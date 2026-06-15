@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LitNavigator · 架构框架图</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500;700&display=swap');
+
+:root{
+  --bg:#0e0c16;
+  --panel:#171326;
+  --panel-2:#1f1a33;
+  --line:#332a4d;
+  --ink:#ece8f6;
+  --ink-dim:#b1a6cf;
+  --ink-faint:#83779e;
+  --accent:#a78bfa;
+  --accent-2:#c4b5fd;
+  --accent-soft:rgba(167,139,250,.13);
+  --warn:#fbbf24;
+  --bad:#f87171;
+  --good:#34d399;
+  --mono:'JetBrains Mono',monospace;
+  --disp:'Space Grotesk','Noto Sans SC',sans-serif;
+  --body:'Inter','Noto Sans SC',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  background:
+    radial-gradient(1200px 600px at 80% -10%, rgba(167,139,250,.10), transparent 60%),
+    var(--bg);
+  color:var(--ink);
+  font-family:var(--body);
+  line-height:1.5;
+  padding:48px 32px 64px;
+}
+.wrap{max-width:1180px;margin:0 auto}
+
+.head{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:24px;margin-bottom:8px}
+.brand{font-family:var(--disp)}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
+h1{font-family:var(--disp);font-size:46px;font-weight:700;letter-spacing:-.02em;line-height:1}
+h1 .dim{color:var(--ink-faint);font-weight:500}
+.thesis{margin-top:14px;color:var(--ink-dim);font-size:15px;max-width:600px}
+.tags{display:flex;gap:8px;flex-wrap:wrap}
+.tag{font-family:var(--mono);font-size:11px;letter-spacing:.04em;border:1px solid var(--line);color:var(--ink-dim);padding:6px 11px;border-radius:99px}
+.tag.hot{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+
+.diff{margin:34px 0 38px;display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.diff .cell{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 16px 18px;position:relative;overflow:hidden}
+.diff .cell::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent)}
+.diff .k{font-family:var(--mono);font-size:11px;color:var(--accent);letter-spacing:.06em;margin-bottom:9px}
+.diff .v{font-size:13.5px;color:var(--ink);font-weight:500}
+.diff .v small{display:block;color:var(--ink-faint);font-weight:400;margin-top:5px;font-size:12px;line-height:1.45}
+
+.sec-label{display:flex;align-items:center;gap:12px;margin:42px 0 20px}
+.sec-label .num{font-family:var(--mono);font-size:12px;color:var(--accent);border:1px solid var(--line);border-radius:6px;padding:3px 8px}
+.sec-label h2{font-family:var(--disp);font-size:19px;font-weight:600;letter-spacing:-.01em}
+.sec-label .hint{font-size:12.5px;color:var(--ink-faint);margin-left:auto;font-family:var(--mono)}
+
+.stack{display:flex;flex-direction:column;align-items:center;gap:0}
+.layer{width:100%;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px;position:relative}
+.layer .lhead{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.layer .badge{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--bg);background:var(--accent);padding:4px 9px;border-radius:5px;font-weight:600}
+.layer .ltitle{font-family:var(--disp);font-size:15px;font-weight:600}
+.layer .lsub{font-size:12px;color:var(--ink-faint);margin-left:auto;font-family:var(--mono)}
+
+.flowarrow{height:30px;width:2px;background:linear-gradient(var(--accent),var(--line));position:relative;margin:2px 0}
+.flowarrow::after{content:"";position:absolute;bottom:-1px;left:50%;transform:translateX(-50%);border-left:5px solid transparent;border-right:5px solid transparent;border-top:7px solid var(--accent)}
+
+.boxrow{display:grid;gap:12px}
+.boxrow.c2{grid-template-columns:repeat(2,1fr)}
+.boxrow.c3{grid-template-columns:repeat(3,1fr)}
+.boxrow.c4{grid-template-columns:repeat(4,1fr)}
+.node{background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:13px 14px}
+.node .nt{font-size:13.5px;font-weight:600;color:var(--ink);margin-bottom:5px;display:flex;align-items:center;gap:7px}
+.node .nt .dot{width:7px;height:7px;border-radius:99px;background:var(--accent)}
+.node .nd{font-size:12px;color:var(--ink-dim);line-height:1.5}
+.node.tool .nt .dot{background:var(--accent-2)}
+.node .src{font-family:var(--mono);font-size:10.5px;color:var(--ink-faint);margin-top:8px;padding-top:8px;border-top:1px dashed var(--line)}
+
+.core{background:linear-gradient(180deg,var(--panel-2),var(--panel));border-color:var(--accent);box-shadow:0 0 0 1px rgba(167,139,250,.15), 0 18px 40px -28px rgba(167,139,250,.55)}
+.loop-tag{position:absolute;top:-11px;right:18px;font-family:var(--mono);font-size:10.5px;background:var(--bg);border:1px solid var(--accent);color:var(--accent);padding:3px 10px;border-radius:99px}
+
+.trust{display:flex;align-items:center;gap:16px;width:100%;background:linear-gradient(90deg,var(--accent-soft),transparent);border:1px dashed var(--accent);border-radius:12px;padding:14px 18px;margin:14px 0}
+.trust .ti{font-family:var(--disp);font-weight:600;font-size:14px;color:var(--accent-2);white-space:nowrap}
+.trust .td{font-size:12.5px;color:var(--ink-dim)}
+.trust .tcode{font-family:var(--mono);font-size:11px;color:var(--ink-faint)}
+
+.demo{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:6px 22px 22px;margin-top:4px}
+.uquote{font-family:var(--body);font-size:14px;color:var(--ink);background:var(--panel-2);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:14px 16px;margin:20px 0 6px}
+.uquote .ulabel{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:6px}
+.steps{counter-reset:s;margin-top:8px}
+.step{display:grid;grid-template-columns:auto 1fr;gap:14px;padding:14px 0;border-bottom:1px solid var(--line)}
+.step:last-child{border-bottom:0}
+.step .sn{counter-increment:s;font-family:var(--mono);font-size:13px;font-weight:600;color:var(--bg);background:var(--accent);width:26px;height:26px;border-radius:7px;display:grid;place-items:center}
+.step .sn::before{content:counter(s)}
+.step .stitle{font-weight:600;font-size:13.5px;margin-bottom:3px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.chip{font-family:var(--mono);font-size:10px;letter-spacing:.04em;border:1px solid var(--line);color:var(--accent);padding:2px 7px;border-radius:5px}
+.chip.key{border-color:var(--accent);background:var(--accent-soft)}
+.step .sbody{font-size:12.5px;color:var(--ink-dim);line-height:1.55}
+.replan{font-family:var(--mono);font-size:11.5px;margin-top:8px;padding:9px 12px;border-radius:8px;border:1px solid rgba(167,139,250,.4);background:var(--accent-soft);color:var(--accent-2)}
+
+.tech{margin-top:8px;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.tech .trow{display:grid;grid-template-columns:180px 1fr 250px;gap:0;border-bottom:1px solid var(--line)}
+.tech .trow:last-child{border-bottom:0}
+.tech .trow.h{background:var(--panel-2)}
+.tech .trow.h div{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint)}
+.tech .trow>div{padding:11px 16px;font-size:12.5px}
+.tech .trow:not(.h) .c1{font-weight:600;color:var(--ink)}
+.tech .trow:not(.h) .c2{color:var(--ink-dim)}
+.tech .trow:not(.h) .c3{font-family:var(--mono);font-size:11px;color:var(--accent)}
+
+.note{margin-top:38px;border:1px solid var(--line);border-radius:12px;padding:18px 20px;background:var(--panel);display:flex;gap:14px;align-items:flex-start}
+.note .nm{font-family:var(--mono);font-size:11px;color:var(--accent);letter-spacing:.1em;white-space:nowrap;padding-top:2px}
+.note .ntxt{font-size:13px;color:var(--ink-dim);line-height:1.6}
+.note .ntxt b{color:var(--ink)}
+.note.amber{border-color:rgba(251,191,36,.4);background:linear-gradient(90deg,rgba(251,191,36,.07),var(--panel))}
+.note.amber .nm{color:var(--warn)}
+
+/* smart-signal banner */
+.principle{margin:6px 0 26px;border:1px solid var(--accent);border-radius:14px;padding:20px 22px;background:linear-gradient(110deg,var(--accent-soft),transparent 70%)}
+.principle .pl{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
+.principle .pt{font-family:var(--disp);font-size:18px;font-weight:600;line-height:1.45;letter-spacing:-.01em}
+.principle .pt b{color:var(--accent-2)}
+
+/* signal cards */
+.signals{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.sig{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:16px 17px 17px;position:relative}
+.sig .sighd{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.sig .signo{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--accent);border:1px solid var(--line);border-radius:6px;padding:3px 7px}
+.sig .signame{font-family:var(--disp);font-size:14.5px;font-weight:600}
+.sig .sigtag{margin-left:auto;font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);border:1px solid var(--line);padding:3px 7px;border-radius:5px}
+.sig .sigtag.cheap{color:var(--good);border-color:rgba(52,211,153,.4)}
+.sig .sigtag.mid{color:var(--warn);border-color:rgba(251,191,36,.4)}
+.vs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:11px}
+.vs .col{border-radius:9px;padding:10px 11px;font-size:12px;line-height:1.5}
+.vs .stupid{background:rgba(248,113,113,.07);border:1px solid rgba(248,113,113,.28)}
+.vs .smart{background:var(--accent-soft);border:1px solid rgba(167,139,250,.4)}
+.vs .vl{font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;display:block;margin-bottom:6px}
+.vs .stupid .vl{color:var(--bad)}
+.vs .smart .vl{color:var(--accent-2)}
+.vs .col .q{color:var(--ink);font-style:italic}
+.sig .sigwhy{font-size:12px;color:var(--ink-dim);line-height:1.55;padding-top:11px;border-top:1px dashed var(--line)}
+.sig .sigwhy b{color:var(--ink)}
+
+/* priority tiers */
+.tiers{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:6px}
+.tier{border:1px solid var(--line);border-radius:13px;padding:16px 16px 17px;background:var(--panel)}
+.tier .th{display:flex;align-items:center;gap:9px;margin-bottom:11px}
+.tier .tdot{width:9px;height:9px;border-radius:99px}
+.tier .tname{font-family:var(--disp);font-size:14px;font-weight:600}
+.tier .tmeta{font-family:var(--mono);font-size:10px;color:var(--ink-faint);margin-left:auto}
+.tier ul{list-style:none}
+.tier li{font-size:12.5px;color:var(--ink-dim);line-height:1.5;padding:6px 0 6px 16px;position:relative;border-bottom:1px solid var(--line)}
+.tier li:last-child{border-bottom:0}
+.tier li::before{content:"";position:absolute;left:0;top:13px;width:5px;height:5px;border-radius:99px;background:var(--accent)}
+.tier.t1{border-color:var(--good)}
+.tier.t1 .tdot{background:var(--good)}
+.tier.t1 li::before{background:var(--good)}
+.tier.t2 .tdot{background:var(--warn)}
+.tier.t2 li::before{background:var(--warn)}
+.tier.t3 .tdot{background:var(--ink-faint)}
+.tier.t3 li::before{background:var(--ink-faint)}
+
+@media(max-width:860px){
+  .signals,.vs,.tiers{grid-template-columns:1fr}
+  .diff{grid-template-columns:repeat(2,1fr)}
+  .boxrow.c2,.boxrow.c3,.boxrow.c4{grid-template-columns:1fr}
+  h1{font-size:34px}
+  .tech .trow{grid-template-columns:1fr}
+  .tech .trow.h{display:none}
+  .tech .trow>div{padding:8px 14px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="head">
+    <div class="brand">
+      <div class="eyebrow">ICCSE 2026 · Agentic AI · Education / Research</div>
+      <h1>LitNavigator<span class="dim"> /文献领航 · 架构框架</span></h1>
+      <p class="thesis">陪你用几周入门一个陌生子领域的智能体。不是"帮你总结论文",而是<b style="color:var(--ink)">规划阅读路径 → 诊断你的知识缺口 → 动态决定下一篇该读什么 → 用测验验证你真的吃透</b>。核心差异在"管理学习进度并自适应重规划",不在检索。</p>
+    </div>
+    <div class="tags">
+      <span class="tag hot">评委即用户 · 代入感最高</span>
+      <span class="tag">agentic 含金量最高</span>
+      <span class="tag">arXiv 公开数据 · 10-day</span>
+    </div>
+  </div>
+
+  <!-- differentiators -->
+  <div class="diff">
+    <div class="cell"><div class="k">ADAPTIVE</div><div class="v">自适应重规划<small>读完每篇后,根据你掌握了什么,改写后续路径</small></div></div>
+    <div class="cell"><div class="k">LEARNER MODEL</div><div class="v">建模你的知识状态<small>逐概念追踪掌握度 —— 这是与检索工具的分界线</small></div></div>
+    <div class="cell"><div class="k">DIAGNOSE</div><div class="v">诊断知识缺口<small>找出你卡在哪个前置概念,而非盲目推荐</small></div></div>
+    <div class="cell"><div class="k">VERIFY</div><div class="v">测验验证吃透<small>小测验确认理解,而非假设你读懂了</small></div></div>
+  </div>
+
+  <!-- ARCHITECTURE -->
+  <div class="sec-label">
+    <span class="num">01</span>
+    <h2>系统分层架构</h2>
+    <span class="hint">注意:核心是一个自适应闭环,非线性管道</span>
+  </div>
+
+  <div class="stack">
+
+    <!-- input -->
+    <div class="layer">
+      <div class="lhead"><span class="badge">Input</span><span class="ltitle">用户输入层 · 方向 + 当前水平</span><span class="lsub">goal + level</span></div>
+      <div class="node"><div class="nd">"我想入门<b style="color:var(--ink)">联邦学习的隐私攻击</b>这个子领域,我懂基础 ML,但没接触过差分隐私。" —— agent 据此初始化学习目标与起点水平。</div></div>
+    </div>
+
+    <div class="flowarrow"></div>
+
+    <!-- agent core -->
+    <div class="layer core">
+      <span class="loop-tag">⟳ 自适应闭环 · plan→read→quiz→diagnose→replan</span>
+      <div class="lhead"><span class="badge">Core</span><span class="ltitle">Agent 编排核心 · 区分度所在</span><span class="lsub">adaptive tutor loop</span></div>
+      <div class="boxrow c3">
+        <div class="node"><div class="nt"><span class="dot"></span>① 阅读路径规划</div><div class="nd">由概念依赖图排出"先读什么、后读什么"的有序路径。</div></div>
+        <div class="node"><div class="nt"><span class="dot"></span>② 检索编排</div><div class="nd">按当前缺口去抓论文、补引用、扩概念,而非一次性全抓。</div></div>
+        <div class="node"><div class="nt"><span class="dot"></span>③ 概念/引用图构建</div><div class="nd">把论文映射到概念节点,建依赖与引用边。</div></div>
+        <div class="node"><div class="nt"><span class="dot"></span>④ 知识缺口诊断</div><div class="nd">对比 learner state 与目标图,找出卡点前置概念。</div></div>
+        <div class="node"><div class="nt"><span class="dot"></span>⑤ 下一篇决策(重规划)</div><div class="nd">根据你"实际懂了什么"改写后续,而非照初始计划走。</div></div>
+        <div class="node"><div class="nt"><span class="dot"></span>⑥ 测验生成 + 评判</div><div class="nd">针对刚读的概念出题,判分回写知识状态。</div></div>
+      </div>
+    </div>
+
+    <div class="flowarrow"></div>
+
+    <!-- tools / data -->
+    <div class="layer">
+      <div class="lhead"><span class="badge">Tools / Data</span><span class="ltitle">工具与数据层 · 全部公开 API + 现成科学资产</span><span class="lsub">retrieval, not training</span></div>
+      <div class="boxrow c4">
+        <div class="node tool"><div class="nt"><span class="dot"></span>论文检索</div><div class="nd">按主题/关键词抓论文与摘要。</div><div class="src">arXiv API</div></div>
+        <div class="node tool"><div class="nt"><span class="dot"></span>引用图 + 概念体系</div><div class="nd">现成的引用边与概念分类(免自训)。</div><div class="src">OpenAlex · Semantic Scholar</div></div>
+        <div class="node tool"><div class="nt"><span class="dot"></span>全文解析</div><div class="nd">PDF→结构化章节与图表。</div><div class="src">GROBID</div></div>
+        <div class="node tool"><div class="nt"><span class="dot"></span>向量检索</div><div class="nd">论文/概念语义近邻。</div><div class="src">SPECTER2 / bge-m3 + Chroma</div></div>
+      </div>
+    </div>
+
+    <!-- cross-cutting learner state -->
+    <div class="trust">
+      <span class="ti">⟂ 知识状态层 Learner State</span>
+      <span class="td">横切整个闭环 —— 逐概念的掌握度,被④诊断读、被⑥测验写、被⑤重规划用。这是运行时生成的 per-user 状态,<b style="color:var(--ink)">是项目的灵魂,不是训练出来的</b>。</span>
+      <span class="tcode">runtime state · per-user</span>
+    </div>
+
+    <div class="flowarrow"></div>
+
+    <!-- output -->
+    <div class="layer">
+      <div class="lhead"><span class="badge">Output</span><span class="ltitle">交付层</span><span class="lsub">guide + verify</span></div>
+      <div class="boxrow c3">
+        <div class="node"><div class="nt"><span class="dot"></span>带理由的阅读路径</div><div class="nd">有序清单 + 每篇"为什么现在读"。</div></div>
+        <div class="node"><div class="nt"><span class="dot"></span>交互式概念图</div><div class="nd">已懂 / 待学 / 卡点 高亮可视化。</div></div>
+        <div class="node"><div class="nt"><span class="dot"></span>缺口报告 + 小测验</div><div class="nd">指出薄弱前置,出题验证掌握。</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DEMO FLOW -->
+  <div class="sec-label">
+    <span class="num">02</span>
+    <h2>Demo 脚本 · "重规划"是 money shot</h2>
+    <span class="hint">让评委看到 agent 因你的测验结果改了计划</span>
+  </div>
+
+  <div class="demo">
+    <div class="uquote">
+      <span class="ulabel">User</span>
+      我想入门"联邦学习中的隐私攻击",我懂基础机器学习,但没学过差分隐私。
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="sn"></div>
+        <div>
+          <div class="stitle">规划初始路径 <span class="chip">plan</span></div>
+          <div class="sbody">建出概念依赖图,排出路径:联邦学习基础 → 梯度泄露 → 成员推断 → 差分隐私防御。先推第 1 篇综述。</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="sn"></div>
+        <div>
+          <div class="stitle">读完出测验 <span class="chip">quiz</span></div>
+          <div class="sbody">针对"梯度泄露"出 3 道小题,验证是否真的吃透,而不是假设读懂了。</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="sn"></div>
+        <div>
+          <div class="stitle">诊断出意外缺口 <span class="chip">diagnose</span></div>
+          <div class="sbody">测验暴露:你对"梯度泄露"理解 OK,但卡在更底层的"差分隐私的 ε 定义"。更新 learner state。</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="sn"></div>
+        <div>
+          <div class="stitle">动态重规划 <span class="chip key">re-plan ★</span></div>
+          <div class="sbody">这里是演示高潮 —— agent <b style="color:var(--ink)">不按原计划推"成员推断"</b>,而是插入一篇差分隐私入门,补上前置短板:</div>
+          <div class="replan">↻ 路径已调整:下一篇改为《Differential Privacy: A Primer》—— 因为你的 ε 概念尚未稳固,先补这块再继续。</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="sn"></div>
+        <div>
+          <div class="stitle">概念图实时填充 <span class="chip">visualize</span></div>
+          <div class="sbody">概念图上"梯度泄露"变绿(已懂)、"差分隐私"变黄(在学)、"成员推断"仍灰(待学),进度一目了然。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TECH / DATA -->
+  <div class="sec-label">
+    <span class="num">03</span>
+    <h2>技术栈与数据(全部 retrieval,无需训练)</h2>
+    <span class="hint">本质是 RAG + 知识图谱 + agent 状态机</span>
+  </div>
+
+  <div class="tech">
+    <div class="trow h"><div>组件</div><div>用途</div><div>选型</div></div>
+    <div class="trow"><div class="c1">Reasoning LLM</div><div class="c2">规划 / 诊断 / 出题 / 评判(prompt 驱动,不微调)</div><div class="c3">Qwen / 任一现成 LLM</div></div>
+    <div class="trow"><div class="c1">Agent 框架</div><div class="c2">自适应 tutor 闭环 + 工具编排</div><div class="c3">LangGraph(状态机天然契合)</div></div>
+    <div class="trow"><div class="c1">论文语料</div><div class="c2">检索 + 全文</div><div class="c3">arXiv API + GROBID</div></div>
+    <div class="trow"><div class="c1">引用 / 概念结构</div><div class="c2">现成引用边 + 概念分类(免自建)</div><div class="c3">OpenAlex / Semantic Scholar</div></div>
+    <div class="trow"><div class="c1">向量索引</div><div class="c2">论文/概念语义检索</div><div class="c3">SPECTER2 / bge-m3 + Chroma</div></div>
+    <div class="trow"><div class="c1">知识状态</div><div class="c2">逐概念掌握度(运行时生成)</div><div class="c3">JSON / 图存储</div></div>
+    <div class="trow"><div class="c1">观测</div><div class="c2">追踪 agent 决策链(评委加分)</div><div class="c3">Langfuse</div></div>
+  </div>
+
+  <div class="note">
+    <div class="nm">关键判断</div>
+    <div class="ntxt">这个项目<b>几乎不需要"训练"任何模型</b> —— 它是 RAG + 知识图谱 + agent 状态机的组合(和你做过的 CVE-KGRAG 同构,只是图从漏洞关系换成引用/概念,新颖点在 learner-state 闭环)。智能来自<b>编排 + 现成科学资产 + 运行时状态</b>,不是权重。Demo 锁定<b>一个</b>子领域、离线预抓 ~200 篇 + 引用边 + 概念、预建索引,现场不做 live fetch —— 又快又稳。</div>
+  </div>
+
+  <!-- SMART vs STUPID -->
+  <div class="sec-label">
+    <span class="num">04</span>
+    <h2>怎么让它像 smart agent,而不是 stupid workflow</h2>
+    <span class="hint">评委是研究者 · 戏精会被一眼看穿</span>
+  </div>
+
+  <div class="principle">
+    <div class="pl">核心原理</div>
+    <div class="pt">Workflow 的输出<b>对谁都一样</b>;agent 的输出是<b>"你这个人"的函数,而且它把这个函数亮给你看</b>。所有"smart 感"的招数,本质都在强化两件事 —— <b>因你而异</b> 与 <b>亮出判断</b>。</div>
+  </div>
+
+  <div class="signals">
+
+    <div class="sig">
+      <div class="sighd"><span class="signo">S1</span><span class="signame">暴露"因为",且挂在你的状态上</span><span class="sigtag cheap">必做 · 便宜</span></div>
+      <div class="vs">
+        <div class="col stupid"><span class="vl">stupid</span><span class="q">"下一篇:《DP Primer》。"</span></div>
+        <div class="col smart"><span class="vl">smart</span><span class="q">"给你《DP Primer》,因为刚那道题暴露你 ε 还没稳,而原计划的成员推断会默认你懂这个。"</span></div>
+      </div>
+      <div class="sigwhy">前提:"因为"必须引用<b>具体概念名 + 具体测验表现 + 具体下游依赖</b>,全部来自 learner-state,模板套话会被秒穿。</div>
+    </div>
+
+    <div class="sig">
+      <div class="sighd"><span class="signo">S2</span><span class="signame">把"分叉"演给评委看</span><span class="sigtag cheap">Demo 杀手锏</span></div>
+      <div class="vs">
+        <div class="col stupid"><span class="vl">workflow</span><span class="q">答对答错都走同一步。</span></div>
+        <div class="col smart"><span class="vl">agent</span><span class="q">"我把这题答错→它绕道补 DP;倒回去答对→它直接推进到成员推断。"</span></div>
+      </div>
+      <div class="sigwhy">感知智能几乎全靠<b>反事实对比</b>建立。同一节点两条分支,是整个 demo 最值钱的 30 秒,几乎零成本(条件边本就存在)。</div>
+    </div>
+
+    <div class="sig">
+      <div class="sighd"><span class="signo">S3</span><span class="signame">会"有理有据地反对你"</span><span class="sigtag mid">高 ROI</span></div>
+      <div class="vs">
+        <div class="col stupid"><span class="vl">stupid</span><span class="q">你说跳到 2024 最新攻击,它就照做。</span></div>
+        <div class="col smart"><span class="vl">smart</span><span class="q">"先别跳 —— 你还没建威胁模型,直接读会看不懂动机。要不要我先补一篇?"</span></div>
+      </div>
+      <div class="sigwhy">顺从是 workflow 的特征。<b>有依据的不同意</b>证明它在拿你的请求和领域结构做对照。实现:重规划节点加"请求 vs 前置依赖"冲突检测。</div>
+    </div>
+
+    <div class="sig">
+      <div class="sighd"><span class="signo">S4</span><span class="signame">主动注意到你没问的事</span><span class="sigtag mid">高 ROI</span></div>
+      <div class="vs">
+        <div class="col stupid"><span class="vl">stupid</span><span class="q">只回答字面问题。</span></div>
+        <div class="col smart"><span class="vl">smart</span><span class="q">"你读的前三篇全来自同一个组,认识是单边的 —— 我拉一篇不同阵营的批评性回应。"</span></div>
+      </div>
+      <div class="sigwhy">从语料里<b>涌现</b>出、用户没要求的观察 = "它在替我思考"。实现:状态里多记几维(来源机构/立场/年份),诊断节点扫异常。</div>
+    </div>
+
+    <div class="sig">
+      <div class="sighd"><span class="signo">S5</span><span class="signame">有校准的不确定性</span><span class="sigtag cheap">必做 · 便宜</span></div>
+      <div class="vs">
+        <div class="col stupid"><span class="vl">stupid</span><span class="q">对所有事都用同一种平铺的自信。</span></div>
+        <div class="col smart"><span class="vl">smart</span><span class="q">"到 DP 这段我很有把握;2024 后那些攻击还没定论,这段排序是暂定的,你读完可推翻我。"</span></div>
+      </div>
+      <div class="sigwhy">知道自己不知道什么,是<b>研究者评委最吃</b>的智能信号 —— 因为他们自己就这么想问题。</div>
+    </div>
+
+    <div class="sig" style="border-color:rgba(248,113,113,.4);background:linear-gradient(110deg,rgba(248,113,113,.06),var(--panel))">
+      <div class="sighd"><span class="signo" style="color:var(--bad);border-color:rgba(248,113,113,.4)">✕</span><span class="signame" style="color:#fca5a5">反面警告:别用"戏精"假装聪明</span><span class="sigtag" style="color:var(--bad);border-color:rgba(248,113,113,.4)">会反向暴露</span></div>
+      <div class="sigwhy" style="border-top:0;padding-top:0">逢事必问澄清、每步旁白"让我想想…"、什么都 hedge 都长篇 —— 这些是 faux-intelligence 的 tell,研究者评委一眼穿。<b>聪明 = 果断 + 经济</b>:该决策就决策并给一句理由,只在真有分歧时才追问。Restraint 本身就是智能。</div>
+    </div>
+
+  </div>
+
+  <!-- priority tiers -->
+  <div class="sec-label">
+    <span class="num">05</span>
+    <h2>10 天落地:按"高感知 × 已有状态能撑"排序</h2>
+    <span class="hint">不是每条都做</span>
+  </div>
+
+  <div class="tiers">
+    <div class="tier t1">
+      <div class="th"><span class="tdot"></span><span class="tname">必做地基</span><span class="tmeta">~80% 的 smart 感</span></div>
+      <ul>
+        <li><b>S1</b> 带状态的"因为"</li>
+        <li><b>S2</b> demo 答对/答错分叉</li>
+        <li><b>S5</b> 路径的校准语气</li>
+      </ul>
+    </div>
+    <div class="tier t2">
+      <div class="th"><span class="tdot"></span><span class="tname">高 ROI 加分</span><span class="tmeta">中等工作量</span></div>
+      <ul>
+        <li><b>S3</b> 会反对的重规划<br><span style="color:var(--ink-faint);font-size:11.5px">请求 vs 前置依赖冲突检测</span></li>
+        <li><b>S4</b> 主动指出阅读偏向<br><span style="color:var(--ink-faint);font-size:11.5px">来源/立场单一</span></li>
+      </ul>
+    </div>
+    <div class="tier t3">
+      <div class="th"><span class="tdot"></span><span class="tname">深度彩蛋</span><span class="tmeta">有余力再加</span></div>
+      <ul>
+        <li>跨会话记忆<br><span style="color:var(--ink-faint);font-size:11.5px">"上周你卡在 X,我先确认一下"</span></li>
+        <li>优雅接住离题提问并更新状态</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="note amber">
+    <div class="nm">工程诚实</div>
+    <div class="ntxt">这些<b>不能只是 UI 文案</b>。评委会去戳 —— 故意答错、问离题、让它跳步。所以"因为"得真从状态生成、分叉得真由条件边驱动、反对得真有依据。<b>真的,就经得起戳;写死的台词被戳穿,比平庸的 workflow 还伤。</b></div>
+  </div>
+
+</div>
+</body>
+</html>
