@@ -6,8 +6,8 @@ import uuid
 from pathlib import Path
 from typing import List, Optional
 
-from langgraph.graph import END, StateGraph
-
+# NOTE: langgraph is imported lazily inside build_graph() so that the M0 walking
+# skeleton (run_m0_session below) and verify_m0 can run without langgraph installed.
 from litnav.graph.router import tutor_router
 from litnav.nodes.advance import advance_node
 from litnav.nodes.check import check_node
@@ -51,6 +51,8 @@ def build_graph(
                       Pass sqlite3.connect(":memory:") for isolated tests.
     interrupt_after — Optional node names to interrupt after (for checkpoint tests).
     """
+    from langgraph.graph import END, StateGraph
+
     if checkpoint_conn is None:
         checkpoint_conn = _file_checkpoint_conn()
 

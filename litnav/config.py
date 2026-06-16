@@ -3,6 +3,11 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 
+# Dedicated, gitignored demo databases. The CLI demo runner writes here and only
+# ever deletes these files, so it can never erase whatever LITNAV_DB_PATH points at.
+DEMO_DB_PATH = "data/runtime/litnav-demo.sqlite"
+DEMO_CKPT_PATH = "data/runtime/litnav-demo-ckpt.sqlite"
+
 
 @dataclass(frozen=True)
 class Settings:

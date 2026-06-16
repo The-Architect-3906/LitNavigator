@@ -17,7 +17,7 @@ import sqlite3
 import uuid
 from pathlib import Path
 
-from litnav.config import load_settings
+from litnav.config import DEMO_CKPT_PATH, DEMO_DB_PATH
 from litnav.graph.builder import build_graph, make_initial_state
 from litnav.storage.schema import init_db
 from litnav.storage.seed import seed_demo_data
@@ -38,11 +38,13 @@ _M2_ANSWERS = {
 }
 
 
-def _fresh_db(suffix: str) -> tuple[sqlite3.Connection, sqlite3.Connection, str]:
-    db_path = Path(load_settings().db_path)
+def _fresh_db() -> tuple[sqlite3.Connection, sqlite3.Connection, str]:
+    """Open fresh demo databases. Only the dedicated demo files are ever deleted,
+    so this never touches whatever LITNAV_DB_PATH points at."""
+    db_path = Path(DEMO_DB_PATH)
+    ckpt = Path(DEMO_CKPT_PATH)
     db_path.parent.mkdir(parents=True, exist_ok=True)
     db_path.unlink(missing_ok=True)
-    ckpt = db_path.parent / "litnav_checkpoint.sqlite"
     ckpt.unlink(missing_ok=True)
     return (sqlite3.connect(str(db_path), check_same_thread=False),
             sqlite3.connect(str(ckpt), check_same_thread=False),
@@ -71,7 +73,7 @@ def _print_trace(conn: sqlite3.Connection, sid: str, db_path: str) -> None:
 
 
 def _run(fixture: str, answers: list[str], targets: list[str], threshold: float) -> None:
-    conn, ckpt, db_path = _fresh_db("demo")
+    conn, ckpt, db_path = _fresh_db()
     init_db(conn)
     seed_demo_data(conn, fixture)
     data = json.loads(Path(fixture).read_text(encoding="utf-8"))

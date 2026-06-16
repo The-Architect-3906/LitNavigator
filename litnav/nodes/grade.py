@@ -52,8 +52,13 @@ def grade_node(state: NavState, conn: sqlite3.Connection) -> dict:
             'Respond as JSON: {"misconception_id": "<id or null>"}'
         )
         result = llm_client.complete_json(prompt, fallback={"misconception_id": deterministic})
-        detected_id = result.get("misconception_id", deterministic)
         turn_token_cost = llm_client.LAST_TOKEN_COST  # 0 offline; real token usage when provider=qwen
+        # Only trust an id the model could legitimately have chosen; otherwise fall back to the
+        # deterministic detection. Guards against a malformed/unknown id from a live LLM polluting
+        # held_misconceptions / quiz_attempts and breaking reteach's anchor to the correct model.
+        candidate_ids = {m["id"] for m in candidates}
+        llm_id = result.get("misconception_id")
+        detected_id = llm_id if llm_id in candidate_ids else deterministic
 
     # ── Learner state update ────────────────────────────────────────────────────
     learner_state = dict(state["learner_state"])

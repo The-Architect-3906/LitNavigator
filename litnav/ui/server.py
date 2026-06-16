@@ -9,6 +9,7 @@ The CLI demo runner (litnav.app) populates that DB; the panel renders it read-on
 """
 from __future__ import annotations
 
+import os
 import sqlite3
 from pathlib import Path
 
@@ -16,7 +17,7 @@ from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, JSONResponse
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-from litnav.config import load_settings
+from litnav.config import DEMO_DB_PATH
 from litnav.ui.trace import build_trace
 
 app = FastAPI(title="LitNavigator trace panel")
@@ -28,7 +29,8 @@ _TEMPLATES = Environment(
 
 
 def _connect() -> sqlite3.Connection:
-    return sqlite3.connect(load_settings().db_path)
+    # Default to the demo DB the CLI runner populates; honor an explicit override.
+    return sqlite3.connect(os.getenv("LITNAV_DB_PATH", DEMO_DB_PATH))
 
 
 def _list_sessions(conn: sqlite3.Connection) -> list[dict]:

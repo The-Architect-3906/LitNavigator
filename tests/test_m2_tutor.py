@@ -122,3 +122,24 @@ def test_parallel_quiz_forms_differ_pre_post():
     s = {**s, **out1}
     out2 = check_node(s, conn)
     assert out1["current_quiz_item"]["id"] != out2["current_quiz_item"]["id"]
+
+
+def test_grade_rejects_unknown_llm_misconception_id(monkeypatch):
+    """A live LLM returning a bogus id must not pollute state; fall back to deterministic."""
+    from litnav.nodes import grade as grade_mod
+    monkeypatch.setattr(grade_mod.llm_client, "complete_json",
+                        lambda *a, **k: {"misconception_id": "totally_made_up"})
+    conn = _conn()
+    s = _drive(_base_state(), conn, "it just uses chain of thought reasoning")
+    assert s["quiz_result"]["detected_misconception"] == "react_is_just_cot"
+    assert "totally_made_up" not in s["learner_state"][REACT]["held_misconceptions"]
+
+
+def test_grade_accepts_valid_llm_misconception_id(monkeypatch):
+    """When the deterministic check misses but the LLM returns a valid candidate id, accept it."""
+    from litnav.nodes import grade as grade_mod
+    monkeypatch.setattr(grade_mod.llm_client, "complete_json",
+                        lambda *a, **k: {"misconception_id": "react_is_just_cot"})
+    conn = _conn()
+    s = _drive(_base_state(), conn, "I really have no idea honestly")
+    assert s["quiz_result"]["detected_misconception"] == "react_is_just_cot"
