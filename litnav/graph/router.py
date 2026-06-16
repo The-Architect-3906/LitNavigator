@@ -16,9 +16,13 @@ def tutor_router(state: dict) -> str:
     if mastery >= threshold:
         return "advance"
 
+    # A prereq counts as "met" if mastery is high enough OR if it has already
+    # been attempted in this session (route step status == "done").
+    done_ids = {s["concept_id"] for s in state.get("route", []) if s.get("status") == "done"}
     unmastered_prereqs = [
         p for p in prereqs
         if state["learner_state"].get(p, {}).get("mastery", 0.0) < threshold
+        and p not in done_ids
     ]
     if unmastered_prereqs:
         return "diagnose"

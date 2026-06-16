@@ -1,43 +1,65 @@
 from __future__ import annotations
 
-from typing import Literal, TypedDict
+import operator
+from typing import Annotated, Dict, List, Literal, Optional, TypedDict
 
 
 class ConceptState(TypedDict):
     mastery: float
     confidence: float
     n_observations: int
-    evidence: list[dict]
-    held_misconceptions: list[str]
-    tried_strategies: list[str]
+    evidence: List[dict]
+    held_misconceptions: List[str]
+    tried_strategies: List[str]
     depth: Literal["recall", "apply", "explain"]
 
 
 class RouteStep(TypedDict):
     step_id: str
     concept_id: int
-    paper_id: int | None
+    paper_id: Optional[int]
     reason: str
     status: str
     confidence: float
 
 
 class NavState(TypedDict):
+    # Identity
     session_id: str
     user_goal: str
-    concept_dag: dict[int, list[int]]       # concept_id -> list of prereq concept_ids
-    learner_state: dict[int, ConceptState]
-    route: list[RouteStep]
+    topic: str
+
+    # Concept graph
+    concept_dag: Dict[int, List[int]]       # concept_id -> prereq_concept_ids
+    all_concept_ids: List[int]
+    target_concept_ids: List[int]
+
+    # Route
+    route: List[dict]
     route_version: int
-    current_concept_id: int | None
-    current_evidence: list[dict]
-    quiz_result: dict | None
-    diagnosis: dict | None
-    decision: str | None
-    rationale: str | None
+
+    # Current position
+    current_concept_id: Optional[int]
+    current_evidence: List[dict]
+    current_quiz_item: Optional[dict]
+
+    # Answer handling
+    user_answer: Optional[str]
+    pending_answers: List[str]              # pre-seeded for gate / batch mode
+
+    # Results
+    quiz_result: Optional[dict]
+    diagnosis: Optional[dict]
+    decision: Optional[str]
+    rationale: Optional[str]
+
+    # Learner model
+    learner_state: dict                     # {concept_id: ConceptState}
     mastery_threshold: float
-    reteach_count: dict[int, int]
-    history: list[dict]
+    reteach_count: dict                     # {concept_id: int}
+
+    # Append-only audit history (LangGraph merges with operator.add)
+    history: Annotated[List[dict], operator.add]
 
 
 def initial_concept_state() -> ConceptState:
