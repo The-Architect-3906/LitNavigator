@@ -4,13 +4,7 @@ This document translates the product spec into the engineering shape we should b
 
 ## Current Repository State
 
-The repository currently contains:
-
-- `README.md`: product narrative and competition positioning.
-- `litnavigator-build-spec.md`: full implementation spec, architecture, schema, milestones, and demo script.
-- `litnavigator.html`: static Chinese architecture/positioning page.
-
-The repository does not yet contain the Python package, runtime dependencies, seed data, tests, or demo app. Treat the current repo as a planning/prototype package until M0 lands.
+**M0–M3 are implemented and green** (`verify_m0/m1/m2/m3` pass fully offline; see the README roadmap). The repository contains the runnable `litnav/` package (state, storage, graph + LangGraph builder, nodes, llm seam, ui panel), seed fixtures, tests, and CLI demos. The section below documents the original engineering shape; it remains accurate as the module map. M4 (polish) and the interactive product UI are the remaining work.
 
 ## First Engineering Principle
 

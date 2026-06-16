@@ -663,6 +663,8 @@ Priority: Langfuse trace → S3 refuse_jump → coverage warning (S4) → multi-
 
 ## 13. Frozen demo script (three scenarios, mapping to the three phases)
 
+> **Implementation note:** the scenarios below use a RAG topic to *illustrate the architecture*. The **implemented** competition demo runs on the **agent paper pack** (`data/seed/agents_m2.json` / `agents_m3.json`): reteach on `react` (`react_is_just_cot`), and induction of the off-skeleton `multi_agent_debate` (`multi_agent → multi_agent_debate`, contested). M1's reroute still runs on the RAG fixture. See the README, `docs/demo-script.md`, and the `demo-m1/m2/m3` CLI for the current canonical demo.
+
 **Topic:** "I want to understand retrieval-augmented generation (RAG) for scientific QA."
 Initial skeleton route: `Dense retrieval → Contrastive learning → RAG pipeline → Evaluation/hallucination`
 

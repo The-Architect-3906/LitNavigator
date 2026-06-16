@@ -1,5 +1,7 @@
 # M0 Walking Skeleton Implementation Plan
 
+> **⚠️ ARCHIVED / HISTORICAL — M0 is implemented and green (`verify_m0`).** This was the original M0 construction plan; the unchecked `[ ]` boxes are historical. See the README roadmap and `docs/milestones.md` for current state.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build the first runnable LitNavigator vertical slice with deterministic seed data, SQLite persistence, a simple tutor flow, and an M0 verification gate.

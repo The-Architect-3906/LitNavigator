@@ -1,5 +1,8 @@
 # LitNavigator Complete Engineering Implementation Plan
 
+> **⚠️ ARCHIVED / HISTORICAL — superseded by the current README roadmap, `docs/milestones.md`, and `docs/engineering-slices.md`.**
+> This was the original task-by-task construction plan. **M0–M3 are now implemented and green** (`verify_m0/m1/m2/m3`). The unchecked `[ ]` boxes and the M2/M3 fixture names below (`rag_m2_demo.json` / `rag_m3_induction.json`) are out of date — the project pivoted to the **agent corpus** (`data/seed/agents_m2.json`, `agents_m3.json`, off-skeleton concept `multi_agent_debate`). Use the live docs above for current state; keep this file only for historical context.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build LitNavigator from planning package to a recordable M3 competition system, with M4 polish only after the core gates pass.

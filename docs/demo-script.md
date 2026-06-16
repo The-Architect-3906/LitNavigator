@@ -41,8 +41,10 @@ Dense retrieval -> Contrastive learning -> RAG pipeline -> Evaluation / hallucin
 
 The route intentionally leaves room for:
 
-- a missing prerequisite: `negative_sampling`,
-- an off-skeleton concept: `hard_negative_mining`.
+- a missing prerequisite (M1, RAG fixture): `negative_sampling`,
+- an off-skeleton concept (M2/M3 run on the agent corpus): `multi_agent_debate` (see Money Shot 3).
+
+> Note: M1's reroute demo runs on the RAG fixture (route above); M2 (reteach) and M3 (induction) run on the agent paper pack. The canonical commands are in "Running the demo" above.
 
 ## Money Shot 1: Reroute on Missing Prerequisite
 

@@ -21,11 +21,7 @@ LitNavigator should be built as a ladder of runnable slices. Each slice must be 
 - tests,
 - app entry point.
 
-**Exit criteria:**
-
-- README honestly says the code has not started.
-- M0 scope is small enough to implement in one focused pass.
-- implementation plan exists under `docs/superpowers/plans/`.
+**Status:** ✅ exited — M0–M3 are implemented and green. (Original exit criteria: README states code status honestly; M0 scope small enough for one pass; implementation plan exists under `docs/superpowers/plans/`.)
 
 ## Slice 1: M0 Fake-Data Walking Skeleton
 
@@ -127,7 +123,7 @@ Trigger `dr_is_keyword_match`, reteach with an analogy, then pass a parallel ite
 
 **Demo:**
 
-User asks about `hard_negative_mining`, which is off the curated skeleton. The system induces `negative_sampling -> hard_negative_mining`, mines one misconception, and teaches with evidence.
+User asks about `multi_agent_debate` (agent corpus), which is off the curated skeleton. The system induces `multi_agent -> multi_agent_debate`, mines one misconception (`debate_more_is_better`), labels it `contested`, and teaches it through the normal inner loop with cited evidence.
 
 **Gate G3:**
 
