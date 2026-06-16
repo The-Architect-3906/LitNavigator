@@ -64,13 +64,16 @@ def index():
     conn = _connect()
     try:
         sessions = _list_sessions(conn)
+        # Open the most recent session's panel directly (the last demo you ran).
+        if sessions:
+            data = build_trace(conn, sessions[0]["id"])
+            return _TEMPLATES.get_template("index.html").render(session_id=sessions[0]["id"], **data)
     finally:
         conn.close()
-    links = "".join(
-        f'<li><a href="/sessions/{s["id"]}">{s["topic"]} — {s["id"][:8]} ({s["status"]})</a></li>'
-        for s in sessions
-    ) or "<li>No sessions yet. Run <code>python -m litnav.app demo-m2 --answer cot</code>.</li>"
-    return f"<html><body style='font-family:system-ui;margin:2rem'><h1>LitNavigator sessions</h1><ul>{links}</ul></body></html>"
+    return ("<html><body style='font-family:system-ui;margin:2rem'>"
+            "<h1>LitNavigator</h1><p>No sessions yet. Run "
+            "<code>python -m litnav.app demo-m2 --answer cot</code> or "
+            "<code>python -m litnav.app demo-m3</code>, then refresh.</p></body></html>")
 
 
 def main() -> None:  # pragma: no cover - manual launch helper

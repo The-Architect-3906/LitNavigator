@@ -121,6 +121,17 @@ python -m litnav.evaluation.verify_m0
 
 Only add M4 work if M3 is already recordable. M4 should not risk the latest stable submission.
 
+## Beyond M4: Interactive Agent Product UI (productization, not a competition gate)
+
+The current `litnav/ui` panel is **read-only observability** — it renders a session that already ran. The productized end-state is an **interactive agent interface**: the user types a goal, the tutor teaches, asks a quiz, the user actually answers, and the agent adapts live (reteach / replan / induce).
+
+This is **not** a competition gate (the gated core is M0–M3; the recordable demo uses the panel + CLI). It is the "real users use it" form. Architecturally the path is short because the backend already supports human-in-the-loop:
+
+- **Already built:** LangGraph `SqliteSaver` checkpoint + `interrupt`/resume (proven in M1's checkpoint gate). The demos pre-seed `pending_answers` (batch mode) instead of waiting for real input.
+- **To build:** (a) a chat front-end (input box, send answer, render each turn, loop); (b) a `submit-answer` endpoint that interrupts after `check`, takes the user's real answer, and resumes the graph; (c) wire Qwen into `teach` for genuinely grounded explanations (needs an API key); (d) optional streaming of teaching text.
+
+So "panel → real agent UI" is *a new interaction front-end + swapping batch answers for interrupt/resume + LLM-backed teach*, not an architecture rewrite.
+
 ## Timeline Checkpoints
 
 | Checkpoint | Ideal state | If behind |

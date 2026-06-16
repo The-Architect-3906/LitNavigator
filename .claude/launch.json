@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "litnav-panel",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "litnav.ui.server"],
+      "port": 8000
+    }
+  ]
+}

@@ -148,3 +148,7 @@ Only after M3 is stable:
 - Chroma/vector retrieval,
 - cross-session memory,
 - richer concept graph.
+
+## Slice 6: Interactive agent UI (product phase, post-competition)
+
+Not a gate. Turns the read-only panel into a real interactive tutor: user types a goal -> teach -> quiz -> user answers -> adapt live. Reuses the M1 `SqliteSaver` interrupt/resume (already proven) for human-in-the-loop; build a chat front-end, a `submit-answer` (interrupt-after-`check` -> resume) endpoint, and wire Qwen into `teach`. Architecture-complete; this is a new front-end + real-time answer handling, not a rewrite.
