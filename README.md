@@ -24,10 +24,16 @@ What is present now:
 
 - `litnavigator-build-spec.md` — complete product/architecture/milestone spec.
 - `litnavigator.html` — static architecture and positioning page.
-- `docs/development-architecture.md` — engineering boundaries and target project skeleton.
-- `docs/engineering-slices.md` — phased build slices from M0 to M4.
-- `docs/m0-walking-skeleton.md` — reduced M0 definition of done.
-- `docs/superpowers/plans/2026-06-16-m0-walking-skeleton.md` — implementation plan for the first runnable slice.
+- `docs/architecture.md` — system boundaries, state machine, and data flow.
+- `docs/milestones.md` — M0-M4 gates and timeline checkpoints.
+- `docs/evaluation.md` — T1-T11 acceptance checks and gate commands.
+- `docs/demo-script.md` — competition demo path and fallback recordings.
+- `docs/data-contract.md` — SQLite tables, seed fixture shape, and state contracts.
+- `docs/development-architecture.md` — engineering skeleton and module boundaries.
+- `docs/engineering-slices.md` — phased build slices from planning to M4.
+- `docs/m0-walking-skeleton.md` — detailed M0 definition of done.
+- `docs/superpowers/plans/2026-06-16-complete-engineering-plan.md` — complete M0-M4 engineering implementation plan.
+- `docs/superpowers/plans/2026-06-16-m0-walking-skeleton.md` — detailed implementation plan for the first runnable slice.
 
 What is not present yet:
 
@@ -142,11 +148,17 @@ cd litnavigator
 
 Read in this order:
 
-1. `docs/development-architecture.md`
-2. `docs/engineering-slices.md`
-3. `docs/m0-walking-skeleton.md`
-4. `docs/superpowers/plans/2026-06-16-m0-walking-skeleton.md`
-5. `litnavigator-build-spec.md`
+1. `docs/architecture.md`
+2. `docs/milestones.md`
+3. `docs/evaluation.md`
+4. `docs/demo-script.md`
+5. `docs/data-contract.md`
+6. `docs/development-architecture.md`
+7. `docs/engineering-slices.md`
+8. `docs/m0-walking-skeleton.md`
+9. `docs/superpowers/plans/2026-06-16-complete-engineering-plan.md`
+10. `docs/superpowers/plans/2026-06-16-m0-walking-skeleton.md`
+11. `litnavigator-build-spec.md`
 
 After M0 is implemented, the first expected command will be:
 
@@ -166,10 +178,17 @@ Current layout:
 ```
 litnavigator/
 ├── docs/
+│   ├── architecture.md
+│   ├── milestones.md
+│   ├── evaluation.md
+│   ├── demo-script.md
+│   ├── data-contract.md
 │   ├── development-architecture.md
 │   ├── engineering-slices.md
 │   ├── m0-walking-skeleton.md
-│   └── superpowers/plans/2026-06-16-m0-walking-skeleton.md
+│   └── superpowers/plans/
+│       ├── 2026-06-16-complete-engineering-plan.md
+│       └── 2026-06-16-m0-walking-skeleton.md
 ├── litnavigator-build-spec.md
 ├── litnavigator.html
 ├── README.md
