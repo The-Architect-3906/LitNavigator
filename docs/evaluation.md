@@ -25,7 +25,7 @@ Each check should verify durable evidence:
 | G2 | `python -m litnav.evaluation.verify_m2` | tutor loop branches and reteaches |
 | G3 | `python -m litnav.evaluation.verify_m3` | induction creates evidence-backed scaffolding |
 
-Only G0 is planned for the first implementation pass. G1-G3 commands are named now so the project has a stable evaluation shape.
+G0-G3 are all implemented and pass fully offline (M0-M3 complete).
 
 **All gates run fully offline.** M2/M3 use the LLM only when `LITNAV_LLM_PROVIDER=qwen`; with the default `none` they take the deterministic fixture path, so `verify_m2`/`verify_m3` pass with no network. The live LLM is exercised separately during recording (see "Live LLM induction check" below) to satisfy the spec's "at least one live induction" rule.
 
@@ -101,23 +101,26 @@ It should assert:
 
 ## M3 Verification Details
 
-`verify_m3` should run an off-skeleton concept request and assert:
+`verify_m3` drives the compiled graph with an off-skeleton concept request and asserts:
 
-- an induced concept edge or misconception is written,
-- `source='induced'`,
-- at least one evidence chunk is attached,
-- `confidence_basis` is present and machine-readable,
-- the induced element is consumed by route or teaching output.
+- the request flows through the graph: `planner -> induce_scaffold -> select_next -> retrieve -> teach -> check -> grade`,
+- an induced concept edge and a misconception are written with `source='induced'`,
+- at least one evidence chunk is attached, and `confidence` matches the `induced_confidence` rule,
+- `confidence_basis` is logged in `induction_log` and is machine-readable,
+- the induced concept is slotted into the route and labeled with its frontier status,
+- the induced concept is then **taught** by the normal inner loop (a `tutor_turn` is recorded for it).
 
 ## Live LLM Induction Check
 
-The automated gates run offline on fixtures. To satisfy the spec's "the demo must actually perform at least one live literature induction" rule, run once with the live provider during recording:
+The automated gates run offline on fixtures. To exercise the live provider during recording:
 
 ```bash
-LITNAV_LLM_PROVIDER=qwen python -m litnav.app demo-m3 --concept hard_negative_mining
+LITNAV_LLM_PROVIDER=qwen python -m litnav.app demo-m3
 ```
 
-Confirm the induced edge/misconception was produced by the LLM over real chunks (not the fixture), that `confidence` is still computed by the rule, and that the evidence chain is shown. This is a recording step, not a blocking gate — if the live call fails, fall back to the offline fixture and show the evidence chain.
+**What the live path currently does:** the LLM labels the *evidence strength* of the induced edge/misconception over the ingested chunks (confidence stays rule-computed); the offline candidate provides the structure as fallback. Confirm the `provider=qwen` path ran and the cited evidence chain is shown. This is a recording step, not a blocking gate — if the live call fails it falls back to the offline candidate.
+
+**Not yet implemented (future work):** fully autonomous live induction — the LLM proposing the prerequisite edge and misconception *itself* from real extracted PDF text. That needs the real PDF chunk extraction (deferred) plus an extraction prompt; until then the spec's "perform at least one live induction" rule is only partially met (strength labeling, not extraction).
 
 ## Manual Demo Checks
 
