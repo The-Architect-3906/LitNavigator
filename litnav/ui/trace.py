@@ -66,15 +66,46 @@ def build_trace(conn: sqlite3.Connection, session_id: str) -> dict:
     tutor_turns = [
         {"concept_id": r[0], "name": r[1], "turn_type": r[2], "strategy": r[3],
          "pre_check_score": r[4], "post_check_score": r[5],
-         "cited_chunks": _loads(r[6], []), "token_cost": r[7]}
+         "cited_chunks": _loads(r[6], []), "token_cost": r[7],
+         "mastery_after": round(r[8], 3) if r[8] is not None else None,
+         "confidence_after": round(r[9], 3) if r[9] is not None else None}
         for r in conn.execute(
             "SELECT tt.concept_id, c.name, tt.turn_type, tt.strategy, tt.pre_check_score, "
-            "tt.post_check_score, tt.cited_chunks, tt.token_cost "
+            "tt.post_check_score, tt.cited_chunks, tt.token_cost, tt.mastery_after, "
+            "tt.confidence_after "
             "FROM tutor_turns tt LEFT JOIN concepts c ON c.id = tt.concept_id "
             "WHERE tt.session_id=? ORDER BY tt.id",
             (session_id,),
         ).fetchall()
     ]
+
+    # Per-turn learner answers, in graph order — paired 1:1 with tutor_turns
+    # (grade_node writes one quiz_attempt and one tutor_turn per check).
+    attempts = [
+        {"answer": r[0], "score": r[1], "detected_misconception": r[2]}
+        for r in conn.execute(
+            "SELECT user_answer, score, detected_misconception FROM quiz_attempts "
+            "WHERE session_id=? ORDER BY id",
+            (session_id,),
+        ).fetchall()
+    ]
+
+    # A single chronological view the CLI and panel can both render: each teaching
+    # turn, the answer that drove it, the learner state after, and the decision it triggered.
+    timeline = []
+    for i, tt in enumerate(tutor_turns):
+        att = attempts[i] if i < len(attempts) else {}
+        dec = decisions[i] if i < len(decisions) else None
+        timeline.append({
+            "index": i + 1,
+            "name": tt["name"], "turn_type": tt["turn_type"], "strategy": tt["strategy"],
+            "cited_chunks": tt["cited_chunks"],
+            "answer": att.get("answer"), "score": att.get("score"),
+            "detected_misconception": att.get("detected_misconception"),
+            "mastery_after": tt["mastery_after"], "confidence_after": tt["confidence_after"],
+            "decision": dec["decision"] if dec else None,
+            "rationale": dec["rationale"] if dec else None,
+        })
 
     cited_ids: list[str] = []
     for tt in tutor_turns:
@@ -99,6 +130,7 @@ def build_trace(conn: sqlite3.Connection, session_id: str) -> dict:
         "concepts": concepts,
         "decisions": decisions,
         "tutor_turns": tutor_turns,
+        "timeline": timeline,
         "evidence": evidence,
         "total_token_cost": total_tokens,
     }

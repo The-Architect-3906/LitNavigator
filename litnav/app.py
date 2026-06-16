@@ -56,14 +56,23 @@ def _print_trace(conn: sqlite3.Connection, sid: str, db_path: str) -> None:
     print(f"\nSession:       {sid}  ({t['session'].get('topic')})")
     print(f"Route (v{t['route_version']}):  " +
           " | ".join(f"{s['name']}[{s['status']}]" for s in t["route"]))
-    print("Tutor turns:")
-    for tt in t["tutor_turns"]:
-        print(f"  - {tt['name']}: {tt['turn_type']}/{tt['strategy']} "
-              f"pre={tt['pre_check_score']} post={tt['post_check_score']} cites={tt['cited_chunks']}")
-    print("Decisions:")
-    for d in t["decisions"]:
-        print(f"  - {d['decision']}: {d['rationale']}")
-    print("Learner model:")
+
+    # Turn-by-turn: build_trace.timeline already pairs each teaching turn with the
+    # answer, the learner state after, and the decision it triggered (real stored values).
+    print("\nTurn-by-turn:")
+    for ev in t["timeline"]:
+        print(f"\n  [{ev['index']}] {ev['name']} — {ev['turn_type']}/{ev['strategy']}  "
+              f"cites={ev['cited_chunks']}")
+        if ev["answer"] is not None:
+            mark = "correct" if ev["score"] == 1.0 else "wrong"
+            print(f"      answer:  {ev['answer']!r}  ->  {mark} (score={ev['score']})"
+                  + (f"   misconception: {ev['detected_misconception']}"
+                     if ev["detected_misconception"] else ""))
+        print(f"      learner: mastery={ev['mastery_after']} confidence={ev['confidence_after']}")
+        if ev["decision"] is not None:
+            print(f"      -> decision: {ev['decision']} — {ev['rationale']}")
+
+    print("\nFinal learner model:")
     for c in t["concepts"]:
         if c["n_observations"]:
             print(f"  - {c['name']}: mastery={c['mastery']} confidence={c['confidence']} "

@@ -25,6 +25,10 @@
     .bar { height:8px; background:#e2e6ee; border-radius:4px; flex:1; overflow:hidden; }
     .bar > span { display:block; height:100%; background:#5b49c4; }
     .mut { color:#7a8699; font-size:.8rem; }
+    .ans { font-size:.84rem; margin:.3rem 0 .1rem; }
+    .ok { color:#1f8a4c; font-weight:700; } .bad { color:#cf4f24; font-weight:700; }
+    .miscon { color:#8a1f4c; }
+    .turn .decision { margin:.4rem 0 .1rem; }
     code { background:#eef0f6; padding:0 .25rem; border-radius:4px; }
     .ev { font-size:.82rem; border-top:1px dashed #e2e6ee; padding:.4rem 0; }
   </style>
@@ -37,21 +41,25 @@
 </header>
 <div class="wrap">
   <div class="col left">
-    <h2>Teaching transcript</h2>
-    {% for t in tutor_turns %}
-      <div class="turn {{ t.turn_type }}">
-        <b>{{ t.name }}</b> <span class="badge">{{ t.turn_type }} · {{ t.strategy }}</span>
-        <div class="mut">pre {{ '%.1f'|format(t.pre_check_score) if t.pre_check_score is not none else '—' }}
-          → post {{ '%.1f'|format(t.post_check_score) if t.post_check_score is not none else '—' }}
-          · cites {{ t.cited_chunks|join(', ') or '—' }}</div>
+    <h2>Turn-by-turn</h2>
+    {% for ev in timeline %}
+      <div class="turn {{ ev.turn_type }}">
+        <b>[{{ ev.index }}] {{ ev.name }}</b>
+        <span class="badge">{{ ev.turn_type }} · {{ ev.strategy }}</span>
+        {% if ev.answer is not none %}
+          <div class="ans">answer: <i>“{{ ev.answer }}”</i> →
+            <span class="{{ 'ok' if ev.score == 1.0 else 'bad' }}">{{ 'correct' if ev.score == 1.0 else 'wrong' }}</span>
+            {% if ev.detected_misconception %}<span class="miscon">· ⚠ {{ ev.detected_misconception }}</span>{% endif %}
+          </div>
+        {% endif %}
+        <div class="mut">learner: mastery {{ ev.mastery_after if ev.mastery_after is not none else '—' }}
+          · confidence {{ ev.confidence_after if ev.confidence_after is not none else '—' }}
+          · cites {{ ev.cited_chunks|join(', ') or '—' }}</div>
+        {% if ev.decision is not none %}
+          <div class="decision"><span class="d d-{{ ev.decision }}">→ {{ ev.decision }}</span><br>{{ ev.rationale }}</div>
+        {% endif %}
       </div>
-    {% else %}<div class="mut">No tutor turns recorded.</div>{% endfor %}
-
-    <h2 style="margin-top:1rem">Decisions</h2>
-    {% for d in decisions %}
-      <div class="decision"><span class="d d-{{ d.decision }}">{{ d.decision }}</span>
-        <span class="mut">(rv{{ d.route_version }})</span><br>{{ d.rationale }}</div>
-    {% else %}<div class="mut">No decisions recorded.</div>{% endfor %}
+    {% else %}<div class="mut">No turns recorded.</div>{% endfor %}
   </div>
 
   <div class="col right">
