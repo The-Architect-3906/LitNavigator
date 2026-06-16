@@ -55,6 +55,13 @@ litnavigator/
 │   ├── retrieval/
 │   │   ├── __init__.py
 │   │   └── fake.py             # M0 deterministic evidence lookup
+│   ├── llm/                    # M2/M3: provider abstraction (qwen + none fallback)
+│   │   ├── __init__.py
+│   │   └── client.py
+│   ├── ui/                     # M1+: thin FastAPI/Jinja trace panel
+│   │   ├── __init__.py
+│   │   ├── server.py
+│   │   └── templates/
 │   └── evaluation/
 │       ├── __init__.py
 │       └── verify_m0.py        # gate script for M0
@@ -92,7 +99,7 @@ Each node owns one transformation:
 - `grade`: score the answer, update mastery/confidence, and detect misconceptions.
 - `diagnose`: identify a missing prerequisite.
 - `replan`: insert or reorder route steps and increment `route_version`.
-- `induce`: add machine-derived scaffolding from evidence, initially fixture-backed.
+- `induce`: add machine-derived scaffolding from evidence. Fixture-backed by default; with `LITNAV_LLM_PROVIDER=qwen` the LLM extracts chunks and labels strength, while confidence stays rule-computed.
 
 ### Storage
 

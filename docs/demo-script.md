@@ -102,7 +102,8 @@ It writes:
 ```text
 negative_sampling -> hard_negative_mining
 source = induced
-confidence_basis = explicit phrasing + single/multiple supporting chunks
+confidence_basis = {n_chunks, max_strength, multi_paper}  ->  rule-computed confidence
+example: 1 chunk + explicit_assertion + single paper  ->  0.75
 ```
 
 It also mines a misconception:
@@ -147,7 +148,7 @@ If M1 is unstable:
 
 ## Demo UI Requirements
 
-The UI or transcript must show:
+The recordable artifact is the **thin web panel** (FastAPI + Jinja, started at M1 and extended each milestone), not a CLI transcript. It must show:
 
 - current route,
 - route version,

@@ -16,27 +16,30 @@ It does not prove literature induction, RAG quality, or teaching quality yet.
 
 Use one tiny topic: `RAG for scientific QA`.
 
-Minimum fixture:
+Minimum fixture (M1-ready, so it is reused without a rewrite):
 
-- 4 concepts:
+- a `targets` list: `dense_retrieval, contrastive_learning, rag_pipeline, evaluation` (note: `negative_sampling` is **not** a target).
+- 5 concepts:
   - `dense_retrieval`
   - `negative_sampling`
   - `contrastive_learning`
   - `rag_pipeline`
-- 3 prerequisite edges:
+  - `evaluation`
+- 4 prerequisite edges:
   - `dense_retrieval -> rag_pipeline`
   - `negative_sampling -> contrastive_learning`
   - `contrastive_learning -> rag_pipeline`
+  - `rag_pipeline -> evaluation`
 - 2 papers or paper-like records.
-- 4 evidence chunks, one per concept.
-- 4 quiz items, one per concept.
+- 5 evidence chunks, one per concept.
+- 5 quiz items, one per concept.
 
-The fixture can be JSON. It should be deterministic and checked into git.
+The fixture can be JSON. It should be deterministic and checked into git. The full fixture lives in `docs/superpowers/plans/2026-06-16-m0-walking-skeleton.md`, Task 1.
 
 ## M0 Flow
 
 1. `init_or_load_state` creates a session and default learner state for all seed concepts.
-2. `planner` topo-sorts the seed concept DAG.
+2. `planner` topo-sorts the **target** concepts (tie-break by ascending id); the non-target prereq `negative_sampling` is left out of the initial route.
 3. `select_next_concept` chooses the first pending concept.
 4. `retrieve_evidence` returns the seed chunk for that concept.
 5. `check` returns one fixed quiz item.
@@ -99,7 +102,7 @@ G0 PASS: offline run
 
 ## Explicit Deferrals
 
-- No LLM call.
+- No LLM call (M0/M1 are LLM-free; the LLM enters at M2 `grade` and M3 `induce`, each with a deterministic fixture fallback).
 - No embeddings.
 - No Chroma.
 - No live paper fetch.

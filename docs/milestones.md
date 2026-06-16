@@ -6,6 +6,8 @@ LitNavigator is built as a risk ladder. Each milestone must be runnable, recorda
 
 Do not advance past a gate that has not passed. A polished lower milestone is better than an unstable higher milestone.
 
+> **Gates are serial; the work inside each milestone is parallel.** Three tracks (A data, B engine, C UI+eval) run concurrently and converge at each gate. See the **Dependency & Parallelization** section in `docs/superpowers/plans/2026-06-16-complete-engineering-plan.md` for the layer-by-layer breakdown.
+
 ## M0: Fake-Data Walking Skeleton
 
 **Goal:** prove the software loop and durable trace exist.
@@ -64,7 +66,7 @@ python -m litnav.evaluation.verify_m0
 
 - `teach` with cited chunks,
 - Socratic `check`,
-- misconception detection in `grade`,
+- misconception detection in `grade` (LLM when `provider=qwen`, deterministic keyword fallback when `none`),
 - `reteach` with unused strategy selection,
 - `concede` route for exhausted reteach,
 - `tutor_turns`,
@@ -84,7 +86,7 @@ python -m litnav.evaluation.verify_m0
 
 **Build:**
 
-- `induce_scaffold`,
+- `induce_scaffold` (LLM extraction when `provider=qwen`, offline fixture fallback when `none`; confidence always rule-computed),
 - induced prerequisite edge,
 - induced misconception,
 - `source='induced'`,

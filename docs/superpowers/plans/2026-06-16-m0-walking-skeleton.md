@@ -63,19 +63,24 @@ Each `__init__.py` can contain:
 
 - [ ] **Step 4: Add deterministic seed fixture**
 
+This fixture is **M1-ready**: it carries `targets` and an `evaluation` concept so M1 reuses it without a rewrite. `negative_sampling` is a prerequisite edge into `contrastive_learning` but is **not** a target — so the planner leaves it out of the initial route, and M1's `replan` can insert it on a quiz failure.
+
 ```json
 {
   "topic": "RAG for scientific QA",
+  "targets": ["dense_retrieval", "contrastive_learning", "rag_pipeline", "evaluation"],
   "concepts": [
     {"id": 1, "slug": "dense_retrieval", "name": "Dense retrieval", "frontier_flag": "consensus"},
     {"id": 2, "slug": "negative_sampling", "name": "Negative sampling", "frontier_flag": "consensus"},
     {"id": 3, "slug": "contrastive_learning", "name": "Contrastive learning", "frontier_flag": "consensus"},
-    {"id": 4, "slug": "rag_pipeline", "name": "RAG pipeline", "frontier_flag": "consensus"}
+    {"id": 4, "slug": "rag_pipeline", "name": "RAG pipeline", "frontier_flag": "consensus"},
+    {"id": 5, "slug": "evaluation", "name": "Evaluation and hallucination", "frontier_flag": "consensus"}
   ],
   "edges": [
     {"prereq_concept": 1, "target_concept": 4, "edge_type": "prerequisite", "source": "curated", "confidence": 1.0},
     {"prereq_concept": 2, "target_concept": 3, "edge_type": "prerequisite", "source": "curated", "confidence": 1.0},
-    {"prereq_concept": 3, "target_concept": 4, "edge_type": "prerequisite", "source": "curated", "confidence": 1.0}
+    {"prereq_concept": 3, "target_concept": 4, "edge_type": "prerequisite", "source": "curated", "confidence": 1.0},
+    {"prereq_concept": 4, "target_concept": 5, "edge_type": "prerequisite", "source": "curated", "confidence": 1.0}
   ],
   "papers": [
     {"id": 1, "title": "Dense Retrieval for Scientific Question Answering", "year": 2023},
@@ -85,13 +90,15 @@ Each `__init__.py` can contain:
     {"id": "c_dense_1", "paper_id": 1, "concept_id": 1, "text": "Dense retrieval represents queries and documents in an embedding space, then retrieves nearest neighbors by vector similarity."},
     {"id": "c_negative_1", "paper_id": 2, "concept_id": 2, "text": "Negative sampling teaches a model to distinguish relevant examples from non-relevant alternatives during contrastive training."},
     {"id": "c_contrastive_1", "paper_id": 2, "concept_id": 3, "text": "Contrastive learning improves representations by pulling positive pairs together and pushing negative pairs apart."},
-    {"id": "c_rag_1", "paper_id": 1, "concept_id": 4, "text": "A RAG pipeline retrieves external evidence and conditions generation on that evidence to reduce unsupported answers."}
+    {"id": "c_rag_1", "paper_id": 1, "concept_id": 4, "text": "A RAG pipeline retrieves external evidence and conditions generation on that evidence to reduce unsupported answers."},
+    {"id": "c_eval_1", "paper_id": 1, "concept_id": 5, "text": "Evaluation of RAG checks whether generated answers are grounded in retrieved evidence and flags unsupported (hallucinated) claims."}
   ],
   "quiz_items": [
     {"id": 1, "concept_id": 1, "question": "Dense retrieval mainly compares documents using what representation?", "answer_key": "embedding vectors", "evidence_chunk_id": "c_dense_1", "source_paper_id": 1},
     {"id": 2, "concept_id": 2, "question": "What role do negatives play in contrastive training?", "answer_key": "non-relevant alternatives", "evidence_chunk_id": "c_negative_1", "source_paper_id": 2},
     {"id": 3, "concept_id": 3, "question": "What happens to positive pairs in contrastive learning?", "answer_key": "they are pulled together", "evidence_chunk_id": "c_contrastive_1", "source_paper_id": 2},
-    {"id": 4, "concept_id": 4, "question": "Why does RAG retrieve evidence before generation?", "answer_key": "to condition generation on external evidence", "evidence_chunk_id": "c_rag_1", "source_paper_id": 1}
+    {"id": 4, "concept_id": 4, "question": "Why does RAG retrieve evidence before generation?", "answer_key": "to condition generation on external evidence", "evidence_chunk_id": "c_rag_1", "source_paper_id": 1},
+    {"id": 5, "concept_id": 5, "question": "What does RAG evaluation primarily check for?", "answer_key": "answers grounded in retrieved evidence", "evidence_chunk_id": "c_eval_1", "source_paper_id": 1}
   ]
 }
 ```
@@ -220,10 +227,10 @@ def test_seed_demo_data_writes_core_tables(tmp_path):
     init_db(conn)
     seed_demo_data(conn, "data/seed/rag_demo.json")
 
-    assert conn.execute("select count(*) from concepts").fetchone()[0] == 4
-    assert conn.execute("select count(*) from concept_edges").fetchone()[0] == 3
-    assert conn.execute("select count(*) from paper_chunks").fetchone()[0] == 4
-    assert conn.execute("select count(*) from quiz_items").fetchone()[0] == 4
+    assert conn.execute("select count(*) from concepts").fetchone()[0] == 5
+    assert conn.execute("select count(*) from concept_edges").fetchone()[0] == 4
+    assert conn.execute("select count(*) from paper_chunks").fetchone()[0] == 5
+    assert conn.execute("select count(*) from quiz_items").fetchone()[0] == 5
 ```
 
 - [ ] **Step 2: Run test to verify it fails**

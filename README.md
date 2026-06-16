@@ -65,7 +65,7 @@ It trains no model — its "smarts" come from retrieval, a concept/misconception
 
 Demo media is not checked in yet. The planned demo has three moments:
 
-1. **"Let me explain it from a different angle."** You've understood dense retrieval as keyword matching, and it immediately re-explains with the analogy of "finding neighbors in an embedding space" — your mastery of that concept climbs from `0.40` to `0.81`.
+1. **"Let me explain it from a different angle."** You've understood dense retrieval as keyword matching, and it immediately re-explains with the analogy of "finding neighbors in an embedding space" — your mastery of that concept climbs from `0.40` to `0.82`.
 2. **"You need to shore this up first."** A question on contrastive learning exposes that you haven't gotten negative sampling down, so it inserts a prerequisite primer before moving on — your learning route changes right there.
 3. **"This concept isn't in your map yet; let me go to the papers and work it out for you."** You casually ask about hard-negative mining, and it reads the papers on the spot, derives that it builds on negative sampling, mines a misconception the papers themselves call out, and then teaches it as a "still-contested topic" — with every step backed by clickable evidence.
 
@@ -200,14 +200,15 @@ Target M0/M1 layout:
 ```
 litnavigator/
 ├── litnav/
-│   ├── graph/          # LangGraph state machine: nodes + conditional edges
-│   ├── nodes/          # planner, teach, check, grade, reteach, induce_scaffold, replan
-│   ├── retrieval/      # FTS5(BM25) + Chroma vector retrieval
-│   ├── scaffold/       # prerequisite induction + misconception mining
-│   ├── state.py        # NavState / learner model
-│   └── app.py          # entry point / UI
-├── data/               # SQLite (graph + state) + Chroma index
-├── docs/               # demo assets, architecture notes
+│   ├── graph/          # LangGraph StateGraph (from M1): nodes + conditional edges + SqliteSaver
+│   ├── nodes/          # planner, teach, check, grade, reteach, concede, induce_scaffold, replan
+│   ├── retrieval/      # M1 FTS5(BM25); M4 optional Chroma/vector
+│   ├── llm/            # M2/M3 provider abstraction (Qwen + deterministic 'none' fallback)
+│   ├── ui/             # M1+ thin FastAPI/Jinja trace panel
+│   ├── state.py        # NavState / learner model (BKT + confidence)
+│   └── app.py          # CLI debug runner
+├── data/               # seed fixtures + generated SQLite (graph + state)
+├── docs/               # architecture, milestones, evaluation, data contract, plans
 └── README.md
 ```
 
@@ -217,13 +218,13 @@ litnavigator/
 
 We build along a risk ladder: every milestone is a self-contained, demoable, recordable system — so no matter where progress stops, there's always a version we can submit.
 
-- [ ] **M0 · Fake-data walking skeleton** — deterministic seed fixture + state machine + SQLite writes + verification gate
-- [ ] **M1 · Navigator** — adaptive learning route that replans on a prerequisite gap (money shot ①)
-- [ ] **M2 · Tutor** — paper-grounded teaching + misconception-driven reteaching, plus an honest `concede` path instead of spinning (money shot ②)
-- [ ] **M3 · Literature-induced scaffolding** — induce prerequisites and mine misconceptions from the corpus, with rule-computed confidence (money shot ③, where the real differentiation is)
-- [ ] **M4 · Polish** — decision-trace UI, coverage warnings, hybrid retrieval, cross-session memory
+- [ ] **M0 · Fake-data walking skeleton** — deterministic seed fixture + procedural state machine + SQLite writes + verification gate (no LLM, no network)
+- [ ] **M1 · Navigator** — real LangGraph `StateGraph`, target-only route planning that replans on a prerequisite gap, and a thin web panel (money shot ①)
+- [ ] **M2 · Tutor** — paper-grounded teaching + misconception-driven reteaching + an honest `concede` path; misconception detection via LLM with a deterministic offline fallback (money shot ②)
+- [ ] **M3 · Literature-induced scaffolding** — induce prerequisites and mine misconceptions from the corpus (LLM extraction with offline fallback), confidence always rule-computed (money shot ③, the real differentiation)
+- [ ] **M4 · Polish** — UI polish, coverage warnings, hybrid retrieval, cross-session memory
 
-> **Current progress:** planning package complete; M0 implementation not started.
+> **Current progress:** planning + detailed engineering plan complete; M0 implementation not started. The engineering plan, milestone gates, and parallel/dependency map are in `docs/`.
 
 ---
 

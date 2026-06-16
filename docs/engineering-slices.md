@@ -68,11 +68,13 @@ Then show that SQLite contains:
 
 **Build:**
 
-- concept DAG route planning,
+- the real LangGraph `StateGraph` (nodes + conditional edges) + `SqliteSaver`, replacing M0's procedural flow,
+- target-only route planning (prereqs assumed known, inserted on a revealed gap),
 - prerequisite diagnosis,
 - `replan` with `route_version + 1`,
 - evidence-bound quiz,
-- traceable rationale.
+- traceable rationale,
+- a thin FastAPI web panel (left chat / right route+evidence) as the recordable artifact.
 
 **Demo:**
 
@@ -92,7 +94,8 @@ Answer a negative-sampling prerequisite question wrong. The system inserts the m
 **Build:**
 
 - `teach` with cited chunks,
-- misconception detection,
+- the `llm/client` provider abstraction (qwen + deterministic `none` fallback),
+- misconception detection (LLM path + deterministic fallback),
 - `reteach` with unused strategy selection,
 - `concede` route for exhausted reteach attempts,
 - `tutor_turns`,
@@ -115,9 +118,9 @@ Trigger `dr_is_keyword_match`, reteach with an analogy, then pass a parallel ite
 
 **Build:**
 
-- `induce_scaffold`,
+- `induce_scaffold` (LLM extraction over ingested chunks when `provider=qwen`; offline fixture fallback when `none`),
 - `source='induced'` provenance,
-- `confidence_basis`,
+- `confidence_basis` (rule-computed, never LLM-emitted),
 - induced prerequisite edge,
 - induced misconception,
 - UI/trace distinction between curated and induced scaffolding.

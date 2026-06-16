@@ -15,6 +15,7 @@ Required shape:
 ```json
 {
   "topic": "RAG for scientific QA",
+  "targets": ["dense_retrieval", "contrastive_learning", "rag_pipeline", "evaluation"],
   "concepts": [
     {
       "id": 1,
@@ -60,7 +61,9 @@ Required shape:
 }
 ```
 
-M0 must not require embeddings, LLM calls, or live paper APIs.
+`targets` lists the concepts the **planner** sequences into the initial route. Prerequisites that are *not* in `targets` (e.g. `negative_sampling`) are assumed mastered and only inserted by `replan` when a quiz reveals a gap — this is what enables the M1 reroute money shot. The fixture must include an `evaluation` concept so the demo route `Dense → Contrastive → RAG → Evaluation` matches the data, and `negative_sampling` as a prereq edge into `contrastive_learning` that is **not** a target.
+
+LLM usage by milestone: **M0/M1 require no LLM** (no embeddings, no LLM calls, no live paper APIs). **M2 (`grade` misconception detection) and M3 (`induce_scaffold` extraction) call an LLM when `LITNAV_LLM_PROVIDER=qwen`, and fall back to deterministic fixtures when `none`** — so all gates still pass fully offline.
 
 ## Core Tables
 
@@ -310,13 +313,17 @@ Learner-state confidence is separate from mastery:
 confidence = 1 - 0.6 ** n_observations
 ```
 
-Induced-scaffold confidence is computed from evidence:
+Induced-scaffold confidence is computed from evidence. This is the **single canonical formula** — it must stay byte-identical here, in `litnavigator-build-spec.md` §5.3, and in the engineering plan's induce task:
 
 ```python
-confidence = min(0.95, 0.35 + 0.15 * n_chunks + strength_bonus + multi_paper_bonus)
+def induced_confidence(n_chunks, max_strength, multi_paper):
+    # max_strength ∈ {'weak_hint','general_statement','explicit_assertion'}
+    strength_bonus = {"weak_hint": 0.05, "general_statement": 0.15, "explicit_assertion": 0.25}[max_strength]
+    multi_paper_bonus = 0.10 if multi_paper else 0.0
+    return round(min(0.95, 0.35 + 0.15 * n_chunks + strength_bonus + multi_paper_bonus), 2)
 ```
 
-The exact formula may evolve, but it must remain deterministic, inspectable, and based on evidence rather than an LLM-generated number.
+Worked example: `1 chunk + explicit_assertion + single paper → 0.75`. The number is always deterministic, inspectable, and computed from evidence — never an LLM-generated float.
 
 ## Data Deferrals
 

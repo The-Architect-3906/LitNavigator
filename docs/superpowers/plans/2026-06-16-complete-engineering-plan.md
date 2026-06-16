@@ -26,8 +26,10 @@ Create or evolve these files across the plan:
 - `litnav/storage/repo.py`: storage helper functions.
 - `litnav/retrieval/fake.py`: deterministic fixture retrieval.
 - `litnav/retrieval/sqlite.py`: FTS5/BM25 retrieval after M1.
+- `litnav/llm/client.py`: LLM provider abstraction (`qwen` via OpenAI-compatible API; `none` returns the deterministic fixture path). Used by `grade` (M2) and `induce` (M3).
 - `litnav/graph/router.py`: `tutor_router` and route decision constants.
-- `litnav/graph/builder.py`: state-machine composition.
+- `litnav/graph/builder.py`: state-machine composition — procedural for M0, real LangGraph `StateGraph` + `SqliteSaver` checkpointer from M1.
+- `litnav/ui/server.py` + `litnav/ui/templates/`: thin FastAPI/Jinja trace panel, started at M1 and extended each milestone.
 - `litnav/nodes/planner.py`: initial route planning.
 - `litnav/nodes/select_next.py`: select current concept and off-skeleton detection.
 - `litnav/nodes/retrieve.py`: evidence lookup.
@@ -66,6 +68,58 @@ M0 -> G0 pass -> M1 -> G1 pass -> M2 -> G2 pass -> M3 -> G3 pass -> M4
 ```
 
 If a gate fails, fix the current milestone instead of starting the next one.
+
+---
+
+## Dependency & Parallelization
+
+This plan is written as a serial task list, but the work is meant to run on **three parallel tracks** owned by three people. The gates are serial; the tracks inside each milestone are parallel.
+
+### Tracks (run in parallel for the whole project)
+
+- **Track A — Data/content:** seed fixtures (M0/M2/M3), concept skeleton + `targets`, parallel quiz forms, offline-prerun induction candidates, and the LLM few-shot prompts for `grade` and `induce`.
+- **Track B — Engine:** `state.py` (BKT/confidence), storage (schema/seed/repo), `router`, the LangGraph `builder`, the node functions, `llm/client`, and retrieval.
+- **Track C — UI + evaluation:** the thin FastAPI GUI, the `verify_m0..m3` gates, the pytest suite, recording scripts, and token/cost accounting.
+
+### Dependency layers (arrows = hard dependency; same layer = parallel)
+
+```text
+Layer 0  (start immediately, in parallel — interfaces are frozen in docs/data-contract.md):
+  A: data/seed/rag_demo.json (M0 fixture)
+  B: litnav/state.py  (bkt_update / confidence_update / initial_concept_state)
+  B: litnav/storage/{schema,seed,repo}.py
+  C: tests/test_bkt.py, tests/test_storage.py  (tests-first, against the agreed signatures)
+        |  all of the above converge
+        v
+  ===== G0 gate (M0) =====  (must pass before M1)
+        v
+Layer M1 (after G0):
+  B: graph/builder.py (real LangGraph StateGraph + SqliteSaver) + planner(target-only) + diagnose + replan + FTS5 (optional)
+  B: llm/client.py    (independent infra — build during M1 so M2/M3 are never blocked on it)
+  A: M1 fixture fields (targets / evaluation concept / evidence-bound quiz)
+  C: thin FastAPI panel (depends only on the M0 schema, so it runs in PARALLEL with B's M1 logic) + verify_m1
+        v  ===== G1 gate =====
+Layer M2 (after G1):
+  A: M2 fixture (misconception + parallel quiz) + grade few-shot prompt
+  B: teach / check / grade(deterministic + LLM) / reteach / concede / four-path router
+  C: GUI increment (three-color graph + reteach trail) + verify_m2
+        v  ===== G2 gate =====
+Layer M3 (after G2):
+  A: M3 induction fixture + offline-prerun candidates + induce few-shot prompt
+  B: induce (LLM extraction + fixture fallback) + induced_confidence + off-skeleton detection + route insertion
+  C: GUI increment (curated/induced distinction + confidence_basis) + verify_m3
+        v  ===== G3 gate =====
+Layer M4 (after G3): polish, fully parallel.
+```
+
+### Parallel/dependency rules
+
+1. **Gates are serial, tracks are parallel.** `G0 → M1 → G1 → M2 → G2 → M3 → G3` must not be skipped, but inside each milestone A/B/C run concurrently and converge at the gate.
+2. **The GUI depends only on the schema.** Track C's panel reads the SQLite domain tables, so once the M0 schema is frozen it can be built without waiting for B's per-milestone logic — each gate just adds a panel.
+3. **Tests-first decouples C from B.** The `verify_*` scripts and pytest are written against the function signatures defined in `docs/data-contract.md` and this plan, so C does not wait for B to finish implementing.
+4. **The LLM client is independent infra.** Build `llm/client.py` during M1 so the M2/M3 LLM paths are never blocked on it.
+5. **Track B internal order:** `state → storage → router → builder(graph) → nodes`. But `teach`/`check`/`grade`/`reteach` are sibling nodes — once the graph skeleton exists they can be split across people.
+6. **Data does not block the engine.** Fixture shapes are frozen in `docs/data-contract.md`, so Track B depends on the *agreed shape*, not on Track A finishing the content.
 
 ---
 
@@ -140,7 +194,7 @@ Each `__init__.py`:
 
 - [ ] **Step 5: Add deterministic M0 fixture**
 
-Use the exact fixture shape in `docs/data-contract.md` with four concepts, three edges, two papers, four chunks, and four quiz items.
+Use the exact fixture in the M0 plan (`docs/superpowers/plans/2026-06-16-m0-walking-skeleton.md`, Task 1): a `targets` list plus five concepts (incl. `evaluation`), four edges, two papers, five chunks, and five quiz items. `negative_sampling` is a prereq edge but **not** a target.
 
 - [ ] **Step 6: Verify**
 
@@ -178,10 +232,10 @@ Implement `initial_concept_state`, `bkt_update`, and `confidence_update` exactly
 `tests/test_storage.py` must assert seed loading writes:
 
 ```python
-assert conn.execute("select count(*) from concepts").fetchone()[0] == 4
-assert conn.execute("select count(*) from concept_edges").fetchone()[0] == 3
-assert conn.execute("select count(*) from paper_chunks").fetchone()[0] == 4
-assert conn.execute("select count(*) from quiz_items").fetchone()[0] == 4
+assert conn.execute("select count(*) from concepts").fetchone()[0] == 5
+assert conn.execute("select count(*) from concept_edges").fetchone()[0] == 4
+assert conn.execute("select count(*) from paper_chunks").fetchone()[0] == 5
+assert conn.execute("select count(*) from quiz_items").fetchone()[0] == 5
 ```
 
 - [ ] **Step 4: Implement M0 tables**
@@ -334,7 +388,7 @@ negative_sampling inserted before contrastive_learning
 decision rationale mentions failed quiz and prerequisite edge
 ```
 
-- [ ] **Step 2: Implement topological planner**
+- [ ] **Step 2: Implement topological planner (target-only)**
 
 `planner.py` exposes:
 
@@ -342,7 +396,7 @@ decision rationale mentions failed quiz and prerequisite edge
 plan_route(conn, target_concept_ids: list[int]) -> list[dict]
 ```
 
-For M1, implement a deterministic topological sort from `concept_edges`.
+Sequence **only the `target` concepts** by a deterministic topological sort, breaking ties by ascending `concept.id`. **Do not expand the full prerequisite closure into the initial route** — prerequisites that are not targets (e.g. `negative_sampling`) are assumed mastered and only inserted by `replan` when a quiz reveals a gap. This is exactly what makes the M1 reroute money shot possible: if the planner pre-included `negative_sampling`, there would be nothing left for `replan` to insert.
 
 - [ ] **Step 3: Implement `diagnose_gap`**
 
@@ -361,7 +415,9 @@ get_route_steps(conn, session_id: str, route_version: int) -> list[dict]
 get_latest_route_version(conn, session_id: str) -> int
 ```
 
-- [ ] **Step 6: Implement `verify_m1`**
+- [ ] **Step 5b: Build the real LangGraph `StateGraph` (M1 replaces the M0 procedural flow)**
+
+Add `langgraph>=0.2` to `requirements.txt`. In `litnav/graph/builder.py`, compose a `StateGraph` whose nodes are the spec §2.2 nodes (`init_or_load_state`, `planner`, `select_next_concept`, `retrieve_evidence`, `grade`, `diagnose_gap`, `replan`, `advance`) and whose conditional edges are driven by `tutor_router`. Persist `NavState` with LangGraph's `SqliteSaver` checkpointer (the audit domain tables are still written via the storage helpers). Add `tests/test_graph_build.py` asserting the graph compiles and runs one correct→advance and one wrong→replan edge. From M1 on, `verify_m*` drive the compiled graph, not `run_m0_session`.
 
 Expected output:
 
@@ -389,56 +445,83 @@ git add litnav/nodes litnav/evaluation/verify_m1.py litnav/graph/builder.py litn
 git commit -m "feat: add M1 adaptive route planning"
 ```
 
-### Task 5: M1 Thin Recordable App
+### Task 5: M1 Thin Web Panel (primary recordable artifact)
+
+The money shots are visual, so the recordable artifact is a **thin web panel**, not a CLI transcript. The CLI is kept only as a debug runner.
 
 **Files:**
-- Create: `litnav/app.py`
+- Create: `litnav/app.py` (CLI debug runner)
+- Create: `litnav/ui/__init__.py`, `litnav/ui/server.py`, `litnav/ui/templates/index.html`
+- Modify: `requirements.txt` (add `fastapi>=0.115`, `uvicorn>=0.30`, `jinja2>=3.1`)
 - Modify: `README.md`
 - Modify: `docs/demo-script.md`
 
-- [ ] **Step 1: Add CLI app command**
+- [ ] **Step 1: Add the thin panel**
 
-`litnav/app.py` supports:
-
-```bash
-python -m litnav.app demo-m1 --answer wrong_prereq
-python -m litnav.app demo-m1 --answer correct
-```
-
-- [ ] **Step 2: Print recordable trace**
-
-The CLI output must include:
+`litnav/ui/server.py` is a FastAPI app that runs a demo session and renders, server-side from SQLite, a **left chat / right route panel**:
 
 ```text
-Session:
-Route before:
-Quiz:
-Answer:
-Decision:
-Route after:
-Evidence:
+left:  teaching/quiz transcript for the session
+right: current route + route_version, decision rationale, cited evidence
 ```
+
+Launch: `python -m litnav.ui.server` (or `uvicorn litnav.ui.server:app`). The page must visibly change `route_version` and insert the prerequisite when the wrong-answer path runs.
+
+- [ ] **Step 2: Keep a CLI debug runner**
+
+`litnav/app.py` supports `demo-m1 --answer {wrong_prereq,correct}` and prints the same trace fields (Session / Route before / Quiz / Answer / Decision / Route after / Evidence). This is for debugging, not the demo.
 
 - [ ] **Step 3: Update demo docs**
 
-Add the exact CLI transcript shape to `docs/demo-script.md`.
+Add the panel layout and the recording steps to `docs/demo-script.md`.
 
 - [ ] **Step 4: Verify**
 
-Run:
-
 ```bash
-python -m litnav.app demo-m1 --answer wrong_prereq
-python -m litnav.app demo-m1 --answer correct
+python -m litnav.app demo-m1 --answer wrong_prereq   # replans
+python -m litnav.app demo-m1 --answer correct        # advances
+python -m litnav.ui.server                            # panel renders route_version change
 ```
-
-Expected: wrong path replans; correct path advances.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add litnav/app.py README.md docs/demo-script.md
-git commit -m "feat: add M1 recordable demo command"
+git add litnav/app.py litnav/ui requirements.txt README.md docs/demo-script.md
+git commit -m "feat: add M1 thin web panel + CLI debug runner"
+```
+
+### Task 5c: LLM Client Infrastructure (build during M1; used by M2/M3)
+
+The LLM client is independent infra. Build it while M1 is in flight so the M2/M3 LLM paths are never blocked on it. M2 (`grade`) and M3 (`induce`) call it when `LITNAV_LLM_PROVIDER=qwen`; with `none` they take the deterministic fixture path, so all gates pass offline.
+
+**Files:**
+- Create: `litnav/llm/__init__.py`, `litnav/llm/client.py`
+- Create: `tests/test_llm_fallback.py`
+- Modify: `requirements.txt`, `.env.example`
+
+- [ ] **Step 1: Add dependency and env**
+
+Add `openai>=1.0` to `requirements.txt` (Qwen via DashScope's OpenAI-compatible endpoint). In `.env.example`, keep `LITNAV_LLM_PROVIDER=none` as default and comment that setting `qwen` + a key enables the live LLM path.
+
+- [ ] **Step 2: Implement the provider abstraction**
+
+`litnav/llm/client.py` exposes a single entry point, e.g.:
+
+```python
+def complete_json(prompt: str, *, schema_hint: str, fallback: dict) -> dict
+```
+
+When `provider == "none"`, return `fallback` unchanged (deterministic). When `provider == "qwen"`, call the OpenAI-compatible endpoint, parse JSON, and on any error/timeout return `fallback`. The caller (grade/induce) always supplies a deterministic `fallback`, so the system degrades gracefully offline.
+
+- [ ] **Step 3: Test the fallback**
+
+`tests/test_llm_fallback.py` asserts that with `provider=none`, `complete_json` returns the supplied fallback verbatim and makes no network call.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add litnav/llm requirements.txt .env.example tests/test_llm_fallback.py
+git commit -m "feat: add LLM provider abstraction with deterministic fallback"
 ```
 
 ### Task 6: M2 Misconception and Parallel Quiz Data
@@ -535,15 +618,19 @@ Return:
 }
 ```
 
-M2 can use deterministic templates. No LLM is required.
+`teach` uses deterministic templates — no LLM here (the LLM enters at `grade` misconception detection in Step 4, and at M3 `induce`).
 
 - [ ] **Step 3: Implement `check`**
 
 Select parallel quiz items by concept, qtype, and difficulty. Ensure pre/post do not use the same item id in one tutor turn.
 
-- [ ] **Step 4: Implement `grade`**
+- [ ] **Step 4: Implement `grade` (deterministic + LLM paths)**
 
-Detect `dr_is_keyword_match` when an answer contains keyword/BM25 framing for dense retrieval. Update BKT and confidence.
+Misconception detection has two interchangeable paths returning the **same schema** (`{"detected_misconception": {"concept", "id"}, ...}`):
+- `provider=none` (default, gates run on this): deterministic — detect `dr_is_keyword_match` when the answer contains keyword/BM25 framing for dense retrieval.
+- `provider=qwen`: call `llm.complete_json(...)` with the concept, the answer, and the candidate misconception library, passing the deterministic result as `fallback`.
+
+Either way, BKT mastery and `confidence` are updated by the transparent functions in `state.py` — the LLM never emits a mastery or confidence number.
 
 - [ ] **Step 5: Implement `reteach`**
 
@@ -597,7 +684,11 @@ git commit -m "feat: add M2 tutor loop"
 - Modify: `docs/demo-script.md`
 - Modify: `docs/evaluation.md`
 
-- [ ] **Step 1: Add M2 CLI command**
+- [ ] **Step 0: M2 UI increment**
+
+Extend `litnav/ui/server.py` + template: add the three-color concept graph (consensus/contested/open or curated status), the reteach trail (`tried_strategies`), and a dual **mastery / confidence** readout. Add `litnav/ui/server.py` to this task's Files.
+
+- [ ] **Step 1: Add M2 CLI command (debug)**
 
 ```bash
 python -m litnav.app demo-m2 --answer keyword
@@ -691,6 +782,8 @@ Return and persist:
 }
 ```
 
+Two interchangeable paths: `provider=none` replays the offline-prerun fixture above; `provider=qwen` calls `llm.complete_json(...)` over the already-ingested chunks to (a) extract the supporting chunk ids and (b) label `max_strength` — then `confidence` is computed by `induced_confidence(...)`, **never returned by the LLM**. The fixture is the `fallback`, so this gate also passes offline. To satisfy the spec's "at least one live induction" rule, run this once with `provider=qwen` during the recording (see `docs/evaluation.md`).
+
 - [ ] **Step 5: Add tests**
 
 Assert:
@@ -743,7 +836,11 @@ G3 PASS: confidence_basis written
 G3 PASS: induced scaffold used in route
 ```
 
-- [ ] **Step 4: Add M3 demo command**
+- [ ] **Step 3b: M3 UI increment**
+
+Extend the panel to visually distinguish `curated` vs `induced` elements, make each induced edge/misconception's evidence openable, and show `confidence_basis` (n_chunks / max_strength / multi_paper → confidence). Add `litnav/ui/server.py` to this task's Files.
+
+- [ ] **Step 4: Add M3 demo command (debug)**
 
 ```bash
 python -m litnav.app demo-m3 --concept hard_negative_mining
@@ -777,28 +874,19 @@ git add litnav/evaluation/verify_m3.py litnav/nodes litnav/graph litnav/app.py d
 git commit -m "feat: add M3 induction gate"
 ```
 
-### Task 11: M4 Trace UI and Judge-Facing Polish
+### Task 11: M4 Trace UI Polish (the panel already exists since M1)
+
+The thin web panel and its dependencies (`fastapi`/`uvicorn`/`jinja2`) were created in Task 5 and grew each milestone (M2 three-color graph + reteach trail; M3 curated/induced distinction + `confidence_basis`). M4 is **polish only** — do not rebuild the UI here, and never let M4 work risk the latest stable gate.
 
 **Files:**
-- Create: `litnav/ui/__init__.py`
-- Create: `litnav/ui/server.py`
-- Create: `litnav/ui/templates/index.html`
+- Modify: `litnav/ui/server.py`, `litnav/ui/templates/index.html`
 - Create: `tests/test_ui_trace.py`
-- Modify: `requirements.txt`
 - Modify: `README.md`
 - Modify: `docs/demo-script.md`
 
-- [ ] **Step 1: Add lightweight UI dependency**
+- [ ] **Step 1: Confirm UI baseline**
 
-If a browser UI is chosen, add:
-
-```text
-fastapi>=0.115
-uvicorn>=0.30
-jinja2>=3.1
-```
-
-If time is short, keep CLI as the official demo UI and skip this task.
+The panel from Task 5 already renders route/route_version, decisions, evidence, mastery/confidence, and curated-vs-induced provenance. M4 only adds nicer graph rendering, interactivity, and coverage warnings. Skip any item that risks the stable demo.
 
 - [ ] **Step 2: Add trace endpoint**
 

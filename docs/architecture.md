@@ -42,7 +42,7 @@ M0 can use CLI output. M1+ needs a recordable view.
 
 ### State-Machine Layer
 
-The state machine owns flow control. It should preserve these node boundaries even if M0 is implemented as a plain function pipeline before LangGraph is introduced:
+The state machine owns flow control. M0 is a plain function pipeline; **M1 introduces the real LangGraph `StateGraph`** (these nodes as graph nodes, `tutor_router` as the conditional edge, `SqliteSaver` for NavState). The node boundaries are identical in both, so M0 ports cleanly into the graph:
 
 - `init_or_load_state`
 - `planner`
@@ -96,6 +96,8 @@ No live paper fetch is required during the demo.
 - confidence,
 - confidence basis,
 - conflict flags when it disagrees with curated structure.
+
+Extraction runs over already-ingested chunks. With `LITNAV_LLM_PROVIDER=qwen` the LLM (a) selects the supporting chunks and (b) labels each one's language strength; with `none` it replays a deterministic fixture. Either way `confidence` is computed by the rule in `docs/data-contract.md` — never returned by the LLM. The spec's "at least one live induction" rule is met by running once with `provider=qwen` during the recording.
 
 ## State Machine
 
@@ -178,7 +180,8 @@ off-skeleton concept
 - Storage helpers should not decide routes.
 - Retrieval should return chunks and scores, not teaching prose.
 - Grading updates mastery and confidence, but does not choose the next node.
-- UI renders state and traces; it should not invent rationale.
+- The LLM client (`litnav/llm/`) returns structured fields only (misconception id, chunk selection, strength label); it never emits mastery, confidence, or a routing decision. Every LLM caller passes a deterministic fallback, so the system runs offline.
+- UI (`litnav/ui/`) renders state and traces; it should not invent rationale.
 
 ## Non-Goals Before M2
 

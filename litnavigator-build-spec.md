@@ -53,7 +53,7 @@ input
   ↓
 init_or_load_state            ← build default learner_state for all target/prereq concepts (prevents router KeyError)
   ↓
-planner                       ← topo-sort an initial route from the concept DAG (skeleton first)
+planner                       ← topo-sort an initial route over TARGET concepts only (prereqs assumed known; tie-break by id)
   ↓
 select_next_concept ──in curated DAG?──┬─ no / user brought a new concept ─► induce_scaffold ─┐
                                        │   (induce prereqs/misconceptions, write source='induced'+evidence) │
@@ -89,7 +89,7 @@ select_next_concept ──in curated DAG?──┬─ no / user brought a new co
 | Node | Responsibility | Must not do |
 |---|---|---|
 | `init_or_load_state` | Create/load the session's NavState; build a default ConceptState for all target concepts and their prereqs | — |
-| `planner` | Topo-sort an **initial** route from the concept DAG | Don't reroute dynamically |
+| `planner` | Topo-sort an **initial** route over the **target concepts only** (prerequisites are assumed already mastered until a quiz proves otherwise); break ties by ascending `concept.id` for reproducibility | Don't reroute dynamically; **don't expand the full prereq closure into the initial route** (that would leave nothing for `replan` to insert) |
 | `select_next_concept` | Pick the next pending concept; **judge whether it's inside the curated DAG** | — |
 | `induce_scaffold` | Induce prereq edges/misconceptions from retrieved papers; write `source='induced'`+evidence+confidence | No assertion without evidence; on conflict with the skeleton, don't silently overwrite (flag as to-be-verified) |
 | `retrieve_evidence` | Fetch evidence chunks for the current concept | No broad search |
@@ -294,13 +294,13 @@ From `direct → analogy → worked_example → contrast_case → simpler_decomp
 ### 5.2 `induce_prereq` (prerequisite induction)
 Let the LLM find "assumes / builds on / extends / requires prior understanding of" statements in the chunks, and extract "C depends on A" candidate edges. **Acceptance gate**: every edge has ≥1 cited chunk; without evidence, don't write it.
 
-> **Confidence is computed, not LLM-blurted**: the LLM only (a) extracts the supporting chunks, and (b) judges the **language strength** of each piece of evidence (explicit assertion / general statement / weak hint). `confidence` is computed by a transparent rule (see §5.3 formula), and the rationale shows "how many papers × what strength → what score." When a judge asks "where does 0.78 come from," there's a clear answer.
+> **Confidence is computed, not LLM-blurted**: the LLM only (a) extracts the supporting chunks, and (b) judges the **language strength** of each piece of evidence (`explicit_assertion` / `general_statement` / `weak_hint`). `confidence` is computed by a transparent rule (see §5.3 formula), and the rationale shows "how many chunks × what strength × multi-paper → what score." When a judge asks "where does 0.75 come from," there's a clear answer.
 
 Write to `concept_edges(source='induced', evidence=JSON[chunks], weight=confidence)`:
 ```json
 { "prereq": "negative_sampling", "target": "hard_negative_mining",
-  "source": "induced", "confidence": 0.78,
-  "confidence_basis": { "n_chunks": 2, "max_strength": "explicit", "multi_paper": false },
+  "source": "induced", "confidence": 0.75,
+  "confidence_basis": { "n_chunks": 1, "max_strength": "explicit_assertion", "multi_paper": false },
   "evidence": [{ "chunk_id": "c_2207_x", "paper_id": 41,
     "quote_span": "...builds on standard negative sampling by mining harder negatives..." }] }
 ```
@@ -308,14 +308,14 @@ Write to `concept_edges(source='induced', evidence=JSON[chunks], weight=confiden
 ### 5.3 `mine_misconception` (misconception induction) + transparent confidence formula
 Scan correction/contrast-type language patterns ("contrary to (common belief)", "a common misconception", "naively", "it is often (wrongly) assumed", "unlike prior work", rebuttal/erratum), extract `wrong_model`/`correct_model` + citation. **Acceptance gate**: must point back to a specific chunk, else discard.
 
-**Transparent confidence tiers for induced items (shared by prereq edges and misconceptions)**:
+**Transparent confidence tiers for induced items (shared by prereq edges and misconceptions)**. This is the single canonical formula — `litnavigator-build-spec.md`, `docs/data-contract.md`, and the engineering plan must stay byte-identical:
 ```python
 def induced_confidence(n_chunks, max_strength, multi_paper):
-    # max_strength ∈ {'weak','general','explicit'} (LLM labels the language strength of the evidence)
-    base = {'weak': 0.50, 'general': 0.65, 'explicit': 0.78}[max_strength]
-    if multi_paper:        base += 0.12     # corroborated across papers
-    if n_chunks >= 3:      base += 0.05
-    return round(min(base, 0.95), 2)        # induced never gets 1.0: leave calibration headroom
+    # max_strength ∈ {'weak_hint','general_statement','explicit_assertion'} (LLM labels evidence language strength)
+    strength_bonus = {"weak_hint": 0.05, "general_statement": 0.15, "explicit_assertion": 0.25}[max_strength]
+    multi_paper_bonus = 0.10 if multi_paper else 0.0
+    return round(min(0.95, 0.35 + 0.15 * n_chunks + strength_bonus + multi_paper_bonus), 2)
+    # induced never reaches 1.0: leave calibration headroom. e.g. 1 chunk + explicit + single-paper → 0.75
 ```
 > This is the most on-point part: the misconception isn't something you made up — it's a pitfall the field's own papers call out; and "how trustworthy it is" is also decided by an explainable rule, not model conjecture.
 
@@ -601,8 +601,8 @@ CREATE TABLE induction_log (
 - **Gate G0**: the verification command passes, and the run performs no network calls.
 
 ### M1 · Navigator (floor, first submittable/recordable system) | target D4–D5
-- **Add**: planner orders the route from the DAG; real quiz bound to evidence; grade uses BKT-lite to write mastery + confidence; router two paths (advance / diagnose→replan insert prereq).
-- **Thin UI increment**: a minimal panel (left chat / right route+evidence), so "the route changed because of your quiz" is recordable on the spot, not saved up to D9.
+- **Add**: planner orders the route over the **target concepts** (prereqs assumed known, inserted only when a quiz reveals a gap — this is what makes Money Shot ① possible); real quiz bound to evidence; grade uses BKT-lite to write mastery + confidence; router two paths (advance / diagnose→replan insert prereq). **Build the real LangGraph `StateGraph` (nodes + conditional edges) here**, with `SqliteSaver` for NavState; M0's procedural flow is replaced by the compiled graph.
+- **Thin UI increment**: a minimal **web** panel (FastAPI + Jinja, left chat / right route+evidence), so "the route changed because of your quiz" is recordable on the spot, not saved up to D9.
 - **Cost**: decisions/tutor_turns start logging token_cost.
 - **Money shot ①**: adaptive reroute (wrong answer → insert prereq → route_version+1).
 - **Gate G1**: T1 + true conditional edges (correct→advance / wrong→replan, not hard-coded) + T4 rationale traceable.
@@ -654,7 +654,7 @@ Priority: Langfuse trace → S3 refuse_jump → coverage warning (S4) → multi-
 Initial skeleton route: `Dense retrieval → Contrastive learning → RAG pipeline → Evaluation/hallucination`
 
 **Scenario ② (M2) · same-concept reteach**
-teach dense retrieval → check (draw parallel item A) exposes the misconception "thinks it's just keyword/BM25 matching" (`dr_is_keyword_match`) → prereqs OK → `reteach` switches to the analogy of nearest neighbors in embedding space → check again (draw parallel item B) passes. `mastery 0.40→0.81`, `confidence` rises to ~0.64 on the 2nd observation, `tried_strategies=[direct, analogy]`.
+teach dense retrieval → check (draw parallel item A) exposes the misconception "thinks it's just keyword/BM25 matching" (`dr_is_keyword_match`) → prereqs OK → `reteach` switches to the analogy of nearest neighbors in embedding space → check again (draw parallel item B) passes. `mastery 0.40→0.82` (one correct-after-teach BKT step), `confidence` rises to ~0.64 on the 2nd observation, `tried_strategies=[direct, analogy]`.
 
 **Scenario ① (M1) · cross-concept reroute**
 teach contrastive learning → check fails on the negative-sampling question → maps to the prereq `negative_sampling` (mastery<threshold) → `replan` inserts a negative-sampling primer before contrastive learning, `route_version+1`.
@@ -662,7 +662,7 @@ teach contrastive learning → check fails on the negative-sampling question →
 **Scenario ③ (M3) · literature induction ★ hard evidence of novelty**
 User introduces an off-skeleton concept: "I keep seeing hard negative mining — where does it go, and what are the pitfalls?"
 → `induce_scaffold`:
-  - prereq edge: `negative_sampling → hard_negative_mining`, evidence "…builds on standard negative sampling…" (marked induced; confidence rule-computed: explicit phrasing, single paper → 0.78);
+  - prereq edge: `negative_sampling → hard_negative_mining`, evidence "…builds on standard negative sampling…" (marked induced; confidence rule-computed: 1 chunk + explicit_assertion + single paper → 0.75);
   - misconception: mined from the papers "thinks more negatives is better" → correct: "hard negatives matter more than quantity" (marked induced, with cited chunk);
   - frontier annotation: taught as `contested` — "how to mine hard negatives is still unsettled; here are two schools."
 → slot into the route and teach; the induced elements carry **openable evidence + confidence_basis**, visually distinguished from the human skeleton.
