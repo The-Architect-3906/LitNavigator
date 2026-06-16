@@ -3,8 +3,9 @@ from __future__ import annotations
 import re
 import sqlite3
 import uuid
+from pathlib import Path
+from typing import List, Optional
 
-from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, StateGraph
 
 from litnav.graph.router import tutor_router
@@ -19,35 +20,50 @@ from litnav.nodes.select_next import route_after_select, select_next_node
 from litnav.nodes.teach import teach_node
 from litnav.state import NavState
 
-# Module-level connection registry (single-threaded demo use)
-_conn: sqlite3.Connection | None = None
+
+def _file_checkpoint_conn() -> sqlite3.Connection:
+    """Open a file-based checkpoint connection derived from LITNAV_DB_PATH config."""
+    from litnav.config import load_settings
+    settings = load_settings()
+    ckpt_path = Path(settings.db_path).parent / "litnav_checkpoint.sqlite"
+    ckpt_path.parent.mkdir(parents=True, exist_ok=True)
+    return sqlite3.connect(str(ckpt_path), check_same_thread=False)
 
 
-def set_conn(conn: sqlite3.Connection) -> None:
-    global _conn
-    _conn = conn
+def _make_checkpointer(checkpoint_conn: sqlite3.Connection):
+    from langgraph.checkpoint.sqlite import SqliteSaver
+    return SqliteSaver(checkpoint_conn)
 
 
-def _get_conn() -> sqlite3.Connection:
-    assert _conn is not None, "Call set_conn(conn) before invoking the graph"
-    return _conn
+def build_graph(
+    domain_conn: sqlite3.Connection,
+    checkpoint_conn: Optional[sqlite3.Connection] = None,
+    interrupt_after: Optional[List[str]] = None,
+):
+    """Compile the LangGraph StateGraph with SqliteSaver persistence.
 
+    domain_conn     — SQLite connection for domain tables (route_steps, decisions, …).
+    checkpoint_conn — SQLite connection for LangGraph checkpoints.  Defaults to a
+                      FILE-BASED connection at data/runtime/litnav_checkpoint.sqlite
+                      so that graph state survives process restarts.
+                      Pass sqlite3.connect(":memory:") for isolated tests.
+    interrupt_after — Optional node names to interrupt after (for checkpoint tests).
+    """
+    if checkpoint_conn is None:
+        checkpoint_conn = _file_checkpoint_conn()
 
-# LangGraph node wrappers (capture conn from module-level registry)
-def _planner(s: NavState) -> dict:      return planner_node(s, _get_conn())
-def _select_next(s: NavState) -> dict:  return select_next_node(s)
-def _retrieve(s: NavState) -> dict:     return retrieve_node(s, _get_conn())
-def _teach(s: NavState) -> dict:        return teach_node(s, _get_conn())
-def _check(s: NavState) -> dict:        return check_node(s, _get_conn())
-def _grade(s: NavState) -> dict:        return grade_node(s, _get_conn())
-def _diagnose(s: NavState) -> dict:     return diagnose_node(s, _get_conn())
-def _replan(s: NavState) -> dict:       return replan_node(s, _get_conn())
-def _advance(s: NavState) -> dict:      return advance_node(s, _get_conn())
+    # Each wrapper captures domain_conn in a closure — no shared global state.
+    def _planner(s: NavState) -> dict:      return planner_node(s, domain_conn)
+    def _select_next(s: NavState) -> dict:  return select_next_node(s)
+    def _retrieve(s: NavState) -> dict:     return retrieve_node(s, domain_conn)
+    def _teach(s: NavState) -> dict:        return teach_node(s, domain_conn)
+    def _check(s: NavState) -> dict:        return check_node(s, domain_conn)
+    def _grade(s: NavState) -> dict:        return grade_node(s, domain_conn)
+    def _diagnose(s: NavState) -> dict:     return diagnose_node(s, domain_conn)
+    def _replan(s: NavState) -> dict:       return replan_node(s, domain_conn)
+    def _advance(s: NavState) -> dict:      return advance_node(s, domain_conn)
 
-
-def build_graph() -> object:
     workflow = StateGraph(NavState)
-
     workflow.add_node("planner", _planner)
     workflow.add_node("select_next", _select_next)
     workflow.add_node("retrieve", _retrieve)
@@ -75,14 +91,18 @@ def build_graph() -> object:
     workflow.add_edge("replan", "select_next")
     workflow.add_edge("advance", "select_next")
 
-    return workflow.compile(checkpointer=MemorySaver())
+    compile_kwargs: dict = {"checkpointer": _make_checkpointer(checkpoint_conn)}
+    if interrupt_after:
+        compile_kwargs["interrupt_after"] = interrupt_after
+
+    return workflow.compile(**compile_kwargs)
 
 
 def make_initial_state(
     session_id: str,
     topic: str,
-    target_concept_ids: list[int],
-    pending_answers: list[str] | None = None,
+    target_concept_ids: List[int],
+    pending_answers: Optional[List[str]] = None,
     user_goal: str = "Learn the topic",
     mastery_threshold: float = 0.8,
 ) -> NavState:
@@ -116,7 +136,7 @@ def make_initial_state(
 _NEGATION_TOKENS = {"no", "not", "never", "isnt", "isn't", "arent", "aren't"}
 
 
-def _normalize_tokens(text: str) -> list[str]:
+def _normalize_tokens(text: str) -> list:
     return re.findall(r"[a-z0-9']+", text.lower())
 
 
@@ -136,7 +156,7 @@ def _matches_answer_key(user_answer: str, answer_key: str) -> bool:
     return False
 
 
-def _grade_answer(user_answer: str, answer_key: str) -> tuple[float, str]:
+def _grade_answer(user_answer: str, answer_key: str) -> tuple:
     correct = _matches_answer_key(user_answer, answer_key)
     score = 1.0 if correct else 0.0
     feedback = "Correct." if correct else f"Expected something like: {answer_key}"
@@ -147,10 +167,10 @@ def run_m0_session(
     conn: sqlite3.Connection,
     fixture_path: str = "data/seed/rag_demo.json",
     answer: str = "embedding vectors",
-    session_id: str | None = None,
+    session_id: Optional[str] = None,
 ) -> str:
     import json
-    from pathlib import Path
+    from pathlib import Path as P
 
     from litnav.graph.router import tutor_router as _router
     from litnav.state import bkt_update, confidence_update, initial_concept_state
@@ -159,7 +179,7 @@ def run_m0_session(
     if session_id is None:
         session_id = str(uuid.uuid4())
 
-    data = json.loads(Path(fixture_path).read_text())
+    data = json.loads(P(fixture_path).read_text())
     topic = data["topic"]
     slug_to_id = {c["slug"]: c["id"] for c in data["concepts"]}
     target_ids = [slug_to_id[s] for s in data["targets"] if s in slug_to_id]
@@ -170,7 +190,7 @@ def run_m0_session(
     dag = _build_dag(conn)
     route_order = _topo_sort(target_ids, dag)
 
-    learner_state: dict[int, dict] = {}
+    learner_state: dict = {}
     for c in data["concepts"]:
         learner_state[c["id"]] = initial_concept_state()
         repo.upsert_learner_state(
@@ -223,6 +243,7 @@ def run_m0_session(
         "learner_state": learner_state,
         "concept_dag": dag,
         "reteach_count": {},
+        "route": steps,
     }
     decision = _router(router_state)
     rationale = (

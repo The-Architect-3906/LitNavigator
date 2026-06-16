@@ -162,9 +162,80 @@ def test_route_version_in_db_matches_state(tmp_path):
     assert db_version == s["route_version"]
 
 
+def _mem_ckpt():
+    return sqlite3.connect(":memory:", check_same_thread=False)
+
+
 def test_graph_compiles(tmp_path):
-    from litnav.graph.builder import build_graph, set_conn
+    from litnav.graph.builder import build_graph
     conn = _setup(tmp_path)
-    set_conn(conn)
-    app = build_graph()
+    app = build_graph(conn, checkpoint_conn=_mem_ckpt())
     assert app is not None
+
+
+def test_graph_advance_via_invoke(tmp_path):
+    from litnav.graph.builder import build_graph, make_initial_state
+    conn = _setup(tmp_path)
+    ids = _slug_to_id(conn)
+    app = build_graph(conn, checkpoint_conn=_mem_ckpt())
+    sid = str(uuid.uuid4())
+    state = make_initial_state(sid, "RAG for scientific QA", [ids["dense_retrieval"]],
+                               pending_answers=["embedding vectors"])
+    app.invoke(state, config={"configurable": {"thread_id": sid}, "recursion_limit": 50})
+    row = conn.execute(
+        "SELECT decision FROM decisions WHERE session_id=? AND decision='advance'", (sid,)
+    ).fetchone()
+    assert row is not None
+
+
+def test_graph_replan_via_invoke(tmp_path):
+    from litnav.graph.builder import build_graph, make_initial_state
+    conn = _setup(tmp_path)
+    ids = _slug_to_id(conn)
+    app = build_graph(conn, checkpoint_conn=_mem_ckpt())
+    sid = str(uuid.uuid4())
+    state = make_initial_state(
+        sid, "RAG for scientific QA",
+        [ids["dense_retrieval"], ids["contrastive_learning"]],
+        pending_answers=["embedding vectors", "keyword matching"],
+    )
+    app.invoke(state, config={"configurable": {"thread_id": sid}, "recursion_limit": 50})
+    ver = conn.execute(
+        "SELECT MAX(route_version) FROM route_steps WHERE session_id=?", (sid,)
+    ).fetchone()[0]
+    assert ver >= 2
+
+
+def test_checkpoint_durability(tmp_path):
+    """Interrupt after grade, rebuild app from same file checkpoint, resume → advance written."""
+    from litnav.graph.builder import build_graph, make_initial_state
+    conn = _setup(tmp_path)
+    ids = _slug_to_id(conn)
+    ckpt_path = tmp_path / "ckpt.sqlite"
+    sid = str(uuid.uuid4())
+    state = make_initial_state(sid, "RAG for scientific QA", [ids["dense_retrieval"]],
+                               pending_answers=["embedding vectors"])
+
+    # Phase 1: run with interrupt after grade
+    ckpt1 = sqlite3.connect(str(ckpt_path), check_same_thread=False)
+    app1 = build_graph(conn, checkpoint_conn=ckpt1, interrupt_after=["grade"])
+    app1.invoke(state, config={"configurable": {"thread_id": sid}, "recursion_limit": 50})
+    ckpt1.close()
+
+    # grade ran — quiz_attempt written; advance node has NOT run yet
+    assert conn.execute(
+        "SELECT count(*) FROM quiz_attempts WHERE session_id=?", (sid,)
+    ).fetchone()[0] == 1
+    assert conn.execute(
+        "SELECT count(*) FROM decisions WHERE session_id=? AND decision='advance'", (sid,)
+    ).fetchone()[0] == 0
+
+    # Phase 2: new connection to same file (simulates process restart), resume
+    ckpt2 = sqlite3.connect(str(ckpt_path), check_same_thread=False)
+    app2 = build_graph(conn, checkpoint_conn=ckpt2)
+    app2.invoke(None, config={"configurable": {"thread_id": sid}, "recursion_limit": 50})
+    ckpt2.close()
+
+    assert conn.execute(
+        "SELECT count(*) FROM decisions WHERE session_id=? AND decision='advance'", (sid,)
+    ).fetchone()[0] >= 1
