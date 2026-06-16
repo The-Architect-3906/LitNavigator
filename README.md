@@ -144,10 +144,16 @@ G0 PASS: offline run
 | **M1** · Navigator | Route changes because of learner state; LangGraph StateGraph + prereq replan + SqliteSaver checkpoint (G1 green) | ✅ Done |
 | **M2** · Tutor | teach → reteach → concede on the agent corpus; misconception detection (Qwen / offline fallback); parallel-form quizzes; learning gain (G2 green) | ✅ Done |
 | **M3** · Literature induction | `induce_scaffold` — induce a prereq edge + mine a misconception for an off-skeleton concept, rule-computed confidence + provenance, panel marks curated vs induced (G3 green) | ✅ Done |
-| **M4** · Polish | intent/audience modes, hybrid retrieval (embeddings), cross-session memory, live-Qwen induction recording | ⬜ Next |
+| **M4** · Polish | intent/audience modes (researcher vs journalist), hybrid/vector retrieval, cross-session memory, UI polish, live-Qwen induction recording | ⬜ Next |
+| **Product** · Interactive agent UI | read-only panel → interactive tutor (type a goal → teach → quiz → you answer → adapt live), reusing the M1 interrupt/resume | post-competition |
 
-> Every milestone is a self-contained, demoable, submittable build — no matter where progress stops.
-> Gates run fully offline (`verify_m0/1/2`); the LLM (Qwen) is an optional path in M2/M3 with deterministic fixtures as fallback. The thin web panel remains the outstanding UI item, carried into M3/M4.
+> **M0–M3 (the gated core) is complete and green** — `verify_m0/m1/m2/m3` all pass fully offline. M4 is icing; the interactive product UI is beyond the competition gates.
+
+**Enablers (needed only by specific items, not the gated core):**
+
+- **Real PDF chunk extraction** — replace representative chunks with text extracted from the 8 papers. *No API / no compute.* Prerequisite for grounding live induction and real teaching in actual paper text.
+- **Qwen API key** — for the one live induction recording (M4) and for genuinely grounded teaching in the product UI. The LLM is an optional path everywhere; offline fixtures are the fallback.
+- **Embeddings (bge-m3 + Chroma)** — only for M4 hybrid/vector retrieval. Until then keyword/FTS5 suffices.
 
 ---
 
