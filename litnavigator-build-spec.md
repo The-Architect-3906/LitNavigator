@@ -329,6 +329,25 @@ def induced_confidence(n_chunks, max_strength, multi_paper):
 
 ## 6. Data scale (frozen, don't exceed)
 
+### 6.0 M0 seed fixture (build this first)
+
+M0 uses a deterministic toy fixture, not the competition data package:
+
+| Item | M0 |
+|---|---|
+| Papers | 2 paper-like records |
+| Concepts | 4 concepts (`dense_retrieval`, `negative_sampling`, `contrastive_learning`, `rag_pipeline`) |
+| Prereq edges | 3 curated edges |
+| Misconceptions | 0 required |
+| Quiz items | 1 fixed item per concept |
+| Retrieval | deterministic lookup by `concept_id` |
+| Embeddings | none |
+| External APIs | none |
+
+This exists only to prove state-machine flow and SQLite writes. Do not block M0 on ingestion, embeddings, GROBID, Chroma, or live APIs.
+
+### 6.1 Competition data package (M1+)
+
 | Item | MVP |
 |---|---|
 | Papers | 30–50 |
@@ -569,16 +588,17 @@ CREATE TABLE induction_log (
 
 | Track | Owner | Responsibilities | Cross-milestone deliverables |
 |---|---|---|---|
-| **A · Data/content** | 1 person | ingest 30–50 papers, 8–15-concept skeleton, prereq edges, misconception library, parallel quiz forms, pre-run induction candidates offline on D1–2, concept↔paper binding | M0 data ready → M2 add demo-core items/misconceptions → M3 leave off-skeleton concepts ready |
-| **B · Graph engine** | 1 person | LangGraph nodes + four-path + concede routing + BKT/confidence + `SqliteSaver` persistence + `induce_scaffold` | M0 skeleton → M1 routing/reroute → M2 inner loop → M3 induction |
-| **C · UI + evaluation** | 1 person | thin UI (incremental per milestone) + T1–T11 acceptance scripts + recording scripts + token/cost accounting | from M1, a recordable view every time a gate passes |
+| **A · Data/content** | 1 person | first create the 4-concept M0 fixture; then ingest 30–50 papers, 8–15-concept skeleton, prereq edges, misconception library, parallel quiz forms, pre-run induction candidates offline, concept↔paper binding | M0 fixture ready → M1 competition data ready → M2 add demo-core items/misconceptions → M3 leave off-skeleton concepts ready |
+| **B · Graph engine** | 1 person | package skeleton + deterministic M0 flow first; then LangGraph nodes + four-path + concede routing + BKT/confidence + `SqliteSaver` persistence + `induce_scaffold` | M0 skeleton → M1 routing/reroute → M2 inner loop → M3 induction |
+| **C · UI + evaluation** | 1 person | M0 verification script first; then thin UI (incremental per milestone) + T1–T11 acceptance scripts + recording scripts + token/cost accounting | from M0, every gate has a command; from M1, a recordable view every time a gate passes |
 
-> This way M0's "content track in parallel" actually lands on a person; track A's data doesn't block track B's engine, and track C ensures every gate is "recordable."
+> This way M0 is not blocked by the real corpus. Track A can grow the competition data package in parallel, while track B proves the loop and track C proves every gate with commands.
 
-### M0 · Walking skeleton (foundation, not demoed standalone) | target D1–D3
-- **Deliverable**: the LangGraph state machine runs end-to-end on rails (however dumb): input→planner→present concept→fixed quiz→score→advance; NavState lands in SQLite (via `SqliteSaver`); init builds a default ConceptState for all concepts.
-- **Content track in parallel (track A)**: ingest 30–50 papers, 8–15 concepts, skeleton prereq edges, 2–3 misconceptions, parallel quiz forms, pre-run induction candidates offline, concept↔paper binding.
-- **Gate G0**: the DB shows session / learner_state / route writes (T11 runs offline).
+### M0 · Fake-data walking skeleton (foundation, not demoed standalone) | target D1–D2
+- **Deliverable**: a tiny deterministic Python package runs end-to-end on rails: seed fixture → init session → plan route → select concept → fixed quiz → deterministic grade → mastery/confidence update → advance. SQLite shows real writes. LangGraph is optional for M0; preserving node boundaries is required.
+- **Content track in parallel (track A)**: create the 4-concept M0 fixture first. Then start the 30–50 paper competition data package without blocking the M0 gate.
+- **Verification**: `python -m litnav.evaluation.verify_m0` creates a fresh local SQLite DB and prints G0 PASS lines for session, route, learner_state, quiz_attempt, decision, and offline run.
+- **Gate G0**: the verification command passes, and the run performs no network calls.
 
 ### M1 · Navigator (floor, first submittable/recordable system) | target D4–D5
 - **Add**: planner orders the route from the DAG; real quiz bound to evidence; grade uses BKT-lite to write mastery + confidence; router two paths (advance / diagnose→replan insert prereq).
@@ -614,7 +634,8 @@ Priority: Langfuse trace → S3 refuse_jump → coverage warning (S4) → multi-
 
 | Checkpoint | Ideal progress | If behind → action |
 |---|---|---|
-| **late D3** | M0 passes (skeleton runs) | trim the data package to 30 papers / 8 concepts, secure the skeleton first |
+| **late D2** | M0 passes (fake-data skeleton runs) | drop all ingestion/UI work and secure the deterministic SQLite loop first |
+| **late D3** | M1 data package has started | trim the data package to 30 papers / 8 concepts if needed |
 | **late D5** | M1 passes (navigator recordable) | **freeze at M1 to guarantee a submission**; compress M2 scope |
 | **late D7** | M2 passes (tutor recordable) | freeze M2; M3 only does the minimal "induced offline + live evidence shown" version |
 | **late D8** | M3 passes (induction demoable) | if M3 is unstable → fall back to recording M2, present M3 in the deck as "implemented capability + evidence screenshots" |

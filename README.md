@@ -16,6 +16,29 @@
 
 ---
 
+## Current status
+
+This repository is currently in the **planning and architecture stage**. It contains the product narrative, full build spec, and static architecture page, but the runnable Python package has not been implemented yet.
+
+What is present now:
+
+- `litnavigator-build-spec.md` — complete product/architecture/milestone spec.
+- `litnavigator.html` — static architecture and positioning page.
+- `docs/development-architecture.md` — engineering boundaries and target project skeleton.
+- `docs/engineering-slices.md` — phased build slices from M0 to M4.
+- `docs/m0-walking-skeleton.md` — reduced M0 definition of done.
+- `docs/superpowers/plans/2026-06-16-m0-walking-skeleton.md` — implementation plan for the first runnable slice.
+
+What is not present yet:
+
+- `litnav/` Python package.
+- `requirements.txt`.
+- `.env.example`.
+- seed data / SQLite runtime data.
+- tests and verification scripts.
+
+The next engineering step is **M0: fake-data walking skeleton**. M0 should prove the state machine and persistence loop before adding ingestion, embeddings, full retrieval, or a polished UI.
+
 ## What this is
 
 The hardest part of breaking into an unfamiliar research subfield is never a lack of material — it's that there's too much of it and no one to untangle it for you: hundreds of papers each presupposing some background, and every so often contradicting one another. Today's tools don't help with this. They either retrieve papers for you (Elicit, Connected Papers) or answer questions about papers you upload (NotebookLM). None of them teach you, and none of them know what you actually already understand.
@@ -34,12 +57,7 @@ It trains no model — its "smarts" come from retrieval, a concept/misconception
 
 ## Demo
 
-<!-- Drop a 30–60s GIF here → docs/demo.gif -->
-<div align="center">
-<img src="docs/demo.gif" alt="LitNavigator demo" width="720"/>
-</div>
-
-Watch for three moments:
+Demo media is not checked in yet. The planned demo has three moments:
 
 1. **"Let me explain it from a different angle."** You've understood dense retrieval as keyword matching, and it immediately re-explains with the analogy of "finding neighbors in an embedding space" — your mastery of that concept climbs from `0.40` to `0.81`.
 2. **"You need to shore this up first."** A question on contrastive learning exposes that you haven't gotten negative sampling down, so it inserts a prerequisite primer before moving on — your learning route changes right there.
@@ -115,27 +133,50 @@ Every decision leaves a traceable rationale chain: your answer → the concept/m
 
 ## Quick start
 
-> Requirements: Python 3.11+, and an LLM API key (system is model-agnostic; we use Qwen).
+There is no runnable app yet. Start with the planning artifacts:
 
 ```bash
 git clone https://github.com/<your-org>/litnavigator.git
 cd litnavigator
-pip install -r requirements.txt
-
-cp .env.example .env          # fill in your LLM API key
-
-# Build the corpus, concept graph, quiz bank and misconception library offline
-python -m litnav.ingest --topic "RAG for scientific QA"
-
-# Launch the tutor
-python -m litnav.app
 ```
 
-The build step is entirely offline (papers, vectors, and the concept/prerequisite graph are all assembled locally), so once it's running the whole session depends on no external API.
+Read in this order:
+
+1. `docs/development-architecture.md`
+2. `docs/engineering-slices.md`
+3. `docs/m0-walking-skeleton.md`
+4. `docs/superpowers/plans/2026-06-16-m0-walking-skeleton.md`
+5. `litnavigator-build-spec.md`
+
+After M0 is implemented, the first expected command will be:
+
+```bash
+pip install -r requirements.txt
+python -m litnav.evaluation.verify_m0
+```
+
+M0 intentionally requires no LLM key and no network access.
 
 ---
 
 ## Project layout
+
+Current layout:
+
+```
+litnavigator/
+├── docs/
+│   ├── development-architecture.md
+│   ├── engineering-slices.md
+│   ├── m0-walking-skeleton.md
+│   └── superpowers/plans/2026-06-16-m0-walking-skeleton.md
+├── litnavigator-build-spec.md
+├── litnavigator.html
+├── README.md
+└── LICENSE
+```
+
+Target M0/M1 layout:
 
 ```
 litnavigator/
@@ -157,13 +198,13 @@ litnavigator/
 
 We build along a risk ladder: every milestone is a self-contained, demoable, recordable system — so no matter where progress stops, there's always a version we can submit.
 
-- [ ] **M0 · Walking skeleton** — end-to-end state machine + offline corpus
+- [ ] **M0 · Fake-data walking skeleton** — deterministic seed fixture + state machine + SQLite writes + verification gate
 - [ ] **M1 · Navigator** — adaptive learning route that replans on a prerequisite gap (money shot ①)
 - [ ] **M2 · Tutor** — paper-grounded teaching + misconception-driven reteaching, plus an honest `concede` path instead of spinning (money shot ②)
 - [ ] **M3 · Literature-induced scaffolding** — induce prerequisites and mine misconceptions from the corpus, with rule-computed confidence (money shot ③, where the real differentiation is)
 - [ ] **M4 · Polish** — decision-trace UI, coverage warnings, hybrid retrieval, cross-session memory
 
-> **Current progress:** `M_` (updated as we go)
+> **Current progress:** planning package complete; M0 implementation not started.
 
 ---
 
