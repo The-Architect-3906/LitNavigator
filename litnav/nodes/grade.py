@@ -105,6 +105,7 @@ def grade_node(state: NavState, conn: sqlite3.Connection) -> dict:
         pre_check_score=pre_score, post_check_score=score,
         cited_chunks=state.get("current_cited_chunks") or [],
         token_cost=turn_token_cost,
+        mastery_after=new_mastery, confidence_after=new_confidence,
     )
 
     quiz_result = {

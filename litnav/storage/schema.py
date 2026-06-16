@@ -140,6 +140,8 @@ CREATE TABLE IF NOT EXISTS tutor_turns (
     strategy TEXT,
     pre_check_score REAL,
     post_check_score REAL,
+    mastery_after REAL,
+    confidence_after REAL,
     cited_chunks TEXT,
     token_cost INTEGER DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
