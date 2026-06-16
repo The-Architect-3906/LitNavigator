@@ -19,12 +19,15 @@ from pathlib import Path
 
 from litnav.config import DEMO_CKPT_PATH, DEMO_DB_PATH
 from litnav.graph.builder import build_graph, make_initial_state
+from litnav.nodes.induce import induce_scaffold_node
+from litnav.storage import repo
 from litnav.storage.schema import init_db
 from litnav.storage.seed import seed_demo_data
 from litnav.ui.trace import build_trace
 
 _M1_FIXTURE = "data/seed/rag_demo.json"
 _M2_FIXTURE = "data/seed/agents_m2.json"
+_M3_FIXTURE = "data/seed/agents_m3.json"
 
 # answer keyword -> ordered pending answers fed to the grader
 _M1_ANSWERS = {
@@ -97,6 +100,39 @@ def _run(fixture: str, answers: list[str], targets: list[str], threshold: float)
     _print_trace(conn, sid, db_path)
 
 
+def _run_m3() -> None:
+    """M3: induce scaffolding for an off-skeleton concept (offline fixture replay)."""
+    conn, _ckpt, db_path = _fresh_db()
+    init_db(conn)
+    seed_demo_data(conn, _M3_FIXTURE)
+    data = json.loads(Path(_M3_FIXTURE).read_text(encoding="utf-8"))
+    cand = data["induction"]
+    off_slug = cand["off_skeleton"]["slug"]
+
+    sid = str(uuid.uuid4())
+    repo.create_session(conn, sid, data["topic"])
+    print(f"\nSession:        {sid}  ({data['topic']})")
+    print(f"Off-skeleton request: '{off_slug}' is NOT in the curated graph -> induce_scaffold")
+
+    induce_scaffold_node({"session_id": sid, "route": [], "route_version": 1}, conn, cand)
+
+    print("\nInduced scaffolding (source=induced, confidence rule-computed):")
+    for log in repo.get_induction_log(conn, sid):
+        print(f"  [{log['kind']}] confidence={log['confidence']}  basis={log['confidence_basis']}")
+        print(f"      output:   {log['output']}")
+        print(f"      evidence: {log['evidence_chunks']}")
+    concept = repo.get_concept_by_slug(conn, off_slug)
+    if concept:
+        print(f"\nFrontier label: {concept['name']} -> {concept['frontier_flag']}")
+    dec = conn.execute(
+        "SELECT rationale FROM decisions WHERE session_id=? AND decision='induce' LIMIT 1", (sid,)
+    ).fetchone()
+    if dec:
+        print(f"Rationale:      {dec[0]}")
+    print(f"\nView the panel:  python -m litnav.ui.server   then open  http://127.0.0.1:8000/sessions/{sid}")
+    print(f"(demo DB: {db_path})")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(prog="litnav.app")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -104,6 +140,7 @@ def main() -> int:
                                                     choices=sorted(_M1_ANSWERS))
     p2 = sub.add_parser("demo-m2"); p2.add_argument("--answer", default="cot",
                                                     choices=sorted(_M2_ANSWERS))
+    p3 = sub.add_parser("demo-m3"); p3.add_argument("--concept", default="multi_agent_debate")
     args = parser.parse_args()
 
     if args.command == "demo-m1":
@@ -111,6 +148,8 @@ def main() -> int:
              targets=["dense_retrieval", "contrastive_learning"], threshold=0.8)
     elif args.command == "demo-m2":
         _run(_M2_FIXTURE, _M2_ANSWERS[args.answer], targets=["react"], threshold=0.75)
+    elif args.command == "demo-m3":
+        _run_m3()
     return 0
 
 

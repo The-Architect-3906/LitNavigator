@@ -39,6 +39,20 @@ def build_trace(conn: sqlite3.Connection, session_id: str) -> dict:
         ).fetchall()
     ]
 
+    # Induced (machine-derived) prerequisite edges — kept distinct from curated for the panel.
+    induced_edges = [
+        {"prereq_id": r[0], "prereq": r[1], "target_id": r[2], "target": r[3],
+         "confidence": r[4], "evidence": _loads(r[5], [])}
+        for r in conn.execute(
+            "SELECT e.prereq_concept, p.name, e.target_concept, t.name, e.confidence, e.evidence "
+            "FROM concept_edges e "
+            "LEFT JOIN concepts p ON p.id = e.prereq_concept "
+            "LEFT JOIN concepts t ON t.id = e.target_concept "
+            "WHERE e.source='induced'",
+        ).fetchall()
+    ]
+    induced_target_ids = {e["target_id"] for e in induced_edges}
+
     ls_rows = conn.execute(
         "SELECT ls.concept_id, c.name, c.slug, c.frontier_flag, ls.mastery, ls.confidence, "
         "ls.n_observations, ls.held_misconceptions, ls.tried_strategies "
@@ -49,7 +63,8 @@ def build_trace(conn: sqlite3.Connection, session_id: str) -> dict:
     concepts = [
         {"concept_id": r[0], "name": r[1], "slug": r[2], "frontier_flag": r[3] or "consensus",
          "mastery": round(r[4], 3), "confidence": round(r[5], 3), "n_observations": r[6],
-         "held_misconceptions": _loads(r[7], []), "tried_strategies": _loads(r[8], [])}
+         "held_misconceptions": _loads(r[7], []), "tried_strategies": _loads(r[8], []),
+         "induced": r[0] in induced_target_ids}
         for r in ls_rows
     ]
 
@@ -75,6 +90,16 @@ def build_trace(conn: sqlite3.Connection, session_id: str) -> dict:
             "tt.confidence_after "
             "FROM tutor_turns tt LEFT JOIN concepts c ON c.id = tt.concept_id "
             "WHERE tt.session_id=? ORDER BY tt.id",
+            (session_id,),
+        ).fetchall()
+    ]
+
+    induction = [
+        {"kind": r[0], "output": _loads(r[1], {}), "evidence_chunks": _loads(r[2], []),
+         "confidence": r[3], "confidence_basis": _loads(r[4], {})}
+        for r in conn.execute(
+            "SELECT kind, output, evidence_chunks, confidence, confidence_basis "
+            "FROM induction_log WHERE session_id=? ORDER BY id",
             (session_id,),
         ).fetchall()
     ]
@@ -112,6 +137,10 @@ def build_trace(conn: sqlite3.Connection, session_id: str) -> dict:
         for cid in tt["cited_chunks"]:
             if cid not in cited_ids:
                 cited_ids.append(cid)
+    for ind in induction:  # induced scaffolding cites chunks too
+        for cid in ind["evidence_chunks"]:
+            if cid not in cited_ids:
+                cited_ids.append(cid)
     evidence = []
     for cid in cited_ids:
         row = conn.execute(
@@ -132,5 +161,7 @@ def build_trace(conn: sqlite3.Connection, session_id: str) -> dict:
         "tutor_turns": tutor_turns,
         "timeline": timeline,
         "evidence": evidence,
+        "induced_edges": induced_edges,
+        "induction": induction,
         "total_token_cost": total_tokens,
     }

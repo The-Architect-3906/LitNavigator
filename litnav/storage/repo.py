@@ -238,3 +238,83 @@ def get_last_tutor_post_score(
         (session_id, concept_id),
     ).fetchone()
     return row[0] if row else None
+
+
+# ── M3: literature-induced scaffolding writers ──────────────────────────────
+
+def get_concept_by_slug(conn: sqlite3.Connection, slug: str) -> dict | None:
+    row = conn.execute(
+        "SELECT id, slug, name, frontier_flag FROM concepts WHERE slug=?", (slug,)
+    ).fetchone()
+    return {"id": row[0], "slug": row[1], "name": row[2], "frontier_flag": row[3]} if row else None
+
+
+def next_concept_id(conn: sqlite3.Connection) -> int:
+    row = conn.execute("SELECT COALESCE(MAX(id), 0) FROM concepts").fetchone()
+    return int(row[0]) + 1
+
+
+def create_concept(conn: sqlite3.Connection, concept_id: int, slug: str, name: str,
+                   frontier_flag: str | None = None) -> None:
+    conn.execute(
+        "INSERT OR IGNORE INTO concepts (id, slug, name, frontier_flag) VALUES (?,?,?,?)",
+        (concept_id, slug, name, frontier_flag),
+    )
+    conn.commit()
+
+
+def record_induced_edge(conn: sqlite3.Connection, prereq_concept: int, target_concept: int,
+                        confidence: float, evidence_chunks: list[str]) -> None:
+    conn.execute(
+        "INSERT OR IGNORE INTO concept_edges "
+        "(prereq_concept, target_concept, edge_type, source, confidence, evidence) "
+        "VALUES (?,?,?,?,?,?)",
+        (prereq_concept, target_concept, "prerequisite", "induced", confidence,
+         json.dumps(evidence_chunks)),
+    )
+    conn.commit()
+
+
+def record_induced_misconception(conn: sqlite3.Connection, mid: str, concept_id: int,
+                                 wrong_model: str, correct_model: str, confidence: float,
+                                 evidence_chunk_id: str | None) -> None:
+    conn.execute(
+        "INSERT OR IGNORE INTO misconceptions "
+        "(id, concept_id, wrong_model, correct_model, source, confidence, evidence_chunk_id) "
+        "VALUES (?,?,?,?,?,?,?)",
+        (mid, concept_id, wrong_model, correct_model, "induced", confidence, evidence_chunk_id),
+    )
+    conn.commit()
+
+
+def record_induction_log(conn: sqlite3.Connection, session_id: str, kind: str, output: dict,
+                         evidence_chunks: list[str], confidence: float,
+                         confidence_basis: dict) -> None:
+    conn.execute(
+        "INSERT INTO induction_log "
+        "(session_id, kind, output, evidence_chunks, confidence, confidence_basis) "
+        "VALUES (?,?,?,?,?,?)",
+        (session_id, kind, json.dumps(output), json.dumps(evidence_chunks),
+         confidence, json.dumps(confidence_basis)),
+    )
+    conn.commit()
+
+
+def get_induced_edges(conn: sqlite3.Connection) -> list[dict]:
+    rows = conn.execute(
+        "SELECT prereq_concept, target_concept, confidence, evidence FROM concept_edges "
+        "WHERE source='induced'"
+    ).fetchall()
+    return [{"prereq_concept": r[0], "target_concept": r[1], "confidence": r[2],
+             "evidence": json.loads(r[3]) if r[3] else []} for r in rows]
+
+
+def get_induction_log(conn: sqlite3.Connection, session_id: str) -> list[dict]:
+    rows = conn.execute(
+        "SELECT kind, output, evidence_chunks, confidence, confidence_basis "
+        "FROM induction_log WHERE session_id=? ORDER BY id", (session_id,)
+    ).fetchall()
+    return [{"kind": r[0], "output": json.loads(r[1]) if r[1] else {},
+             "evidence_chunks": json.loads(r[2]) if r[2] else [],
+             "confidence": r[3], "confidence_basis": json.loads(r[4]) if r[4] else {}}
+            for r in rows]

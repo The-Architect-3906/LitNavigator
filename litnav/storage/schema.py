@@ -146,6 +146,17 @@ CREATE TABLE IF NOT EXISTS tutor_turns (
     token_cost INTEGER DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS induction_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_id TEXT REFERENCES sessions(id),
+    kind TEXT,                    -- 'prereq' | 'misconception'
+    output TEXT,                  -- JSON of the induced element
+    evidence_chunks TEXT,         -- JSON list of chunk ids
+    confidence REAL,
+    confidence_basis TEXT,        -- JSON: {n_chunks, max_strength, multi_paper}
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 """
 
 

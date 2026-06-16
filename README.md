@@ -4,7 +4,7 @@
 
 ### An AI tutor that reads the research papers and then teaches *you* — step by step, adapted to what you actually know.
 
-![Status](https://img.shields.io/badge/status-M2%20complete-brightgreen)
+![Status](https://img.shields.io/badge/status-M3%20complete-brightgreen)
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
 ![Framework](https://img.shields.io/badge/agent-LangGraph-black)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -86,10 +86,12 @@ flowchart TD
    A quiz reveals a missing prerequisite.
    → Prereq inserted mid-session. route_version increments.
 
-③ "This concept isn't in your map yet — let me go to the papers."   [M3 next]
-   You ask about an off-graph agent concept.
-   → induce_scaffold reads the corpus, derives a prereq edge, mines one
-     misconception, teaches it as "still-contested", every claim backed by chunk id.
+③ "This concept isn't in your map yet — let me go to the papers."   [M3 ✅ implemented]
+   You ask about multi-agent debate (off the curated graph).
+   → induce_scaffold reads the corpus, induces the prereq edge
+     multi_agent → multi_agent_debate (conf 0.75, source=induced),
+     mines the misconception "more agents/rounds is always better" (conf 0.65),
+     and teaches it as "contested" — confidence rule-computed, every claim cited.
 
 The demo corpus is the agent-paper pack in `papers/agent-competition/` (ReAct,
 Toolformer, Reflexion, Generative Agents, Voyager, the autonomous-agents survey,
@@ -116,6 +118,7 @@ pip install -r requirements.txt
 python -m litnav.evaluation.verify_m0   # G0: state machine + SQLite writes
 python -m litnav.evaluation.verify_m1   # G1: route replans on a prereq gap (LangGraph + checkpoint)
 python -m litnav.evaluation.verify_m2   # G2: teach/reteach/concede + misconception detection (agent corpus)
+python -m litnav.evaluation.verify_m3   # G3: induce prereq + misconception for an off-skeleton concept
 pytest -q                               # full test suite
 ```
 
@@ -140,8 +143,8 @@ G0 PASS: offline run
 | **M0** · Fake-data walking skeleton | State machine loop + SQLite persistence | ✅ Done |
 | **M1** · Navigator | Route changes because of learner state; LangGraph StateGraph + prereq replan + SqliteSaver checkpoint (G1 green) | ✅ Done |
 | **M2** · Tutor | teach → reteach → concede on the agent corpus; misconception detection (Qwen / offline fallback); parallel-form quizzes; learning gain (G2 green) | ✅ Done |
-| **M3** · Literature induction | `induce_scaffold` — the core novelty; confidence rule-computed | ⬜ Next |
-| **M4** · Polish | thin web UI, hybrid retrieval, cross-session memory | ⬜ |
+| **M3** · Literature induction | `induce_scaffold` — induce a prereq edge + mine a misconception for an off-skeleton concept, rule-computed confidence + provenance, panel marks curated vs induced (G3 green) | ✅ Done |
+| **M4** · Polish | intent/audience modes, hybrid retrieval (embeddings), cross-session memory, live-Qwen induction recording | ⬜ Next |
 
 > Every milestone is a self-contained, demoable, submittable build — no matter where progress stops.
 > Gates run fully offline (`verify_m0/1/2`); the LLM (Qwen) is an optional path in M2/M3 with deterministic fixtures as fallback. The thin web panel remains the outstanding UI item, carried into M3/M4.

@@ -31,6 +31,9 @@
     .turn .decision { margin:.4rem 0 .1rem; }
     code { background:#eef0f6; padding:0 .25rem; border-radius:4px; }
     .ev { font-size:.82rem; border-top:1px dashed #e2e6ee; padding:.4rem 0; }
+    .induced { border:1px dashed #258a51; background:#f3fbf6; border-radius:6px; padding:.45rem .6rem; margin:.4rem 0; font-size:.83rem; }
+    .tag-ind { background:#d7f0e0; color:#0c3a22; }
+    .basis { color:#5b6678; font-size:.78rem; }
   </style>
 </head>
 <body>
@@ -72,13 +75,25 @@
     {% for c in concepts %}
       <div class="concept">
         <span class="dot {{ c.frontier_flag }}"></span>
-        <span style="width:9rem">{{ c.name }}</span>
+        <span style="width:9rem">{{ c.name }}{% if c.induced %} <span class="badge tag-ind">induced</span>{% endif %}</span>
         <span class="bar"><span style="width:{{ (c.mastery*100)|round }}%"></span></span>
         <span class="mut">m {{ c.mastery }} · conf {{ c.confidence }} ({{ c.n_observations }}obs)</span>
       </div>
       {% if c.held_misconceptions %}<div class="mut" style="margin-left:1.4rem">⚠ holds: {{ c.held_misconceptions|join(', ') }}</div>{% endif %}
       {% if c.tried_strategies|length > 1 %}<div class="mut" style="margin-left:1.4rem">strategies: {{ c.tried_strategies|join(' → ') }}</div>{% endif %}
     {% endfor %}
+
+    {% if induction %}
+    <h2 style="margin-top:1rem">Induced scaffolding <span class="badge tag-ind">machine-derived</span></h2>
+    {% for ind in induction %}
+      <div class="induced">
+        <b>{{ ind.kind }}</b> · confidence <b>{{ ind.confidence }}</b>
+        <div class="basis">basis: {{ ind.confidence_basis.n_chunks }} chunk(s) · {{ ind.confidence_basis.max_strength }} · {{ 'multi-paper' if ind.confidence_basis.multi_paper else 'single paper' }} (rule-computed, not model-emitted)</div>
+        <div class="mut">{{ ind.output }}</div>
+        <div class="mut">evidence: {{ ind.evidence_chunks|join(', ') }}</div>
+      </div>
+    {% endfor %}
+    {% endif %}
 
     <h2 style="margin-top:1rem">Cited evidence</h2>
     {% for e in evidence %}

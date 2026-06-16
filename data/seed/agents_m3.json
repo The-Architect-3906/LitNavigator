@@ -1,0 +1,65 @@
+{
+  "topic": "LLM-based autonomous agents",
+  "targets": ["react", "reflection", "tool_use"],
+  "concepts": [
+    {"id": 1, "slug": "react", "name": "ReAct (reasoning + acting)", "is_demo_core": 1, "frontier_flag": "consensus"},
+    {"id": 2, "slug": "tool_use", "name": "Tool use", "frontier_flag": "consensus"},
+    {"id": 3, "slug": "reflection", "name": "Reflection and self-correction", "frontier_flag": "consensus"},
+    {"id": 4, "slug": "agent_memory", "name": "Agent memory", "frontier_flag": "consensus"},
+    {"id": 5, "slug": "skill_learning", "name": "Skill learning and lifelong agents", "frontier_flag": "consensus"},
+    {"id": 6, "slug": "multi_agent", "name": "Multi-agent collaboration", "frontier_flag": "contested"},
+    {"id": 7, "slug": "agent_taxonomy", "name": "Agent architecture taxonomy", "frontier_flag": "consensus"}
+  ],
+  "edges": [
+    {"prereq_concept": 1, "target_concept": 2, "edge_type": "prerequisite", "source": "curated", "confidence": 1.0},
+    {"prereq_concept": 1, "target_concept": 3, "edge_type": "prerequisite", "source": "curated", "confidence": 1.0},
+    {"prereq_concept": 1, "target_concept": 4, "edge_type": "prerequisite", "source": "curated", "confidence": 1.0},
+    {"prereq_concept": 3, "target_concept": 5, "edge_type": "prerequisite", "source": "curated", "confidence": 1.0},
+    {"prereq_concept": 1, "target_concept": 6, "edge_type": "prerequisite", "source": "curated", "confidence": 1.0},
+    {"prereq_concept": 1, "target_concept": 7, "edge_type": "prerequisite", "source": "curated", "confidence": 1.0}
+  ],
+  "papers": [
+    {"id": 1, "arxiv_id": "2210.03629", "title": "ReAct: Synergizing Reasoning and Acting in Language Models", "year": 2022},
+    {"id": 2, "arxiv_id": "2302.04761", "title": "Toolformer: Language Models Can Teach Themselves to Use Tools", "year": 2023},
+    {"id": 3, "arxiv_id": "2303.11366", "title": "Reflexion: Language Agents with Verbal Reinforcement Learning", "year": 2023},
+    {"id": 4, "arxiv_id": "2304.03442", "title": "Generative Agents: Interactive Simulacra of Human Behavior", "year": 2023},
+    {"id": 5, "arxiv_id": "2305.16291", "title": "Voyager: An Open-Ended Embodied Agent with Large Language Models", "year": 2023},
+    {"id": 6, "arxiv_id": "2308.11432", "title": "A Survey on Large Language Model Based Autonomous Agents", "year": 2023},
+    {"id": 7, "arxiv_id": "2308.00352", "title": "MetaGPT: Meta Programming for a Multi-Agent Collaborative Framework", "year": 2023},
+    {"id": 8, "arxiv_id": "2303.17760", "title": "CAMEL: Communicative Agents for Mind Exploration of LLM Society", "year": 2023},
+    {"id": 9, "arxiv_id": "2305.14325", "title": "Improving Factuality and Reasoning in Language Models through Multiagent Debate", "year": 2023}
+  ],
+  "chunks": [
+    {"id": "c_react_1", "paper_id": 1, "concept_id": 1, "text": "ReAct prompts a language model to generate interleaved reasoning traces and task-specific actions: it reasons about a task, acts on an external environment such as a search API, and feeds the resulting observations back into further reasoning."},
+    {"id": "c_react_2", "paper_id": 1, "concept_id": 1, "text": "In contrast to chain-of-thought prompting, which only produces internal reasoning, ReAct grounds its reasoning in actions and observations, which reduces hallucination by letting the agent consult external sources."},
+    {"id": "c_multi_1", "paper_id": 7, "concept_id": 6, "text": "MetaGPT encodes standardized operating procedures into a multi-agent system so that specialized role agents collaborate and hand off intermediate artefacts."},
+    {"id": "c_taxonomy_1", "paper_id": 6, "concept_id": 7, "text": "Surveys of LLM-based autonomous agents organize the field around construction, planning, memory, tool use, and evaluation, providing a concept map of the area."},
+    {"id": "c_debate_1", "paper_id": 9, "concept_id": null, "text": "Multi-agent debate has several language-model agents independently propose answers and then critique and refine each other's responses over multiple rounds. It builds directly on multi-agent collaboration, adding an adversarial critique loop on top of role-based cooperation."},
+    {"id": "c_debate_2", "paper_id": 9, "concept_id": null, "text": "A common assumption is that adding more agents or more debate rounds always improves the answer. In practice the gains are task-dependent, and debate can amplify a shared error rather than correct it, so its benefit over a single strong agent remains contested."}
+  ],
+  "quiz_items": [
+    {"id": 1, "concept_id": 1, "qtype": "explain", "difficulty": 1,
+     "question": "In one sentence, what makes ReAct different from plain chain-of-thought prompting?",
+     "answer_key": "actions and observations", "evidence_chunk_id": "c_react_2", "source_paper_id": 1,
+     "targets_misconception": "react_is_just_cot"}
+  ],
+  "misconceptions": [
+    {"id": "react_is_just_cot", "concept_id": 1,
+     "wrong_model": "ReAct is just chain-of-thought prompting - the model only produces reasoning text.",
+     "correct_model": "ReAct interleaves reasoning traces with actions and observations from an external environment.",
+     "detect_hint": "chain.?of.?thought|\\bcot\\b|just (reason|think)|only (reason|think)|keyword",
+     "reteach_strategy": "analogy", "source": "curated", "confidence": 1.0,
+     "evidence_chunk_id": "c_react_2"}
+  ],
+  "induction": {
+    "off_skeleton": {"slug": "multi_agent_debate", "name": "Multi-agent debate", "frontier_flag": "contested"},
+    "prereq_slug": "multi_agent",
+    "edge": {"evidence_chunks": ["c_debate_1"], "max_strength": "explicit_assertion", "multi_paper": false},
+    "misconception": {
+      "id": "debate_more_is_better",
+      "wrong_model": "More agents or more debate rounds always improve the answer.",
+      "correct_model": "Gains are task-dependent and debate can amplify a shared error; its benefit over a single strong agent is contested.",
+      "evidence_chunks": ["c_debate_2"], "max_strength": "general_statement", "multi_paper": false
+    }
+  }
+}
