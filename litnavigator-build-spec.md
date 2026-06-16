@@ -42,6 +42,19 @@ This is **a strong applied innovation at a neglected intersection**, not "a bran
 
 > **Don't let the cost dimension run naked**: scoring includes "cost." Token/cost accounting should not be deferred to the end — from M1, drop a lightweight token count into `decisions` / `tutor_turns` (see §12), so the deck can report "average tokens/cost per concept learned."
 
+### 1.4 Same engine, re-scoped to your purpose (second utility axis)
+
+Because the curriculum is *induced and re-scopable*, one engine serves very different people on the **same** corpus. Two concrete intents, both on our agents topic and the same 8-paper pack:
+
+- **A researcher entering the field.** Wants the whole picture: the full prerequisite chain (ReAct → tool use → reflection → memory → multi-agent), the methods, and the open problems worth working on. The route is deep and complete (`depth=apply/explain`), the mastery bar is high ("can build and critique it"), and `contested`/`open` concepts are framed as *research opportunities*.
+- **A journalist prepping to interview an AI scientist.** Wants a 30-minute orientation: what an LLM agent actually is, the 2–3 landmark ideas (ReAct, reflection, multi-agent), where the live debates are (does it really "reason"? autonomy/safety), and good questions to ask. The route is short and high-level (`depth=recall`), the bar is "can hold the conversation," implementation is skipped, and the same `contested`/`open` map becomes *talking points*.
+
+Same engine, same papers — two completely different routes, depths, and emphases.
+
+**Framing rule (stay on the moat).** This is **not** "we personalize like any tutor" — Khanmigo/LearnLM personalize too, so pitched that way it's not a differentiator. The point is structural: a **fixed-curriculum tutor has no curriculum for an arbitrary subfield to re-scope**, and a static source assistant won't reorder around your goal; LitNavigator can, *because its curriculum is derived from the live literature*. So this widens the audience (utility dimension) **along the same novelty axis**, it doesn't dilute it. Note the synergy: a journalist most wants "where's the consensus vs the controversy" — which is exactly the `frontier_flags` we already mine in M3.
+
+**Cost to support (mostly existing state, not a new subsystem).** An *intent* maps onto current `NavState` fields: `target_concepts` breadth, `mastery_threshold`, `depth`, and how much `frontier_flags` are surfaced. **Free today** (already parameters): the target set and the mastery threshold. **Thin layer (M4)**: depth-aware teaching and frontier-prioritized routing. Intent selection itself is primarily a front-end scenario picker. See §12 M4.
+
 ---
 
 ## 2. Architecture
@@ -688,7 +701,7 @@ User introduces an off-skeleton concept: "I keep seeing hard negative mining —
 
 ## 15. Positioning statement (for the deck and README)
 
-> LitNavigator is a stateful tutor that is **built from and teaches through the living research literature**. It induces a concept's prerequisites and mines a field's misconceptions directly from the papers (each shown with its citing evidence and a rule-computed confidence), models your concept-level mastery and specific misconceptions, re-teaches differently when you don't get it, re-routes when you're missing a prerequisite, honestly concedes when a concept won't land, and teaches the frontier's open disagreements with calibrated confidence. Unlike fixed-curriculum tutors that teach an authored course, and unlike static source-grounded assistants that generate one-shot quizzes without a learner model, LitNavigator's curriculum, misconceptions, and teaching content all come from the live corpus.
+> LitNavigator is a stateful tutor that is **built from and teaches through the living research literature**. It induces a concept's prerequisites and mines a field's misconceptions directly from the papers (each shown with its citing evidence and a rule-computed confidence), models your concept-level mastery and specific misconceptions, re-teaches differently when you don't get it, re-routes when you're missing a prerequisite, honestly concedes when a concept won't land, and teaches the frontier's open disagreements with calibrated confidence. Unlike fixed-curriculum tutors that teach an authored course, and unlike static source-grounded assistants that generate one-shot quizzes without a learner model, LitNavigator's curriculum, misconceptions, and teaching content all come from the live corpus. And because that curriculum is re-scopable, the *same* engine teaches to your **purpose, not just your topic** — a researcher gets the full prerequisite chain, methods, and open problems, while a journalist prepping an interview gets a 30-minute orientation to the field's consensus and live controversies.
 
 ---
 

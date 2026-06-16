@@ -108,6 +108,7 @@ python -m litnav.evaluation.verify_m0
 
 **Candidate work:**
 
+- intent/audience modes (e.g. researcher vs journalist): map a chosen intent onto target breadth, `depth`, mastery bar, and frontier emphasis — free dims (targets, threshold) work today; depth-aware teaching + frontier-prioritized routing are the thin layer to add here,
 - decision-trace UI polish,
 - jump-step pushback,
 - coverage warning,

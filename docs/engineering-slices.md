@@ -140,6 +140,7 @@ User asks about `hard_negative_mining`, which is off the curated skeleton. The s
 
 Only after M3 is stable:
 
+- intent/audience modes (researcher vs journalist): re-scope targets / depth / mastery bar / frontier emphasis from a chosen intent (front-end scenario picker + thin planner/teach layer),
 - trace UI polish,
 - coverage warnings,
 - jump-step pushback,

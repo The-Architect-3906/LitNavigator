@@ -150,6 +150,15 @@ For perceived intelligence, show at least one counterfactual:
 
 This proves the route is conditional, not a scripted transcript.
 
+## Optional money shot: intent-mode contrast (M4)
+
+If M4 intent modes land, record one high-impact contrast on the **same** agents corpus:
+
+- **Researcher mode** → a long, deep route (full prerequisite chain + methods + open problems), high mastery bar.
+- **Journalist mode** → a short, high-level route (landmark ideas + consensus/controversy map + questions to ask), "can hold the conversation" bar.
+
+Two completely different routes from one engine and one corpus — the visual proof that the curriculum is re-scoped to *purpose*, not authored once. Skip if M4 time is tight; otherwise it is a strong utility-dimension moment.
+
 ## Fallback Recordings
 
 If M3 is unstable:

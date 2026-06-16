@@ -98,6 +98,17 @@ MetaGPT, CAMEL). M2's tutor loop runs on this agent domain end to end.
 
 ---
 
+## Built for your purpose, not just your topic
+
+The same engine re-scopes to *why* you need the field — because its curriculum is induced from the live literature, not authored once. Two intents on the same agents corpus:
+
+- **Researcher entering the field** → the full prerequisite chain (ReAct → tool use → reflection → memory → multi-agent), methods, and the open problems worth working on; high mastery bar; contested/open points framed as research opportunities.
+- **Journalist prepping to interview an AI scientist** → a 30-minute orientation: what an LLM agent is, the 2–3 landmark ideas, where the live debates are, and good questions to ask; a "can hold the conversation" bar; implementation skipped; the consensus-vs-controversy map as talking points.
+
+A fixed-curriculum tutor has no curriculum for an arbitrary subfield to re-scope, and a static source assistant won't reorder around your goal — LitNavigator can. *(Intent modes are an M4 item; the learner model, route, depth, and frontier labels they build on already exist.)*
+
+---
+
 ## Quick start
 
 ```bash

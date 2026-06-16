@@ -183,6 +183,17 @@ off-skeleton concept
 - The LLM client (`litnav/llm/`) returns structured fields only (misconception id, chunk selection, strength label); it never emits mastery, confidence, or a routing decision. Every LLM caller passes a deterministic fallback, so the system runs offline.
 - UI (`litnav/ui/`) renders state and traces; it should not invent rationale.
 
+## Intent / audience modes (M4)
+
+The same engine re-scopes to the learner's *purpose*, not just their topic (e.g. a researcher entering the field vs a journalist prepping an interview). An intent maps onto existing `NavState` fields rather than a new subsystem:
+
+- `target_concepts` breadth — full prerequisite chain vs a high-level orientation,
+- `mastery_threshold` — "can build and critique" vs "can hold the conversation",
+- `depth` — apply/explain vs recall,
+- `frontier_flags` emphasis — surface consensus/contested/open as research opportunities vs talking points.
+
+Free today (already parameters): the target set and the mastery threshold. Thin layer for M4: depth-aware teaching and frontier-prioritized routing. Intent selection is primarily a front-end scenario picker.
+
 ## Non-Goals Before M2
 
 - Full paper ingestion pipeline.
