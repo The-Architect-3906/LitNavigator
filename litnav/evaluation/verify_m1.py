@@ -77,13 +77,13 @@ def main() -> int:
     # Node-level checks (verify routing logic in isolation)
     # ══════════════════════════════════════════════════════════════════════════
 
-    # ── Check 1: correct answer → advance ────────────────────────────────────
+    # ── Check 1: correct answer -> advance ────────────────────────────────────
     conn_a = _setup("a")
     s = make_initial_state(str(uuid.uuid4()), data["topic"], [dense_id])
     s = _apply(s, planner_node(s, conn_a))
     s = _apply(s, select_next_node(s))
     s = _run_concept(s, conn_a, "embedding vectors")
-    results.append(check("correct answer → tutor_router returns advance",
+    results.append(check("correct answer -> tutor_router returns advance",
                           tutor_router(s) == "advance"))
 
     s = _apply(s, advance_node(s, conn_a))
@@ -94,7 +94,7 @@ def main() -> int:
     results.append(check("advance recorded in decisions table",
                           db_dec and db_dec[0] == "advance"))
 
-    # ── Check 2: wrong answer + unmastered prereq → diagnose → replan ────────
+    # ── Check 2: wrong answer + unmastered prereq -> diagnose -> replan ────────
     conn_b = _setup("b")
     s2 = make_initial_state(str(uuid.uuid4()), data["topic"], [dense_id, contrastive_id])
     s2 = _apply(s2, planner_node(s2, conn_b))
@@ -108,7 +108,7 @@ def main() -> int:
                           s2["current_concept_id"] == contrastive_id))
 
     s2 = _run_concept(s2, conn_b, "keyword matching")
-    results.append(check("wrong answer → tutor_router returns diagnose",
+    results.append(check("wrong answer -> tutor_router returns diagnose",
                           tutor_router(s2) == "diagnose"))
 
     s2 = _apply(s2, diagnose_node(s2, conn_b))
@@ -168,7 +168,7 @@ def main() -> int:
     results.append(check("graph invoke: route step marked done in SQLite",
                           step_done is not None))
 
-    # ── Check 4: graph diagnose → replan path ────────────────────────────────
+    # ── Check 4: graph diagnose -> replan path ────────────────────────────────
     conn_d = _setup("d")
     ckpt_d = _fresh_ckpt("d")
     app2 = build_graph(conn_d, checkpoint_conn=ckpt_d)
@@ -192,7 +192,7 @@ def main() -> int:
                           replan_dec is not None))
 
     # ══════════════════════════════════════════════════════════════════════════
-    # Checkpoint durability check (P2): interrupt → rebuild → resume
+    # Checkpoint durability check (P2): interrupt -> rebuild -> resume
     # ══════════════════════════════════════════════════════════════════════════
 
     # ── Check 5: SqliteSaver checkpoint survives app rebuild ─────────────────

@@ -51,7 +51,7 @@ def replan_node(state: NavState, conn: sqlite3.Connection) -> dict:
 
     rationale = (
         f"Quiz revealed {missing_name} (id={missing_id}) is a missing prerequisite of "
-        f"concept {blocked_id}. Inserted before it. route_version → {new_version}."
+        f"concept {blocked_id}. Inserted before it. route_version -> {new_version}."
     )
     repo.record_decision(
         conn, session_id, new_version, "replan", "replan",

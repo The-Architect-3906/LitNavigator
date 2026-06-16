@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 def create_session(conn: sqlite3.Connection, session_id: str, topic: str, user_id: str = "demo") -> None:
@@ -47,7 +47,7 @@ def upsert_learner_state(
             json.dumps(tried_strategies or []),
             depth,
             json.dumps(evidence or []),
-            datetime.utcnow().isoformat(),
+            datetime.now(timezone.utc).isoformat(),
         ),
     )
     conn.commit()

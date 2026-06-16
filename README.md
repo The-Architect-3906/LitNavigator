@@ -4,7 +4,7 @@
 
 ### An AI tutor that reads the research papers and then teaches *you* — step by step, adapted to what you actually know.
 
-![Status](https://img.shields.io/badge/status-M0%20complete-brightgreen)
+![Status](https://img.shields.io/badge/status-M1%20complete-brightgreen)
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
 ![Framework](https://img.shields.io/badge/agent-LangGraph-black)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -96,10 +96,12 @@ flowchart TD
 
 ```bash
 pip install -r requirements.txt
-python -m litnav.evaluation.verify_m0
+python -m litnav.evaluation.verify_m0   # G0: state machine + SQLite writes
+python -m litnav.evaluation.verify_m1   # G1: route replans on a prereq gap (LangGraph + checkpoint)
+pytest -q                               # full test suite
 ```
 
-Expected output:
+Expected `verify_m0` output:
 ```
 G0 PASS: session written
 G0 PASS: route written
@@ -109,7 +111,7 @@ G0 PASS: decision written
 G0 PASS: offline run
 ```
 
-> M0 requires no LLM key and no network access.
+> M0 and M1 require no LLM key and no network access. The LLM (Qwen, with offline fallback) enters at M2.
 
 ---
 
@@ -118,12 +120,13 @@ G0 PASS: offline run
 | Milestone | What it proves | Status |
 |:--|:--|:--:|
 | **M0** · Fake-data walking skeleton | State machine loop + SQLite persistence | ✅ Done |
-| **M1** · Navigator | Route changes because of learner state; LangGraph StateGraph + thin web UI | ⬜ Next |
-| **M2** · Tutor | teach → reteach → concede; misconception detection (Qwen / offline fallback) | ⬜ |
+| **M1** · Navigator | Route changes because of learner state; LangGraph StateGraph + prereq replan + SqliteSaver checkpoint (G1 green) | ✅ Done |
+| **M2** · Tutor | teach → reteach → concede; misconception detection (Qwen / offline fallback) | ⬜ Next |
 | **M3** · Literature induction | `induce_scaffold` — the core novelty; confidence rule-computed | ⬜ |
 | **M4** · Polish | UI, hybrid retrieval, cross-session memory | ⬜ |
 
 > Every milestone is a self-contained, demoable, submittable build — no matter where progress stops.
+> M1's gate (G1) passes via the `verify_m1` transcript; the thin web panel is the remaining M1 UI item and is folded into the upcoming UI work.
 
 ---
 
