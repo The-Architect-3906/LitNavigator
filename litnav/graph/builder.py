@@ -1,13 +1,15 @@
 from __future__ import annotations
 
-import json
 import sqlite3
+import re
 import uuid
 
 from litnav.graph.router import tutor_router
 from litnav.retrieval.fake import retrieve_evidence
 from litnav.state import bkt_update, confidence_update, initial_concept_state
 from litnav.storage import repo
+
+NEGATION_TOKENS = {"no", "not", "never", "isnt", "isn't", "arent", "aren't"}
 
 
 def _build_dag(conn: sqlite3.Connection) -> dict[int, list[int]]:
@@ -39,10 +41,32 @@ def _topo_sort(target_ids: list[int], dag: dict[int, list[int]]) -> list[int]:
 
 
 def _grade_answer(user_answer: str, answer_key: str) -> tuple[float, str]:
-    correct = answer_key.lower() in user_answer.lower()
+    correct = _matches_answer_key(user_answer, answer_key)
     score = 1.0 if correct else 0.0
     feedback = "Correct." if correct else f"Expected something like: {answer_key}"
     return score, feedback
+
+
+def _matches_answer_key(user_answer: str, answer_key: str) -> bool:
+    answer_tokens = _normalize_tokens(user_answer)
+    key_tokens = _normalize_tokens(answer_key)
+    if not answer_tokens or not key_tokens or len(answer_tokens) < len(key_tokens):
+        return False
+
+    window = len(key_tokens)
+    for start in range(len(answer_tokens) - window + 1):
+        if answer_tokens[start : start + window] != key_tokens:
+            continue
+        prefix = answer_tokens[max(0, start - 3) : start]
+        if any(token in NEGATION_TOKENS for token in prefix):
+            continue
+        return True
+
+    return False
+
+
+def _normalize_tokens(text: str) -> list[str]:
+    return re.findall(r"[a-z0-9']+", text.lower())
 
 
 def run_m0_session(
@@ -59,7 +83,6 @@ def run_m0_session(
 
     data = json.loads(Path(fixture_path).read_text())
     topic = data["topic"]
-    target_slugs = set(data["targets"])
     slug_to_id = {c["slug"]: c["id"] for c in data["concepts"]}
     target_ids = [slug_to_id[s] for s in data["targets"] if s in slug_to_id]
 

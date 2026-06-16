@@ -1,5 +1,8 @@
 import sqlite3
+import socket
 
+from litnav.evaluation import verify_m0
+from litnav.graph.builder import _grade_answer
 from litnav.graph.builder import run_m0_session
 from litnav.storage.schema import init_db
 from litnav.storage.seed import seed_demo_data
@@ -65,3 +68,23 @@ def test_m0_learner_state_mastery_updated(tmp_path):
         "SELECT mastery FROM learner_state WHERE session_id=? AND concept_id=1", (session_id,)
     ).fetchone()[0]
     assert mastery > 0.4
+
+
+def test_grade_rejects_negated_answer_key():
+    score, feedback = _grade_answer(
+        "It is not embedding vectors, it is BM25 keyword matching.",
+        "embedding vectors",
+    )
+
+    assert score == 0.0
+    assert feedback.startswith("Expected something like:")
+
+
+def test_verify_m0_offline_guard_blocks_network():
+    with verify_m0.offline_guard():
+        try:
+            socket.create_connection(("example.com", 80))
+        except verify_m0.OfflineRunError:
+            pass
+        else:
+            raise AssertionError("offline_guard should block network access")
