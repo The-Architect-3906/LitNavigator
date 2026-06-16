@@ -117,10 +117,14 @@ def build_trace(conn: sqlite3.Connection, session_id: str) -> dict:
 
     # A single chronological view the CLI and panel can both render: each teaching
     # turn, the answer that drove it, the learner state after, and the decision it triggered.
+    # Pair turns with per-turn ROUTING decisions only; 'induce' is a pre-loop decision
+    # (recorded before any teaching turn) and must not be attributed to a teach turn.
+    routing = [d for d in decisions
+               if d["decision"] in ("advance", "reteach", "diagnose", "replan", "concede")]
     timeline = []
     for i, tt in enumerate(tutor_turns):
         att = attempts[i] if i < len(attempts) else {}
-        dec = decisions[i] if i < len(decisions) else None
+        dec = routing[i] if i < len(routing) else None
         timeline.append({
             "index": i + 1,
             "name": tt["name"], "turn_type": tt["turn_type"], "strategy": tt["strategy"],

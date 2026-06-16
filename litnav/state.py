@@ -48,6 +48,9 @@ class NavState(TypedDict):
     current_cited_chunks: List[str]         # chunks cited by the current teach/reteach turn
     used_quiz_ids: List[int]                # quiz item ids already drawn this concept (pre vs post)
 
+    # Literature induction (M3)
+    pending_induction: Optional[dict]       # off-skeleton candidate to induce before teaching, or None
+
     # Answer handling
     user_answer: Optional[str]
     pending_answers: List[str]              # pre-seeded for gate / batch mode

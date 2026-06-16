@@ -17,6 +17,7 @@ from litnav.nodes.planner import planner_node
 from litnav.nodes.replan import replan_node
 from litnav.nodes.retrieve import retrieve_node
 from litnav.nodes.concede import concede_node
+from litnav.nodes.induce import induce_scaffold_node
 from litnav.nodes.reteach import reteach_node
 from litnav.nodes.select_next import route_after_select, select_next_node
 from litnav.nodes.teach import teach_node
@@ -69,6 +70,15 @@ def build_graph(
     def _reteach(s: NavState) -> dict:      return reteach_node(s, domain_conn)
     def _concede(s: NavState) -> dict:      return concede_node(s, domain_conn)
 
+    def _induce(s: NavState) -> dict:
+        updates = induce_scaffold_node(s, domain_conn)   # reads s["pending_induction"]
+        updates["pending_induction"] = None              # consume the request so we don't re-induce
+        return updates
+
+    def _route_after_planner(s: NavState) -> str:
+        # Off-skeleton request present -> induce its scaffolding before the inner loop.
+        return "induce" if s.get("pending_induction") else "select_next"
+
     workflow = StateGraph(NavState)
     workflow.add_node("planner", _planner)
     workflow.add_node("select_next", _select_next)
@@ -81,9 +91,12 @@ def build_graph(
     workflow.add_node("advance", _advance)
     workflow.add_node("reteach", _reteach)
     workflow.add_node("concede", _concede)
+    workflow.add_node("induce", _induce)
 
     workflow.set_entry_point("planner")
-    workflow.add_edge("planner", "select_next")
+    workflow.add_conditional_edges("planner", _route_after_planner,
+                                   {"induce": "induce", "select_next": "select_next"})
+    workflow.add_edge("induce", "select_next")
     workflow.add_conditional_edges("select_next", route_after_select,
                                    {"retrieve": "retrieve", "__end__": END})
     workflow.add_edge("retrieve", "teach")
@@ -115,6 +128,7 @@ def make_initial_state(
     pending_answers: Optional[List[str]] = None,
     user_goal: str = "Learn the topic",
     mastery_threshold: float = 0.8,
+    pending_induction: Optional[dict] = None,
 ) -> NavState:
     return {
         "session_id": session_id,
@@ -140,6 +154,7 @@ def make_initial_state(
         "learner_state": {},
         "mastery_threshold": mastery_threshold,
         "reteach_count": {},
+        "pending_induction": pending_induction,
         "history": [],
     }
 

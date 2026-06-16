@@ -59,7 +59,14 @@
       "id": "debate_more_is_better",
       "wrong_model": "More agents or more debate rounds always improve the answer.",
       "correct_model": "Gains are task-dependent and debate can amplify a shared error; its benefit over a single strong agent is contested.",
+      "detect_hint": "more (agents|rounds)|always (improve|improves|better)|the more the better",
+      "reteach_strategy": "contrast_case",
       "evidence_chunks": ["c_debate_2"], "max_strength": "general_statement", "multi_paper": false
+    },
+    "quiz": {
+      "question": "Beyond cooperating, what loop does multi-agent debate add on top of role-based collaboration?",
+      "answer_key": "critique and refine",
+      "qtype": "explain", "difficulty": 1
     }
   }
 }

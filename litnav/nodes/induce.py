@@ -2,22 +2,25 @@
 
 For an off-skeleton concept (one the user asks about that is NOT in the curated DAG),
 read already-ingested chunks, induce a prerequisite edge into an existing concept, mine
-a field misconception, label the frontier status, and slot it into the route. Provenance
-is explicit (source='induced'), and confidence is computed by a transparent rule — never
-emitted by the LLM.
+a field misconception, label the frontier status, and slot it into the route. It also
+adopts the supporting chunks and a quiz item for the induced concept so the normal
+retrieve -> teach -> check -> grade inner loop can teach it.
 
-Offline (provider=none) it replays the offline-prerun candidate from the fixture; with
-provider=qwen the LLM would extract the supporting chunks and label each one's language
-strength over the real text. Either way induced_confidence() computes the number.
+Provenance is explicit (source='induced'), and confidence is computed by a transparent
+rule — never emitted by the LLM. Offline (provider=none) the evidence strength comes from
+the offline-prerun candidate; with provider=qwen the LLM labels strength over the real
+chunk text (candidate label is the fallback). induced_confidence() always computes the number.
 """
 from __future__ import annotations
 
 import sqlite3
 
-from litnav.state import NavState
+from litnav.llm import client as llm_client
+from litnav.state import NavState, initial_concept_state
 from litnav.storage import repo
 
 _STRENGTH_BONUS = {"weak_hint": 0.05, "general_statement": 0.15, "explicit_assertion": 0.25}
+_VALID_STRENGTH = set(_STRENGTH_BONUS)
 
 
 def induced_confidence(n_chunks: int, max_strength: str, multi_paper: bool) -> float:
@@ -28,7 +31,30 @@ def induced_confidence(n_chunks: int, max_strength: str, multi_paper: bool) -> f
     return round(min(0.95, 0.35 + 0.15 * n_chunks + strength_bonus + multi_paper_bonus), 2)
 
 
-def induce_scaffold_node(state: NavState, conn: sqlite3.Connection, candidate: dict) -> dict:
+def _label_strength(conn: sqlite3.Connection, chunk_ids: list[str], fallback: str) -> str:
+    """LLM seam: with provider=qwen, label evidence strength over the real chunk text;
+    offline (provider=none) complete_json returns the fallback unchanged."""
+    texts = []
+    for cid in chunk_ids:
+        row = conn.execute("SELECT text FROM paper_chunks WHERE id=?", (cid,)).fetchone()
+        if row:
+            texts.append(row[0])
+    prompt = (
+        "Rate how strongly the evidence asserts the claim it is cited for.\n"
+        f"Evidence: {texts}\n"
+        'Respond as JSON: {"max_strength": "weak_hint" | "general_statement" | "explicit_assertion"}'
+    )
+    result = llm_client.complete_json(prompt, fallback={"max_strength": fallback})
+    labelled = result.get("max_strength", fallback)
+    return labelled if labelled in _VALID_STRENGTH else fallback
+
+
+def induce_scaffold_node(state: NavState, conn: sqlite3.Connection,
+                         candidate: dict | None = None) -> dict:
+    candidate = candidate or state.get("pending_induction")
+    if not candidate:
+        raise ValueError("induce_scaffold_node requires a candidate (state['pending_induction'])")
+
     session_id = state["session_id"]
     route_version = state["route_version"]
 
@@ -41,12 +67,13 @@ def induce_scaffold_node(state: NavState, conn: sqlite3.Connection, candidate: d
     new_id = repo.next_concept_id(conn)
     repo.create_concept(conn, new_id, off["slug"], off["name"], off.get("frontier_flag"))
 
-    # 2) Induced prerequisite edge — confidence is rule-computed from the evidence.
+    # 2) Induced prerequisite edge — confidence rule-computed from (LLM- or fixture-) labelled strength.
     e = candidate["edge"]
     edge_chunks = e["evidence_chunks"]
-    edge_conf = induced_confidence(len(edge_chunks), e["max_strength"], e.get("multi_paper", False))
+    edge_strength = _label_strength(conn, edge_chunks, e["max_strength"])
+    edge_conf = induced_confidence(len(edge_chunks), edge_strength, e.get("multi_paper", False))
     repo.record_induced_edge(conn, prereq["id"], new_id, edge_conf, edge_chunks)
-    edge_basis = {"n_chunks": len(edge_chunks), "max_strength": e["max_strength"],
+    edge_basis = {"n_chunks": len(edge_chunks), "max_strength": edge_strength,
                   "multi_paper": e.get("multi_paper", False)}
     repo.record_induction_log(
         conn, session_id, "prereq",
@@ -57,12 +84,14 @@ def induce_scaffold_node(state: NavState, conn: sqlite3.Connection, candidate: d
     # 3) Mined misconception — also rule-computed confidence, cited to a chunk.
     m = candidate["misconception"]
     m_chunks = m["evidence_chunks"]
-    m_conf = induced_confidence(len(m_chunks), m["max_strength"], m.get("multi_paper", False))
+    m_strength = _label_strength(conn, m_chunks, m["max_strength"])
+    m_conf = induced_confidence(len(m_chunks), m_strength, m.get("multi_paper", False))
     repo.record_induced_misconception(
         conn, m["id"], new_id, m["wrong_model"], m["correct_model"], m_conf,
-        m_chunks[0] if m_chunks else None,
+        m_chunks[0] if m_chunks else None, detect_hint=m.get("detect_hint"),
+        reteach_strategy=m.get("reteach_strategy", "analogy"),
     )
-    m_basis = {"n_chunks": len(m_chunks), "max_strength": m["max_strength"],
+    m_basis = {"n_chunks": len(m_chunks), "max_strength": m_strength,
                "multi_paper": m.get("multi_paper", False)}
     repo.record_induction_log(
         conn, session_id, "misconception",
@@ -70,7 +99,26 @@ def induce_scaffold_node(state: NavState, conn: sqlite3.Connection, candidate: d
         evidence_chunks=m_chunks, confidence=m_conf, confidence_basis=m_basis,
     )
 
-    # 4) Slot the induced concept into the route and record the decision.
+    # 4) Make the induced concept teachable by the normal inner loop:
+    #    adopt its supporting chunks (so retrieve finds them) and add a quiz item.
+    for cid in dict.fromkeys(edge_chunks + m_chunks):  # de-duped, ordered
+        repo.assign_chunk_concept(conn, cid, new_id)
+    q = candidate.get("quiz")
+    if q:
+        repo.create_quiz_item(
+            conn, new_id, q["question"], q["answer_key"],
+            evidence_chunk_id=edge_chunks[0] if edge_chunks else None,
+            source_paper_id=repo.get_chunk_paper_id(conn, edge_chunks[0]) if edge_chunks else None,
+            qtype=q.get("qtype", "explain"), difficulty=q.get("difficulty", 1),
+            targets_misconception=m["id"],
+        )
+
+    # 5) Learner state for the induced concept (planner ran before it existed).
+    learner_state = dict(state.get("learner_state", {}))
+    learner_state[new_id] = initial_concept_state()
+    repo.upsert_learner_state(conn, session_id, new_id, mastery=0.4, confidence=0.0, n_observations=0)
+
+    # 6) Slot the induced concept into the route and record the decision.
     route = [dict(s) for s in state.get("route", [])]
     new_step = {
         "step_id": f"route-induced-{new_id:03d}",
@@ -98,6 +146,7 @@ def induce_scaffold_node(state: NavState, conn: sqlite3.Connection, candidate: d
 
     return {
         "route": route,
+        "learner_state": learner_state,
         "current_concept_id": new_id,
         "rationale": rationale,
         "history": [{"event": "induce_scaffold", "concept_id": new_id, "slug": off["slug"],

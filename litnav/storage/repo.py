@@ -277,12 +277,14 @@ def record_induced_edge(conn: sqlite3.Connection, prereq_concept: int, target_co
 
 def record_induced_misconception(conn: sqlite3.Connection, mid: str, concept_id: int,
                                  wrong_model: str, correct_model: str, confidence: float,
-                                 evidence_chunk_id: str | None) -> None:
+                                 evidence_chunk_id: str | None, detect_hint: str | None = None,
+                                 reteach_strategy: str = "analogy") -> None:
     conn.execute(
         "INSERT OR IGNORE INTO misconceptions "
-        "(id, concept_id, wrong_model, correct_model, source, confidence, evidence_chunk_id) "
-        "VALUES (?,?,?,?,?,?,?)",
-        (mid, concept_id, wrong_model, correct_model, "induced", confidence, evidence_chunk_id),
+        "(id, concept_id, wrong_model, correct_model, detect_hint, reteach_strategy, "
+        " source, confidence, evidence_chunk_id) VALUES (?,?,?,?,?,?,?,?,?)",
+        (mid, concept_id, wrong_model, correct_model, detect_hint, reteach_strategy,
+         "induced", confidence, evidence_chunk_id),
     )
     conn.commit()
 
@@ -298,6 +300,33 @@ def record_induction_log(conn: sqlite3.Connection, session_id: str, kind: str, o
          confidence, json.dumps(confidence_basis)),
     )
     conn.commit()
+
+
+def assign_chunk_concept(conn: sqlite3.Connection, chunk_id: str, concept_id: int) -> None:
+    """Tag an ingested chunk to a concept so retrieve_node (which filters by concept_id)
+    can serve it. Used when an induced concept adopts its supporting evidence."""
+    conn.execute("UPDATE paper_chunks SET concept_id=? WHERE id=?", (concept_id, chunk_id))
+    conn.commit()
+
+
+def create_quiz_item(conn: sqlite3.Connection, concept_id: int, question: str, answer_key: str,
+                     evidence_chunk_id: str | None = None, source_paper_id: int | None = None,
+                     qtype: str = "explain", difficulty: int = 1,
+                     targets_misconception: str | None = None) -> int:
+    cur = conn.execute(
+        "INSERT INTO quiz_items "
+        "(concept_id, question, answer_key, qtype, difficulty, evidence_chunk_id, "
+        " source_paper_id, targets_misconception) VALUES (?,?,?,?,?,?,?,?)",
+        (concept_id, question, answer_key, qtype, difficulty, evidence_chunk_id,
+         source_paper_id, targets_misconception),
+    )
+    conn.commit()
+    return int(cur.lastrowid)
+
+
+def get_chunk_paper_id(conn: sqlite3.Connection, chunk_id: str) -> int | None:
+    row = conn.execute("SELECT paper_id FROM paper_chunks WHERE id=?", (chunk_id,)).fetchone()
+    return row[0] if row else None
 
 
 def get_induced_edges(conn: sqlite3.Connection) -> list[dict]:

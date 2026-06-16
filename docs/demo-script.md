@@ -2,7 +2,7 @@
 
 This is the competition demo path. The demo should show the highest stable milestone reached, while keeping lower milestone recordings available as fallbacks.
 
-## Running the demo (implemented M0-M2)
+## Running the demo (implemented M0-M3)
 
 The recordable artifact is the thin web panel. The CLI runner populates the demo SQLite, then the panel renders it (left: teaching transcript + decisions; right: route + route_version, learner model with three-color concepts and mastery/confidence bars, cited evidence).
 
@@ -73,19 +73,19 @@ decision rationale cites the failed quiz and the prerequisite edge
 
 ## Money Shot 2: Reteach on Misconception
 
-**Milestone:** M2
+**Milestone:** M2 (agent corpus)
 
 **Setup:**
 
-The user is learning `dense_retrieval`.
+The user is learning `react` (ReAct).
 
 **Misconception:**
 
 ```text
-dr_is_keyword_match
+react_is_just_cot
 ```
 
-The user thinks dense retrieval is just keyword/BM25 matching.
+The user thinks ReAct is just chain-of-thought prompting.
 
 **Expected system behavior:**
 
@@ -94,7 +94,7 @@ teach using direct explanation
 check detects misconception
 reteach switches to analogy
 parallel quiz item passes
-mastery rises
+mastery rises (0.40 -> ~0.80)
 confidence rises but remains calibrated
 ```
 
@@ -108,22 +108,24 @@ confidence rises but remains calibrated
 
 ## Money Shot 3: Literature-Induced Scaffolding
 
-**Milestone:** M3
+**Milestone:** M3 (agent corpus)
 
 **User prompt:**
 
 ```text
-I keep seeing hard negative mining. Where does it fit, and what are the pitfalls?
+I keep seeing multi-agent debate. Where does it fit, and what are the pitfalls?
 ```
 
 **Expected system behavior:**
 
-`hard_negative_mining` is outside the curated skeleton, so `induce_scaffold` runs over already-ingested chunks.
+`multi_agent_debate` is outside the curated skeleton, so the graph routes
+`planner -> induce_scaffold` over already-ingested chunks, then teaches it through the
+normal `retrieve -> teach -> check -> grade` loop.
 
 It writes:
 
 ```text
-negative_sampling -> hard_negative_mining
+multi_agent -> multi_agent_debate
 source = induced
 confidence_basis = {n_chunks, max_strength, multi_paper}  ->  rule-computed confidence
 example: 1 chunk + explicit_assertion + single paper  ->  0.75
@@ -132,8 +134,8 @@ example: 1 chunk + explicit_assertion + single paper  ->  0.75
 It also mines a misconception:
 
 ```text
-wrong_model: more negatives is always better
-correct_model: hard negatives matter more than raw quantity
+wrong_model: more agents / rounds always improves the answer
+correct_model: gains are task-dependent; debate can amplify a shared error (contested)
 ```
 
 **What the viewer should see:**
