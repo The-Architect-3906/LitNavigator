@@ -61,7 +61,7 @@ def _print_trace(conn: sqlite3.Connection, sid: str, db_path: str) -> None:
     # answer, the learner state after, and the decision it triggered (real stored values).
     print("\nTurn-by-turn:")
     for ev in t["timeline"]:
-        print(f"\n  [{ev['index']}] {ev['name']} — {ev['turn_type']}/{ev['strategy']}  "
+        print(f"\n  [{ev['index']}] {ev['name']} - {ev['turn_type']}/{ev['strategy']}  "
               f"cites={ev['cited_chunks']}")
         if ev["answer"] is not None:
             mark = "correct" if ev["score"] == 1.0 else "wrong"
@@ -70,7 +70,7 @@ def _print_trace(conn: sqlite3.Connection, sid: str, db_path: str) -> None:
                      if ev["detected_misconception"] else ""))
         print(f"      learner: mastery={ev['mastery_after']} confidence={ev['confidence_after']}")
         if ev["decision"] is not None:
-            print(f"      -> decision: {ev['decision']} — {ev['rationale']}")
+            print(f"      -> decision: {ev['decision']} - {ev['rationale']}")
 
     print("\nFinal learner model:")
     for c in t["concepts"]:
