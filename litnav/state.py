@@ -43,6 +43,11 @@ class NavState(TypedDict):
     current_evidence: List[dict]
     current_quiz_item: Optional[dict]
 
+    # Inner-loop teaching state (M2)
+    current_strategy: Optional[str]         # explanation strategy of the current teach/reteach turn
+    current_cited_chunks: List[str]         # chunks cited by the current teach/reteach turn
+    used_quiz_ids: List[int]                # quiz item ids already drawn this concept (pre vs post)
+
     # Answer handling
     user_answer: Optional[str]
     pending_answers: List[str]              # pre-seeded for gate / batch mode
@@ -60,6 +65,10 @@ class NavState(TypedDict):
 
     # Append-only audit history (LangGraph merges with operator.add)
     history: Annotated[List[dict], operator.add]
+
+
+# Explanation strategies, tried in order; reteach picks the first not yet used.
+RETEACH_STRATEGIES = ["direct", "analogy", "worked_example", "contrast_case", "simpler_decomposition"]
 
 
 def initial_concept_state() -> ConceptState:

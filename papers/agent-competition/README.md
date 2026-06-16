@@ -29,3 +29,11 @@ Selection date: 2026-06-16
 6. A Survey on Large Language Model Based Autonomous Agents
    Source: https://arxiv.org/abs/2308.11432
    Why: agent taxonomy and concept-map backbone.
+
+7. MetaGPT: Meta Programming for A Multi-Agent Collaborative Framework
+   Source: https://arxiv.org/abs/2308.00352
+   Why: multi-agent division of labor, SOPs, role collaboration.
+
+8. CAMEL: Communicative Agents for "Mind" Exploration of Large Language Model Society
+   Source: https://arxiv.org/abs/2303.17760
+   Why: role-playing, inter-agent communication, cooperative frameworks.

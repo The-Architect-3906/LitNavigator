@@ -165,3 +165,72 @@ def get_learner_mastery(conn: sqlite3.Connection, session_id: str, concept_id: i
         (session_id, concept_id),
     ).fetchone()
     return row[0] if row else None
+
+
+def get_parallel_quiz_items(
+    conn: sqlite3.Connection, concept_id: int, exclude_ids: list[int] | None = None
+) -> list[dict]:
+    """Return quiz items for a concept (ordered by id). Used for pre/post parallel forms:
+    the caller excludes already-used item ids so pre and post draw different forms."""
+    rows = conn.execute(
+        "SELECT id, concept_id, question, answer_key, qtype, difficulty, "
+        "evidence_chunk_id, source_paper_id, targets_misconception "
+        "FROM quiz_items WHERE concept_id=? ORDER BY id",
+        (concept_id,),
+    ).fetchall()
+    items = [
+        {"id": r[0], "concept_id": r[1], "question": r[2], "answer_key": r[3],
+         "qtype": r[4], "difficulty": r[5], "evidence_chunk_id": r[6],
+         "source_paper_id": r[7], "targets_misconception": r[8]}
+        for r in rows
+    ]
+    exclude = set(exclude_ids or [])
+    fresh = [it for it in items if it["id"] not in exclude]
+    return fresh if fresh else items  # fall back to reusing when all forms used
+
+
+def get_misconceptions_for_concept(conn: sqlite3.Connection, concept_id: int) -> list[dict]:
+    rows = conn.execute(
+        "SELECT id, concept_id, wrong_model, correct_model, detect_hint, reteach_strategy, "
+        "source, confidence, evidence_chunk_id FROM misconceptions WHERE concept_id=?",
+        (concept_id,),
+    ).fetchall()
+    return [
+        {"id": r[0], "concept_id": r[1], "wrong_model": r[2], "correct_model": r[3],
+         "detect_hint": r[4], "reteach_strategy": r[5], "source": r[6],
+         "confidence": r[7], "evidence_chunk_id": r[8]}
+        for r in rows
+    ]
+
+
+def record_tutor_turn(
+    conn: sqlite3.Connection,
+    session_id: str,
+    concept_id: int,
+    turn_type: str,
+    strategy: str,
+    pre_check_score: float | None,
+    post_check_score: float | None,
+    cited_chunks: list[str] | None = None,
+) -> None:
+    conn.execute(
+        """
+        INSERT INTO tutor_turns
+            (session_id, concept_id, turn_type, strategy, pre_check_score, post_check_score, cited_chunks)
+        VALUES (?,?,?,?,?,?,?)
+        """,
+        (session_id, concept_id, turn_type, strategy, pre_check_score, post_check_score,
+         json.dumps(cited_chunks or [])),
+    )
+    conn.commit()
+
+
+def get_last_tutor_post_score(
+    conn: sqlite3.Connection, session_id: str, concept_id: int
+) -> float | None:
+    row = conn.execute(
+        "SELECT post_check_score FROM tutor_turns "
+        "WHERE session_id=? AND concept_id=? ORDER BY id DESC LIMIT 1",
+        (session_id, concept_id),
+    ).fetchone()
+    return row[0] if row else None

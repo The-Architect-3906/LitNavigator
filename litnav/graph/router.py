@@ -17,8 +17,11 @@ def tutor_router(state: dict) -> str:
         return "advance"
 
     # A prereq counts as "met" if mastery is high enough OR if it has already
-    # been attempted in this session (route step status == "done").
-    done_ids = {s["concept_id"] for s in state.get("route", []) if s.get("status") == "done"}
+    # been attempted in this session (route step status terminal: done or conceded).
+    # Conceded must count too, otherwise a conceded prereq deadlocks its dependents
+    # into an endless diagnose -> replan(noop) loop.
+    done_ids = {s["concept_id"] for s in state.get("route", [])
+                if s.get("status") in ("done", "conceded")}
     unmastered_prereqs = [
         p for p in prereqs
         if state["learner_state"].get(p, {}).get("mastery", 0.0) < threshold

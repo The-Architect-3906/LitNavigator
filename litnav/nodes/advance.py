@@ -23,7 +23,7 @@ def advance_node(state: NavState, conn: sqlite3.Connection) -> dict:
 
     mastery = state["learner_state"].get(concept_id, {}).get("mastery", 0.0)
     rationale = (
-        f"Concept {concept_id} mastery={mastery:.3f} ≥ threshold or conceded. "
+        f"Concept {concept_id} mastery={mastery:.3f} >= threshold or conceded. "
         f"Quiz score={quiz_result.get('score', '?')}. Advancing."
     )
     repo.record_decision(

@@ -66,7 +66,7 @@ def _run_concept(state: dict, conn: sqlite3.Connection, answer: str) -> dict:
 
 
 def main() -> int:
-    data = json.loads(Path(FIXTURE).read_text())
+    data = json.loads(Path(FIXTURE).read_text(encoding="utf-8"))
     slug_to_id = {c["slug"]: c["id"] for c in data["concepts"]}
     dense_id = slug_to_id["dense_retrieval"]
     contrastive_id = slug_to_id["contrastive_learning"]
@@ -213,7 +213,7 @@ def main() -> int:
     n_qa = conn_e.execute(
         "SELECT count(*) FROM quiz_attempts WHERE session_id=?", (sid_e,)
     ).fetchone()[0]
-    results.append(check("checkpoint P1: grade executed — quiz_attempt written before interrupt",
+    results.append(check("checkpoint P1: grade executed -> quiz_attempt written before interrupt",
                           n_qa == 1))
 
     n_adv_before = conn_e.execute(

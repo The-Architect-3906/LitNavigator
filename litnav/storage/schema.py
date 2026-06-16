@@ -119,6 +119,31 @@ CREATE TABLE IF NOT EXISTS decisions (
     token_cost INTEGER DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS misconceptions (
+    id TEXT PRIMARY KEY,
+    concept_id INTEGER REFERENCES concepts(id),
+    wrong_model TEXT,
+    correct_model TEXT,
+    detect_hint TEXT,
+    reteach_strategy TEXT,
+    source TEXT CHECK(source IN ('curated','induced')) DEFAULT 'curated',
+    confidence REAL DEFAULT 1.0,
+    evidence_chunk_id TEXT REFERENCES paper_chunks(id)
+);
+
+CREATE TABLE IF NOT EXISTS tutor_turns (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_id TEXT REFERENCES sessions(id),
+    concept_id INTEGER REFERENCES concepts(id),
+    turn_type TEXT,
+    strategy TEXT,
+    pre_check_score REAL,
+    post_check_score REAL,
+    cited_chunks TEXT,
+    token_cost INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 """
 
 

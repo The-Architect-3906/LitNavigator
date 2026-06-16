@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Runtime data / generated databases
+data/runtime/
+*.sqlite
+*.sqlite-*
+
+# Local environment
+.env
+.venv/
+venv/

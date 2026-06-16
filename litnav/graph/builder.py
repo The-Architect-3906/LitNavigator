@@ -16,6 +16,8 @@ from litnav.nodes.grade import grade_node
 from litnav.nodes.planner import planner_node
 from litnav.nodes.replan import replan_node
 from litnav.nodes.retrieve import retrieve_node
+from litnav.nodes.concede import concede_node
+from litnav.nodes.reteach import reteach_node
 from litnav.nodes.select_next import route_after_select, select_next_node
 from litnav.nodes.teach import teach_node
 from litnav.state import NavState
@@ -62,6 +64,8 @@ def build_graph(
     def _diagnose(s: NavState) -> dict:     return diagnose_node(s, domain_conn)
     def _replan(s: NavState) -> dict:       return replan_node(s, domain_conn)
     def _advance(s: NavState) -> dict:      return advance_node(s, domain_conn)
+    def _reteach(s: NavState) -> dict:      return reteach_node(s, domain_conn)
+    def _concede(s: NavState) -> dict:      return concede_node(s, domain_conn)
 
     workflow = StateGraph(NavState)
     workflow.add_node("planner", _planner)
@@ -73,6 +77,8 @@ def build_graph(
     workflow.add_node("diagnose", _diagnose)
     workflow.add_node("replan", _replan)
     workflow.add_node("advance", _advance)
+    workflow.add_node("reteach", _reteach)
+    workflow.add_node("concede", _concede)
 
     workflow.set_entry_point("planner")
     workflow.add_edge("planner", "select_next")
@@ -84,12 +90,14 @@ def build_graph(
     workflow.add_conditional_edges("grade", tutor_router, {
         "advance": "advance",
         "diagnose": "diagnose",
-        "reteach": "advance",   # M2 will replace
-        "concede": "advance",   # M2 will replace
+        "reteach": "reteach",
+        "concede": "concede",
     })
     workflow.add_edge("diagnose", "replan")
     workflow.add_edge("replan", "select_next")
     workflow.add_edge("advance", "select_next")
+    workflow.add_edge("reteach", "teach")     # reteach loops back to teaching with a new strategy
+    workflow.add_edge("concede", "select_next")
 
     compile_kwargs: dict = {"checkpointer": _make_checkpointer(checkpoint_conn)}
     if interrupt_after:
@@ -118,6 +126,9 @@ def make_initial_state(
         "current_concept_id": None,
         "current_evidence": [],
         "current_quiz_item": None,
+        "current_strategy": None,
+        "current_cited_chunks": [],
+        "used_quiz_ids": [],
         "user_answer": None,
         "pending_answers": pending_answers or [],
         "quiz_result": None,
@@ -179,7 +190,7 @@ def run_m0_session(
     if session_id is None:
         session_id = str(uuid.uuid4())
 
-    data = json.loads(P(fixture_path).read_text())
+    data = json.loads(P(fixture_path).read_text(encoding="utf-8"))
     topic = data["topic"]
     slug_to_id = {c["slug"]: c["id"] for c in data["concepts"]}
     target_ids = [slug_to_id[s] for s in data["targets"] if s in slug_to_id]

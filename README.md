@@ -4,7 +4,7 @@
 
 ### An AI tutor that reads the research papers and then teaches *you* — step by step, adapted to what you actually know.
 
-![Status](https://img.shields.io/badge/status-M1%20complete-brightgreen)
+![Status](https://img.shields.io/badge/status-M2%20complete-brightgreen)
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
 ![Framework](https://img.shields.io/badge/agent-LangGraph-black)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -76,18 +76,24 @@ flowchart TD
 ## Three demo moments
 
 ```
-① "Let me re-explain from a different angle."
-   You've understood dense retrieval as keyword matching.
-   → Mastery 0.40 → 0.82. Strategy switched. Route advances.
+① "Let me re-explain from a different angle."          [M2 ✅ implemented]
+   You think ReAct is just chain-of-thought prompting.
+   → Misconception detected, strategy switches direct → analogy,
+     mastery rises past threshold, route advances. (If it still won't land
+     after the strategies are exhausted, the tutor concedes honestly.)
 
-② "You need to shore this up first."
-   Contrastive learning quiz reveals negative sampling is missing.
+② "You need to shore this up first."                    [M1 ✅ implemented]
+   A quiz reveals a missing prerequisite.
    → Prereq inserted mid-session. route_version increments.
 
-③ "This concept isn't in your map yet — let me go to the papers."
-   You ask about hard-negative mining (off-graph concept).
-   → induce_scaffold reads corpus, derives prereq edge, mines one misconception,
-     teaches it as "still-contested", every claim backed by chunk id.
+③ "This concept isn't in your map yet — let me go to the papers."   [M3 next]
+   You ask about an off-graph agent concept.
+   → induce_scaffold reads the corpus, derives a prereq edge, mines one
+     misconception, teaches it as "still-contested", every claim backed by chunk id.
+
+The demo corpus is the agent-paper pack in `papers/agent-competition/` (ReAct,
+Toolformer, Reflexion, Generative Agents, Voyager, the autonomous-agents survey,
+MetaGPT, CAMEL). M2's tutor loop runs on this agent domain end to end.
 ```
 
 ---
@@ -98,6 +104,7 @@ flowchart TD
 pip install -r requirements.txt
 python -m litnav.evaluation.verify_m0   # G0: state machine + SQLite writes
 python -m litnav.evaluation.verify_m1   # G1: route replans on a prereq gap (LangGraph + checkpoint)
+python -m litnav.evaluation.verify_m2   # G2: teach/reteach/concede + misconception detection (agent corpus)
 pytest -q                               # full test suite
 ```
 
@@ -121,12 +128,12 @@ G0 PASS: offline run
 |:--|:--|:--:|
 | **M0** · Fake-data walking skeleton | State machine loop + SQLite persistence | ✅ Done |
 | **M1** · Navigator | Route changes because of learner state; LangGraph StateGraph + prereq replan + SqliteSaver checkpoint (G1 green) | ✅ Done |
-| **M2** · Tutor | teach → reteach → concede; misconception detection (Qwen / offline fallback) | ⬜ Next |
-| **M3** · Literature induction | `induce_scaffold` — the core novelty; confidence rule-computed | ⬜ |
-| **M4** · Polish | UI, hybrid retrieval, cross-session memory | ⬜ |
+| **M2** · Tutor | teach → reteach → concede on the agent corpus; misconception detection (Qwen / offline fallback); parallel-form quizzes; learning gain (G2 green) | ✅ Done |
+| **M3** · Literature induction | `induce_scaffold` — the core novelty; confidence rule-computed | ⬜ Next |
+| **M4** · Polish | thin web UI, hybrid retrieval, cross-session memory | ⬜ |
 
 > Every milestone is a self-contained, demoable, submittable build — no matter where progress stops.
-> M1's gate (G1) passes via the `verify_m1` transcript; the thin web panel is the remaining M1 UI item and is folded into the upcoming UI work.
+> Gates run fully offline (`verify_m0/1/2`); the LLM (Qwen) is an optional path in M2/M3 with deterministic fixtures as fallback. The thin web panel remains the outstanding UI item, carried into M3/M4.
 
 ---
 
