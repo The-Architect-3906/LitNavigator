@@ -4,7 +4,7 @@ import re
 import sqlite3
 
 from litnav.grading import grade_answer
-from litnav.llm.client import complete_json
+from litnav.llm import client as llm_client
 from litnav.state import NavState, bkt_update, confidence_update
 from litnav.storage import repo
 
@@ -38,6 +38,7 @@ def grade_node(state: NavState, conn: sqlite3.Connection) -> dict:
 
     # ── Misconception detection (only meaningful on a wrong answer) ──────────────
     detected_id = None
+    turn_token_cost = 0
     candidates = repo.get_misconceptions_for_concept(conn, concept_id)
     if not correct and candidates:
         deterministic = _detect_misconception(answer, candidates)
@@ -50,8 +51,9 @@ def grade_node(state: NavState, conn: sqlite3.Connection) -> dict:
             f"Candidate misconceptions: {[{'id': m['id'], 'wrong_model': m['wrong_model']} for m in candidates]}\n"
             'Respond as JSON: {"misconception_id": "<id or null>"}'
         )
-        result = complete_json(prompt, fallback={"misconception_id": deterministic})
+        result = llm_client.complete_json(prompt, fallback={"misconception_id": deterministic})
         detected_id = result.get("misconception_id", deterministic)
+        turn_token_cost = llm_client.LAST_TOKEN_COST  # 0 offline; real token usage when provider=qwen
 
     # ── Learner state update ────────────────────────────────────────────────────
     learner_state = dict(state["learner_state"])
@@ -97,6 +99,7 @@ def grade_node(state: NavState, conn: sqlite3.Connection) -> dict:
         conn, session_id, concept_id, turn_type, strategy,
         pre_check_score=pre_score, post_check_score=score,
         cited_chunks=state.get("current_cited_chunks") or [],
+        token_cost=turn_token_cost,
     )
 
     quiz_result = {

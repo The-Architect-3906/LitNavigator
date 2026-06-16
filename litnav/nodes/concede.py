@@ -38,7 +38,7 @@ def concede_node(state: NavState, conn: sqlite3.Connection) -> dict:
     rationale = (
         f"I switched explanations {len(cs.get('tried_strategies', []))} times and concept "
         f"{concept_id} still has not landed (mastery={mastery:.3f}). Marking it not-yet-mastered "
-        f"with low confidence ({cs['confidence']}) — you can overrule me — and moving on rather "
+        f"with low confidence ({cs['confidence']}); you can overrule me; and moving on rather "
         f"than looping. We can come back to it."
     )
     repo.record_decision(

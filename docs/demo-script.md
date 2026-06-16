@@ -2,6 +2,26 @@
 
 This is the competition demo path. The demo should show the highest stable milestone reached, while keeping lower milestone recordings available as fallbacks.
 
+## Running the demo (implemented M0-M2)
+
+The recordable artifact is the thin web panel. The CLI runner populates the demo SQLite, then the panel renders it (left: teaching transcript + decisions; right: route + route_version, learner model with three-color concepts and mastery/confidence bars, cited evidence).
+
+```bash
+# M1 — adaptive reroute (RAG fixture): wrong prereq answer inserts a prerequisite, route_version -> 2
+python -m litnav.app demo-m1 --answer wrong_prereq
+python -m litnav.app demo-m1 --answer correct        # counterfactual: advances cleanly
+
+# M2 — agent corpus: misconception -> reteach -> pass
+python -m litnav.app demo-m2 --answer cot            # ReAct=CoT misconception, reteach to analogy, mastery 0.40 -> 0.80
+python -m litnav.app demo-m2 --answer correct        # counterfactual: advance without reteach
+python -m litnav.app demo-m2 --answer exhausted      # reteach exhausted -> honest concede
+
+# Visual panel (renders the last demo session)
+python -m litnav.ui.server                            # then open http://127.0.0.1:8000/sessions/<id>
+```
+
+> Gates remain the source of truth for state: `verify_m0` / `verify_m1` / `verify_m2` all pass fully offline. The M2 tutor loop runs on the agent paper pack; the M1 reroute currently runs on the RAG fixture and will be re-themed onto the agent route when the full agent curriculum is assembled in M3.
+
 ## Demo Topic
 
 Use one stable topic:

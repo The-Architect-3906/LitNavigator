@@ -212,15 +212,17 @@ def record_tutor_turn(
     pre_check_score: float | None,
     post_check_score: float | None,
     cited_chunks: list[str] | None = None,
+    token_cost: int = 0,
 ) -> None:
     conn.execute(
         """
         INSERT INTO tutor_turns
-            (session_id, concept_id, turn_type, strategy, pre_check_score, post_check_score, cited_chunks)
-        VALUES (?,?,?,?,?,?,?)
+            (session_id, concept_id, turn_type, strategy, pre_check_score, post_check_score,
+             cited_chunks, token_cost)
+        VALUES (?,?,?,?,?,?,?,?)
         """,
         (session_id, concept_id, turn_type, strategy, pre_check_score, post_check_score,
-         json.dumps(cited_chunks or [])),
+         json.dumps(cited_chunks or []), token_cost),
     )
     conn.commit()
 
