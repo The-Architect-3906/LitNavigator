@@ -1,0 +1,367 @@
+{
+  "topic": "LLM-based autonomous agents",
+  "targets": [
+    "react",
+    "reflection",
+    "tool_use"
+  ],
+  "concepts": [
+    {
+      "id": 1,
+      "slug": "react",
+      "name": "ReAct (reasoning + acting)",
+      "is_demo_core": 1,
+      "frontier_flag": "consensus"
+    },
+    {
+      "id": 2,
+      "slug": "tool_use",
+      "name": "Tool use",
+      "frontier_flag": "consensus"
+    },
+    {
+      "id": 3,
+      "slug": "reflection",
+      "name": "Reflection and self-correction",
+      "frontier_flag": "consensus"
+    },
+    {
+      "id": 4,
+      "slug": "agent_memory",
+      "name": "Agent memory",
+      "frontier_flag": "consensus"
+    },
+    {
+      "id": 5,
+      "slug": "skill_learning",
+      "name": "Skill learning and lifelong agents",
+      "frontier_flag": "consensus"
+    },
+    {
+      "id": 6,
+      "slug": "multi_agent",
+      "name": "Multi-agent collaboration",
+      "frontier_flag": "contested"
+    },
+    {
+      "id": 7,
+      "slug": "agent_taxonomy",
+      "name": "Agent architecture taxonomy",
+      "frontier_flag": "consensus"
+    }
+  ],
+  "edges": [
+    {
+      "prereq_concept": 1,
+      "target_concept": 2,
+      "edge_type": "prerequisite",
+      "source": "curated",
+      "confidence": 1.0
+    },
+    {
+      "prereq_concept": 1,
+      "target_concept": 3,
+      "edge_type": "prerequisite",
+      "source": "curated",
+      "confidence": 1.0
+    },
+    {
+      "prereq_concept": 1,
+      "target_concept": 4,
+      "edge_type": "prerequisite",
+      "source": "curated",
+      "confidence": 1.0
+    },
+    {
+      "prereq_concept": 3,
+      "target_concept": 5,
+      "edge_type": "prerequisite",
+      "source": "curated",
+      "confidence": 1.0
+    },
+    {
+      "prereq_concept": 1,
+      "target_concept": 6,
+      "edge_type": "prerequisite",
+      "source": "curated",
+      "confidence": 1.0
+    },
+    {
+      "prereq_concept": 1,
+      "target_concept": 7,
+      "edge_type": "prerequisite",
+      "source": "curated",
+      "confidence": 1.0
+    }
+  ],
+  "papers": [
+    {
+      "id": 1,
+      "arxiv_id": "2210.03629",
+      "title": "ReAct: Synergizing Reasoning and Acting in Language Models",
+      "year": 2022
+    },
+    {
+      "id": 2,
+      "arxiv_id": "2302.04761",
+      "title": "Toolformer: Language Models Can Teach Themselves to Use Tools",
+      "year": 2023
+    },
+    {
+      "id": 3,
+      "arxiv_id": "2303.11366",
+      "title": "Reflexion: Language Agents with Verbal Reinforcement Learning",
+      "year": 2023
+    },
+    {
+      "id": 4,
+      "arxiv_id": "2304.03442",
+      "title": "Generative Agents: Interactive Simulacra of Human Behavior",
+      "year": 2023
+    },
+    {
+      "id": 5,
+      "arxiv_id": "2305.16291",
+      "title": "Voyager: An Open-Ended Embodied Agent with Large Language Models",
+      "year": 2023
+    },
+    {
+      "id": 6,
+      "arxiv_id": "2308.11432",
+      "title": "A Survey on Large Language Model Based Autonomous Agents",
+      "year": 2023
+    },
+    {
+      "id": 7,
+      "arxiv_id": "2308.00352",
+      "title": "MetaGPT: Meta Programming for a Multi-Agent Collaborative Framework",
+      "year": 2023
+    },
+    {
+      "id": 8,
+      "arxiv_id": "2303.17760",
+      "title": "CAMEL: Communicative Agents for Mind Exploration of LLM Society",
+      "year": 2023
+    }
+  ],
+  "chunks": [
+    {
+      "id": "c_2210.03629_1",
+      "paper_id": 1,
+      "concept_id": 1,
+      "text": "ABSTRACT While large language models (LLMs) have demonstrated impressive performance across tasks in language understanding and interactive decision making, their abilities for reasoning (e.g. chain-of-thought prompting) and acting (e.g. action plan generation) have primarily been studied as separate topics. In this paper, we explore the use of LLMs to generate both reasoning traces and task-speci\ufb01c actions in an interleaved manner, allowing for greater synergy between the two: reasoning traces help the model induce, track, and update action plans as well as handle exceptions, while actions allow it to interface with and gather additional information from external sources such as knowledge bases"
+    },
+    {
+      "id": "c_2210.03629_2",
+      "paper_id": 1,
+      "concept_id": 1,
+      "text": "or environments. We apply our approach, named ReAct, to a diverse set of language and decision making tasks and demonstrate its effectiveness over state-of-the-art baselines in addition to improved human interpretability and trustworthiness. Concretely, on question answering (HotpotQA) and fact veri\ufb01cation (Fever), ReAct overcomes prevalent issues of hallucination and error propagation in chain-of-thought reasoning by interacting with a simple Wikipedia API, and generating human-like task-solving trajectories that are more interpretable than baselines without reasoning traces. Furthermore, on two interactive decision making benchmarks (ALFWorld and WebShop), ReAct outperforms imitation and reinforcement"
+    },
+    {
+      "id": "c_2210.03629_3",
+      "paper_id": 1,
+      "concept_id": 1,
+      "text": "learning methods by an absolute success rate of 34% and 10% respectively, while being prompted with only one or two in-context examples. 1 I NTRODUCTION A unique feature of human intelligence is the ability to seamlessly combine task-oriented actions with verbal reasoning (or inner speech, Alderson-Day & Fernyhough, 2015), which has been theorized to play an important role in human cognition for enabling self-regulation or strategization (Vygotsky, 1987; Luria, 1965; Fernyhough, 2010) and maintaining a working memory (Baddeley, 1992). Consider the example of cooking up a dish in the kitchen. Between any two speci\ufb01c actions, we may reason in language in order to track progress (\u201cnow that everything"
+    },
+    {
+      "id": "c_2210.03629_4",
+      "paper_id": 1,
+      "concept_id": 1,
+      "text": "is cut, I should heat up the pot of water\u201d), to handle exceptions or adjust the plan according to the situation (\u201cI don\u2019t have salt, so let me use soy sauce and pepper instead\u201d), and to realize when external information is needed (\u201chow do I prepare dough? Let me search on the Internet\u201d). We may also act (open a cookbook to read the recipe, open the fridge, check ingredients) to support the reasoning and to answer questions (\u201cWhat dish can I make right now?\u201d). This tight synergy between \u201cacting\u201d and \u201creasoning\u201d allows humans to learn new tasks quickly and perform robust decision making or reasoning, even under previously unseen circumstances or facing information uncertainties. Recent results"
+    },
+    {
+      "id": "c_2302.04761_1",
+      "paper_id": 2,
+      "concept_id": 2,
+      "text": "Abstract Language models (LMs) exhibit remarkable abilities to solve new tasks from just a few examples or textual instructions, especially at scale. They also, paradoxically, struggle with basic functionality, such as arithmetic or factual lookup, where much simpler and smaller models excel. In this paper, we show that LMs can teach themselves touse external tools via simple APIs and achieve the best of both worlds. We introduce Toolformer, a model trained to decide which APIs to call, when to call them, what arguments to pass, and how to best incorporate the results into future token prediction. This is done in a self-supervised way, requiring nothing more than a handful of demonstrations for"
+    },
+    {
+      "id": "c_2302.04761_2",
+      "paper_id": 2,
+      "concept_id": 2,
+      "text": "each API. We incorporate a range of tools, including a calculator, a Q&A system, a search engine, a translation system, and a calendar. Toolformer achieves substantially improved zero-shot performance across a variety of downstream tasks, often competitive with much larger models, without sacri\ufb01cing its core language modeling abilities. 1 Introduction Large language models achieve impressive zeroand few-shot results on a variety of natural language processing tasks (Brown et al., 2020; Chowdhery et al., 2022, i.a.) and show several emergent capabilities (Wei et al., 2022). However, all of these models have several inherent limitations that can at best be partially addressed by further scaling."
+    },
+    {
+      "id": "c_2302.04761_3",
+      "paper_id": 2,
+      "concept_id": 2,
+      "text": "These limitations include an inability to access up-to-date information on recent events (Komeili et al., 2022) and the related tendency to hallucinate facts (Maynez et al., 2020; Ji et al., 2022), dif\ufb01culties in understanding low-resource languages (Lin et al., 2021), a lack of mathematical skills to perform precise calculations (Patel et al., 2021) and an unawareness of the progression of time (Dhingra et al., 2022). The New England Journal of Medicine is a registered trademark of [QA(\u201cWho is the publisher of The New England Journal of Medicine?\u201d) \u2192 Massachusetts Medical Society] the MMS. Out of 1400 participants, 400 (or [Calculator(400 / 1400) \u2192 0.29] 29%) passed the test. The name derives"
+    },
+    {
+      "id": "c_2302.04761_4",
+      "paper_id": 2,
+      "concept_id": 2,
+      "text": "from \u201cla tortuga\u201d, the Spanish word for [MT(\u201ctortuga\u201d) \u2192 turtle] turtle. The Brown Act is California\u2019s law [WikiSearch(\u201cBrown Act\u201d) \u2192 The Ralph M. Brown Act is an act of the California State Legislature that guarantees the public's right to attend and participate in meetings of local legislative bodies.] that requires legislative bodies, like city councils, to hold their meetings open to the public. Figure 1: Exemplary predictions of Toolformer. The model autonomously decides to call different APIs (from top to bottom: a question answering system, a calculator, a machine translation system, and a Wikipedia search engine) to obtain information that is useful for completing a piece of text. A"
+    },
+    {
+      "id": "c_2303.11366_1",
+      "paper_id": 3,
+      "concept_id": 3,
+      "text": "Abstract Large language models (LLMs) have been increasingly used to interact with external environments (e.g., games, compilers, APIs) as goal-driven agents. However, it remains challenging for these language agents to quickly and efficiently learn from trial-and-error as traditional reinforcement learning methods require extensive training samples and expensive model fine-tuning. We propose Reflexion, a novel framework to reinforce language agents not by updating weights, but instead through linguistic feedback. Concretely, Reflexion agents verbally reflect on task feedback signals, then maintain their own reflective text in an episodic memory buffer to induce better decision-making in subsequent"
+    },
+    {
+      "id": "c_2303.11366_2",
+      "paper_id": 3,
+      "concept_id": 3,
+      "text": "trials. Reflexion is flexible enough to incorporate various types (scalar values or free-form language) and sources (external or internally simulated) of feedback signals, and obtains significant improvements over a baseline agent across diverse tasks (sequential decision-making, coding, language reasoning). For example, Reflexion achieves a 91% pass@1 accuracy on the HumanEval coding benchmark, surpassing the previous state-of-the-art GPT-4 that achieves 80%. We also conduct ablation and analysis studies using different feedback signals, feedback incorporation methods, and agent types, and provide insights into how they affect performance. We release all code, demos, and datasets at https://github.com/noahshinn024/reflexion."
+    },
+    {
+      "id": "c_2303.11366_3",
+      "paper_id": 3,
+      "concept_id": 3,
+      "text": "1 Introduction Recent works such as ReAct [ 30], SayCan [ 1], Toolformer [ 22], HuggingGPT [ 23], generative agents [19], and WebGPT [17] have demonstrated the feasibility of autonomous decision-making agents that are built on top of a large language model (LLM) core. These methods use LLMs to generate text and \u2018actions\u2018 that can be used in API calls and executed in an environment. Since they rely on massive models with an enormous number of parameters, such approaches have been so far limited to using in-context examples as a way of teaching the agents, since more traditional optimization schemes like reinforcement learning with gradient descent require substantial amounts of compute and time."
+    },
+    {
+      "id": "c_2303.11366_4",
+      "paper_id": 3,
+      "concept_id": 3,
+      "text": "Preprint. Under review. [cs.AI] 10 Oct 2023 In this paper, we propose an alternative approach called Reflexion that uses verbal reinforcement to help agents learn from prior failings. Reflexion converts binary or scalar feedback from the environment into verbal feedback in the form of a textual summary, which is then added as additional context for the LLM agent in the next episode. This self-reflective feedback acts as a \u2018semantic\u2019 gradient signal by providing the agent with a concrete direction to improve upon, helping it learn from prior mistakes to perform better on the task. This is akin to how humans iteratively learn to accomplish complex tasks in a few-shot manner \u2013 by reflecting on"
+    },
+    {
+      "id": "c_2304.03442_1",
+      "paper_id": 4,
+      "concept_id": 4,
+      "text": "ABSTRACT Believable proxies of human behavior can empower interactive applications ranging from immersive environments to rehearsal spaces for interpersonal communication to prototyping tools. In this paper, we introduce generative agents: computational software agents that simulate believable human behavior. Generative agents wake up, cook breakfast, and head to work; artists paint, while Permission to make digital or hard copies of part or all of this work for personal or classroom use is granted without fee provided that copies are not made or distributed for profit or commercial advantage and that copies bear this notice and the full citation on the first page. Copyrights for third-party"
+    },
+    {
+      "id": "c_2304.03442_2",
+      "paper_id": 4,
+      "concept_id": 4,
+      "text": "components of this work must be honored. For all other uses, contact the owner/author(s). UIST \u201923, October 29-November 1, 2023, San Francisco, CA, USA \u00a9 2023 Copyright held by the owner/author(s). ACM ISBN 979-8-4007-0132-0/23/10. https://doi.org/10.1145/3586183.3606763 authors write; they form opinions, notice each other, and initiate conversations; they remember and reflect on days past as they plan the next day. To enable generative agents, we describe an architecture that extends a large language model to store a complete record of the agent\u2019s experiences using natural language, synthesize those memories over time into higher-level reflections, and retrieve them dynamically to plan behavior."
+    },
+    {
+      "id": "c_2304.03442_3",
+      "paper_id": 4,
+      "concept_id": 4,
+      "text": "We instantiate generative agents to populate an interactive sandbox environment inspired by The Sims, where end users can interact with a small town of twenty-five agents using natural language. In an evaluation, these generative agents produce believable individual and emergent social behaviors. For example, starting with only a single user-specified notion that one agent wants to throw a Valentine\u2019s Day party, the agents autonomously spread invitations to the party over the next two [cs.HC] 6 Aug 2023 UIST \u201923, October 29-November 1, 2023, San Francisco, CA, USA J.S. Park, J.C. O\u2019Brien, C.J. Cai, M.R. Morris, P. Liang, M.S. Bernstein days, make new acquaintances, ask each other out on dates"
+    },
+    {
+      "id": "c_2304.03442_4",
+      "paper_id": 4,
+      "concept_id": 4,
+      "text": "to the party, and coordinate to show up for the party together at the right time. We demonstrate through ablation that the components of our agent architecture\u2014observation, planning, and reflection\u2014each contribute critically to the believability of agent behavior. By fusing large language models with computational interactive agents, this work introduces architectural and interaction patterns for enabling believable simulations of human behavior. CCS CONCEPTS \u2022 Human-centered computing\u2192 Interactive systems and tools; \u2022 Computing methodologies\u2192 Natural language processing. KEYWORDS Human-AI interaction, agents, generative AI, large language models ACM Reference Format: Joon Sung Park, Joseph"
+    },
+    {
+      "id": "c_2305.16291_1",
+      "paper_id": 5,
+      "concept_id": 5,
+      "text": "Abstract We introduce VOYAGER, the first LLM-powered embodied lifelong learning agent in Minecraft that continuously explores the world, acquires diverse skills, and makes novel discoveries without human intervention. VOYAGER consists of three key components: 1) an automatic curriculum that maximizes exploration, 2) an ever-growing skill library of executable code for storing and retrieving complex behaviors, and 3) a new iterative prompting mechanism that incorporates environment feedback, execution errors, and self-verification for program improvement. VOYAGER interacts with GPT-4 via blackbox queries, which bypasses the need for model parameter fine-tuning. The skills developed by VOYAGER"
+    },
+    {
+      "id": "c_2305.16291_2",
+      "paper_id": 5,
+      "concept_id": 5,
+      "text": "are temporally extended, interpretable, and compositional, which compounds the agent\u2019s abilities rapidly and alleviates catastrophic forgetting. Empirically, VOYAGER shows strong in-context lifelong learning capability and exhibits exceptional proficiency in playing Minecraft. It obtains 3.3\u00d7 more unique items, travels 2.3\u00d7 longer distances, and unlocks key tech tree milestones up to 15.3\u00d7 faster than prior SOTA. VOYAGER is able to utilize the learned skill library in a new Minecraft world to solve novel tasks from scratch, while other techniques struggle to generalize. Figure 1: VOYAGER discovers new Minecraft items and skills continually by self-driven exploration, significantly outperforming"
+    },
+    {
+      "id": "c_2305.16291_3",
+      "paper_id": 5,
+      "concept_id": 5,
+      "text": "the baselines. X-axis denotes the number of prompting iterations. 1 [cs.AI] 19 Oct 2023 Mine Wood Log Make Crafting Table Craft Stone Sword Craft Shield Make Furnace Cook Steak Combat Zombie Mine Wood Log Make Crafting Table Combat Zombie Mine Diamond New Task Code as Actions Refine ProgramEnv Feedback Execution Errors Update Exploration Progress Skill Retrieval Add New Skill Automatic Curriculum Iterative Prompting Mechanism Skill Library Environment Self-Verification Figure 2: VOYAGER consists of three key components: an automatic curriculum for open-ended exploration, a skill library for increasingly complex behaviors, and an iterative prompting mechanism that uses code as action space. 1"
+    },
+    {
+      "id": "c_2305.16291_4",
+      "paper_id": 5,
+      "concept_id": 5,
+      "text": "Introduction Building generally capable embodied agents that continuously explore, plan, and develop new skills in open-ended worlds is a grand challenge for the AI community [ 1\u20135]. Classical approaches employ reinforcement learning (RL) [6, 7] and imitation learning [8\u201310] that operate on primitive actions, which could be challenging for systematic exploration [11\u201315], interpretability [16\u201318], and generalization [19\u201321]. Recent advances in large language model (LLM) based agents harness the world knowledge encapsulated in pre-trained LLMs to generate consistent action plans or executable policies [16, 22, 19]. They are applied to embodied tasks like games and robotics [23\u201327], as well as"
+    },
+    {
+      "id": "c_2308.11432_1",
+      "paper_id": 6,
+      "concept_id": 7,
+      "text": "Abstract Autonomous agents have long been a research focus in academic and industry communities. Previous research often focuses on training agents with limited knowledge within isolated environments, which diverges significantly from human learning processes, and makes the agents hard to achieve human-like decisions. Recently, through the acquisition of vast amounts of web knowledge, large language models (LLMs) have shown potential in human-level intelligence, leading to a surge in research on LLM-based autonomous agents. In this paper, we present a comprehensive survey of these studies, delivering a systematic review of LLMbased autonomous agents from a holistic perspective. We first discuss"
+    },
+    {
+      "id": "c_2308.11432_2",
+      "paper_id": 6,
+      "concept_id": 7,
+      "text": "the construction of LLM-based autonomous agents, proposing a unified framework that encompasses much of previous work. Then, we present an overview of the diverse applications of LLM-based autonomous agents in social science, natural science, and engineering. Finally, we delve into the evaluation strategies commonly used for LLM-based autonomous agents. Based on the previous studies, we also present several challenges and future directions in this field. Keywords Autonomous agent, Large language model, Human-level intelligence 1 Introduction \u201cAn autonomous agent is a system situated within and a part of an environment that senses that environment and acts on it, over time, in pursuit of its"
+    },
+    {
+      "id": "c_2308.11432_3",
+      "paper_id": 6,
+      "concept_id": 7,
+      "text": "own agenda and so as to effect what it senses in the future. \u201d Franklin and Graesser (1997) Autonomous agents have long been recognized as a promising approach to achieving artificial general intelligence (AGI), which is expected to acReceived month dd, yyyy; accepted month dd, yyyy E-mail: xu.chen@ruc.edu.cn;yankailin@ruc.edu.cn *Both authors contribute equally to this paper. [cs.AI] 2 Mar 2025 2 Front. Comput. Sci., 2025, 0(0): 1\u201342 2021-1 2022-1 2023-2 2023-4 2023-6 2023-8 Time\uff08Year-Month\uff09 NumberofPapers\uff08cumulated\uff09 WebGPT 2021-12 Generative Agent2023-4 Voyager 2023-5 ToolBench 2023-7 AgentSims 2023-8 Tool Agent Simulation Agent General Agent Embodied Agent TALM2022-5 HuggingGPT2023-3 Game"
+    },
+    {
+      "id": "c_2308.11432_4",
+      "paper_id": 6,
+      "concept_id": 7,
+      "text": "Agent CoT 2022-1 Web Agent WebShop2022-7 InnerMonologue2022-7 DEPS2023-2 Toolformer2023-2 AutoGPT2023-3 Assistant Agent AgentGPT2023-4 RecAgent 2023-6 GITM2023-5 ToT2023-5 MIND2WEB2023-6 CO-LLM 2023-7 ChatDev 2023-7 Fig. 1 Illustration of the growth trend in the field of LLM-based autonomous agents. We present the cumulative number of papers published from January 2021 to August 2023. We assign di fferent colors to represent various agent categories. For example, a game agent aims to simulate a game-player, while a tool agent mainly focuses on tool using. For each time period, we provide a curated list of studies with diverse agent categories. complish tasks through self-directed planning and"
+    },
+    {
+      "id": "c_2308.00352_1",
+      "paper_id": 7,
+      "concept_id": 6,
+      "text": "ABSTRACT Remarkable progress has been made on automated problem solving through societies of agents based on large language models (LLMs). Existing LLM-based multi-agent systems can already solve simple dialogue tasks. Solutions to more complex tasks, however, are complicated through logic inconsistencies due to cascading hallucinations caused by naively chaining LLMs. Here we introduce MetaGPT, an innovative meta-programming framework incorporating efficient human workflows into LLM-based multi-agent collaborations. MetaGPT encodes Standardized Operating Procedures (SOPs) into prompt sequences for more streamlined workflows, thus allowing agents with human-like domain expertise to verify intermediate"
+    },
+    {
+      "id": "c_2308.00352_2",
+      "paper_id": 7,
+      "concept_id": 6,
+      "text": "results and reduce errors. MetaGPT utilizes an assembly line paradigm to assign diverse roles to various agents, efficiently breaking down complex tasks into subtasks involving many agents working together. On collaborative software engineering benchmarks, MetaGPT generates more coherent solutions than previous chat-based multi-agent systems. Our project can be found at https://github.com/geekan/MetaGPT. 1 I NTRODUCTION Autonomous agents utilizing Large Language Models (LLMs) offer promising opportunities to enhance and replicate human workflows. In real-world applications, however, existing systems (Park et al., 2023; Zhuge et al., 2023; Cai et al., 2023; Wang et al., 2023c; Li et al., 2023;"
+    },
+    {
+      "id": "c_2308.00352_3",
+      "paper_id": 7,
+      "concept_id": 6,
+      "text": "Du et al., 2023; Liang et al., 2023; Hao et al., 2023; Zhou et al., 2023b) tend to oversimplify the complexities. They struggle to achieve effective, coherent, and accurate problem-solving processes, particularly when there is a need for meaningful collaborative interaction (Chen et al., 2024; Zhang et al., 2023a; Dong et al., 2023; Zhou et al., 2023a; Qian et al., 2023; Tang et al., 2023b; Hong et al., 2024). Through extensive collaborative practice, humans have developed widely accepted Standardized Operating Procedures (SOPs) across various domains (Belbin, 2012; Manifesto, 2001; DeMarco & Lister, 2013). These SOPs play a critical role in supporting task decomposition and effective coordination."
+    },
+    {
+      "id": "c_2308.00352_4",
+      "paper_id": 7,
+      "concept_id": 6,
+      "text": "Furthermore, SOPs outline the responsibilities of each team member, while establishing standards for intermediate outputs. Well-defined SOPs improve the consistent and accurate execution of tasks that align with defined roles and quality standards (Belbin, 2012; Manifesto, 2001; DeMarco & Lister, 2013; Wooldridge & Jennings, 1998). For instance, in a software company, Product Managers analyze competition and user needs to create Product Requirements Documents (PRDs) using a standardized structure, to guide the developmental process. Inspired by such ideas, we design a promising GPT -based Meta-Programming framework called MetaGPT that significantly benefits from SOPs. Unlike other works (Li"
+    },
+    {
+      "id": "c_2303.17760_1",
+      "paper_id": 8,
+      "concept_id": 6,
+      "text": "Abstract The rapid advancement of chat-based language models has led to remarkable progress in complex task-solving. However, their success heavily relies on human input to guide the conversation, which can be challenging and time-consuming. This paper explores the potential of building scalable techniques to facilitate autonomous cooperation among communicative agents, and provides insight into their \u201ccognitive\u201d processes. To address the challenges of achieving autonomous cooperation, we propose a novel communicative agent framework named roleplaying . Our approach involves using inception prompting to guide chat agents toward task completion while maintaining consistency with human intentions."
+    },
+    {
+      "id": "c_2303.17760_2",
+      "paper_id": 8,
+      "concept_id": 6,
+      "text": "We showcase how role-playing can be used to generate conversational data for studying the behaviors and capabilities of a society of agents, providing a valuable resource for investigating conversational language models. In particular, we conduct comprehensive studies on instruction-following cooperation in multi-agent settings. Our contributions include introducing a novel communicative agent framework, offering a scalable approach for studying the cooperative behaviors and capabilities of multi-agent systems, and open-sourcing our library to support research on communicative agents and beyond: https://github.com/camel-ai/camel. 1 Introduction \u201cWhat magical trick makes us intelligent? The trick"
+    },
+    {
+      "id": "c_2303.17760_3",
+      "paper_id": 8,
+      "concept_id": 6,
+      "text": "is that there is no trick. The power of intelligence stems from our vast diversity, not from any single, perfect principle. \u201d - Marvin Minsky, The Society of Mind, p. 308 Confronted with the complexities of real-world tasks, solving them often requires multiple steps. The rapid progress of chat-based large-scale language models (LLMs) has yielded remarkable achievements in complex task-solving [82, 84, 116, 89, 5, 10, 122, 13]. Nevertheless, it is worth noting that their success is heavily reliant on human input to guide the conversation in the right direction. This reliance necessitates users to provide relevant and precise prompts based on their intentions and the chat agent\u2019s feedback. This"
+    },
+    {
+      "id": "c_2303.17760_4",
+      "paper_id": 8,
+      "concept_id": 6,
+      "text": "can be challenging, time-consuming, and sometimes impossible. Crafting effective prompts often demands a deep understanding and expertise of a particular domain of knowledge. Consider an individual who lacks trading expertise; they would find it difficult to create suitable prompts for directing a chat agent to develop a trading application. This predicament is raising a crucial question: can we replace human intervention with an autonomous communicative agent capable of steering the conversation toward task completion with minimal human supervision? To tackle this issue, it is crucial to conduct more research exploring the potential, \u2217Equal contribution 37th Conference on Neural Information"
+    }
+  ],
+  "misconceptions": [
+    {
+      "id": "react_is_just_cot",
+      "concept_id": 1,
+      "wrong_model": "ReAct is just chain-of-thought prompting - the model only produces reasoning text.",
+      "correct_model": "ReAct interleaves reasoning traces with actions and observations from an external environment.",
+      "detect_hint": "chain.?of.?thought|\\bcot\\b|just (reason|think)|only (reason|think)|keyword",
+      "reteach_strategy": "analogy",
+      "source": "curated",
+      "confidence": 1.0,
+      "evidence_chunk_id": "c_2210.03629_1"
+    }
+  ],
+  "quiz_items": [
+    {
+      "id": 1,
+      "concept_id": 1,
+      "qtype": "explain",
+      "difficulty": 1,
+      "question": "In one sentence, what makes ReAct different from plain chain-of-thought prompting?",
+      "answer_key": "actions and observations",
+      "evidence_chunk_id": "c_2210.03629_1",
+      "source_paper_id": 1,
+      "targets_misconception": "react_is_just_cot"
+    }
+  ]
+}

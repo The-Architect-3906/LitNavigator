@@ -151,7 +151,7 @@ G0 PASS: offline run
 
 **Enablers (needed only by specific items, not the gated core):**
 
-- **Real PDF chunk extraction** — replace representative chunks with text extracted from the 8 papers. *No API / no compute.* Prerequisite for grounding live induction and real teaching in actual paper text.
+- **Real PDF chunk extraction** — ✅ **done.** `data/seed/agents_corpus.json` holds real abstract/intro text extracted from all 8 PDFs (32 chunks, each tagged to a concept); regenerate with `python -m litnav.ingest.pdf_extract`. *No API / no compute.* The tuned `agents_m2/m3.json` stay as the demo-core; this corpus is the real-data set and the basis for future grounded teaching / live induction.
 - **Qwen API key** — for the one live induction recording (M4) and for genuinely grounded teaching in the product UI. The LLM is an optional path everywhere; offline fixtures are the fallback.
 - **Embeddings (bge-m3 + Chroma)** — only for M4 hybrid/vector retrieval. Until then keyword/FTS5 suffices.
 

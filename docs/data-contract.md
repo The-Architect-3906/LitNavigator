@@ -61,6 +61,8 @@ Required shape:
 }
 ```
 
+There are three seed fixtures, all the same shape: `rag_demo.json` (M0/M1 walking-skeleton), `agents_m2.json` / `agents_m3.json` (tuned agent demo-core), and **`agents_corpus.json`** (the real corpus — chunks are real text extracted from the 8 PDFs by `python -m litnav.ingest.pdf_extract`, tagged to concepts via a curated paper→concept map).
+
 `targets` lists the concepts the **planner** sequences into the initial route. Prerequisites that are *not* in `targets` (e.g. `negative_sampling`) are assumed mastered and only inserted by `replan` when a quiz reveals a gap — this is what enables the M1 reroute money shot. The fixture must include an `evaluation` concept so the demo route `Dense → Contrastive → RAG → Evaluation` matches the data, and `negative_sampling` as a prereq edge into `contrastive_learning` that is **not** a target.
 
 LLM usage by milestone: **M0/M1 require no LLM** (no embeddings, no LLM calls, no live paper APIs). **M2 `grade` (misconception detection) and M3 `induce_scaffold` call an LLM when `LITNAV_LLM_PROVIDER=qwen`, and fall back to deterministic fixtures when `none`** — so all gates pass fully offline. Scope note: M2 grade genuinely lets the LLM pick the misconception id (validated against candidates); **M3 induce currently only lets the LLM label evidence *strength*** — the induced edge/misconception structure comes from the offline candidate. Fully autonomous M3 extraction is future work (see `docs/evaluation.md`).
