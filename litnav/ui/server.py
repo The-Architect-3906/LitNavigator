@@ -151,6 +151,9 @@ def tutor_answer(sid: str, answer: str = ""):
 
 def main() -> None:  # pragma: no cover - manual launch helper
     import uvicorn
+
+    from litnav.config import load_dotenv
+    load_dotenv()  # pick up LITNAV_LLM_* / OPENAI_API_KEY from .env
     uvicorn.run(app, host="127.0.0.1", port=8000)
 
 

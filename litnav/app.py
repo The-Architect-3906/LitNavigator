@@ -155,6 +155,8 @@ def _run_intent(which: str | None) -> None:
 
 
 def main() -> int:
+    from litnav.config import load_dotenv
+    load_dotenv()  # pick up LITNAV_LLM_* / OPENAI_API_KEY from .env for live runs
     parser = argparse.ArgumentParser(prog="litnav.app")
     sub = parser.add_subparsers(dest="command", required=True)
     p1 = sub.add_parser("demo-m1"); p1.add_argument("--answer", default="wrong_prereq",

@@ -2,6 +2,23 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
+from pathlib import Path
+
+
+def load_dotenv(path: str = ".env") -> None:
+    """Minimal .env loader (no dependency). Real environment variables win (setdefault).
+    Called only from CLI/server entry points, so tests and gates stay offline by default."""
+    p = Path(path)
+    if not p.exists():
+        return
+    for line in p.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, _, value = line.partition("=")
+        key, value = key.strip(), value.strip()
+        if key:
+            os.environ.setdefault(key, value)
 
 # Dedicated, gitignored demo databases. The CLI demo runner writes here and only
 # ever deletes these files, so it can never erase whatever LITNAV_DB_PATH points at.
