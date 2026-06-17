@@ -44,15 +44,58 @@ _M2_ANSWERS = {
 }
 
 
+def _pid_alive(pid: int) -> bool:
+    """True if a process with this PID is currently running. Cross-platform and SAFE —
+    never signals/terminates the target (notably, os.kill(pid, 0) would TERMINATE on
+    Windows, so we use OpenProcess there)."""
+    if pid <= 0:
+        return False
+    if os.name == "nt":
+        import ctypes
+        PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
+        STILL_ACTIVE = 259
+        kernel32 = ctypes.windll.kernel32
+        handle = kernel32.OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, False, pid)
+        if not handle:
+            return False  # no such process (or not ours) -> treat as gone
+        try:
+            code = ctypes.c_ulong()
+            if kernel32.GetExitCodeProcess(handle, ctypes.byref(code)):
+                return code.value == STILL_ACTIVE
+            return False
+        finally:
+            kernel32.CloseHandle(handle)
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True  # exists but owned by someone else
+    return True
+
+
+def _lock_holder_pid(lock_path: Path) -> int | None:
+    """PID recorded in the lock file, or None if absent/empty/unreadable."""
+    try:
+        text = lock_path.read_text().strip()
+        return int(text) if text else None
+    except (FileNotFoundError, ValueError, OSError):
+        return None
+
+
 @contextmanager
-def _demo_db_lock(timeout: float = 60.0):
+def _demo_db_lock(timeout: float = 120.0):
     """Serialize concurrent CLI demos against the shared demo DB.
 
     Every demo run resets the demo DB in place (drop+recreate). Running two demos at once
     let one process drop tables mid-run in another ('no such table: route_steps'). This
-    cross-platform lockfile (O_CREAT|O_EXCL) makes concurrent runs wait their turn. A lock
-    held longer than `timeout` is treated as stale (crashed run) and stolen, so a dead
-    process never wedges future demos."""
+    cross-platform lockfile (O_CREAT|O_EXCL) makes concurrent runs wait their turn.
+
+    Stale-lock handling is liveness-based, not time-based: the lock records the holder's
+    PID, and we only reclaim it when that process is actually gone (a crashed run). A live
+    holder is NEVER stolen — so a slow live-LLM demo that runs past any timeout keeps its
+    lock. If a live holder is still busy after `timeout`, we raise a clear error instead of
+    stealing (so two demos never end up racing on the shared DB)."""
     lock_path = Path(DEMO_DB_PATH).with_suffix(".lock")
     lock_path.parent.mkdir(parents=True, exist_ok=True)
     fd = None
@@ -60,15 +103,21 @@ def _demo_db_lock(timeout: float = 60.0):
     while True:
         try:
             fd = os.open(str(lock_path), os.O_CREAT | os.O_EXCL | os.O_RDWR)
+            os.write(fd, str(os.getpid()).encode())  # record holder for liveness checks
             break
         except FileExistsError:
-            if time.monotonic() - start > timeout:        # steal a stale lock, then retry
-                try:
+            holder = _lock_holder_pid(lock_path)
+            if holder is not None and not _pid_alive(holder):
+                try:                                  # holder crashed -> reclaim its lock
                     lock_path.unlink()
                 except FileNotFoundError:
                     pass
-                start = time.monotonic()
                 continue
+            if time.monotonic() - start > timeout:
+                raise RuntimeError(
+                    f"Demo DB is locked by a running demo (PID {holder}) and still busy "
+                    f"after {timeout:.0f}s. Wait for it to finish and retry, or delete "
+                    f"{lock_path} if that process is gone.")
             time.sleep(0.2)
     try:
         yield
