@@ -144,7 +144,7 @@ def make_initial_state(
         "current_quiz_item": None,
         "current_strategy": None,
         "current_cited_chunks": [],
-        "used_quiz_ids": [],
+        "used_quiz_ids": {},
         "user_answer": None,
         "pending_answers": pending_answers or [],
         "quiz_result": None,

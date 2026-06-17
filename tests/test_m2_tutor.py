@@ -37,7 +37,7 @@ def _base_state():
         "current_evidence": [],
         "current_strategy": "direct",
         "current_cited_chunks": [],
-        "used_quiz_ids": [],
+        "used_quiz_ids": {},
         "pending_answers": [],
         "history": [],
     }

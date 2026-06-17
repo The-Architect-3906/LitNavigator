@@ -46,7 +46,7 @@ class NavState(TypedDict):
     # Inner-loop teaching state (M2)
     current_strategy: Optional[str]         # explanation strategy of the current teach/reteach turn
     current_cited_chunks: List[str]         # chunks cited by the current teach/reteach turn
-    used_quiz_ids: List[int]                # quiz item ids already drawn this concept (pre vs post)
+    used_quiz_ids: Dict[int, List[int]]     # {concept_id: [quiz_item_ids drawn]} — pre/post dedup per concept
 
     # Literature induction (M3)
     pending_induction: Optional[dict]       # off-skeleton candidate to induce before teaching, or None

@@ -1,16 +1,21 @@
 from __future__ import annotations
 
 import os
+import threading
 
-# Token usage of the most recent complete_json call (0 when provider=none / no call made).
-# Callers read this to record token_cost; offline runs honestly report 0.
-LAST_TOKEN_COST = 0
+# Per-thread token cost: each calling thread sees its own counter so concurrent
+# sessions do not bleed cost into each other's records.
+_tls = threading.local()
+
+
+def last_token_cost() -> int:
+    """Return the token cost of the most recent complete_json call on this thread (0 offline)."""
+    return getattr(_tls, "cost", 0)
 
 
 def complete_json(prompt: str, *, schema_hint: str = "", fallback: dict) -> dict:
     """Call the configured LLM and return a JSON dict, or return fallback when provider=none."""
-    global LAST_TOKEN_COST
-    LAST_TOKEN_COST = 0
+    _tls.cost = 0
     provider = os.getenv("LITNAV_LLM_PROVIDER", "none")
 
     if provider == "none":
@@ -32,9 +37,9 @@ def complete_json(prompt: str, *, schema_hint: str = "", fallback: dict) -> dict
                 timeout=30,
             )
             try:
-                LAST_TOKEN_COST = int(response.usage.total_tokens or 0)
+                _tls.cost = int(response.usage.total_tokens or 0)
             except Exception:
-                LAST_TOKEN_COST = 0
+                pass
             return json.loads(response.choices[0].message.content)
         except Exception:
             return fallback
