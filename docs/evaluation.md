@@ -120,7 +120,7 @@ LITNAV_LLM_PROVIDER=qwen python -m litnav.app demo-m3
 
 **What the live path currently does:** the LLM labels the *evidence strength* of the induced edge/misconception over the ingested chunks (confidence stays rule-computed); the offline candidate provides the structure as fallback. Confirm the `provider=qwen` path ran and the cited evidence chain is shown. This is a recording step, not a blocking gate — if the live call fails it falls back to the offline candidate.
 
-**Not yet implemented (future work):** fully autonomous live induction — the LLM proposing the prerequisite edge and misconception *itself* from real extracted PDF text. That needs the real PDF chunk extraction (deferred) plus an extraction prompt; until then the spec's "perform at least one live induction" rule is only partially met (strength labeling, not extraction).
+**Not yet implemented (future work):** fully autonomous live induction — the LLM proposing the prerequisite edge and misconception *itself* from the real chunks. Real PDF chunk extraction is **done** (`data/seed/agents_corpus.json`, via `python -m litnav.ingest.pdf_extract`); what remains is pointing `induce` at the real corpus chunks and adding the extraction prompt. Until then the spec's "perform at least one live induction" rule is only partially met (strength labeling, not autonomous extraction).
 
 ## Manual Demo Checks
 

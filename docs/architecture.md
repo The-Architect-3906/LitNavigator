@@ -97,7 +97,7 @@ No live paper fetch is required during the demo.
 - confidence basis,
 - conflict flags when it disagrees with curated structure.
 
-Induction runs over already-ingested chunks. **Currently:** with `LITNAV_LLM_PROVIDER=qwen` the LLM labels the evidence *strength* (with `none` the offline candidate's label is used); the induced edge/misconception **structure comes from the offline candidate either way**. `confidence` is always computed by the rule in `docs/data-contract.md` — never returned by the LLM. **Future work:** fully autonomous live induction (the LLM proposing the edge/misconception itself from extracted PDF text), which needs real PDF chunk extraction; until then the spec's "at least one live induction" rule is only partially met (strength labeling). See `docs/evaluation.md`.
+Induction runs over already-ingested chunks. **Currently:** with `LITNAV_LLM_PROVIDER=qwen` the LLM labels the evidence *strength* (with `none` the offline candidate's label is used); the induced edge/misconception **structure comes from the offline candidate either way**. `confidence` is always computed by the rule in `docs/data-contract.md` — never returned by the LLM. **Future work:** fully autonomous live induction — the LLM proposing the edge/misconception itself from the real chunks. PDF chunk extraction is already done (`data/seed/agents_corpus.json`); what remains is pointing `induce` at those chunks plus an extraction prompt. Until then the spec's "at least one live induction" rule is only partially met (strength labeling). See `docs/evaluation.md`.
 
 ## State Machine
 
