@@ -19,7 +19,7 @@ from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-from litnav.config import DEMO_CKPT_PATH, DEMO_DB_PATH
+from litnav.config import DEMO_DB_PATH
 from litnav.storage.schema import init_db
 from litnav.storage.seed import seed_demo_data
 from litnav.ui.interactive import TutorSession
@@ -41,6 +41,18 @@ def _connect() -> sqlite3.Connection:
     return sqlite3.connect(os.getenv("LITNAV_DB_PATH", DEMO_DB_PATH))
 
 
+def _trace_for(session_id: str) -> dict:
+    """Build a trace from a live tutor's own per-session DB when present, else the demo DB."""
+    ts = _TUTORS.get(session_id)
+    if ts is not None:
+        return build_trace(ts.conn, session_id)
+    conn = _connect()
+    try:
+        return build_trace(conn, session_id)
+    finally:
+        conn.close()
+
+
 def _list_sessions(conn: sqlite3.Connection) -> list[dict]:
     rows = conn.execute(
         "SELECT id, topic, status, created_at FROM sessions ORDER BY created_at DESC"
@@ -50,21 +62,13 @@ def _list_sessions(conn: sqlite3.Connection) -> list[dict]:
 
 @app.get("/sessions/{session_id}/trace")
 def trace_json(session_id: str):
-    conn = _connect()
-    try:
-        return JSONResponse(build_trace(conn, session_id))
-    finally:
-        conn.close()
+    return JSONResponse(_trace_for(session_id))
 
 
 @app.get("/sessions/{session_id}", response_class=HTMLResponse)
 def session_page(session_id: str):
-    conn = _connect()
-    try:
-        data = build_trace(conn, session_id)
-    finally:
-        conn.close()
-    return _TEMPLATES.get_template("index.html").render(session_id=session_id, **data)
+    return _TEMPLATES.get_template("index.html").render(
+        session_id=session_id, **_trace_for(session_id))
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -88,14 +92,17 @@ def index():
 # GET-based forms keep this dependency-free (no python-multipart); fine for a local demo.
 
 def _start_tutor(fixture: str, target_ids: list[int], pending_induction: dict | None) -> str:
-    db = Path(DEMO_DB_PATH); db.parent.mkdir(parents=True, exist_ok=True); db.unlink(missing_ok=True)
-    ck = Path(DEMO_CKPT_PATH); ck.unlink(missing_ok=True)
-    conn = sqlite3.connect(str(db), check_same_thread=False)
+    # Per-session DB + checkpoint files so concurrent tutors never clobber each other
+    # or the CLI/panel demo DB (no shared-file deletion).
+    sid = str(uuid.uuid4())
+    base = Path(DEMO_DB_PATH).parent
+    base.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(str(base / f"tutor-{sid}.sqlite"), check_same_thread=False)
     init_db(conn)
     seed_demo_data(conn, fixture)
     topic = json.loads(Path(fixture).read_text(encoding="utf-8"))["topic"]
-    sid = str(uuid.uuid4())
-    ts = TutorSession(conn, sqlite3.connect(str(ck), check_same_thread=False), sid)
+    ckpt = sqlite3.connect(str(base / f"tutor-{sid}-ckpt.sqlite"), check_same_thread=False)
+    ts = TutorSession(conn, ckpt, sid)
     ts.start(topic, target_concept_ids=target_ids, pending_induction=pending_induction,
              mastery_threshold=0.75)
     _TUTORS[sid] = ts

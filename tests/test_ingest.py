@@ -34,6 +34,16 @@ def test_corpus_fixture_is_real_and_well_formed():
     assert all(ord(c) < 128 for c in Path(CORPUS).read_text(encoding="utf-8"))
 
 
+def test_corpus_regeneration_is_idempotent():
+    """Re-running extraction must reproduce the committed fixture byte-for-content.
+    Guards against silent drift; fails loudly if the pinned pypdf version changes."""
+    from litnav.ingest.pdf_extract import build_corpus
+    committed = json.loads(Path(CORPUS).read_text(encoding="utf-8"))
+    assert build_corpus() == committed, (
+        "agents_corpus.json drifted from a fresh extraction — check the pinned pypdf version"
+    )
+
+
 def test_corpus_seeds_into_db_with_real_chunks():
     conn = sqlite3.connect(":memory:")
     init_db(conn)

@@ -163,3 +163,17 @@ CREATE TABLE IF NOT EXISTS induction_log (
 def init_db(conn: sqlite3.Connection) -> None:
     conn.executescript(DDL)
     conn.commit()
+
+
+def reset_db(conn: sqlite3.Connection) -> None:
+    """Drop all domain tables and recreate them, IN PLACE (no file unlink).
+
+    Used by one-shot demos so a fresh run cannot hit a Windows PermissionError trying to
+    delete a SQLite file the panel/server still has open."""
+    rows = conn.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"
+    ).fetchall()
+    for (name,) in rows:
+        conn.execute(f"DROP TABLE IF EXISTS {name}")
+    conn.commit()
+    init_db(conn)

@@ -17,10 +17,10 @@ import sqlite3
 import uuid
 from pathlib import Path
 
-from litnav.config import DEMO_CKPT_PATH, DEMO_DB_PATH
+from litnav.config import DEMO_DB_PATH
 from litnav.graph.builder import build_graph, make_initial_state
 from litnav.storage import repo
-from litnav.storage.schema import init_db
+from litnav.storage.schema import init_db, reset_db
 from litnav.storage.seed import seed_demo_data
 from litnav.ui.trace import build_trace
 
@@ -42,16 +42,15 @@ _M2_ANSWERS = {
 
 
 def _fresh_db() -> tuple[sqlite3.Connection, sqlite3.Connection, str]:
-    """Open fresh demo databases. Only the dedicated demo files are ever deleted,
-    so this never touches whatever LITNAV_DB_PATH points at."""
+    """Open a fresh demo DB. Resets the demo DB IN PLACE (drop+recreate, no file unlink)
+    so a run can't hit a Windows PermissionError when the panel still has the file open.
+    The checkpoint is in-memory: a CLI demo is one-shot and needs no persistent checkpoint."""
     db_path = Path(DEMO_DB_PATH)
-    ckpt = Path(DEMO_CKPT_PATH)
     db_path.parent.mkdir(parents=True, exist_ok=True)
-    db_path.unlink(missing_ok=True)
-    ckpt.unlink(missing_ok=True)
-    return (sqlite3.connect(str(db_path), check_same_thread=False),
-            sqlite3.connect(str(ckpt), check_same_thread=False),
-            str(db_path))
+    conn = sqlite3.connect(str(db_path), check_same_thread=False)
+    reset_db(conn)
+    ckpt = sqlite3.connect(":memory:", check_same_thread=False)
+    return conn, ckpt, str(db_path)
 
 
 def _print_trace(conn: sqlite3.Connection, sid: str, db_path: str) -> None:

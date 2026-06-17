@@ -145,7 +145,7 @@ G0 PASS: offline run
 | **M2** · Tutor | teach → reteach → concede on the agent corpus; misconception detection (Qwen / offline fallback); parallel-form quizzes; learning gain (G2 green) | ✅ Done |
 | **M3** · Literature induction | `induce_scaffold` — induce a prereq edge + mine a misconception for an off-skeleton concept, rule-computed confidence + provenance, panel marks curated vs induced (G3 green) | ✅ Done |
 | **M4** · Polish | intent/audience modes ✅ (`demo-intent`); still: hybrid/vector retrieval, cross-session memory, live-Qwen induction recording | 🟡 In progress |
-| **Product** · Interactive agent UI | ✅ interactive tutor (type a goal → teach → quiz → **you answer** → adapt live) at `/tutor`, reusing the M1 interrupt/resume; teaching is deterministic today, swap in Qwen when a key is available | 🟡 Prototype |
+| **Product** · Interactive agent UI | ✅ interactive tutor at `/tutor`: pick a session → teach → quiz → **you answer in a text box** → it adapts live (reteach / induce), reusing the M1 interrupt/resume. Today: preset sessions + deterministic teach; remaining: free-text goal entry, Qwen-backed teach, restart persistence | 🟡 Prototype |
 
 > **M0–M3 (the gated core) is complete and green** — `verify_m0/m1/m2/m3` all pass fully offline. M4 is icing; the interactive product UI is beyond the competition gates.
 
