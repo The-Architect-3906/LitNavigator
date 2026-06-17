@@ -91,7 +91,8 @@ def index():
 # ── Interactive tutor (B): real human-in-the-loop over the graph ───────────────
 # GET-based forms keep this dependency-free (no python-multipart); fine for a local demo.
 
-def _start_tutor(fixture: str, target_ids: list[int], pending_induction: dict | None) -> str:
+def _start_tutor(fixture: str, target_ids: list[int], pending_induction: dict | None,
+                 intent: str | None = None) -> str:
     # Per-session DB + checkpoint files so concurrent tutors never clobber each other
     # or the CLI/panel demo DB (no shared-file deletion).
     sid = str(uuid.uuid4())
@@ -103,8 +104,10 @@ def _start_tutor(fixture: str, target_ids: list[int], pending_induction: dict | 
     topic = json.loads(Path(fixture).read_text(encoding="utf-8"))["topic"]
     ckpt = sqlite3.connect(str(base / f"tutor-{sid}-ckpt.sqlite"), check_same_thread=False)
     ts = TutorSession(conn, ckpt, sid)
+    # An intent re-scopes the route (targets/order) and sets the bar/depth — see litnav.intent.
+    # With an intent, target_ids is ignored (planner derives targets from the intent).
     ts.start(topic, target_concept_ids=target_ids, pending_induction=pending_induction,
-             mastery_threshold=0.75)
+             intent=intent, mastery_threshold=0.75)
     _TUTORS[sid] = ts
     return sid
 
@@ -119,6 +122,9 @@ def tutor_home():
         "— misconception &rarr; reteach demo (try answering \"it's just chain of thought\" first).</p>"
         "<p><a href='/tutor/start?mode=induce'><b>I keep seeing &lsquo;multi-agent debate&rsquo;</b></a> "
         "— off-skeleton: the tutor induces the scaffold from the papers, then teaches it.</p>"
+        "<p><a href='/tutor/start?mode=journalist'><b>Brief me as a journalist</b></a> "
+        "— same corpus, re-scoped by intent: a short, frontier-first orientation "
+        "(recall depth, lower mastery bar) instead of the full curriculum.</p>"
         "</body></html>"
     )
 
@@ -128,6 +134,10 @@ def tutor_start(mode: str = "react"):
     if mode == "induce":
         cand = json.loads(Path("data/seed/agents_m3.json").read_text(encoding="utf-8"))["induction"]
         sid = _start_tutor("data/seed/agents_m3.json", [], cand)
+    elif mode == "journalist":
+        # Intent mode: planner derives the (frontier-first) targets from the intent;
+        # agents_m3.json has clean chunks + quizzes for all three journalist concepts.
+        sid = _start_tutor("data/seed/agents_m3.json", [], None, intent="journalist")
     else:
         sid = _start_tutor("data/seed/agents_m2.json", [1], None)
     return RedirectResponse(f"/tutor/{sid}", status_code=303)
