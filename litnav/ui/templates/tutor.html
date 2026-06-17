@@ -41,7 +41,7 @@
       <a href="/tutor">start another</a>
     </div>
   {% else %}
-    <div class="q">{{ question }}</div>
+    <div class="q">{{ question or "" }}</div>
     <form method="get" action="/tutor/{{ sid }}/answer">
       <input name="answer" autocomplete="off" autofocus placeholder="type your answer…">
       <button type="submit">Answer</button>

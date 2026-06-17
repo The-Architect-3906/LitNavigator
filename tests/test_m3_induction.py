@@ -99,6 +99,30 @@ def test_autonomous_llm_proposes_misconception_from_chunks(monkeypatch):
     assert stored["correct_model"] == "LLM-proposed correction"
 
 
+def test_induced_prereq_enters_concept_dag_for_routing():
+    """The induced prereq edge must land in the in-memory concept_dag the router reads, so a
+    failed induced concept can diagnose/replan to its prereq — consistent with curated prereqs.
+    (Regression: planner builds concept_dag before induction, so induce must merge the edge in.)"""
+    conn = _conn()
+    cand = _candidate()
+    out = induce_scaffold_node(
+        {"session_id": "s", "route": [], "route_version": 1, "concept_dag": {}}, conn, cand)
+    nid = out["current_concept_id"]
+    prereq = repo.get_concept_by_slug(conn, cand["prereq_slug"])
+    assert nid in out["concept_dag"], "induced concept present in returned concept_dag"
+    assert prereq["id"] in out["concept_dag"][nid], "induced prereq edge is routable"
+
+
+def test_induced_prereq_concept_is_quizzable():
+    """Enforcing an induced prereq routes to teach it, so it must be quizzable — otherwise
+    `check` finds no quiz item and the interactive session dead-ends with a 'None' question.
+    (Regression: the M3 fixture had a quiz only for react; multi_agent had none.)"""
+    conn = _conn()
+    prereq = repo.get_concept_by_slug(conn, _candidate()["prereq_slug"])
+    assert repo.get_parallel_quiz_items(conn, prereq["id"], exclude_ids=[]), \
+        "induced prereq concept must have at least one quiz item"
+
+
 def test_induced_edge_confidence_matches_rule_and_is_not_one():
     conn = _conn()
     out = induce_scaffold_node({"session_id": "s", "route": [], "route_version": 1}, conn, _candidate())
