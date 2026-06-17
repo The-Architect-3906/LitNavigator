@@ -12,7 +12,10 @@ Read in this order:
 6. `development-architecture.md` — module boundaries and target project skeleton.
 7. `engineering-slices.md` — implementation slices from planning package to M4.
 8. `m0-walking-skeleton.md` — detailed M0 scope.
-9. `superpowers/plans/2026-06-16-complete-engineering-plan.md` — executable M0-M4 implementation plan.
-10. `superpowers/plans/2026-06-16-m0-walking-skeleton.md` — deeper executable implementation plan for M0.
 
-`litnavigator-build-spec.md` remains the complete source narrative. These docs are the build-facing working set.
+Active design + plan (post-M3 competition push):
+
+- `specs/2026-06-17-competition-push-design.md` — design for the ICCSE submission push.
+- `plans/2026-06-17-competition-push.md` — task-by-task implementation plan.
+
+`litnavigator-build-spec.md` remains the complete source narrative. These docs are the build-facing working set. (The original M0-M4 implementation plans were archived and removed once M0-M3 shipped; the code + gates are the source of truth.)

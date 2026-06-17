@@ -8,7 +8,7 @@
 
 **Tech Stack:** Python 3.11, FastAPI + Jinja2, SQLite, OpenAI (`gpt-4o-mini`, `text-embedding-3-small`), pytest, langgraph.
 
-**Spec:** `docs/superpowers/specs/2026-06-17-competition-push-design.md`
+**Spec:** `docs/specs/2026-06-17-competition-push-design.md`
 
 **Baseline:** commit `93687a8`, working tree clean, 68 tests + 4 gates green offline.
 

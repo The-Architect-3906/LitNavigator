@@ -6,7 +6,7 @@ LitNavigator is built as a risk ladder. Each milestone must be runnable, recorda
 
 Do not advance past a gate that has not passed. A polished lower milestone is better than an unstable higher milestone.
 
-> **Gates are serial; the work inside each milestone is parallel.** Three tracks (A data, B engine, C UI+eval) run concurrently and converge at each gate. See the **Dependency & Parallelization** section in `docs/superpowers/plans/2026-06-16-complete-engineering-plan.md` for the layer-by-layer breakdown.
+> **Gates are serial; the work inside each milestone is parallel.** Three tracks (A data, B engine, C UI+eval) run concurrently and converge at each gate. (M0–M3 have shipped; the original layer-by-layer engineering plan has been archived and removed — the code + gates are the source of truth.)
 
 ## M0: Fake-Data Walking Skeleton
 

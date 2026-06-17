@@ -21,7 +21,7 @@ LitNavigator should be built as a ladder of runnable slices. Each slice must be 
 - tests,
 - app entry point.
 
-**Status:** ✅ exited — M0–M3 are implemented and green. (Original exit criteria: README states code status honestly; M0 scope small enough for one pass; implementation plan exists under `docs/superpowers/plans/`.)
+**Status:** ✅ exited — M0–M3 are implemented and green. (Original exit criteria: README states code status honestly; M0 scope small enough for one pass; an executable implementation plan existed. Those original M0-M4 plans were archived and removed once M0-M3 shipped — the code + gates are the source of truth.)
 
 ## Slice 1: M0 Fake-Data Walking Skeleton
 

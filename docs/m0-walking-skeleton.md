@@ -34,7 +34,7 @@ Minimum fixture (M1-ready, so it is reused without a rewrite):
 - 5 evidence chunks, one per concept.
 - 5 quiz items, one per concept.
 
-The fixture can be JSON. It should be deterministic and checked into git. The full fixture lives in `docs/superpowers/plans/2026-06-16-m0-walking-skeleton.md`, Task 1.
+The fixture can be JSON. It should be deterministic and checked into git. The implemented fixture lives at `data/seed/rag_demo.json`.
 
 ## M0 Flow
 
