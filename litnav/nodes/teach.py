@@ -18,6 +18,7 @@ def teach_node(state: NavState, conn: sqlite3.Connection) -> dict:
     concept_id = state["current_concept_id"]
     evidence = state.get("current_evidence") or []
     strategy = state.get("current_strategy") or "direct"
+    depth = state.get("teach_depth") or "explain"
     reteach_count = state.get("reteach_count", {}).get(concept_id, 0)
 
     row = conn.execute("SELECT name FROM concepts WHERE id=?", (concept_id,)).fetchone()
@@ -28,11 +29,16 @@ def teach_node(state: NavState, conn: sqlite3.Connection) -> dict:
     if evidence:
         idx = min(reteach_count, len(evidence) - 1)
         chunk = evidence[idx]
-        framing = _STRATEGY_FRAMING.get(strategy, _STRATEGY_FRAMING["direct"])
-        message = (
-            f"**{concept_name}** ({strategy})\n\n"
-            f"{framing}\n\n{chunk['text']}\n\n*(Source: chunk {chunk['chunk_id']})*"
-        )
+        if depth == "recall":
+            # Brief orientation (e.g. journalist intent): just the gist, one sentence.
+            first = chunk["text"].split(". ")[0].strip()
+            gist = (first if len(first) <= 240 else chunk["text"][:240].strip()).rstrip(".") + "."
+            message = (f"**{concept_name}** (quick orientation)\n\n{gist}\n\n"
+                       f"*(Source: chunk {chunk['chunk_id']})*")
+        else:
+            framing = _STRATEGY_FRAMING.get(strategy, _STRATEGY_FRAMING["direct"])
+            message = (f"**{concept_name}** ({strategy})\n\n"
+                       f"{framing}\n\n{chunk['text']}\n\n*(Source: chunk {chunk['chunk_id']})*")
         cited_chunks = [chunk["chunk_id"]]
     else:
         message = f"**{concept_name}** — no evidence found for this concept yet."
@@ -42,7 +48,7 @@ def teach_node(state: NavState, conn: sqlite3.Connection) -> dict:
         "current_cited_chunks": cited_chunks,
         "history": [{
             "event": "reteach" if reteach_count > 0 else "teach",
-            "concept_id": concept_id, "strategy": strategy,
+            "concept_id": concept_id, "strategy": strategy, "depth": depth,
             "cited_chunks": cited_chunks, "message": message,
         }],
     }

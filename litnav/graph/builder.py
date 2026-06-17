@@ -129,7 +129,12 @@ def make_initial_state(
     user_goal: str = "Learn the topic",
     mastery_threshold: float = 0.8,
     pending_induction: Optional[dict] = None,
+    intent: Optional[str] = None,
 ) -> NavState:
+    from litnav.intent import resolve as _resolve_intent
+    _cfg = _resolve_intent(intent)
+    if _cfg:
+        mastery_threshold = _cfg["mastery_threshold"]   # intent sets the bar
     return {
         "session_id": session_id,
         "user_goal": user_goal,
@@ -155,6 +160,8 @@ def make_initial_state(
         "mastery_threshold": mastery_threshold,
         "reteach_count": {},
         "pending_induction": pending_induction,
+        "intent": intent,
+        "teach_depth": _cfg["depth"] if _cfg else None,
         "history": [],
     }
 

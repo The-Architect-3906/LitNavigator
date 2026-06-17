@@ -51,6 +51,10 @@ class NavState(TypedDict):
     # Literature induction (M3)
     pending_induction: Optional[dict]       # off-skeleton candidate to induce before teaching, or None
 
+    # Intent / audience mode (M4)
+    intent: Optional[str]                   # 'researcher' | 'journalist' | None
+    teach_depth: Optional[str]              # explanation depth set by the intent ('recall'|'explain'|'apply')
+
     # Answer handling
     user_answer: Optional[str]
     pending_answers: List[str]              # pre-seeded for gate / batch mode

@@ -35,14 +35,49 @@ def _topo_sort(target_ids: list[int], dag: dict[int, list[int]]) -> list[int]:
     return order
 
 
+def _topo_sort_priority(target_ids: list[int], dag: dict[int, list[int]],
+                        priority: dict[int, int]) -> list[int]:
+    """Topological order (prereqs first) that, among available concepts, prefers lower
+    priority rank (ties broken by id). Used for intent frontier-first ordering."""
+    import heapq
+    targets = set(target_ids)
+    indeg = {t: 0 for t in target_ids}
+    adj: dict[int, list[int]] = {t: [] for t in target_ids}
+    for t in target_ids:
+        for p in dag.get(t, []):
+            if p in targets:
+                indeg[t] += 1
+                adj[p].append(t)
+    avail = [(priority.get(t, 0), t) for t in target_ids if indeg[t] == 0]
+    heapq.heapify(avail)
+    order: list[int] = []
+    while avail:
+        _, t = heapq.heappop(avail)
+        order.append(t)
+        for d in adj[t]:
+            indeg[d] -= 1
+            if indeg[d] == 0:
+                heapq.heappush(avail, (priority.get(d, 0), d))
+    return order
+
+
 def planner_node(state: NavState, conn: sqlite3.Connection) -> dict:
+    from litnav.intent import resolve as resolve_intent
+
     session_id = state["session_id"]
-    target_ids = state["target_concept_ids"]
     topic = state["topic"]
 
     repo.create_session(conn, session_id, topic)
 
     dag = _build_dag(conn)
+
+    # Intent mode re-scopes the targets (and, for journalist, leads with the live debate).
+    intent_cfg = resolve_intent(state.get("intent"))
+    if intent_cfg:
+        slug_to_id = {row[0]: row[1] for row in conn.execute("SELECT slug, id FROM concepts")}
+        target_ids = [slug_to_id[s] for s in intent_cfg["targets"] if s in slug_to_id]
+    else:
+        target_ids = state["target_concept_ids"]
 
     all_rows = conn.execute("SELECT id FROM concepts").fetchall()
     all_ids = [r[0] for r in all_rows]
@@ -57,7 +92,12 @@ def planner_node(state: NavState, conn: sqlite3.Connection) -> dict:
             "n_observations": cs["n_observations"],
         })
 
-    route_order = _topo_sort(list(target_ids), dag)
+    if intent_cfg and intent_cfg.get("frontier_first"):
+        frontier = {r[0]: r[1] for r in conn.execute("SELECT id, frontier_flag FROM concepts")}
+        rank = {cid: (0 if frontier.get(cid) in ("contested", "open") else 1) for cid in target_ids}
+        route_order = _topo_sort_priority(list(target_ids), dag, rank)
+    else:
+        route_order = _topo_sort(list(target_ids), dag)
     route = [
         {
             "step_id": f"route-{i+1:03d}",

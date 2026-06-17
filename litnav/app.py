@@ -27,6 +27,7 @@ from litnav.ui.trace import build_trace
 _M1_FIXTURE = "data/seed/rag_demo.json"
 _M2_FIXTURE = "data/seed/agents_m2.json"
 _M3_FIXTURE = "data/seed/agents_m3.json"
+_CORPUS_FIXTURE = "data/seed/agents_corpus.json"
 
 # answer keyword -> ordered pending answers fed to the grader
 _M1_ANSWERS = {
@@ -129,6 +130,31 @@ def _run_m3(requested_concept: str = "multi_agent_debate") -> None:
     _print_trace(conn, sid, db_path)
 
 
+def _plan_for_intent(conn: sqlite3.Connection, topic: str, intent: str):
+    from litnav.nodes.planner import planner_node
+    sid = str(uuid.uuid4())
+    state = make_initial_state(sid, topic, target_concept_ids=[], intent=intent)
+    out = planner_node(state, conn)
+    names = {r[0]: r[1] for r in conn.execute("SELECT id, name FROM concepts")}
+    route = [names.get(s["concept_id"], s["concept_id"]) for s in out["route"]]
+    return state["mastery_threshold"], state["teach_depth"], route
+
+
+def _run_intent(which: str | None) -> None:
+    """Show how the same corpus is re-scoped to different purposes (intent modes)."""
+    from litnav.intent import INTENTS
+    conn, _ckpt, _db = _fresh_db()
+    init_db(conn)
+    seed_demo_data(conn, _CORPUS_FIXTURE)
+    data = json.loads(Path(_CORPUS_FIXTURE).read_text(encoding="utf-8"))
+    intents = [which] if which else list(INTENTS)
+    print(f"\nSame corpus ('{data['topic']}'), re-scoped by intent:\n")
+    for it in intents:
+        thr, depth, route = _plan_for_intent(conn, data["topic"], it)
+        print(f"[{it}] {INTENTS[it]['label']}  (mastery bar {thr}, depth {depth})")
+        print("  route: " + " -> ".join(route) + "\n")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(prog="litnav.app")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -137,6 +163,9 @@ def main() -> int:
     p2 = sub.add_parser("demo-m2"); p2.add_argument("--answer", default="cot",
                                                     choices=sorted(_M2_ANSWERS))
     p3 = sub.add_parser("demo-m3"); p3.add_argument("--concept", default="multi_agent_debate")
+    p4 = sub.add_parser("demo-intent")
+    p4.add_argument("--intent", choices=["researcher", "journalist"], default=None,
+                    help="show one intent; omit to compare both")
     args = parser.parse_args()
 
     if args.command == "demo-m1":
@@ -146,6 +175,8 @@ def main() -> int:
         _run(_M2_FIXTURE, _M2_ANSWERS[args.answer], targets=["react"], threshold=0.75)
     elif args.command == "demo-m3":
         _run_m3(args.concept)
+    elif args.command == "demo-intent":
+        _run_intent(args.intent)
     return 0
 
 
