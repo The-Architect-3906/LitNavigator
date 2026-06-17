@@ -107,7 +107,7 @@ The same engine re-scopes to *why* you need the field — because its curriculum
 - **Researcher entering the field** → the full prerequisite chain (ReAct → tool use → reflection → memory → multi-agent), methods, and the open problems worth working on; high mastery bar; contested/open points framed as research opportunities.
 - **Journalist prepping to interview an AI scientist** → a 30-minute orientation: what an LLM agent is, the 2–3 landmark ideas, where the live debates are, and good questions to ask; a "can hold the conversation" bar; implementation skipped; the consensus-vs-controversy map as talking points.
 
-A fixed-curriculum tutor has no curriculum for an arbitrary subfield to re-scope, and a static source assistant won't reorder around your goal — LitNavigator can. *(Intent modes are an M4 item; the learner model, route, depth, and frontier labels they build on already exist.)*
+A fixed-curriculum tutor has no curriculum for an arbitrary subfield to re-scope, and a static source assistant won't reorder around your goal — LitNavigator can. *(Implemented: `python -m litnav.app demo-intent` shows both routes on the same corpus.)*
 
 ---
 
@@ -144,8 +144,8 @@ G0 PASS: offline run
 | **M1** · Navigator | Route changes because of learner state; LangGraph StateGraph + prereq replan + SqliteSaver checkpoint (G1 green) | ✅ Done |
 | **M2** · Tutor | teach → reteach → concede on the agent corpus; misconception detection (Qwen / offline fallback); parallel-form quizzes; learning gain (G2 green) | ✅ Done |
 | **M3** · Literature induction | `induce_scaffold` — induce a prereq edge + mine a misconception for an off-skeleton concept, rule-computed confidence + provenance, panel marks curated vs induced (G3 green) | ✅ Done |
-| **M4** · Polish | intent/audience modes (researcher vs journalist), hybrid/vector retrieval, cross-session memory, UI polish, live-Qwen induction recording | ⬜ Next |
-| **Product** · Interactive agent UI | read-only panel → interactive tutor (type a goal → teach → quiz → you answer → adapt live), reusing the M1 interrupt/resume | post-competition |
+| **M4** · Polish | intent/audience modes ✅ (`demo-intent`); still: hybrid/vector retrieval, cross-session memory, live-Qwen induction recording | 🟡 In progress |
+| **Product** · Interactive agent UI | ✅ interactive tutor (type a goal → teach → quiz → **you answer** → adapt live) at `/tutor`, reusing the M1 interrupt/resume; teaching is deterministic today, swap in Qwen when a key is available | 🟡 Prototype |
 
 > **M0–M3 (the gated core) is complete and green** — `verify_m0/m1/m2/m3` all pass fully offline. M4 is icing; the interactive product UI is beyond the competition gates.
 

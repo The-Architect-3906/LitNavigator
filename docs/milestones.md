@@ -108,7 +108,7 @@ python -m litnav.evaluation.verify_m0
 
 **Candidate work:**
 
-- intent/audience modes (e.g. researcher vs journalist): map a chosen intent onto target breadth, `depth`, mastery bar, and frontier emphasis — free dims (targets, threshold) work today; depth-aware teaching + frontier-prioritized routing are the thin layer to add here,
+- ✅ intent/audience modes (researcher vs journalist): implemented — planner target-scoping + frontier-first ordering + depth-aware teach; see `python -m litnav.app demo-intent`,
 - decision-trace UI polish,
 - jump-step pushback,
 - coverage warning,
@@ -124,6 +124,8 @@ Only add M4 work if M3 is already recordable. M4 should not risk the latest stab
 ## Beyond M4: Interactive Agent Product UI (productization, not a competition gate)
 
 The current `litnav/ui` panel is **read-only observability** — it renders a session that already ran. The productized end-state is an **interactive agent interface**: the user types a goal, the tutor teaches, asks a quiz, the user actually answers, and the agent adapts live (reteach / replan / induce).
+
+**Status: a working prototype exists** at `GET /tutor` (`litnav/ui/interactive.py` + server routes): type a goal → teach → quiz → you answer → it adapts (reteach / induce) live, via `interrupt_after=["check"]` + resume. Teaching is deterministic today; the one remaining piece is wiring Qwen into `teach`.
 
 This is **not** a competition gate (the gated core is M0–M3; the recordable demo uses the panel + CLI). It is the "real users use it" form. Architecturally the path is short because the backend already supports human-in-the-loop:
 
