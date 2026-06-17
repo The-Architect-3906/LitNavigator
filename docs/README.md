@@ -15,7 +15,7 @@ Read in this order:
 
 Active design + plan (post-M3 competition push):
 
-- `specs/2026-06-17-competition-push-design.md` — design for the ICCSE submission push.
-- `plans/2026-06-17-competition-push.md` — task-by-task implementation plan.
+- `2026-06-17-competition-push-design.md` — design for the ICCSE submission push.
+- `2026-06-17-competition-push.md` — task-by-task implementation plan.
 
 `litnavigator-build-spec.md` remains the complete source narrative. These docs are the build-facing working set. (The original M0-M4 implementation plans were archived and removed once M0-M3 shipped; the code + gates are the source of truth.)
