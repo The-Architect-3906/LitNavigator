@@ -13,8 +13,11 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sqlite3
+import time
 import uuid
+from contextlib import contextmanager
 from pathlib import Path
 
 from litnav.config import DEMO_DB_PATH
@@ -39,6 +42,42 @@ _M2_ANSWERS = {
     "correct": ["the agent takes actions and observations"],
     "exhausted": ["chain of thought", "chain of thought", "chain of thought"],
 }
+
+
+@contextmanager
+def _demo_db_lock(timeout: float = 60.0):
+    """Serialize concurrent CLI demos against the shared demo DB.
+
+    Every demo run resets the demo DB in place (drop+recreate). Running two demos at once
+    let one process drop tables mid-run in another ('no such table: route_steps'). This
+    cross-platform lockfile (O_CREAT|O_EXCL) makes concurrent runs wait their turn. A lock
+    held longer than `timeout` is treated as stale (crashed run) and stolen, so a dead
+    process never wedges future demos."""
+    lock_path = Path(DEMO_DB_PATH).with_suffix(".lock")
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    fd = None
+    start = time.monotonic()
+    while True:
+        try:
+            fd = os.open(str(lock_path), os.O_CREAT | os.O_EXCL | os.O_RDWR)
+            break
+        except FileExistsError:
+            if time.monotonic() - start > timeout:        # steal a stale lock, then retry
+                try:
+                    lock_path.unlink()
+                except FileNotFoundError:
+                    pass
+                start = time.monotonic()
+                continue
+            time.sleep(0.2)
+    try:
+        yield
+    finally:
+        os.close(fd)
+        try:
+            lock_path.unlink()
+        except FileNotFoundError:
+            pass
 
 
 def _fresh_db() -> tuple[sqlite3.Connection, sqlite3.Connection, str]:
@@ -169,15 +208,18 @@ def main() -> int:
                     help="show one intent; omit to compare both")
     args = parser.parse_args()
 
-    if args.command == "demo-m1":
-        _run(_M1_FIXTURE, _M1_ANSWERS[args.answer],
-             targets=["dense_retrieval", "contrastive_learning"], threshold=0.8)
-    elif args.command == "demo-m2":
-        _run(_M2_FIXTURE, _M2_ANSWERS[args.answer], targets=["react"], threshold=0.75)
-    elif args.command == "demo-m3":
-        _run_m3(args.concept)
-    elif args.command == "demo-intent":
-        _run_intent(args.intent)
+    # All demos write to the one shared demo DB (so the panel can render the latest run);
+    # serialize concurrent invocations so one run's reset_db() can't drop tables mid-run.
+    with _demo_db_lock():
+        if args.command == "demo-m1":
+            _run(_M1_FIXTURE, _M1_ANSWERS[args.answer],
+                 targets=["dense_retrieval", "contrastive_learning"], threshold=0.8)
+        elif args.command == "demo-m2":
+            _run(_M2_FIXTURE, _M2_ANSWERS[args.answer], targets=["react"], threshold=0.75)
+        elif args.command == "demo-m3":
+            _run_m3(args.concept)
+        elif args.command == "demo-intent":
+            _run_intent(args.intent)
     return 0
 
 
