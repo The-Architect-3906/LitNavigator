@@ -86,8 +86,9 @@ offline mode = $0." Surfaces the efficiency story a judge currently cannot see.
 **Maps to:** Efficiency & Cost-effectiveness.
 
 ### 4.4 Corpus expansion (evidence-only)
-New evidence-only ingest path: source ~20 more LLM-agent papers (team-provided or fetched
-by arXiv id list), extract + chunk + embed, **auto-tag each chunk to its nearest existing
+New evidence-only ingest path: **I source ~20 more LLM-agent papers** (curated arXiv id
+list of well-known agent papers, downloaded via arXiv PDF export), extract + chunk + embed,
+**auto-tag each chunk to its nearest existing
 concept** (embedding similarity) — no new hand-authored concepts/edges/quizzes. Rebuild the
 vector index. Enriches grounded teaching + induction evidence and makes the "~30 papers"
 claim true. The curated spine and money shots are untouched.
@@ -172,6 +173,10 @@ the real UI happens after the D3 freeze, compressing recording+edit into D4–D7
 ## 9. Deferred to the implementation plan
 
 - Exact UI layout/markup and CSS approach.
-- The arXiv id list for corpus expansion (and whether team supplies PDFs).
+- The specific arXiv id list for corpus expansion (I curate it; downloaded via arXiv PDF
+  export — confirmed not team-supplied).
 - Whether reroute is recast on agents or handled by scene-switch.
 - gpt-4o-mini blended price constant for the cost estimate.
+
+**Resolved at spec review:** the D3 product-freeze timeline (compressed video buffer) is
+accepted; corpus-expansion PDFs are sourced by me, not the team.
