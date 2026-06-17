@@ -47,12 +47,19 @@ def build_index(conn: sqlite3.Connection) -> int:
     return len(vectors)
 
 
-def semantic_search(conn: sqlite3.Connection, query: str, top_k: int = 3) -> list[dict]:
+def semantic_search(conn: sqlite3.Connection, query: str, top_k: int = 3,
+                    concept_id: int | None = None) -> list[dict]:
     """Return the top-k chunks most semantically similar to `query`.
 
-    Empty list offline, when the index is empty, or when query embedding fails — so the
-    retrieve node can fall back to concept-tagged evidence transparently."""
+    When `concept_id` is given, ranking is restricted to that concept's chunks — the tutor
+    teaches one concept at a time, so evidence must stay in-concept (no cross-concept
+    citations). With concept_id=None this ranks the whole corpus (e.g. for exploration).
+
+    Empty list offline, when the (filtered) index is empty, or when query embedding fails —
+    so the retrieve node can fall back to concept-tagged evidence transparently."""
     stored = repo.get_chunk_vectors(conn)
+    if concept_id is not None:
+        stored = [s for s in stored if s["concept_id"] == concept_id]
     if not stored:
         return []
     q = llm_client.embed_texts([query])

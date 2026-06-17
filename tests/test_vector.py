@@ -71,6 +71,37 @@ def test_build_and_search_with_fake_embeddings(monkeypatch):
     assert hits[0]["score"] >= hits[-1]["score"]
 
 
+def test_semantic_search_concept_filter_excludes_other_concepts(monkeypatch):
+    """A concept_id filter must keep ranking inside that concept (no cross-concept evidence)."""
+    conn = sqlite3.connect(":memory:")
+    init_db(conn)
+    seed_demo_data(conn, "data/seed/agents_corpus.json")
+    repo.create_session(conn, "s", "agents")
+    monkeypatch.setattr(vector.llm_client, "embed_texts",
+                        lambda texts: [[1.0, 0.0, 0.0] for _ in texts])
+    build_index(conn)
+    hits = semantic_search(conn, "anything", top_k=10, concept_id=1)
+    assert hits, "expected at least one in-concept hit"
+    assert all(h["concept_id"] == 1 for h in hits), "filter must exclude other concepts"
+
+
+def test_retrieve_node_vector_mode_stays_in_concept(monkeypatch):
+    """retrieve_node in vector mode must only return chunks tagged to the current concept."""
+    conn = sqlite3.connect(":memory:")
+    init_db(conn)
+    seed_demo_data(conn, "data/seed/agents_corpus.json")
+    repo.create_session(conn, "s", "agents")
+    monkeypatch.setenv("LITNAV_RETRIEVAL", "vector")
+    monkeypatch.setattr(vector.llm_client, "embed_texts",
+                        lambda texts: [[1.0, 0.0, 0.0] for _ in texts])
+    build_index(conn)
+    out = retrieve_node({"current_concept_id": 1, "topic": "agents"}, conn)
+    in_concept = {r[0] for r in conn.execute(
+        "SELECT id FROM paper_chunks WHERE concept_id=1").fetchall()}
+    assert out["current_evidence"]
+    assert all(e["chunk_id"] in in_concept for e in out["current_evidence"])
+
+
 def test_retrieve_node_falls_back_to_concept_tagged(monkeypatch):
     """LITNAV_RETRIEVAL=vector with an empty index -> concept-tagged evidence, not empty."""
     monkeypatch.setenv("LITNAV_RETRIEVAL", "vector")
