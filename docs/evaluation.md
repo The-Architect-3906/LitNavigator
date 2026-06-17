@@ -27,7 +27,7 @@ Each check should verify durable evidence:
 
 G0-G3 are all implemented and pass fully offline (M0-M3 complete).
 
-**All gates run fully offline.** M2/M3 use the LLM only when `LITNAV_LLM_PROVIDER=qwen`; with the default `none` they take the deterministic fixture path, so `verify_m2`/`verify_m3` pass with no network. The live LLM is exercised separately during recording (see "Live LLM induction check" below) to satisfy the spec's "at least one live induction" rule.
+**All gates run fully offline.** M2/M3 use the LLM only when a provider is set (`LITNAV_LLM_PROVIDER=openai` or `qwen`); with the default `none` they take the deterministic fixture path, so `verify_m2`/`verify_m3` pass with no network. The live LLM is exercised separately during recording (see "Live LLM induction check" below) to satisfy the spec's "at least one live induction" rule.
 
 ## T1-T11 Acceptance Matrix
 
@@ -41,7 +41,7 @@ G0-G3 are all implemented and pass fully offline (M0-M3 complete).
 | T5 in-session learning gain | M2 | `tutor_turns.post_check_score > pre_check_score` using parallel items |
 | T5b confidence calibration | M2 | confidence rises with `n_observations`; one-observation state is marked low confidence |
 | T6 induction with evidence | M3 | induced edge/misconception has cited chunk and `confidence_basis` |
-| T7 induction demoable | M3 | off-skeleton concept produces at least one induced element (offline fixture passes the gate; at least one live `provider=qwen` induction is shown during recording) |
+| T7 induction demoable | M3 | off-skeleton concept produces at least one induced element (offline fixture passes the gate; at least one live `provider=openai` induction is shown during recording) |
 | T8 honest provenance | M3 | UI/trace distinguishes curated vs induced and shows confidence basis |
 | T9 jump-step interception | M2 bonus | request to skip ahead produces prerequisite warning |
 | T10 no hallucinated citations | M2 | every teach/reteach assertion references a real chunk id |
@@ -112,15 +112,35 @@ It should assert:
 
 ## Live LLM Induction Check
 
-The automated gates run offline on fixtures. To exercise the live provider during recording:
+The automated gates run offline on fixtures. To exercise the live provider during recording,
+set the key in `.env` (`LITNAV_LLM_PROVIDER=openai`, `LITNAV_LLM_API_KEY=...`) and run:
 
 ```bash
-LITNAV_LLM_PROVIDER=qwen python -m litnav.app demo-m3
+python -m litnav.app demo-m3
 ```
 
-**What the live path currently does:** the LLM labels the *evidence strength* of the induced edge/misconception over the ingested chunks (confidence stays rule-computed); the offline candidate provides the structure as fallback. Confirm the `provider=qwen` path ran and the cited evidence chain is shown. This is a recording step, not a blocking gate — if the live call fails it falls back to the offline candidate.
+**What the live path does (all four model seams):**
 
-**Not yet implemented (future work):** fully autonomous live induction — the LLM proposing the prerequisite edge and misconception *itself* from the real chunks. Real PDF chunk extraction is **done** (`data/seed/agents_corpus.json`, via `python -m litnav.ingest.pdf_extract`); what remains is pointing `induce` at the real corpus chunks and adding the extraction prompt. Until then the spec's "perform at least one live induction" rule is only partially met (strength labeling, not autonomous extraction).
+- **Autonomous induction (`induce`)** — the LLM *reads the real chunk text and proposes the
+  misconception itself* (wrong vs. correct model) plus its evidence strength. The offline
+  candidate is the fallback. Confidence is always **rule-computed** (`induced_confidence`),
+  never emitted by the LLM. This satisfies the spec's "perform at least one live induction" rule.
+- **Grounded teaching (`teach`)** — `complete_text` generates a strategy/depth-aware
+  explanation grounded only in the cited chunk; the deterministic template is the fallback.
+  The teach turn's token cost is folded into `tutor_turns.token_cost`.
+- **Misconception detection (`grade`)** — the LLM picks which candidate misconception an answer
+  reveals; deterministic regex is the fallback. Only an id that is a real candidate is trusted.
+- **Semantic retrieval (`retrieve`, opt-in)** — with `LITNAV_RETRIEVAL=vector` and a built
+  embedding index, `retrieve` ranks chunks by cosine similarity; otherwise it uses
+  concept-tagged evidence. Build the index first:
+
+  ```bash
+  python -m litnav.retrieval.vector --fixture data/seed/agents_corpus.json
+  ```
+
+Confirm the live path ran (token cost > 0 in `tutor_turns` / induction) and the cited evidence
+chain is shown. This is a recording step, not a blocking gate — if any live call fails it falls
+back to the deterministic path, so the demo never breaks.
 
 ## Manual Demo Checks
 

@@ -93,7 +93,7 @@ Each node owns one transformation:
 - `grade`: score the answer, update mastery/confidence, and detect misconceptions.
 - `diagnose`: identify a missing prerequisite.
 - `replan`: insert or reorder route steps and increment `route_version`.
-- `induce`: add machine-derived scaffolding from evidence. Fixture-backed by default; with `LITNAV_LLM_PROVIDER=qwen` the LLM extracts chunks and labels strength, while confidence stays rule-computed.
+- `induce`: add machine-derived scaffolding from evidence. Fixture-backed by default; with a provider set (`LITNAV_LLM_PROVIDER=openai`/`qwen`) the LLM proposes the misconception (wrong vs. correct model) and labels evidence strength over the real chunks, while confidence stays rule-computed.
 
 ### Storage
 

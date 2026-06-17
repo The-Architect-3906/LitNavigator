@@ -125,14 +125,14 @@ Only add M4 work if M3 is already recordable. M4 should not risk the latest stab
 
 The current `litnav/ui` panel is **read-only observability** — it renders a session that already ran. The productized end-state is an **interactive agent interface**: the user types a goal, the tutor teaches, asks a quiz, the user actually answers, and the agent adapts live (reteach / replan / induce).
 
-**Status: a working prototype exists** at `GET /tutor` (`litnav/ui/interactive.py` + server routes): pick a session → teach → quiz → you answer in a text box → it adapts (reteach / induce) live, via `interrupt_after=["check"]` + resume, with per-session DB/checkpoint files. Teaching is deterministic and sessions are preset + in-memory today.
+**Status: a working prototype exists** at `GET /tutor` (`litnav/ui/interactive.py` + server routes): pick a session → teach → quiz → you answer in a text box → it adapts (reteach / induce) live, via `interrupt_after=["check"]` + resume, with per-session DB/checkpoint files. Teaching is LLM-grounded when a key is set (deterministic template offline); sessions are preset + in-memory today.
 
 This is **not** a competition gate (the gated core is M0–M3; the recordable demo uses the panel + CLI). It is the "real users use it" form. Architecturally the path is short because the backend already supports human-in-the-loop:
 
 - **Built:** the M1 `SqliteSaver` interrupt/resume, **plus** the chat front-end (`/tutor` + `tutor.html`), the submit-answer→resume endpoint, and per-session DB/checkpoint (`TutorSession`). (CLI demos still use batch `pending_answers`.)
-- **Remaining:** (a) wire Qwen into `teach` for genuinely grounded explanations (needs a key); (b) free-text goal/topic entry (today `/tutor` offers preset sessions); (c) session persistence across server restart (sessions are in-memory) + cleanup of per-session files; (d) optional streaming of teaching text.
+- **Remaining:** (a) free-text goal/topic entry (today `/tutor` offers preset sessions); (b) session persistence across server restart (sessions are in-memory) + cleanup of per-session files; (c) optional streaming of teaching text. *(LLM-grounded teach is wired — `teach` calls `complete_text`, deterministic template offline.)*
 
-So "panel → real agent UI" is *a new interaction front-end + swapping batch answers for interrupt/resume + LLM-backed teach*, not an architecture rewrite.
+So "panel → real agent UI" is *a new interaction front-end + swapping batch answers for interrupt/resume*, not an architecture rewrite. LLM-backed teach is already in place.
 
 ## Timeline Checkpoints
 

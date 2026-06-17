@@ -97,7 +97,7 @@ No live paper fetch is required during the demo.
 - confidence basis,
 - conflict flags when it disagrees with curated structure.
 
-Induction runs over already-ingested chunks. **Currently:** with `LITNAV_LLM_PROVIDER=qwen` the LLM labels the evidence *strength* (with `none` the offline candidate's label is used); the induced edge/misconception **structure comes from the offline candidate either way**. `confidence` is always computed by the rule in `docs/data-contract.md` — never returned by the LLM. **Future work:** fully autonomous live induction — the LLM proposing the edge/misconception itself from the real chunks. PDF chunk extraction is already done (`data/seed/agents_corpus.json`); what remains is pointing `induce` at those chunks plus an extraction prompt. Until then the spec's "at least one live induction" rule is only partially met (strength labeling). See `docs/evaluation.md`.
+Induction runs over already-ingested chunks. With a provider set (`LITNAV_LLM_PROVIDER=openai`/`qwen`) the LLM **reads the real chunk text and proposes the misconception itself** (wrong vs. correct model) and labels evidence *strength*; with `none` the offline candidate provides both as fallback. `confidence` is always computed by the rule in `docs/data-contract.md` — never returned by the LLM. This satisfies the spec's "at least one live induction" rule (autonomous extraction, not just strength labeling). PDF chunk extraction feeds the corpus (`data/seed/agents_corpus.json`). See `docs/evaluation.md`.
 
 ## State Machine
 
@@ -180,7 +180,7 @@ off-skeleton concept
 - Storage helpers should not decide routes.
 - Retrieval should return chunks and scores, not teaching prose.
 - Grading updates mastery and confidence, but does not choose the next node.
-- The LLM client (`litnav/llm/`) returns structured fields only (misconception id, chunk selection, strength label); it never emits mastery, confidence, or a routing decision. Every LLM caller passes a deterministic fallback, so the system runs offline.
+- The LLM client (`litnav/llm/`) returns content and structured fields (misconception id, proposed wrong/correct model, evidence-strength label, grounded teaching text, query/chunk embeddings); it never emits mastery, confidence, or a routing decision — those stay rule-computed. Every LLM caller passes a deterministic fallback, so the system runs offline.
 - UI (`litnav/ui/`) renders state and traces; it should not invent rationale.
 
 ## Intent / audience modes (M4)

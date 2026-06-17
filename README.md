@@ -132,7 +132,7 @@ G0 PASS: decision written
 G0 PASS: offline run
 ```
 
-> M0 and M1 require no LLM key and no network access. The LLM (Qwen, with offline fallback) enters at M2.
+> M0 and M1 require no LLM key and no network access. The LLM (OpenAI `gpt-4o-mini` by default, provider-agnostic — Qwen also supported — with offline fallback everywhere) enters at M2.
 
 ---
 
@@ -142,18 +142,18 @@ G0 PASS: offline run
 |:--|:--|:--:|
 | **M0** · Fake-data walking skeleton | State machine loop + SQLite persistence | ✅ Done |
 | **M1** · Navigator | Route changes because of learner state; LangGraph StateGraph + prereq replan + SqliteSaver checkpoint (G1 green) | ✅ Done |
-| **M2** · Tutor | teach → reteach → concede on the agent corpus; misconception detection (Qwen / offline fallback); parallel-form quizzes; learning gain (G2 green) | ✅ Done |
-| **M3** · Literature induction | `induce_scaffold` — induce a prereq edge + mine a misconception for an off-skeleton concept, rule-computed confidence + provenance, panel marks curated vs induced (G3 green) | ✅ Done |
-| **M4** · Polish | intent/audience modes ✅ (`demo-intent`); still: hybrid/vector retrieval, cross-session memory, live-Qwen induction recording | 🟡 In progress |
-| **Product** · Interactive agent UI | ✅ interactive tutor at `/tutor`: pick a session → teach → quiz → **you answer in a text box** → it adapts live (reteach / induce), reusing the M1 interrupt/resume. Today: preset sessions + deterministic teach; remaining: free-text goal entry, Qwen-backed teach, restart persistence | 🟡 Prototype |
+| **M2** · Tutor | teach → reteach → concede on the agent corpus; misconception detection (LLM / offline fallback); grounded LLM teaching; parallel-form quizzes; learning gain (G2 green) | ✅ Done |
+| **M3** · Literature induction | `induce_scaffold` — induce a prereq edge + mine a misconception for an off-skeleton concept (LLM proposes it from the real chunks, offline candidate fallback), rule-computed confidence + provenance, panel marks curated vs induced (G3 green) | ✅ Done |
+| **M4** · Polish | intent/audience modes ✅ (`demo-intent`); semantic/vector retrieval ✅ (opt-in, `LITNAV_RETRIEVAL=vector`); live induction recording ✅; still: cross-session memory | 🟡 Mostly done |
+| **Product** · Interactive agent UI | ✅ interactive tutor at `/tutor`: pick a session → teach → quiz → **you answer in a text box** → it adapts live (reteach / induce), reusing the M1 interrupt/resume; LLM-grounded teach when a key is set. Today: preset sessions; remaining: free-text goal entry, restart persistence | 🟡 Prototype |
 
 > **M0–M3 (the gated core) is complete and green** — `verify_m0/m1/m2/m3` all pass fully offline. M4 is icing; the interactive product UI is beyond the competition gates.
 
 **Enablers (needed only by specific items, not the gated core):**
 
 - **Real PDF chunk extraction** — ✅ **done.** `data/seed/agents_corpus.json` holds real abstract/intro text extracted from all 8 PDFs (32 chunks, each tagged to a concept); regenerate with `python -m litnav.ingest.pdf_extract`. *No API / no compute.* The tuned `agents_m2/m3.json` stay as the demo-core; this corpus is the real-data set and the basis for future grounded teaching / live induction.
-- **Qwen API key** — for the one live induction recording (M4) and for genuinely grounded teaching in the product UI. The LLM is an optional path everywhere; offline fixtures are the fallback.
-- **Embeddings (bge-m3 + Chroma)** — only for M4 hybrid/vector retrieval. Until then keyword/FTS5 suffices.
+- **LLM API key (OpenAI `gpt-4o-mini`, or Qwen)** — ✅ **wired.** Drives live induction, grounded teaching, and misconception detection; set `LITNAV_LLM_PROVIDER`/`LITNAV_LLM_API_KEY` in `.env`. The LLM is an optional path everywhere; offline fixtures are the fallback, so all gates pass with `provider=none`.
+- **Embeddings (OpenAI `text-embedding-3-small`)** — ✅ **wired** for opt-in semantic retrieval. Vectors are stored in the `chunk_vectors` table (cosine ranking, no external vector DB); build with `python -m litnav.retrieval.vector`, enable with `LITNAV_RETRIEVAL=vector`. Concept-tagged retrieval is the default fallback.
 
 ---
 
@@ -168,7 +168,7 @@ G0 PASS: offline run
 
 ## Tech stack
 
-`LangGraph` · `SQLite + FTS5` · `Chroma` (M4) · `bge-m3` embeddings (M4) · Qwen (M2+, model-agnostic) · `pytest`
+`LangGraph` · `SQLite + FTS5` · OpenAI `gpt-4o-mini` (M2+, provider-agnostic — Qwen also supported) · OpenAI `text-embedding-3-small` (M4 semantic retrieval, stored in SQLite) · `pytest`
 
 ---
 

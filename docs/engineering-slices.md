@@ -114,7 +114,7 @@ Trigger `dr_is_keyword_match`, reteach with an analogy, then pass a parallel ite
 
 **Build:**
 
-- `induce_scaffold` (LLM extraction over ingested chunks when `provider=qwen`; offline fixture fallback when `none`),
+- `induce_scaffold` (LLM proposes the misconception from the ingested chunks when a provider is set; offline fixture fallback when `none`),
 - `source='induced'` provenance,
 - `confidence_basis` (rule-computed, never LLM-emitted),
 - induced prerequisite edge,
@@ -136,15 +136,14 @@ User asks about `multi_agent_debate` (agent corpus), which is off the curated sk
 
 Only after M3 is stable:
 
-- intent/audience modes (researcher vs journalist): re-scope targets / depth / mastery bar / frontier emphasis from a chosen intent (front-end scenario picker + thin planner/teach layer),
+- intent/audience modes (researcher vs journalist): re-scope targets / depth / mastery bar / frontier emphasis from a chosen intent (front-end scenario picker + thin planner/teach layer) — ✅ done (`demo-intent`),
+- semantic/vector retrieval (OpenAI embeddings stored in SQLite, cosine ranking, opt-in via `LITNAV_RETRIEVAL=vector`) — ✅ done,
 - trace UI polish,
 - coverage warnings,
 - jump-step pushback,
-- hybrid retrieval,
-- Chroma/vector retrieval,
 - cross-session memory,
 - richer concept graph.
 
 ## Slice 6: Interactive agent UI (product phase, post-competition)
 
-Not a gate. **Status: ✅ prototype implemented** — `litnav/ui/interactive.py` (`TutorSession`, `interrupt_after=["check"]` + resume) + `/tutor` routes + `tutor.html`. User types a goal -> teach -> quiz -> user answers -> adapt live (reteach / induce). Remaining: swap Qwen into `teach` for grounded explanations (needs a key); polish the UI.
+Not a gate. **Status: ✅ prototype implemented** — `litnav/ui/interactive.py` (`TutorSession`, `interrupt_after=["check"]` + resume) + `/tutor` routes + `tutor.html`. User types a goal -> teach -> quiz -> user answers -> adapt live (reteach / induce). LLM-grounded teach is wired (`teach` calls `complete_text`, deterministic offline). Remaining: free-text goal entry, restart persistence, UI polish.
