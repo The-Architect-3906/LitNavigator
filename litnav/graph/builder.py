@@ -149,6 +149,7 @@ def make_initial_state(
         "current_quiz_item": None,
         "current_strategy": None,
         "current_cited_chunks": [],
+        "teach_token_cost": 0,
         "used_quiz_ids": {},
         "user_answer": None,
         "pending_answers": pending_answers or [],

@@ -38,7 +38,8 @@ def grade_node(state: NavState, conn: sqlite3.Connection) -> dict:
 
     # ── Misconception detection (only meaningful on a wrong answer) ──────────────
     detected_id = None
-    turn_token_cost = 0
+    # Start from the teach turn's LLM cost (grounded explanation), then add grading's own cost.
+    turn_token_cost = int(state.get("teach_token_cost") or 0)
     candidates = repo.get_misconceptions_for_concept(conn, concept_id)
     if not correct and candidates:
         deterministic = _detect_misconception(answer, candidates)
@@ -52,7 +53,7 @@ def grade_node(state: NavState, conn: sqlite3.Connection) -> dict:
             'Respond as JSON: {"misconception_id": "<id or null>"}'
         )
         result = llm_client.complete_json(prompt, fallback={"misconception_id": deterministic})
-        turn_token_cost = llm_client.last_token_cost()  # 0 offline; real token usage when provider=qwen
+        turn_token_cost += llm_client.last_token_cost()  # 0 offline; real token usage when a provider is set
         # Only trust an id the model could legitimately have chosen; otherwise fall back to the
         # deterministic detection. Guards against a malformed/unknown id from a live LLM polluting
         # held_misconceptions / quiz_attempts and breaking reteach's anchor to the correct model.

@@ -31,22 +31,53 @@ def induced_confidence(n_chunks: int, max_strength: str, multi_paper: bool) -> f
     return round(min(0.95, 0.35 + 0.15 * n_chunks + strength_bonus + multi_paper_bonus), 2)
 
 
-def _label_strength(conn: sqlite3.Connection, chunk_ids: list[str], fallback: str) -> str:
-    """LLM seam: with provider=qwen, label evidence strength over the real chunk text;
-    offline (provider=none) complete_json returns the fallback unchanged."""
+def _chunk_texts(conn: sqlite3.Connection, chunk_ids: list[str]) -> list[str]:
     texts = []
     for cid in chunk_ids:
         row = conn.execute("SELECT text FROM paper_chunks WHERE id=?", (cid,)).fetchone()
         if row:
             texts.append(row[0])
+    return texts
+
+
+def _label_strength(conn: sqlite3.Connection, chunk_ids: list[str], fallback: str) -> str:
+    """LLM seam: with a provider set, label evidence strength over the real chunk text;
+    offline (provider=none) complete_json returns the fallback unchanged."""
     prompt = (
         "Rate how strongly the evidence asserts the claim it is cited for.\n"
-        f"Evidence: {texts}\n"
+        f"Evidence: {_chunk_texts(conn, chunk_ids)}\n"
         'Respond as JSON: {"max_strength": "weak_hint" | "general_statement" | "explicit_assertion"}'
     )
     result = llm_client.complete_json(prompt, fallback={"max_strength": fallback})
     labelled = result.get("max_strength", fallback)
     return labelled if labelled in _VALID_STRENGTH else fallback
+
+
+def _extract_misconception(conn: sqlite3.Connection, chunk_ids: list[str], concept_name: str,
+                           fallback: dict) -> dict:
+    """Autonomous live induction (F): with a provider set, the LLM READS the real chunk text
+    and PROPOSES the misconception (wrong vs correct model) plus its evidence strength — not
+    just a strength label. Offline / on any malformed field, the prepared candidate is the
+    fallback, so this stays deterministic with provider=none. Confidence is never taken from
+    the LLM; the caller computes it via induced_confidence().
+    """
+    prompt = (
+        f"Reading the evidence below about \"{concept_name}\", identify ONE common misconception a "
+        "learner might hold and the correct model that corrects it. Ground both ONLY in the evidence.\n\n"
+        f"Evidence: {_chunk_texts(conn, chunk_ids)}\n\n"
+        'Respond as JSON: {"wrong_model": "<short wrong belief>", '
+        '"correct_model": "<short correction>", '
+        '"max_strength": "weak_hint" | "general_statement" | "explicit_assertion"}'
+    )
+    result = llm_client.complete_json(prompt, fallback={})
+    wrong = result.get("wrong_model")
+    correct = result.get("correct_model")
+    strength = result.get("max_strength")
+    return {
+        "wrong_model": wrong if isinstance(wrong, str) and wrong.strip() else fallback["wrong_model"],
+        "correct_model": correct if isinstance(correct, str) and correct.strip() else fallback["correct_model"],
+        "max_strength": strength if strength in _VALID_STRENGTH else fallback["max_strength"],
+    }
 
 
 def induce_scaffold_node(state: NavState, conn: sqlite3.Connection,
@@ -81,13 +112,15 @@ def induce_scaffold_node(state: NavState, conn: sqlite3.Connection,
         evidence_chunks=edge_chunks, confidence=edge_conf, confidence_basis=edge_basis,
     )
 
-    # 3) Mined misconception — also rule-computed confidence, cited to a chunk.
+    # 3) Mined misconception — LLM proposes wrong/correct model from the real chunks (F);
+    #    the prepared candidate is the offline fallback. Confidence stays rule-computed.
     m = candidate["misconception"]
     m_chunks = m["evidence_chunks"]
-    m_strength = _label_strength(conn, m_chunks, m["max_strength"])
+    extracted = _extract_misconception(conn, m_chunks, off["name"], m)
+    m_strength = extracted["max_strength"]
     m_conf = induced_confidence(len(m_chunks), m_strength, m.get("multi_paper", False))
     repo.record_induced_misconception(
-        conn, m["id"], new_id, m["wrong_model"], m["correct_model"], m_conf,
+        conn, m["id"], new_id, extracted["wrong_model"], extracted["correct_model"], m_conf,
         m_chunks[0] if m_chunks else None, detect_hint=m.get("detect_hint"),
         reteach_strategy=m.get("reteach_strategy", "analogy"),
     )

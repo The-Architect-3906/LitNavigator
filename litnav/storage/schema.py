@@ -147,6 +147,14 @@ CREATE TABLE IF NOT EXISTS tutor_turns (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS chunk_vectors (
+    chunk_id TEXT PRIMARY KEY REFERENCES paper_chunks(id),
+    dim INTEGER,
+    vector TEXT,                  -- JSON list[float]
+    model TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS induction_log (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     session_id TEXT REFERENCES sessions(id),

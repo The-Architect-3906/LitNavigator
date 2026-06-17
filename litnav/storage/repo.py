@@ -347,3 +347,30 @@ def get_induction_log(conn: sqlite3.Connection, session_id: str) -> list[dict]:
              "evidence_chunks": json.loads(r[2]) if r[2] else [],
              "confidence": r[3], "confidence_basis": json.loads(r[4]) if r[4] else {}}
             for r in rows]
+
+
+# ── Chunk embedding vectors (M4 vector retrieval) ──────────────────────────────
+
+def save_chunk_vector(conn: sqlite3.Connection, chunk_id: str, vector: list[float],
+                      model: str) -> None:
+    conn.execute(
+        "INSERT INTO chunk_vectors (chunk_id, dim, vector, model) VALUES (?,?,?,?) "
+        "ON CONFLICT(chunk_id) DO UPDATE SET dim=excluded.dim, vector=excluded.vector, "
+        "model=excluded.model",
+        (chunk_id, len(vector), json.dumps(vector), model),
+    )
+    conn.commit()
+
+
+def get_chunk_vectors(conn: sqlite3.Connection) -> list[dict]:
+    """All stored chunk vectors joined with their text/paper for ranking."""
+    rows = conn.execute(
+        "SELECT v.chunk_id, v.vector, c.text, c.paper_id, c.concept_id "
+        "FROM chunk_vectors v JOIN paper_chunks c ON c.id = v.chunk_id"
+    ).fetchall()
+    return [{"chunk_id": r[0], "vector": json.loads(r[1]), "text": r[2],
+             "paper_id": r[3], "concept_id": r[4]} for r in rows]
+
+
+def count_chunk_vectors(conn: sqlite3.Connection) -> int:
+    return conn.execute("SELECT COUNT(*) FROM chunk_vectors").fetchone()[0]

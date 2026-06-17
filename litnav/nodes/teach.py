@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import sqlite3
 
+from litnav.llm import client as llm_client
 from litnav.state import NavState
 
-# Short framing phrase per explanation strategy (deterministic; no LLM needed for teach).
+# Short framing phrase per explanation strategy (deterministic fallback; no LLM needed).
 _STRATEGY_FRAMING = {
     "direct": "Here is the core idea, stated directly:",
     "analogy": "Let me re-explain with an analogy:",
@@ -24,28 +25,41 @@ def teach_node(state: NavState, conn: sqlite3.Connection) -> dict:
     row = conn.execute("SELECT name FROM concepts WHERE id=?", (concept_id,)).fetchone()
     concept_name = row[0] if row else f"concept {concept_id}"
 
-    # Reteach turns cite a different chunk than the first explanation when one is available.
     cited_chunks: list[str] = []
+    teach_token_cost = 0
     if evidence:
         idx = min(reteach_count, len(evidence) - 1)
         chunk = evidence[idx]
-        if depth == "recall":
-            # Brief orientation (e.g. journalist intent): just the gist, one sentence.
-            first = chunk["text"].split(". ")[0].strip()
-            gist = (first if len(first) <= 240 else chunk["text"][:240].strip()).rstrip(".") + "."
-            message = (f"**{concept_name}** (quick orientation)\n\n{gist}\n\n"
-                       f"*(Source: chunk {chunk['chunk_id']})*")
-        else:
-            framing = _STRATEGY_FRAMING.get(strategy, _STRATEGY_FRAMING["direct"])
-            message = (f"**{concept_name}** ({strategy})\n\n"
-                       f"{framing}\n\n{chunk['text']}\n\n*(Source: chunk {chunk['chunk_id']})*")
         cited_chunks = [chunk["chunk_id"]]
+
+        # Deterministic body (offline fallback).
+        if depth == "recall":
+            first = chunk["text"].split(". ")[0].strip()
+            det_body = (first if len(first) <= 240 else chunk["text"][:240].strip()).rstrip(".") + "."
+            header = f"**{concept_name}** (quick orientation)"
+        else:
+            det_body = f"{_STRATEGY_FRAMING.get(strategy, _STRATEGY_FRAMING['direct'])}\n\n{chunk['text']}"
+            header = f"**{concept_name}** ({strategy})"
+
+        # LLM grounded explanation when a provider is configured; offline returns det_body unchanged.
+        length = "in one short sentence (a quick orientation)" if depth == "recall" else "in 2-4 sentences"
+        prompt = (
+            f"You are a patient tutor. Teach the concept \"{concept_name}\" using a {strategy} "
+            f"explanation, {length}. Ground it ONLY in the evidence below — do not add facts beyond it.\n\n"
+            f"Evidence:\n{chunk['text']}"
+        )
+        body = llm_client.complete_text(prompt, fallback=det_body,
+                                        max_tokens=80 if depth == "recall" else 300)
+        teach_token_cost = llm_client.last_token_cost()
+
+        message = f"{header}\n\n{body}\n\n*(Source: chunk {chunk['chunk_id']})*"
     else:
         message = f"**{concept_name}** — no evidence found for this concept yet."
 
     return {
         "current_strategy": strategy,
         "current_cited_chunks": cited_chunks,
+        "teach_token_cost": teach_token_cost,
         "history": [{
             "event": "reteach" if reteach_count > 0 else "teach",
             "concept_id": concept_id, "strategy": strategy, "depth": depth,

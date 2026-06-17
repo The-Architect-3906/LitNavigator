@@ -68,6 +68,37 @@ def test_trace_surfaces_induced_provenance():
     assert all(i["confidence_basis"] for i in t["induction"])
 
 
+def test_offline_induction_uses_candidate_misconception():
+    """provider=none: the stored misconception text equals the prepared candidate."""
+    conn = _conn()
+    cand = _candidate()
+    out = induce_scaffold_node({"session_id": "s", "route": [], "route_version": 1}, conn, cand)
+    mis = repo.get_misconceptions_for_concept(conn, out["current_concept_id"])
+    stored = next(m for m in mis if m["source"] == "induced")
+    assert stored["wrong_model"] == cand["misconception"]["wrong_model"]
+
+
+def test_autonomous_llm_proposes_misconception_from_chunks(monkeypatch):
+    """With a provider, the LLM-proposed wrong/correct model is what gets stored (F)."""
+    from litnav.nodes import induce as induce_mod
+
+    def fake_complete_json(prompt, *, schema_hint="", fallback):
+        # only answer the misconception-extraction prompt; leave strength labeling to fallback
+        if "identify ONE common misconception" in prompt:
+            return {"wrong_model": "LLM-proposed wrong belief",
+                    "correct_model": "LLM-proposed correction",
+                    "max_strength": "explicit_assertion"}
+        return fallback
+
+    monkeypatch.setattr(induce_mod.llm_client, "complete_json", fake_complete_json)
+    conn = _conn()
+    out = induce_scaffold_node({"session_id": "s", "route": [], "route_version": 1}, conn, _candidate())
+    mis = repo.get_misconceptions_for_concept(conn, out["current_concept_id"])
+    stored = next(m for m in mis if m["source"] == "induced")
+    assert stored["wrong_model"] == "LLM-proposed wrong belief"
+    assert stored["correct_model"] == "LLM-proposed correction"
+
+
 def test_induced_edge_confidence_matches_rule_and_is_not_one():
     conn = _conn()
     out = induce_scaffold_node({"session_id": "s", "route": [], "route_version": 1}, conn, _candidate())

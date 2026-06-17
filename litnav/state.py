@@ -46,6 +46,7 @@ class NavState(TypedDict):
     # Inner-loop teaching state (M2)
     current_strategy: Optional[str]         # explanation strategy of the current teach/reteach turn
     current_cited_chunks: List[str]         # chunks cited by the current teach/reteach turn
+    teach_token_cost: int                   # LLM tokens spent generating the current teach turn (0 offline)
     used_quiz_ids: Dict[int, List[int]]     # {concept_id: [quiz_item_ids drawn]} — pre/post dedup per concept
 
     # Literature induction (M3)

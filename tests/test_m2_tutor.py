@@ -143,3 +143,37 @@ def test_grade_accepts_valid_llm_misconception_id(monkeypatch):
     conn = _conn()
     s = _drive(_base_state(), conn, "I really have no idea honestly")
     assert s["quiz_result"]["detected_misconception"] == "react_is_just_cot"
+
+
+def test_teach_offline_uses_deterministic_body_no_cost():
+    """Offline (provider=none) teach grounds on the chunk text verbatim and costs 0 tokens."""
+    conn = _conn()
+    s = _apply(_base_state(), retrieve_node(_base_state(), conn))
+    out = teach_node(s, conn)
+    assert out["teach_token_cost"] == 0
+    chunk_text = s["current_evidence"][0]["text"]
+    assert chunk_text in out["history"][0]["message"]  # exact chunk, no LLM paraphrase
+
+
+def test_teach_llm_body_and_cost_flow_into_turn(monkeypatch):
+    """With a provider, the LLM body replaces the chunk and its token cost lands in tutor_turns."""
+    from litnav.nodes import teach as teach_mod
+
+    def fake_complete_text(prompt, *, fallback, max_tokens=400):
+        teach_mod.llm_client._tls.cost = 42
+        return "A grounded LLM explanation."
+
+    monkeypatch.setattr(teach_mod.llm_client, "complete_text", fake_complete_text)
+    conn = _conn()
+    s = _apply(_base_state(), retrieve_node(_base_state(), conn))
+    s = _apply(s, teach_node(s, conn))
+    assert s["teach_token_cost"] == 42
+    assert "A grounded LLM explanation." in s["history"][-1]["message"]
+
+    s = _apply(s, check_node(s, conn))
+    s = {**s, "pending_answers": ["the agent takes actions and observations"]}
+    s = _apply(s, grade_node(s, conn))
+    cost = conn.execute(
+        "SELECT token_cost FROM tutor_turns WHERE session_id='s' ORDER BY id DESC LIMIT 1"
+    ).fetchone()[0]
+    assert cost >= 42  # teach cost folded into the turn
