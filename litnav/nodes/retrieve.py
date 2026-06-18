@@ -8,7 +8,8 @@ from litnav.state import NavState
 
 def _concept_tagged(conn: sqlite3.Connection, concept_id: int) -> list[dict]:
     rows = conn.execute(
-        "SELECT id, text, paper_id FROM paper_chunks WHERE concept_id=?",
+        "SELECT id, text, paper_id FROM paper_chunks WHERE concept_id=? "
+        "ORDER BY CASE WHEN substr(id, 1, 3)='cx_' THEN 1 ELSE 0 END, rowid",
         (concept_id,),
     ).fetchall()
     return [{"chunk_id": r[0], "text": r[1], "paper_id": r[2], "score": 1.0} for r in rows]
