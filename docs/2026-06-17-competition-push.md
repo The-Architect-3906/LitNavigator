@@ -262,14 +262,26 @@ git commit -m "feat(ui): per-session token/cost helper for the efficiency panel"
 ## Task 3: Cohesive free-input UI
 
 Replaces preset buttons with a free-text goal box and a single cohesive session page
-(left: conversation; right: glass-box state + cost). Reuses `TutorSession`, `build_trace`,
-`resolve_goal`, `session_cost`.
+(left: conversation; right: glass-box state + cost). Reuses `TutorSession`, `resolve_goal`,
+`session_cost`.
+
+**Critical: the live right panel reads the CHECKPOINT, not the DB.** At the
+`interrupt_after=["check"]` pause (after `check`, before the learner answers and `grade`
+runs), the domain DB holds only the planner's initial route + initial `learner_state`;
+`tutor_turns`, `decisions`, and cited evidence are written by `grade` AFTER the answer — so
+`build_trace()` (DB) is empty/lagging mid-session (verified: `planner_node` writes route +
+seed `learner_state`; `grade_node` writes everything else). The checkpoint (`snap.values`)
+already holds the live `route`, `route_version`, `current_evidence`, `decision`, `rationale`,
+`learner_state`. So the live panel is built from an extended `TutorSession.current()`;
+`build_trace()` stays only for the post-session `/sessions/{sid}` full panel (where the DB
+is fully flushed).
 
 **Files:**
+- Modify: `litnav/ui/interactive.py` (extend `current()` with live glass-box fields)
 - Create: `litnav/ui/templates/agent_home.html`
 - Create: `litnav/ui/templates/agent.html`
 - Modify: `litnav/ui/server.py` (tutor section, lines ~91-149)
-- Test: `tests/test_tutor_routes.py`
+- Test: `tests/test_interactive.py` (current() exposes glass box), `tests/test_tutor_routes.py`
 
 - [ ] **Step 1: Write the failing route tests**
 
@@ -319,7 +331,59 @@ def test_induce_goal_starts_session(client):
 Run: `python -m pytest tests/test_tutor_routes.py -q`
 Expected: FAIL (current `/tutor/start` takes `mode`, ignores `goal`; no `name="goal"` in home).
 
-- [ ] **Step 3: Create `litnav/ui/templates/agent_home.html`**
+- [ ] **Step 3: Extend `TutorSession.current()` for the live glass box**
+
+Append the failing test to `tests/test_interactive.py`:
+
+```python
+def test_current_exposes_live_glass_box_before_answering():
+    ts = _session()
+    s = ts.start("agents", target_concept_ids=[REACT], mastery_threshold=0.75)
+    assert s["route"], "route is visible during teaching (from the checkpoint)"
+    assert any(step["concept_id"] == REACT for step in s["route"])
+    assert s["evidence"], "the chunk(s) being taught now are visible before any answer"
+    assert s["route_version"] == 1
+```
+
+Run: `python -m pytest tests/test_interactive.py::test_current_exposes_live_glass_box_before_answering -q`
+Expected: FAIL with `KeyError: 'route'`.
+
+Add `from litnav.storage import repo` at the top of `litnav/ui/interactive.py`, then extend
+the `return {...}` in `current()` with these keys (all read from `vals = snap.values`):
+
+```python
+            "route_version": vals.get("route_version"),
+            "route": [
+                {"concept_id": st.get("concept_id"),
+                 "name": (self.conn.execute("SELECT name FROM concepts WHERE id=?",
+                                            (st.get("concept_id"),)).fetchone() or [None])[0],
+                 "status": st.get("status")}
+                for st in (vals.get("route") or [])
+            ],
+            "evidence": vals.get("current_evidence") or [],
+            "decision": vals.get("decision"),
+            "rationale": vals.get("rationale"),
+            "learner": [
+                {"name": (self.conn.execute("SELECT name FROM concepts WHERE id=?", (cid,)).fetchone() or [None])[0],
+                 "mastery": round(cs.get("mastery", 0.0), 3),
+                 "confidence": round(cs.get("confidence", 0.0), 3),
+                 "held": cs.get("held_misconceptions", [])}
+                for cid, cs in (vals.get("learner_state") or {}).items()
+                if cs.get("n_observations")
+            ],
+            "induced": [
+                {"prereq": (self.conn.execute("SELECT name FROM concepts WHERE id=?", (e["prereq_concept"],)).fetchone() or [None])[0],
+                 "target": (self.conn.execute("SELECT name FROM concepts WHERE id=?", (e["target_concept"],)).fetchone() or [None])[0],
+                 "confidence": e["confidence"]}
+                for e in repo.get_induced_edges(self.conn)
+            ],
+```
+
+Run: `python -m pytest tests/test_interactive.py -q`
+Expected: PASS (existing tests unaffected; `route` + `current_evidence` are present in the
+checkpoint right after the first teach/check, so the new test passes).
+
+- [ ] **Step 4: Create `litnav/ui/templates/agent_home.html`**
 
 ```html
 <!doctype html>
@@ -358,7 +422,7 @@ Expected: FAIL (current `/tutor/start` takes `mode`, ignores `goal`; no `name="g
 </div></body></html>
 ```
 
-- [ ] **Step 4: Create `litnav/ui/templates/agent.html`**
+- [ ] **Step 5: Create `litnav/ui/templates/agent.html`**
 
 ```html
 <!doctype html>
@@ -400,26 +464,30 @@ Expected: FAIL (current `/tutor/start` takes `mode`, ignores `goal`; no `name="g
   {% endif %}
  </div>
  <div class="right">
-  <div class="card"><b>Route</b> <span class="mut">v{{ trace.route_version }}</span>
-   {% for s in trace.route %}<div class="step {{ 'done-s' if s.status in ['done','conceded'] else ('active-s' if s.status=='active' else '') }}">
-     {{ s.name }} <span class="mut">[{{ s.status }}]</span></div>{% endfor %}</div>
-  <div class="card"><b>Learner model</b>
-   {% for c in trace.concepts if c.n_observations %}
-     <div class="step"><span class="{{ c.frontier_flag or '' }}">{{ c.name }}</span>
-       <div class="bars">m<span class="m" style="width:{{ (c.mastery*80)|round }}px"></span> {{ c.mastery }}
-        · c<span class="c" style="width:{{ (c.confidence*80)|round }}px"></span> {{ c.confidence }}</div>
-       {% if c.held_misconceptions %}<span class="mut miscon">holds: {{ c.held_misconceptions|join(', ') }}</span>{% endif %}
-     </div>{% endfor %}</div>
-  {% if trace.induced_edges %}<div class="card"><b>Induced (machine-derived)</b>
-   {% for i in trace.induction %}<div class="step">[{{ i.kind }}] conf {{ i.confidence }}
-     <span class="mut">basis {{ i.confidence_basis }}</span></div>{% endfor %}</div>{% endif %}
-  <div class="card cost"><b>Cost this session</b><br>
+  <div class="card"><b>Route</b> <span class="mut">v{{ route_version }}</span>
+   {% for s in route %}<div class="step {{ 'done-s' if s.status in ['done','conceded'] else ('active-s' if s.status=='active' else '') }}">
+     {{ s.name }} <span class="mut">[{{ s.status or 'pending' }}]</span></div>{% endfor %}</div>
+  {% if learner %}<div class="card"><b>Learner model</b>
+   {% for c in learner %}<div class="step">{{ c.name }}
+     <div class="bars">m<span class="m" style="width:{{ (c.mastery*80)|round }}px"></span> {{ c.mastery }}
+      · c<span class="c" style="width:{{ (c.confidence*80)|round }}px"></span> {{ c.confidence }}</div>
+     {% if c.held %}<span class="mut miscon">holds: {{ c.held|join(', ') }}</span>{% endif %}</div>{% endfor %}</div>{% endif %}
+  {% if evidence %}<div class="card"><b>Cited evidence (this turn)</b>
+   {% for e in evidence %}<div class="step mut">{{ e.chunk_id }}: {{ e.text[:120] }}…</div>{% endfor %}</div>{% endif %}
+  {% if rationale %}<div class="card"><b>Why this step</b><div class="mut">{{ decision }} — {{ rationale }}</div></div>{% endif %}
+  {% if induced %}<div class="card"><b>Induced (machine-derived)</b>
+   {% for e in induced %}<div class="step">{{ e.prereq }} &rarr; {{ e.target }} <span class="mut">conf {{ e.confidence }}</span></div>{% endfor %}</div>{% endif %}
+  <div class="card cost"><b>Cost so far</b><br>
    {{ cost.tokens }} LLM tokens ≈ ${{ cost.usd }} <span class="mut">(gpt-4o-mini; offline = $0)</span></div>
  </div>
 </div></body></html>
 ```
 
-- [ ] **Step 5: Rewrite the tutor section of `litnav/ui/server.py`**
+> The right panel renders entirely from the extended `current()` (checkpoint) — `route`,
+> `learner`, `evidence`, `decision`/`rationale`, `induced` — plus `cost`. No `build_trace`
+> here, so it is populated and current from the very first teaching turn.
+
+- [ ] **Step 6: Rewrite the tutor section of `litnav/ui/server.py`**
 
 Replace the import block addition and the section from `# ── Interactive tutor` through `tutor_start` (lines ~91-133). Add near the top imports:
 
@@ -470,7 +538,9 @@ def tutor_start(goal: str = ""):
     return RedirectResponse(f"/tutor/{sid}", status_code=303)
 ```
 
-Update `tutor_page` to render the cohesive page with trace + cost:
+Update `tutor_page` to render the cohesive page from `current()` (checkpoint) + cost. Do NOT
+pass `build_trace` here — the live panel is checkpoint-sourced. Leave the existing
+`/sessions/{sid}` route (which uses `build_trace`) untouched; it is the post-session panel.
 
 ```python
 @app.get("/tutor/{sid}", response_class=HTMLResponse)
@@ -479,7 +549,7 @@ def tutor_page(sid: str):
     if ts is None:
         return RedirectResponse("/tutor", status_code=303)
     return _TEMPLATES.get_template("agent.html").render(
-        sid=sid, n_papers=_n_papers(_fixture_data()), trace=_trace_for(sid),
+        sid=sid, n_papers=_n_papers(_fixture_data()),
         cost=session_cost(ts.conn, sid), **ts.current())
 ```
 
@@ -487,23 +557,25 @@ def tutor_page(sid: str):
 > `/tutor/{sid}` (200), satisfying `test_concept_goal_starts_session`. The unknown branch
 > returns the rendered home (200) directly.
 
-- [ ] **Step 6: Run route tests + full suite**
+- [ ] **Step 7: Run route tests + full suite**
 
-Run: `python -m pytest tests/test_tutor_routes.py -q && python -m pytest -q`
-Expected: route tests PASS; full suite still green (existing `test_interactive.py` untouched — it drives `TutorSession` directly, not the HTTP layer).
+Run: `python -m pytest tests/test_tutor_routes.py tests/test_interactive.py -q && python -m pytest -q`
+Expected: route + interactive tests PASS; full suite still green.
 
-- [ ] **Step 7: Live smoke (manual, optional now)**
+- [ ] **Step 8: Live smoke (manual, optional now)**
 
 ```bash
 python -m litnav.ui.server   # open http://127.0.0.1:8000/tutor, type a goal, answer a quiz
 ```
-Expected: free-text goal starts a session; right panel shows route/mastery/cost; out-of-scope goal returns an honest message.
+Expected: free-text goal starts a session; the right panel shows route + cited evidence on
+the **first** teaching turn (before answering), then learner mastery/confidence + decision
+rationale after each answer; cost panel updates; out-of-scope goal returns an honest message.
 
-- [ ] **Step 8: Commit**
+- [ ] **Step 9: Commit**
 
 ```bash
-git add litnav/ui/server.py litnav/ui/templates/agent_home.html litnav/ui/templates/agent.html tests/test_tutor_routes.py
-git commit -m "feat(ui): cohesive free-input agent UI with glass-box state + cost panel"
+git add litnav/ui/interactive.py litnav/ui/server.py litnav/ui/templates/agent_home.html litnav/ui/templates/agent.html tests/test_interactive.py tests/test_tutor_routes.py
+git commit -m "feat(ui): cohesive free-input agent UI; live glass box from checkpoint + cost panel"
 ```
 
 ---

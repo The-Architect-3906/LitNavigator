@@ -49,6 +49,16 @@ work described here is **not-started** and tracked as such.
 6. **Deliverable from me:** shot-by-shot video script + page-by-page PPT outline (team
    records / renders).
 7. **8-day posture:** Approach A (presentation-first); hard product freeze ~D3.
+8. **Hosting:** none. The deliverable is a video + PPT, so the demo is recorded against the
+   **local** server (`127.0.0.1:8000`). GitHub Pages is static-only and cannot run the
+   FastAPI/LangGraph backend, so it is explicitly excluded. (A live hosted URL, if ever
+   wanted, would need a Python host — HF Spaces / a VM on the competition compute credits —
+   not GH Pages; out of scope for submission.)
+9. **Live glass box reads the checkpoint, not the DB.** During teaching (at the
+   `interrupt_after=["check"]` pause) the domain DB lags — `tutor_turns`/`decisions`/cited
+   evidence are written by `grade` only after the learner answers. So the cohesive UI's right
+   panel is built from `TutorSession.current()` (checkpoint `snap.values`); `build_trace()`
+   (DB) is used only for the post-session `/sessions/{sid}` full panel.
 
 ## 4. Product Design
 
@@ -179,4 +189,6 @@ the real UI happens after the D3 freeze, compressing recording+edit into D4–D7
 - gpt-4o-mini blended price constant for the cost estimate.
 
 **Resolved at spec review:** the D3 product-freeze timeline (compressed video buffer) is
-accepted; corpus-expansion PDFs are sourced by me, not the team.
+accepted; corpus-expansion PDFs are sourced by me, not the team; **hosting = local recording
+only** (no GitHub Pages — it can't run the Python backend; see decision 8); the **live glass
+box is sourced from the checkpoint** via `current()`, not `build_trace` (see decision 9).
