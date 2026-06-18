@@ -16,7 +16,7 @@ import uuid
 from pathlib import Path
 
 from fastapi import FastAPI
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, StreamingResponse
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from litnav.config import DEMO_DB_PATH
@@ -176,6 +176,23 @@ def tutor_answer(sid: str, answer: str = ""):
     if ts is not None and answer.strip():
         ts.answer(answer)
     return RedirectResponse(f"/tutor/{sid}", status_code=303)
+
+
+@app.get("/tutor/{sid}/events")
+def tutor_events(sid: str, answer: str = ""):
+    ts = _TUTORS.get(sid)
+    if ts is None:
+        return JSONResponse({"type": "error", "message": "no such session"}, status_code=404)
+
+    def gen():
+        try:
+            stream = ts.stream_answer(answer) if answer.strip() else iter(ts._terminal_events())
+            for ev in stream:
+                yield f"data: {json.dumps(ev)}\n\n"
+        except Exception as e:  # pragma: no cover - defensive
+            yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
+
+    return StreamingResponse(gen(), media_type="text/event-stream")
 
 
 def main() -> None:  # pragma: no cover - manual launch helper
