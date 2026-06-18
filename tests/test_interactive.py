@@ -110,5 +110,6 @@ def test_stream_answer_emits_steps_and_terminal_events():
     assert any(n in ("reteach", "teach") for n in nodes), "reteach/teach step streamed"
     assert "teach" in types and "question" in types and "state" in types
     assert types[-1] == "done"
+    assert all(not n.startswith("__") for n in nodes), "LangGraph control keys are filtered out"
     grade_ev = next(e for e in events if e.get("node") == "grade")
     assert "react_is_just_cot" in grade_ev["detail"], "grade step carries the detected misconception"

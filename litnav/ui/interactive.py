@@ -91,6 +91,8 @@ class TutorSession:
         self.app.update_state(self.config, {"user_answer": text, "pending_answers": []})
         for update in self.app.stream(None, self.config, stream_mode="updates"):
             for node, delta in update.items():
+                if node.startswith("__"):   # skip LangGraph control keys (e.g. __interrupt__)
+                    continue
                 yield self._step_event(node, delta or {})
         for ev in self._terminal_events():
             yield ev
