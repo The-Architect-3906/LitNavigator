@@ -15,7 +15,7 @@ import sqlite3
 import uuid
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, StreamingResponse
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
@@ -178,15 +178,23 @@ def tutor_answer(sid: str, answer: str = ""):
     return RedirectResponse(f"/tutor/{sid}", status_code=303)
 
 
-@app.get("/tutor/{sid}/events")
-def tutor_events(sid: str, answer: str = ""):
+@app.post("/tutor/{sid}/events")
+async def tutor_events(sid: str, request: Request):
+    # POST (answer in the JSON body, not the URL) so learner answers don't leak into
+    # request logs / browser history and long answers don't hit URL limits. The client
+    # consumes the SSE stream via fetch() + ReadableStream (EventSource is GET-only).
     ts = _TUTORS.get(sid)
     if ts is None:
         return JSONResponse({"type": "error", "message": "no such session"}, status_code=404)
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    answer = (body.get("answer") or "").strip()
 
     def gen():
         try:
-            stream = ts.stream_answer(answer) if answer.strip() else iter(ts._terminal_events())
+            stream = ts.stream_answer(answer) if answer else iter(ts._terminal_events())
             for ev in stream:
                 yield f"data: {json.dumps(ev)}\n\n"
         except Exception as e:  # pragma: no cover - defensive

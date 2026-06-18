@@ -48,8 +48,8 @@ def test_intent_mode_starts_session(client):
 def test_events_endpoint_streams_answer_turn(client):
     r = client.get("/tutor/start", params={"goal": "I want to understand ReAct"})
     sid = str(r.url).rstrip("/").split("/tutor/")[-1]
-    ev = client.get(f"/tutor/{sid}/events",
-                    params={"answer": "the agent takes actions and observations"})
+    ev = client.post(f"/tutor/{sid}/events",
+                     json={"answer": "the agent takes actions and observations"})
     assert ev.status_code == 200
     assert "text/event-stream" in ev.headers["content-type"]
     assert "data:" in ev.text
@@ -57,5 +57,5 @@ def test_events_endpoint_streams_answer_turn(client):
 
 
 def test_events_endpoint_unknown_session_404(client):
-    ev = client.get("/tutor/does-not-exist/events")
+    ev = client.post("/tutor/does-not-exist/events", json={})
     assert ev.status_code == 404

@@ -95,19 +95,26 @@ const ft=document.getElementById('first-teach'); if(ft)typewriter(ft,ft.dataset.
 function addBubble(cls,text,tw){const t=document.getElementById('thread');const d=document.createElement('div');d.className='bubble '+cls;t.appendChild(d);if(tw){typewriter(d,text)}else{d.textContent=text}return d;}
 function setFlow(steps){const f=document.getElementById('flow');f.innerHTML='';steps.forEach(s=>{const d=document.createElement('div');d.className='step '+s.state;const ic=s.state==='done'?'✓':(s.state==='active'?'▶':'○');d.innerHTML='<span class="ic">'+ic+'</span><span>'+esc(s.label)+(s.detail?' <span class="mut">· '+esc(s.detail)+'</span>':'')+'</span>';f.appendChild(d)});}
 
-function submitAnswer(ev){ev.preventDefault();const inp=document.getElementById('answer-input');const text=inp.value.trim();if(!text)return false;
+function handleEvent(e,steps,inp){
+  if(e.type==='step'){steps.forEach(s=>s.state='done');steps.push({label:e.label,detail:e.detail,state:'active'});setFlow(steps);}
+  else if(e.type==='teach'){steps.forEach(s=>s.state='done');setFlow(steps);if(e.text)addBubble('ai',e.text,true);}
+  else if(e.type==='question'){if(e.text)addBubble('ai qa',e.text,false);}
+  else if(e.type==='state'){updateGlass(e);}
+  else if(e.type==='done'){document.getElementById('working').style.display='none';
+    if(e.done){location.href='/tutor/'+SID;}else{inp.disabled=false;inp.focus();}}
+  else if(e.type==='error'){location.href='/tutor/'+SID;}
+}
+async function submitAnswer(ev){ev.preventDefault();const inp=document.getElementById('answer-input');const text=inp.value.trim();if(!text)return false;
   addBubble('me',text,false);inp.value='';inp.disabled=true;document.getElementById('working').style.display='block';
-  const steps=[];const es=new EventSource('/tutor/'+SID+'/events?answer='+encodeURIComponent(text));
-  es.onmessage=(m)=>{const e=JSON.parse(m.data);
-    if(e.type==='step'){steps.forEach(s=>s.state='done');steps.push({label:e.label,detail:e.detail,state:'active'});setFlow(steps);}
-    else if(e.type==='teach'){steps.forEach(s=>s.state='done');setFlow(steps);if(e.text)addBubble('ai',e.text,true);}
-    else if(e.type==='question'){if(e.text)addBubble('ai qa',e.text,false);}
-    else if(e.type==='state'){updateGlass(e);}
-    else if(e.type==='done'){es.close();document.getElementById('working').style.display='none';
-      if(e.done){location.href='/tutor/'+SID;}else{inp.disabled=false;inp.focus();}}
-    else if(e.type==='error'){es.close();location.href='/tutor/'+SID;}
-  };
-  es.onerror=()=>{es.close();location.href='/tutor/'+SID;};
+  const steps=[];
+  try{
+    // POST the answer in the body (not the URL) and read the SSE stream via fetch.
+    const resp=await fetch('/tutor/'+SID+'/events',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({answer:text})});
+    const reader=resp.body.getReader();const dec=new TextDecoder();let buf='';
+    while(true){const r=await reader.read();if(r.done)break;buf+=dec.decode(r.value,{stream:true});
+      let i;while((i=buf.indexOf('\n\n'))>=0){const block=buf.slice(0,i);buf=buf.slice(i+2);
+        const dl=block.split('\n').find(l=>l.startsWith('data:'));if(dl)handleEvent(JSON.parse(dl.slice(5).trim()),steps,inp);}}
+  }catch(err){location.href='/tutor/'+SID;}
   return false;}
 
 function updateGlass(e){document.getElementById('route-v').textContent='route v'+e.route_version;
