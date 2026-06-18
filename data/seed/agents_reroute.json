@@ -1,0 +1,25 @@
+{
+  "topic": "LLM-based autonomous agents",
+  "targets": ["reflection"],
+  "concepts": [
+    {"id": 10, "slug": "tool_use", "name": "Tool use", "frontier_flag": "consensus"},
+    {"id": 11, "slug": "reflection", "name": "Reflection and self-correction", "frontier_flag": "consensus"}
+  ],
+  "edges": [
+    {"prereq_concept": 10, "target_concept": 11, "edge_type": "prerequisite", "source": "curated", "confidence": 1.0}
+  ],
+  "papers": [
+    {"id": 10, "title": "Reflexion: Language Agents with Verbal Reinforcement Learning", "year": 2023},
+    {"id": 11, "title": "Toolformer: Language Models Can Teach Themselves to Use Tools", "year": 2023}
+  ],
+  "chunks": [
+    {"id": "c_reflection_1", "paper_id": 10, "concept_id": 11, "text": "Reflexion agents convert environment feedback into verbal self-reflection signals and store them in an episodic memory buffer, allowing the agent to reason about past mistakes and improve on subsequent trials."},
+    {"id": "c_tool_use_1", "paper_id": 11, "concept_id": 10, "text": "Tool use in language models allows an agent to invoke external APIs or programs and incorporate the results into its reasoning, extending its capabilities beyond what is encoded in its weights."}
+  ],
+  "quiz_items": [
+    {"id": 10, "concept_id": 11, "question": "How does a Reflexion agent improve across trials?", "answer_key": "verbal self-reflection stored in memory", "evidence_chunk_id": "c_reflection_1", "source_paper_id": 10},
+    {"id": 11, "concept_id": 10, "question": "What does tool use allow a language model agent to do?", "answer_key": "invoke external APIs and incorporate results", "evidence_chunk_id": "c_tool_use_1", "source_paper_id": 11}
+  ],
+  "misconceptions": [],
+  "demo_wrong_prereq_answers": ["it just retries the same prompt without changing anything"]
+}
