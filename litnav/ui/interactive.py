@@ -11,7 +11,9 @@ from __future__ import annotations
 import sqlite3
 from typing import List, Optional
 
+from litnav.conversation import dispatch
 from litnav.graph.builder import build_graph, make_initial_state
+from litnav.nodes.retrieve import retrieve_node
 from litnav.storage import repo
 from litnav.ui.cost import session_cost
 
@@ -168,3 +170,94 @@ class TutorSession:
             "teach_depth": vals.get("teach_depth"),
             "mastery_threshold": vals.get("mastery_threshold"),
         }
+
+
+class AgentSession:
+    """Conversation layer over the teaching graph. Holds the transcript and a lazily-created
+    TutorSession; handle(message) dispatches each turn and yields UI events. The teaching
+    graph is never modified — set_goal/answer go through TutorSession unchanged."""
+
+    def __init__(self, domain_conn, checkpoint_conn, session_id: str, fixture_data: dict):
+        self.conn = domain_conn
+        self.ckpt = checkpoint_conn
+        self.sid = session_id
+        self.data = fixture_data
+        self.concepts = fixture_data["concepts"]
+        self.off = fixture_data["induction"]["off_skeleton"]
+        self.topic = fixture_data.get("topic", "agents")
+        self.tutor: TutorSession | None = None
+
+    def _cur(self) -> dict:
+        return self.tutor.current() if self.tutor else {}
+
+    def _quiz_pending(self) -> bool:
+        cur = self._cur()
+        return bool(self.tutor and not cur.get("done") and cur.get("question"))
+
+    def current(self) -> dict:
+        """Snapshot for the initial page render (empty 'conversing' state before teaching)."""
+        if self.tutor:
+            return self.tutor.current()
+        return {"done": False, "concept_name": None, "teach": None, "question": None,
+                "route": [], "route_version": 1, "learner": [], "cited": [], "evidence": [],
+                "decision": None, "rationale": None, "induced": [], "intent": None,
+                "mastery": None, "confidence": None}
+
+    def current_events(self):
+        if self.tutor:
+            return self.tutor._terminal_events()
+        return [{"type": "reply",
+                 "text": "Hi! Tell me what you'd like to learn from the agent papers."},
+                {"type": "done", "done": False}]
+
+    def _start_teaching(self, slug: str):
+        slug_to_id = {c["slug"]: c["id"] for c in self.concepts}
+        self.tutor = TutorSession(self.conn, self.ckpt, self.sid)
+        if self.off and slug == self.off["slug"]:
+            self.tutor.start(self.topic, target_concept_ids=[],
+                             pending_induction=self.data["induction"], mastery_threshold=0.75)
+        else:
+            self.tutor.start(self.topic, target_concept_ids=[slug_to_id[slug]],
+                             mastery_threshold=0.75)
+        for ev in self.tutor._terminal_events():
+            yield ev
+
+    def _grounded_aside(self, slug: str) -> str:
+        """A short answer to a side question, grounded ONLY in that concept's top chunk."""
+        slug_to_id = {c["slug"]: c["id"] for c in self.concepts}
+        cid = slug_to_id.get(slug)
+        if cid is None:
+            return "That's outside what these papers cover — let's stay with the question."
+        ev = retrieve_node({"current_concept_id": cid}, self.conn).get("current_evidence") or []
+        if not ev:
+            return "I don't have evidence on that here — let's stay with the question."
+        chunk = ev[0]
+        from litnav.llm import client as llm_client
+        det = chunk["text"][:200].rstrip() + "…"
+        prompt = ("Answer the learner's side question in ONE short sentence, grounded ONLY in "
+                  f"this evidence (do not add facts beyond it):\n{chunk['text']}")
+        return llm_client.complete_text(prompt, fallback=det, max_tokens=80)
+
+    def handle(self, message: str):
+        cur = self._cur()
+        pending = self._quiz_pending()
+        question = cur.get("question") if pending else None
+        d = dispatch(message, concepts=self.concepts, off=self.off,
+                     quiz_pending=pending, question=question)
+        yield {"type": "dispatch", "action": d["action"],
+               "label": f"understood as: {d['action']}"}
+
+        if d["action"] == "answer":
+            yield from self.tutor.stream_answer(message)
+        elif d["action"] == "set_goal":
+            yield from self._start_teaching(d["slug"])
+        elif d["action"] == "aside":
+            yield {"type": "reply", "text": self._grounded_aside(d["slug"])}
+            if question:
+                yield {"type": "question", "text": question}
+            yield {"type": "done", "done": False}
+        else:  # chat or out_of_scope
+            yield {"type": "reply", "text": d["reply"] or "What would you like to learn?"}
+            if question:
+                yield {"type": "question", "text": question}
+            yield {"type": "done", "done": bool(cur.get("done"))}
