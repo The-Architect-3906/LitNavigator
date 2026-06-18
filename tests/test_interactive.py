@@ -124,3 +124,11 @@ def test_quizless_concept_lectures_and_advances_without_stall():
     s = ts.start("agents", target_concept_ids=[2], mastery_threshold=0.75)  # tool_use: no quiz
     assert s["done"] is True, "quizless concept should lecture then advance, not stall"
     assert s["question"] is None
+    # honesty: the quizless concept is recorded as a lecture, NOT 'advanced' as mastered,
+    # and no decision falsely claims mastery >= threshold.
+    rows = conn.execute("SELECT decision, rationale FROM decisions WHERE session_id=?",
+                        (ts.sid,)).fetchall()
+    decisions = {r[0] for r in rows}
+    assert "lecture" in decisions and "advance" not in decisions
+    assert all(">= threshold" not in (r[1] or "") for r in rows), "no false mastery claim"
+    assert s["mastery"] is None, "an unassessed (lecture-only) route makes no mastery claim"

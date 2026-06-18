@@ -18,6 +18,7 @@ from litnav.nodes.replan import replan_node
 from litnav.nodes.retrieve import retrieve_node
 from litnav.nodes.concede import concede_node
 from litnav.nodes.induce import induce_scaffold_node
+from litnav.nodes.lecture import lecture_node
 from litnav.nodes.reteach import reteach_node
 from litnav.nodes.select_next import route_after_select, select_next_node
 from litnav.nodes.teach import teach_node
@@ -69,6 +70,7 @@ def build_graph(
     def _advance(s: NavState) -> dict:      return advance_node(s, domain_conn)
     def _reteach(s: NavState) -> dict:      return reteach_node(s, domain_conn)
     def _concede(s: NavState) -> dict:      return concede_node(s, domain_conn)
+    def _lecture(s: NavState) -> dict:      return lecture_node(s, domain_conn)
 
     def _induce(s: NavState) -> dict:
         updates = induce_scaffold_node(s, domain_conn)   # reads s["pending_induction"]
@@ -91,6 +93,7 @@ def build_graph(
     workflow.add_node("advance", _advance)
     workflow.add_node("reteach", _reteach)
     workflow.add_node("concede", _concede)
+    workflow.add_node("lecture", _lecture)
     workflow.add_node("induce", _induce)
 
     workflow.set_entry_point("planner")
@@ -102,15 +105,16 @@ def build_graph(
     workflow.add_edge("retrieve", "teach")
 
     def _route_after_teach(s: NavState) -> str:
-        # A concept with no quiz can't be checked/graded — teach it (lecture) then advance,
-        # so a multi-concept route (e.g. an intent route) never stalls at an empty quiz.
+        # A concept with no quiz can't be checked/graded — teach it (lecture) then move on
+        # via the lecture node (honest "no mastery claim"), so a multi-concept route (e.g. an
+        # intent route) never stalls at an empty quiz.
         from litnav.storage import repo
         cid = s.get("current_concept_id")
         items = repo.get_parallel_quiz_items(domain_conn, cid, exclude_ids=[]) if cid is not None else []
-        return "check" if items else "advance"
+        return "check" if items else "lecture"
 
     workflow.add_conditional_edges("teach", _route_after_teach,
-                                   {"check": "check", "advance": "advance"})
+                                   {"check": "check", "lecture": "lecture"})
     workflow.add_edge("check", "grade")
     workflow.add_conditional_edges("grade", tutor_router, {
         "advance": "advance",
@@ -123,6 +127,7 @@ def build_graph(
     workflow.add_edge("advance", "select_next")
     workflow.add_edge("reteach", "teach")     # reteach loops back to teaching with a new strategy
     workflow.add_edge("concede", "select_next")
+    workflow.add_edge("lecture", "select_next")  # quizless concept: lectured, no mastery claim
 
     compile_kwargs: dict = {"checkpointer": _make_checkpointer(checkpoint_conn)}
     if interrupt_after:
