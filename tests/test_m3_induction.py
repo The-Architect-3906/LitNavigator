@@ -106,3 +106,17 @@ def test_induced_edge_confidence_matches_rule_and_is_not_one():
     edge = next(e for e in repo.get_induced_edges(conn) if e["target_concept"] == nid)
     assert edge["confidence"] == induced_confidence(1, "explicit_assertion", False) == 0.75
     assert edge["confidence"] < 1.0  # induced never reaches full certainty
+
+
+def test_induced_prereq_enters_concept_dag_for_routing():
+    """The induced prereq edge must land in the in-memory concept_dag the router reads, so a
+    failed induced concept can diagnose/replan to its prereq — like a curated prereq.
+    (planner builds concept_dag before induction, so induce must merge the edge in.)"""
+    conn = _conn()
+    cand = _candidate()
+    out = induce_scaffold_node(
+        {"session_id": "s", "route": [], "route_version": 1, "concept_dag": {}}, conn, cand)
+    nid = out["current_concept_id"]
+    prereq = repo.get_concept_by_slug(conn, cand["prereq_slug"])
+    assert nid in out["concept_dag"], "induced concept present in returned concept_dag"
+    assert prereq["id"] in out["concept_dag"][nid], "induced prereq edge is routable"

@@ -1047,6 +1047,26 @@
       "evidence_chunk_id": "c_react_2",
       "source_paper_id": 1,
       "targets_misconception": "react_is_just_cot"
+    },
+    {
+      "id": 2,
+      "concept_id": 6,
+      "qtype": "explain",
+      "difficulty": 1,
+      "question": "In a multi-agent system like MetaGPT, what do the specialized role agents do with their intermediate work?",
+      "answer_key": "collaborate and hand off",
+      "evidence_chunk_id": "c_multi_1",
+      "source_paper_id": 7
+    },
+    {
+      "id": 3,
+      "concept_id": 7,
+      "qtype": "explain",
+      "difficulty": 1,
+      "question": "What do surveys of LLM-based autonomous agents provide to make sense of the field?",
+      "answer_key": "concept map",
+      "evidence_chunk_id": "c_taxonomy_1",
+      "source_paper_id": 6
     }
   ],
   "misconceptions": [

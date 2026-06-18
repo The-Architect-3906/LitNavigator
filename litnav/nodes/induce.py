@@ -177,9 +177,16 @@ def induce_scaffold_node(state: NavState, conn: sqlite3.Connection,
                         "misconception_confidence": m_conf},
     )
 
+    # Make the induced prereq edge visible to the router: planner built concept_dag before this
+    # concept existed, so without merging it in, a failed induced concept could never
+    # diagnose/replan back to its prerequisite the way a curated one does.
+    concept_dag = {k: list(v) for k, v in state.get("concept_dag", {}).items()}
+    concept_dag.setdefault(new_id, []).append(prereq["id"])
+
     return {
         "route": route,
         "learner_state": learner_state,
+        "concept_dag": concept_dag,
         "current_concept_id": new_id,
         "rationale": rationale,
         "history": [{"event": "induce_scaffold", "concept_id": new_id, "slug": off["slug"],
