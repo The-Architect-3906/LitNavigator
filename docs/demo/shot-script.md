@@ -161,52 +161,49 @@ python -m litnav.app demo-m2 --answer correct
 
 ## Shot 5 — Intent Contrast (Same Corpus, Different Routes) (~30 seconds)
 
-**Surface:** CLI runner + split-screen or sequential browser panels.
+**Surface:** Live `/tutor` UI (two sessions started from the home page's intent links), Glass-box view.
 
 **On-screen action:**
-```bash
-python -m litnav.app demo-intent
-```
-This runs two sessions back-to-back (researcher intent and journalist intent) against the same agent paper corpus.
-
-Open the two session panels in the browser:
-```
-http://127.0.0.1:8000/sessions/<researcher-id>
-http://127.0.0.1:8000/sessions/<journalist-id>
-```
-Show them side-by-side or cut between them.
+1. Open `http://127.0.0.1:8000/tutor`. Under "explore the same corpus re-scoped to your purpose", click **"Researcher entering the field"** (this is `/tutor/start?intent=researcher`).
+2. Switch to the **Glass box** view — show the long Route (the full prerequisite chain) and the header `mode: researcher (depth explain, bar 0.8)`.
+3. Go back to `/tutor`, click **"Journalist prepping an interview"** (`/tutor/start?intent=journalist`).
+4. Switch to **Glass box** — show the short Route (landmark ideas / frontier-first) and `mode: journalist (depth recall, bar 0.6)`.
+5. Cut between the two (or split-screen).
 
 **Narration:**
-> "Same paper pack, two purposes. A researcher gets the full prerequisite chain — methods, open problems, high mastery bar. A journalist gets a short high-level route — landmark ideas, consensus vs controversy. One engine, one corpus, two completely different curricula."
+> "Same paper pack, two purposes. A researcher gets the full prerequisite chain at a high mastery bar. A journalist gets a short, frontier-first route — enough to hold the conversation. One engine, one corpus, two completely different curricula."
 
 **Point at:**
-- The **Route** field in each panel — the researcher route is long with deep prerequisites; the journalist route is short and concept-map-style.
-- The **Learner model** section — note how the mastery/confidence targets differ between intents.
+- The **Route** panel in each session — researcher route is long/deep; journalist route is short.
+- The header **mode** line — `researcher (depth explain, bar 0.8)` vs `journalist (depth recall, bar 0.6)`.
+
+**Quick verification (not on camera):** `python -m litnav.app demo-intent` prints both routes side by side to confirm the contrast before recording.
 
 ---
 
-## Shot 6 — Responsible AI: Honest Decline + Cost Panel (~25 seconds)
+## Shot 6 — Responsible AI: Honest Decline, then Cost Panel (~25 seconds)
 
-**Surface:** Live `/tutor` UI.
+Two short beats — they live on different screens, so do not try to show the cost panel on
+the decline screen (the decline renders the home page, which has no glass box).
 
-**On-screen action:**
-1. Start a new session.
-2. In the goal box, type:
+**Beat 6a — honest decline (Surface: `/tutor` home page).**
+1. On `http://127.0.0.1:8000/tutor`, type into the goal box:
    ```
    teach me quantum chromodynamics
    ```
-3. Submit and let the response render.
-4. Then (without clearing the page) pan or scroll to show the **Cost so far** panel on the right.
+2. Submit. The home page re-renders with the decline notice.
 
-**Narration (on the decline response):**
-> "Out of scope — the system says so clearly. LitNavigator only teaches what the literature it was built from actually supports. It does not fake expertise."
+> Narration: "Out of scope — the system says so clearly. LitNavigator only teaches what the literature it was built from actually supports. It does not fake expertise."
 
-**Narration (on the cost panel):**
-> "The cost panel shows tokens used and estimated spend. Run offline with no API key and it's zero dollars — the deterministic fallback still teaches."
+Point at the decline message: `"teach me quantum chromodynamics" is not in this paper corpus. I can teach: ReAct (reasoning + acting), Tool use, …`.
 
-**Point at:**
-- The honest decline message in the left panel — it should list what CAN be taught ("Here are the concepts available in this corpus:").
-- The **Cost so far** panel on the right — highlight the token count and the dollar estimate. If recording offline, point to the "$0.00" and say "offline mode."
+**Beat 6b — cost panel (Surface: any active tutor session, Glass-box view).**
+Reuse the ReAct session from Shot 1/2 (or start one), switch to **Glass box**, and point at the
+**Cost so far** panel.
+
+> Narration: "Every session shows tokens used and estimated spend — gpt-4o-mini, fractions of a cent. Run it offline with no key and it's $0; the deterministic fallback still teaches."
+
+Point at the **Cost so far** panel — e.g. `279 tok ≈ $0.00011 (offline = $0)`.
 
 ---
 
@@ -230,8 +227,9 @@ Show them side-by-side or cut between them.
 - [ ] Shot 2: wrong answer → misconception detected → reteach → mastery 0.40→~0.80 (+ counterfactual cut)
 - [ ] Shot 3: CLI `demo-reroute` → sessions panel → route_version 1→2 (+ counterfactual cut)
 - [ ] Shot 4: goal "multi-agent debate" → induced edge + source='induced' + confidence_basis + cited chunks
-- [ ] Shot 5: `demo-intent` → two session panels → different routes same corpus
-- [ ] Shot 6: "teach me quantum chromodynamics" → honest decline + cost panel
+- [ ] Shot 5: `/tutor` intent links (researcher vs journalist) → Glass box → different routes, same corpus
+- [ ] Shot 6a: "teach me quantum chromodynamics" → honest decline on the home page
+- [ ] Shot 6b: any active session → Glass box → Cost so far panel
 - [ ] Shot 7: closing narration on clean UI
 
 ## Six-criteria coverage (shots)
