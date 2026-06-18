@@ -146,7 +146,7 @@ def tutor_start(goal: str = ""):
     else:
         avail = ", ".join(plan["available"])
         html = _TEMPLATES.get_template("agent_home.html").render(
-            message=f'"{goal}" isn\'t in this paper corpus. I can teach: {avail}.',
+            message=f'"{goal}" is not in this paper corpus. I can teach: {avail}.',
             n_papers=_n_papers(data))
         return HTMLResponse(html)
     return RedirectResponse(f"/tutor/{sid}", status_code=303)

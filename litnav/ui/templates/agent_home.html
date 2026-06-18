@@ -17,7 +17,7 @@
  <p>Tell the agent what you want to learn. It reads the papers, plans a route, teaches from
     cited evidence, quizzes you, and adapts — inducing new scaffolding when you ask about
     something off the curated map.</p>
- {% if message %}<p class="note">{{ message|safe }}</p>{% endif %}
+ {% if message %}<p class="note">{{ message }}</p>{% endif %}
  <form action="/tutor/start" method="get">
    <input name="goal" autofocus required placeholder="e.g. I want to understand multi-agent debate">
    <button type="submit">Teach me</button>
