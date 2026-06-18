@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>LitNavigator</title>
+<style>
+ body{font-family:system-ui,sans-serif;margin:0;background:#f6f7fb;color:#1c2430}
+ header{background:#1c2430;color:#fff;padding:.8rem 1.2rem}header b{color:#7fd1a6}
+ .wrap{max-width:44rem;margin:2rem auto;padding:0 1rem}
+ form{display:flex;gap:.5rem;margin:1rem 0}
+ input{flex:1;padding:.7rem;font-size:1rem;border:1px solid #c5ccd8;border-radius:8px}
+ button{padding:.7rem 1.2rem;border:0;border-radius:8px;background:#5b49c4;color:#fff;font-size:1rem;cursor:pointer}
+ .note{color:#b3700d;background:#fff6e5;padding:.6rem .8rem;border-radius:6px}
+ .scope{color:#7a8699;font-size:.85rem}
+ ul{color:#444}a{color:#5b49c4}
+</style></head>
+<body>
+<header><b>LitNavigator</b> &nbsp; interactive tutor</header>
+<div class="wrap">
+ <p>Tell the agent what you want to learn. It reads the papers, plans a route, teaches from
+    cited evidence, quizzes you, and adapts — inducing new scaffolding when you ask about
+    something off the curated map.</p>
+ {% if message %}<p class="note">{{ message|safe }}</p>{% endif %}
+ <form action="/tutor/start" method="get">
+   <input name="goal" autofocus required placeholder="e.g. I want to understand multi-agent debate">
+   <button type="submit">Teach me</button>
+ </form>
+ <p>Try, for example:</p>
+ <ul>
+   <li><a href="/tutor/start?goal=I want to understand ReAct">I want to understand ReAct</a>
+       &nbsp;<i>(misconception &rarr; reteach)</i></li>
+   <li><a href="/tutor/start?goal=how do agents remember things across steps">how do agents remember things across steps</a></li>
+   <li><a href="/tutor/start?goal=I keep seeing multi-agent debate, where does it fit">I keep seeing multi-agent debate</a>
+       &nbsp;<i>(off-skeleton &rarr; induced from the papers)</i></li>
+ </ul>
+ <p class="scope">Built from {{ n_papers }} LLM-agent papers. Ask within this scope; out-of-scope goals get an honest decline.</p>
+</div></body></html>

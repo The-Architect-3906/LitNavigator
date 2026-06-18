@@ -60,3 +60,12 @@ def test_interactive_induction_then_teach():
     assert s["question"]
     s = ts.answer("they critique and refine each other's answers")
     assert s["done"] and s["mastery"] >= 0.75
+
+
+def test_current_exposes_live_glass_box_before_answering():
+    ts = _session()
+    s = ts.start("agents", target_concept_ids=[REACT], mastery_threshold=0.75)
+    assert s["route"], "route is visible during teaching (from the checkpoint)"
+    assert any(step["concept_id"] == REACT for step in s["route"])
+    assert s["evidence"], "the chunk(s) being taught now are visible before any answer"
+    assert s["route_version"] == 1

@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>LitNavigator — {{ concept_name }}</title>
+<style>
+ body{font-family:system-ui,sans-serif;margin:0;background:#f6f7fb;color:#1c2430}
+ header{background:#1c2430;color:#fff;padding:.8rem 1.2rem}header b{color:#7fd1a6}
+ .cols{display:flex;gap:1rem;max-width:72rem;margin:1.2rem auto;padding:0 1rem;align-items:flex-start}
+ .left{flex:1.3}.right{flex:1;font-size:.9rem}
+ .card{background:#fff;border:1px solid #e2e6ee;border-radius:8px;padding:1rem;margin-bottom:1rem}
+ .teach{border-left:3px solid #5b49c4;white-space:pre-wrap;line-height:1.45}
+ .q{font-size:1.1rem;font-weight:600;margin:.4rem 0}
+ form{display:flex;gap:.5rem}input{flex:1;padding:.55rem .7rem;border:1px solid #c5ccd8;border-radius:8px}
+ button{padding:.55rem 1rem;border:0;border-radius:8px;background:#5b49c4;color:#fff;cursor:pointer}
+ .fb{background:#fff8ec;border-radius:6px;padding:.5rem .7rem}.miscon{color:#8a1f4c}
+ .bars span{display:inline-block;height:.6rem;border-radius:3px;vertical-align:middle}
+ .m{background:#5b49c4}.c{background:#7fd1a6}
+ .step{padding:.15rem 0}.done-s{color:#258a51}.active-s{font-weight:600}
+ .consensus{color:#258a51}.contested{color:#b3700d}.open{color:#cf4f24}
+ .cost{background:#eef3ff;border:1px solid #cfe0ff}.mut{color:#7a8699;font-size:.8rem}
+ a{color:#5b49c4}
+</style></head>
+<body>
+<header><b>LitNavigator</b> &nbsp; goal: {{ concept_name or "…" }}
+  &nbsp;<span class="mut">corpus: {{ n_papers }} papers</span></header>
+<div class="cols">
+ <div class="left">
+  {% if teach %}<div class="card teach">{{ teach|replace('**','') }}</div>{% endif %}
+  {% if last_feedback %}<div class="card fb">{{ last_feedback }}
+    {% if last_detected_misconception %}<span class="miscon">· misconception: {{ last_detected_misconception }}</span>{% endif %}</div>{% endif %}
+  {% if done %}
+    <div class="card"><b>Session complete.</b><br>
+      <a href="/sessions/{{ sid }}">full trace panel &rarr;</a> · <a href="/tutor">start another</a></div>
+  {% else %}
+    <div class="card"><div class="q">{{ question }}</div>
+      <form method="get" action="/tutor/{{ sid }}/answer">
+        <input name="answer" autocomplete="off" autofocus placeholder="type your answer…">
+        <button type="submit">Answer</button></form></div>
+  {% endif %}
+ </div>
+ <div class="right">
+  <div class="card"><b>Route</b> <span class="mut">v{{ route_version }}</span>
+   {% for s in route %}<div class="step {{ 'done-s' if s.status in ['done','conceded'] else ('active-s' if s.status=='active' else '') }}">
+     {{ s.name }} <span class="mut">[{{ s.status or 'pending' }}]</span></div>{% endfor %}</div>
+  {% if learner %}<div class="card"><b>Learner model</b>
+   {% for c in learner %}<div class="step">{{ c.name }}
+     <div class="bars">m<span class="m" style="width:{{ (c.mastery*80)|round }}px"></span> {{ c.mastery }}
+      · c<span class="c" style="width:{{ (c.confidence*80)|round }}px"></span> {{ c.confidence }}</div>
+     {% if c.held %}<span class="mut miscon">holds: {{ c.held|join(', ') }}</span>{% endif %}</div>{% endfor %}</div>{% endif %}
+  {% if evidence %}<div class="card"><b>Cited evidence (this turn)</b>
+   {% for e in evidence %}<div class="step mut">{{ e.chunk_id }}: {{ e.text[:120] }}…</div>{% endfor %}</div>{% endif %}
+  {% if rationale %}<div class="card"><b>Why this step</b><div class="mut">{{ decision }} — {{ rationale }}</div></div>{% endif %}
+  {% if induced %}<div class="card"><b>Induced (machine-derived)</b>
+   {% for e in induced %}<div class="step">{{ e.prereq }} &rarr; {{ e.target }} <span class="mut">conf {{ e.confidence }}</span></div>{% endfor %}</div>{% endif %}
+  <div class="card cost"><b>Cost so far</b><br>
+   {{ cost.tokens }} LLM tokens ≈ ${{ cost.usd }} <span class="mut">(gpt-4o-mini; offline = $0)</span></div>
+ </div>
+</div></body></html>

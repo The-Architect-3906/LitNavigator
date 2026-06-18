@@ -12,6 +12,7 @@ import sqlite3
 from typing import List, Optional
 
 from litnav.graph.builder import build_graph, make_initial_state
+from litnav.storage import repo
 
 
 class TutorSession:
@@ -75,4 +76,29 @@ class TutorSession:
             "confidence": round(cs.get("confidence", 0.0), 3) if cs else None,
             "last_feedback": last.get("feedback"),
             "last_detected_misconception": last.get("detected_misconception"),
+            "route_version": vals.get("route_version"),
+            "route": [
+                {"concept_id": st.get("concept_id"),
+                 "name": (self.conn.execute("SELECT name FROM concepts WHERE id=?",
+                                            (st.get("concept_id"),)).fetchone() or [None])[0],
+                 "status": st.get("status")}
+                for st in (vals.get("route") or [])
+            ],
+            "evidence": vals.get("current_evidence") or [],
+            "decision": vals.get("decision"),
+            "rationale": vals.get("rationale"),
+            "learner": [
+                {"name": (self.conn.execute("SELECT name FROM concepts WHERE id=?", (cid,)).fetchone() or [None])[0],
+                 "mastery": round(cs.get("mastery", 0.0), 3),
+                 "confidence": round(cs.get("confidence", 0.0), 3),
+                 "held": cs.get("held_misconceptions", [])}
+                for cid, cs in (vals.get("learner_state") or {}).items()
+                if cs.get("n_observations")
+            ],
+            "induced": [
+                {"prereq": (self.conn.execute("SELECT name FROM concepts WHERE id=?", (e["prereq_concept"],)).fetchone() or [None])[0],
+                 "target": (self.conn.execute("SELECT name FROM concepts WHERE id=?", (e["target_concept"],)).fetchone() or [None])[0],
+                 "confidence": e["confidence"]}
+                for e in repo.get_induced_edges(self.conn)
+            ],
         }

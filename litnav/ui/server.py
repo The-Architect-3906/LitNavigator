@@ -20,8 +20,10 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from litnav.config import DEMO_DB_PATH
+from litnav.goal import resolve_goal
 from litnav.storage.schema import init_db
 from litnav.storage.seed import seed_demo_data
+from litnav.ui.cost import session_cost
 from litnav.ui.interactive import TutorSession
 from litnav.ui.trace import build_trace
 
@@ -91,6 +93,23 @@ def index():
 # ── Interactive tutor (B): real human-in-the-loop over the graph ───────────────
 # GET-based forms keep this dependency-free (no python-multipart); fine for a local demo.
 
+# Prefer the evidence-expanded fixture (Task 4) when present; else the curated 8-paper one.
+_TUTOR_FIXTURE = ("data/seed/agents_expanded.json"
+                  if Path("data/seed/agents_expanded.json").exists()
+                  else "data/seed/agents_m3.json")
+
+
+def _fixture_data() -> dict:
+    return json.loads(Path(_TUTOR_FIXTURE).read_text(encoding="utf-8"))
+
+
+def _n_papers(data: dict) -> int:
+    if data.get("papers"):
+        return len(data["papers"])
+    ids = {c.get("paper_id") for c in data.get("chunks", []) if c.get("paper_id") is not None}
+    return len(ids) or len(data["concepts"])
+
+
 def _start_tutor(fixture: str, target_ids: list[int], pending_induction: dict | None) -> str:
     # Per-session DB + checkpoint files so concurrent tutors never clobber each other
     # or the CLI/panel demo DB (no shared-file deletion).
@@ -110,26 +129,26 @@ def _start_tutor(fixture: str, target_ids: list[int], pending_induction: dict | 
 
 
 @app.get("/tutor", response_class=HTMLResponse)
-def tutor_home():
-    return (
-        "<html><body style='font-family:system-ui;margin:2rem;max-width:40rem'>"
-        "<h1>LitNavigator — interactive tutor</h1>"
-        "<p>Pick a session. The tutor teaches a concept, quizzes you, and adapts to your answer.</p>"
-        "<p><a href='/tutor/start?mode=react'><b>Teach me ReAct</b></a> "
-        "— misconception &rarr; reteach demo (try answering \"it's just chain of thought\" first).</p>"
-        "<p><a href='/tutor/start?mode=induce'><b>I keep seeing &lsquo;multi-agent debate&rsquo;</b></a> "
-        "— off-skeleton: the tutor induces the scaffold from the papers, then teaches it.</p>"
-        "</body></html>"
-    )
+def tutor_home(message: str = ""):
+    return _TEMPLATES.get_template("agent_home.html").render(
+        message=message, n_papers=_n_papers(_fixture_data()))
 
 
 @app.get("/tutor/start")
-def tutor_start(mode: str = "react"):
-    if mode == "induce":
-        cand = json.loads(Path("data/seed/agents_m3.json").read_text(encoding="utf-8"))["induction"]
-        sid = _start_tutor("data/seed/agents_m3.json", [], cand)
+def tutor_start(goal: str = ""):
+    data = _fixture_data()
+    plan = resolve_goal(goal, data["concepts"], data["induction"]["off_skeleton"])
+    if plan["kind"] == "concept":
+        slug_to_id = {c["slug"]: c["id"] for c in data["concepts"]}
+        sid = _start_tutor(_TUTOR_FIXTURE, [slug_to_id[plan["slug"]]], None)
+    elif plan["kind"] == "induce":
+        sid = _start_tutor(_TUTOR_FIXTURE, [], data["induction"])
     else:
-        sid = _start_tutor("data/seed/agents_m2.json", [1], None)
+        avail = ", ".join(plan["available"])
+        html = _TEMPLATES.get_template("agent_home.html").render(
+            message=f'"{goal}" isn\'t in this paper corpus. I can teach: {avail}.',
+            n_papers=_n_papers(data))
+        return HTMLResponse(html)
     return RedirectResponse(f"/tutor/{sid}", status_code=303)
 
 
@@ -138,7 +157,9 @@ def tutor_page(sid: str):
     ts = _TUTORS.get(sid)
     if ts is None:
         return RedirectResponse("/tutor", status_code=303)
-    return _TEMPLATES.get_template("tutor.html").render(sid=sid, **ts.current())
+    return _TEMPLATES.get_template("agent.html").render(
+        sid=sid, n_papers=_n_papers(_fixture_data()),
+        cost=session_cost(ts.conn, sid), **ts.current())
 
 
 @app.get("/tutor/{sid}/answer")
