@@ -252,7 +252,13 @@ class AgentSession:
         elif d["action"] == "set_goal":
             yield from self._start_teaching(d["slug"])
         elif d["action"] == "aside":
-            yield {"type": "reply", "text": self._grounded_aside(d["slug"])}
+            # Don't trust the LLM's aside concept — resolve it deterministically from the
+            # message, so an off-corpus side topic (e.g. "chain-of-thought") declines
+            # gracefully instead of grounding on a loosely-related concept.
+            from litnav.goal import resolve_goal
+            r = resolve_goal(message, self.concepts, self.off)
+            aside_slug = r["slug"] if r["kind"] == "concept" else None
+            yield {"type": "reply", "text": self._grounded_aside(aside_slug)}
             if question:
                 yield {"type": "question", "text": question}
             yield {"type": "done", "done": False}
