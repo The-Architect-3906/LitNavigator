@@ -13,3 +13,8 @@ data/runtime/
 .env
 .venv/
 venv/
+
+# PyInstaller build artifacts (the standalone exe is built locally, not committed)
+build/
+dist/
+*.spec

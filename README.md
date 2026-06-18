@@ -134,6 +134,24 @@ G0 PASS: offline run
 
 > M0 and M1 require no LLM key and no network access. The LLM (OpenAI `gpt-4o-mini` by default, provider-agnostic — Qwen also supported — with offline fallback everywhere) enters at M2.
 
+### Interactive agent UI
+
+```bash
+python -m litnav.ui.server        # open http://127.0.0.1:8000/tutor
+```
+Type a goal → the agent plans, teaches (LLM-grounded; deterministic offline), quizzes, and
+adapts; toggle the **Chat** and **Glass box** views. Live LLM needs a key in `.env`
+(`LITNAV_LLM_PROVIDER=openai`, `LITNAV_LLM_API_KEY=...`); without one it runs offline at $0.
+
+### Standalone executable (no Python needed)
+
+```powershell
+pip install pyinstaller
+./build_exe.ps1                   # -> dist/LitNavigator/LitNavigator.exe
+```
+Double-click the exe: it starts the local server and opens the browser, **offline by default**
+(no key, $0, full agentic flow). Drop a `.env` next to the exe to enable live LLM teaching.
+
 ---
 
 ## Roadmap
