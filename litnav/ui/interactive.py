@@ -64,6 +64,16 @@ class TutorSession:
 
         cs = (vals.get("learner_state") or {}).get(focus_id, {}) if focus_id is not None else {}
 
+        # Name of the concept the LAST answer was graded against (may differ from the concept
+        # now being taught — that mismatch is exactly what confused learners before).
+        last_cid = last.get("concept_id")
+        last_concept = None
+        last_cs = {}
+        if last_cid is not None:
+            row = self.conn.execute("SELECT name FROM concepts WHERE id=?", (last_cid,)).fetchone()
+            last_concept = row[0] if row else None
+            last_cs = (vals.get("learner_state") or {}).get(last_cid, {})
+
         return {
             "session_id": self.sid,
             "done": done,
@@ -73,6 +83,13 @@ class TutorSession:
             "question": (quiz.get("question") if not done else None),
             "mastery": round(cs.get("mastery", 0.0), 3) if cs else None,
             "confidence": round(cs.get("confidence", 0.0), 3) if cs else None,
+            # Last-answer verdict, anchored to the exact question it graded.
+            "last_answer": last.get("answer"),
+            "last_question": last.get("question"),
+            "last_concept": last_concept,
+            "last_correct": (last.get("score") == 1.0) if last.get("score") is not None else None,
             "last_feedback": last.get("feedback"),
             "last_detected_misconception": last.get("detected_misconception"),
+            "last_mastery": round(last_cs.get("mastery", 0.0), 3) if last_cs else None,
+            "last_confidence": round(last_cs.get("confidence", 0.0), 3) if last_cs else None,
         }

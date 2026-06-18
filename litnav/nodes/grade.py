@@ -111,6 +111,7 @@ def grade_node(state: NavState, conn: sqlite3.Connection) -> dict:
 
     quiz_result = {
         "score": score, "feedback": feedback, "answer": answer,
+        "question": quiz_item.get("question"),  # the question this answer was graded against
         "mastery": new_mastery, "confidence": new_confidence, "concept_id": concept_id,
         "detected_misconception": detected_id,
     }

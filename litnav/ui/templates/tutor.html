@@ -15,25 +15,42 @@
     input { flex:1; padding:.55rem .7rem; border:1px solid #c5ccd8; border-radius:8px; font-size:1rem; }
     button { padding:.55rem 1rem; border:0; border-radius:8px; background:#5b49c4; color:#fff;
              font-size:1rem; cursor:pointer; }
-    .fb { margin:.8rem 0; padding:.5rem .7rem; border-radius:8px; background:#fff8ec; font-size:.9rem; }
     .miscon { color:#8a1f4c; }
     .mut { color:#7a8699; font-size:.85rem; margin-top:.5rem; }
     .done { background:#e6f6ec; border:1px solid #bfe6cd; border-radius:8px; padding:1rem; margin-top:1rem; }
     a { color:#5b49c4; }
+    /* Verdict on the previous answer — anchored to the exact question it graded. */
+    .verdict { border:1px solid #e2e6ee; border-radius:8px; padding:.7rem .9rem; background:#fff; }
+    .verdict.ok  { border-color:#bfe6cd; background:#f3fbf6; }
+    .verdict.bad { border-color:#f0d6cb; background:#fdf6f3; }
+    .verdict .vq { color:#5b6678; font-size:.85rem; }
+    .verdict .va { margin:.35rem 0; font-size:.95rem; }
+    .verdict .vr { font-weight:600; }
+    .verdict.ok .vr  { color:#1f8a4c; }
+    .verdict.bad .vr { color:#cf4f24; font-weight:500; }
+    .verdict .vm { color:#7a8699; font-size:.8rem; font-weight:400; margin-top:.3rem; }
+    /* Divider + label separating "what just happened" from "what's next". */
+    .nextlabel { display:flex; align-items:center; gap:.6rem; color:#7a8699; font-size:.8rem;
+                 text-transform:uppercase; letter-spacing:.06em; margin:1.4rem 0 .2rem; }
+    .nextlabel::before, .nextlabel::after { content:""; flex:1; height:1px; background:#e2e6ee; }
   </style>
 </head>
 <body>
 <header><b>LitNavigator</b> &nbsp; teaching: {{ concept_name or "…" }}</header>
 <div class="wrap">
-  {% if teach %}<div class="teach">{{ teach|replace('**','') }}</div>{% endif %}
-
-  {% if last_feedback %}
-    <div class="fb">{{ last_feedback }}
-      {% if last_detected_misconception %}<span class="miscon">· detected misconception: {{ last_detected_misconception }}</span>{% endif %}
+  {# Verdict on the LAST answer, anchored to the exact question it graded so it's never
+     confused with the question shown below. #}
+  {% if last_answer %}
+    <div class="verdict {{ 'ok' if last_correct else 'bad' }}">
+      <div class="vq">On <b>{{ last_concept }}</b>, you were asked: <i>{{ last_question }}</i></div>
+      <div class="va">Your answer: &ldquo;{{ last_answer }}&rdquo;</div>
+      <div class="vr">
+        {% if last_correct %}✓ Correct.{% else %}✗ Not quite. {{ last_feedback }}{% endif %}
+        {% if last_detected_misconception %}<span class="miscon">· misconception: {{ last_detected_misconception }}</span>{% endif %}
+      </div>
+      {% if last_mastery is not none %}<div class="vm">{{ last_concept }} mastery now {{ last_mastery }} · confidence {{ last_confidence }}</div>{% endif %}
     </div>
   {% endif %}
-
-  {% if mastery is not none %}<div class="mut">mastery {{ mastery }} · confidence {{ confidence }}</div>{% endif %}
 
   {% if done %}
     <div class="done"><b>Session complete.</b><br>
@@ -41,6 +58,8 @@
       <a href="/tutor">start another</a>
     </div>
   {% else %}
+    <div class="nextlabel">{% if last_answer %}Now teaching{% else %}Teaching{% endif %} ▸ {{ concept_name }}</div>
+    {% if teach %}<div class="teach">{{ teach|replace('**','') }}</div>{% endif %}
     <div class="q">{{ question or "" }}</div>
     <form method="get" action="/tutor/{{ sid }}/answer">
       <input name="answer" autocomplete="off" autofocus placeholder="type your answer…">
