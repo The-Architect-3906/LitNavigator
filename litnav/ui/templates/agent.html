@@ -51,14 +51,13 @@
       {% if question %}<div class="bubble ai qa">{{ question }}</div>{% endif %}
     </div>
     <div class="working" id="working" style="display:none">● agent working…</div>
-    {% if not done %}
-    <form class="answer" id="answer-form" onsubmit="return submitAnswer(event)">
-      <input id="answer-input" autocomplete="off" autofocus placeholder="type your answer…">
-      <button type="submit">Answer</button>
-    </form>
-    {% else %}
-    <div class="card"><b>Session complete.</b> <a href="/sessions/{{ sid }}">full trace &rarr;</a> · <a href="/tutor">start another</a></div>
+    {% if done %}
+    <div class="card"><b>This thread is complete.</b> <a href="/sessions/{{ sid }}">full trace &rarr;</a> · <a href="/tutor">new chat</a></div>
     {% endif %}
+    <form class="answer" id="answer-form" onsubmit="return submitAnswer(event)">
+      <input id="answer-input" autocomplete="off" autofocus placeholder="ask anything, or answer the question…">
+      <button type="submit">Send</button>
+    </form>
   </div>
 
   <div id="glass">
@@ -96,7 +95,9 @@ function addBubble(cls,text,tw){const t=document.getElementById('thread');const 
 function setFlow(steps){const f=document.getElementById('flow');f.innerHTML='';steps.forEach(s=>{const d=document.createElement('div');d.className='step '+s.state;const ic=s.state==='done'?'✓':(s.state==='active'?'▶':'○');d.innerHTML='<span class="ic">'+ic+'</span><span>'+esc(s.label)+(s.detail?' <span class="mut">· '+esc(s.detail)+'</span>':'')+'</span>';f.appendChild(d)});}
 
 function handleEvent(e,steps,inp){
-  if(e.type==='step'){steps.forEach(s=>s.state='done');steps.push({label:e.label,detail:e.detail,state:'active'});setFlow(steps);}
+  if(e.type==='dispatch'){steps.length=0;steps.push({label:e.label,detail:'',state:'active'});setFlow(steps);}
+  else if(e.type==='reply'){steps.forEach(s=>s.state='done');setFlow(steps);if(e.text)addBubble('ai',e.text,true);}
+  else if(e.type==='step'){steps.forEach(s=>s.state='done');steps.push({label:e.label,detail:e.detail,state:'active'});setFlow(steps);}
   else if(e.type==='teach'){steps.forEach(s=>s.state='done');setFlow(steps);if(e.text)addBubble('ai',e.text,true);}
   else if(e.type==='question'){if(e.text)addBubble('ai qa',e.text,false);}
   else if(e.type==='state'){updateGlass(e);}
