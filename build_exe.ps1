@@ -19,3 +19,10 @@ python -m PyInstaller --noconfirm --name LitNavigator --console `
   --collect-all langchain_core `
   --collect-submodules uvicorn `
   run_litnav.py
+
+# Ship the user-facing .env template + quick-start NEXT TO the exe (run_litnav reads .env
+# from the exe's own directory). Then zip the folder into a GitHub Release asset.
+Copy-Item packaging/env.example.txt   dist/LitNavigator/.env.example    -Force
+Copy-Item packaging/README-FIRST.txt  dist/LitNavigator/README-FIRST.txt -Force
+Compress-Archive -Path dist/LitNavigator/* -DestinationPath dist/LitNavigator-windows.zip -Force
+Write-Host "Release bundle ready: dist/LitNavigator-windows.zip"
