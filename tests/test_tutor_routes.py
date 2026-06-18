@@ -25,11 +25,14 @@ def test_concept_goal_starts_session(client):
     assert "route" in r.text.lower()       # right-hand glass box rendered
 
 
-def test_unknown_goal_returns_home_with_message(client):
+def test_unknown_goal_enters_a_conversational_session(client):
     r = client.get("/tutor/start", params={"goal": "teach me quantum chromodynamics"})
     assert r.status_code == 200
-    assert 'name="goal"' in r.text          # back on the home form
-    assert "isn't in" in r.text or "not in" in r.text
+    assert "/tutor/" in str(r.url)                 # a session page, not the home decline
+    sid = str(r.url).rstrip("/").split("/tutor/")[-1]
+    ev = client.post(f"/tutor/{sid}/events", json={"answer": "what can you teach?"})
+    assert ev.status_code == 200
+    assert '"reply"' in ev.text                    # the agent guides/declines conversationally
 
 
 def test_induce_goal_starts_session(client):
@@ -59,3 +62,14 @@ def test_events_endpoint_streams_answer_turn(client):
 def test_events_endpoint_unknown_session_404(client):
     ev = client.post("/tutor/does-not-exist/events", json={})
     assert ev.status_code == 404
+
+
+def test_events_handles_a_chat_turn(client):
+    # Start a session with a greeting goal -> conversational, no teaching yet.
+    r = client.get("/tutor/start", params={"goal": "你好"})
+    sid = str(r.url).rstrip("/").split("/tutor/")[-1]
+    ev = client.post(f"/tutor/{sid}/events", json={"answer": "what can you teach me?"})
+    assert ev.status_code == 200
+    assert "text/event-stream" in ev.headers["content-type"]
+    assert '"reply"' in ev.text or '"dispatch"' in ev.text
+    assert '"done"' in ev.text

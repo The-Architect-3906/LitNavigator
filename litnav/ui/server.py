@@ -24,11 +24,12 @@ from litnav.goal import resolve_goal
 from litnav.storage.schema import init_db
 from litnav.storage.seed import seed_demo_data
 from litnav.ui.cost import session_cost
-from litnav.ui.interactive import TutorSession
+from litnav.ui.interactive import AgentSession, TutorSession
 from litnav.ui.trace import build_trace
 
 # In-memory live tutor sessions (single-process demo). Keyed by session id.
 _TUTORS: dict[str, TutorSession] = {}
+_AGENTS: dict[str, AgentSession] = {}
 
 app = FastAPI(title="LitNavigator trace panel")
 
@@ -44,7 +45,10 @@ def _connect() -> sqlite3.Connection:
 
 
 def _trace_for(session_id: str) -> dict:
-    """Build a trace from a live tutor's own per-session DB when present, else the demo DB."""
+    """Build a trace from a live session's own per-session DB when present, else the demo DB."""
+    ag = _AGENTS.get(session_id)
+    if ag is not None:
+        return build_trace(ag.conn, session_id)
     ts = _TUTORS.get(session_id)
     if ts is not None:
         return build_trace(ts.conn, session_id)
@@ -110,22 +114,25 @@ def _n_papers(data: dict) -> int:
     return len(ids) or len(data["concepts"])
 
 
-def _start_tutor(fixture: str, target_ids: list[int], pending_induction: dict | None,
-                 intent: str | None = None) -> str:
-    # Per-session DB + checkpoint files so concurrent tutors never clobber each other
-    # or the CLI/panel demo DB (no shared-file deletion).
+def _start_agent(goal: str, intent: str | None) -> str:
     sid = str(uuid.uuid4())
     base = Path(DEMO_DB_PATH).parent
     base.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(str(base / f"tutor-{sid}.sqlite"), check_same_thread=False)
     init_db(conn)
-    seed_demo_data(conn, fixture)
-    topic = json.loads(Path(fixture).read_text(encoding="utf-8"))["topic"]
+    seed_demo_data(conn, _TUTOR_FIXTURE)
     ckpt = sqlite3.connect(str(base / f"tutor-{sid}-ckpt.sqlite"), check_same_thread=False)
-    ts = TutorSession(conn, ckpt, sid)
-    ts.start(topic, target_concept_ids=target_ids, pending_induction=pending_induction,
-             intent=intent, mastery_threshold=0.75)
-    _TUTORS[sid] = ts
+    ag = AgentSession(conn, ckpt, sid, _fixture_data())
+    _AGENTS[sid] = ag
+    # An intent (researcher/journalist) starts teaching immediately; an explicit teachable
+    # goal also starts teaching; anything else stays in conversation until the user says more.
+    if intent:
+        ag.tutor = TutorSession(conn, ckpt, sid)
+        ag.tutor.start(ag.topic, target_concept_ids=[], intent=intent, mastery_threshold=0.75)
+    else:
+        plan = resolve_goal(goal, ag.concepts, ag.off)
+        if plan["kind"] in ("concept", "induce"):
+            list(ag._start_teaching(plan["slug"]))   # run the first teach now
     return sid
 
 
@@ -137,45 +144,19 @@ def tutor_home(message: str = ""):
 
 @app.get("/tutor/start")
 def tutor_start(goal: str = "", intent: str = ""):
-    # Intent/audience mode: re-scope the SAME corpus to a purpose (researcher vs journalist).
-    # The intent's preset targets/depth/bar drive the route, independent of a typed goal.
     from litnav.intent import INTENTS
-    if intent in INTENTS:
-        sid = _start_tutor(_TUTOR_FIXTURE, [], None, intent=intent)
-        return RedirectResponse(f"/tutor/{sid}", status_code=303)
-
-    data = _fixture_data()
-    plan = resolve_goal(goal, data["concepts"], data["induction"]["off_skeleton"])
-    if plan["kind"] == "concept":
-        slug_to_id = {c["slug"]: c["id"] for c in data["concepts"]}
-        sid = _start_tutor(_TUTOR_FIXTURE, [slug_to_id[plan["slug"]]], None)
-    elif plan["kind"] == "induce":
-        sid = _start_tutor(_TUTOR_FIXTURE, [], data["induction"])
-    else:
-        avail = ", ".join(plan["available"])
-        html = _TEMPLATES.get_template("agent_home.html").render(
-            message=f'"{goal}" is not in this paper corpus. I can teach: {avail}.',
-            n_papers=_n_papers(data))
-        return HTMLResponse(html)
+    sid = _start_agent(goal, intent if intent in INTENTS else None)
     return RedirectResponse(f"/tutor/{sid}", status_code=303)
 
 
 @app.get("/tutor/{sid}", response_class=HTMLResponse)
 def tutor_page(sid: str):
-    ts = _TUTORS.get(sid)
-    if ts is None:
+    ag = _AGENTS.get(sid)
+    if ag is None:
         return RedirectResponse("/tutor", status_code=303)
     return _TEMPLATES.get_template("agent.html").render(
         sid=sid, n_papers=_n_papers(_fixture_data()),
-        cost=session_cost(ts.conn, sid), **ts.current())
-
-
-@app.get("/tutor/{sid}/answer")
-def tutor_answer(sid: str, answer: str = ""):
-    ts = _TUTORS.get(sid)
-    if ts is not None and answer.strip():
-        ts.answer(answer)
-    return RedirectResponse(f"/tutor/{sid}", status_code=303)
+        cost=session_cost(ag.conn, sid), **ag.current())
 
 
 @app.post("/tutor/{sid}/events")
@@ -183,18 +164,18 @@ async def tutor_events(sid: str, request: Request):
     # POST (answer in the JSON body, not the URL) so learner answers don't leak into
     # request logs / browser history and long answers don't hit URL limits. The client
     # consumes the SSE stream via fetch() + ReadableStream (EventSource is GET-only).
-    ts = _TUTORS.get(sid)
-    if ts is None:
+    ag = _AGENTS.get(sid)
+    if ag is None:
         return JSONResponse({"type": "error", "message": "no such session"}, status_code=404)
     try:
         body = await request.json()
     except Exception:
         body = {}
-    answer = (body.get("answer") or "").strip()
+    message = (body.get("answer") or "").strip()
 
     def gen():
         try:
-            stream = ts.stream_answer(answer) if answer else iter(ts._terminal_events())
+            stream = ag.handle(message) if message else iter(ag.current_events())
             for ev in stream:
                 yield f"data: {json.dumps(ev)}\n\n"
         except Exception as e:  # pragma: no cover - defensive
