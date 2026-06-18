@@ -141,7 +141,8 @@ def build_trace(conn: sqlite3.Connection, session_id: str) -> dict:
             timeline.append({
                 "index": len(timeline) + 1,
                 "name": names.get(d["state_snapshot"].get("concept_id")),
-                "turn_type": "lecture", "strategy": None, "cited_chunks": [],
+                "turn_type": "lecture", "strategy": None,
+                "cited_chunks": d["state_snapshot"].get("cited_chunks", []),
                 "answer": None, "score": None, "detected_misconception": None,
                 "mastery_after": None, "confidence_after": None,
                 "decision": "lecture", "rationale": d["rationale"],
@@ -156,6 +157,11 @@ def build_trace(conn: sqlite3.Connection, session_id: str) -> dict:
         for cid in ind["evidence_chunks"]:
             if cid not in cited_ids:
                 cited_ids.append(cid)
+    for d in decisions:  # lecture-only concepts cite chunks but write no tutor_turn
+        if d["decision"] == "lecture":
+            for cid in d["state_snapshot"].get("cited_chunks", []):
+                if cid not in cited_ids:
+                    cited_ids.append(cid)
     evidence = []
     for cid in cited_ids:
         row = conn.execute(

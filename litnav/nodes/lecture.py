@@ -28,13 +28,20 @@ def lecture_node(state: NavState, conn: sqlite3.Connection) -> dict:
             )
             break
 
+    # The lecture is taught from the chunks teach_node just cited. Persist them in the decision
+    # snapshot so the judge-facing trace can show the evidence chain (a lecture-only concept never
+    # writes a tutor_turn, so the trace can't recover these from anywhere else).
+    cited_chunks = list(state.get("current_cited_chunks") or [])
+
+    taught_from = "taught from cited evidence" if cited_chunks else "no evidence was found to teach from"
     rationale = (
-        f"Concept {concept_id}: orientation only — taught from cited evidence, but it has no "
+        f"Concept {concept_id}: orientation only — {taught_from}, but it has no "
         f"quiz, so the learner was not assessed and no mastery is claimed. Moving on."
     )
     repo.record_decision(
         conn, session_id, route_version, "lecture", "lecture", rationale,
-        state_snapshot={"concept_id": concept_id, "lecture_only": True},
+        state_snapshot={"concept_id": concept_id, "lecture_only": True,
+                        "cited_chunks": cited_chunks},
     )
 
     return {
