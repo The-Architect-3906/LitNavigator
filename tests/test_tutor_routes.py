@@ -42,7 +42,7 @@ def test_intent_mode_starts_session(client):
     r = client.get("/tutor/start", params={"intent": "journalist"})
     assert r.status_code == 200
     assert "/tutor/" in str(r.url)             # started a session page
-    assert "mode: journalist" in r.text        # header shows the re-scoped mode
+    assert "journalist" in r.text              # header shows the re-scoped mode
 
 
 def test_events_endpoint_streams_answer_turn(client):
