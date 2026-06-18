@@ -98,3 +98,17 @@ def test_current_cited_is_only_the_cited_chunk():
     assert cited_ids <= ev_ids, "cited is a subset of retrieved evidence"
     assert len(s["cited"]) <= len(s["evidence"])
     assert all(cid.startswith("c_react") for cid in cited_ids), "cited the curated react chunk"
+
+
+def test_stream_answer_emits_steps_and_terminal_events():
+    ts = _session()
+    ts.start("agents", target_concept_ids=[REACT], mastery_threshold=0.75)
+    events = list(ts.stream_answer("it is just chain of thought"))  # wrong -> misconception -> reteach
+    types = [e["type"] for e in events]
+    nodes = [e["node"] for e in events if e["type"] == "step"]
+    assert "grade" in nodes
+    assert any(n in ("reteach", "teach") for n in nodes), "reteach/teach step streamed"
+    assert "teach" in types and "question" in types and "state" in types
+    assert types[-1] == "done"
+    grade_ev = next(e for e in events if e.get("node") == "grade")
+    assert "react_is_just_cot" in grade_ev["detail"], "grade step carries the detected misconception"
