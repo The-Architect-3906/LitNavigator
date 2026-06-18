@@ -146,4 +146,4 @@ Only after M3 is stable:
 
 ## Slice 6: Interactive agent UI (product phase, post-competition)
 
-Not a gate. **Status: ✅ prototype implemented** — `litnav/ui/interactive.py` (`TutorSession`, `interrupt_after=["check"]` + resume) + `/tutor` routes + `tutor.html`. User picks a preset session -> teach -> quiz -> user answers -> adapt live (reteach / induce). LLM-grounded teach is wired (`teach` calls `complete_text`, deterministic offline). Remaining: free-text goal entry, restart persistence, UI polish.
+Not a gate. **Status: ✅ shipped** — `litnav/ui/interactive.py` (`TutorSession`, `interrupt_after=["check"]` + resume) + `/tutor` routes + `agent.html` (two views: Chat + Glass box). User **types a free-text goal** (`litnav/goal.py`) -> plan -> teach (LLM-grounded, typewriter) -> quiz -> adapt live (reteach / replan / induce), with the agent's per-node flow + cited evidence + cost streamed over SSE (`/tutor/{sid}/events`). Intent modes selectable in-UI. Remaining: restart persistence; folding the reroute path (`demo-reroute`) into the free-text UI.

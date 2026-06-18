@@ -81,6 +81,7 @@
 
 <script>
 const SID = document.body.dataset.sid;
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function setMode(m){document.body.className='mode-'+m;
   document.getElementById('t-chat').classList.toggle('on',m==='chat');
   document.getElementById('t-glass').classList.toggle('on',m==='glass');
@@ -92,7 +93,7 @@ function typewriter(el,text){el.textContent='';let i=0;(function tick(){if(i<=te
 const ft=document.getElementById('first-teach'); if(ft)typewriter(ft,ft.dataset.text);
 
 function addBubble(cls,text,tw){const t=document.getElementById('thread');const d=document.createElement('div');d.className='bubble '+cls;t.appendChild(d);if(tw){typewriter(d,text)}else{d.textContent=text}return d;}
-function setFlow(steps){const f=document.getElementById('flow');f.innerHTML='';steps.forEach(s=>{const d=document.createElement('div');d.className='step '+s.state;const ic=s.state==='done'?'✓':(s.state==='active'?'▶':'○');d.innerHTML='<span class="ic">'+ic+'</span><span>'+s.label+(s.detail?' <span class="mut">· '+s.detail+'</span>':'')+'</span>';f.appendChild(d)});}
+function setFlow(steps){const f=document.getElementById('flow');f.innerHTML='';steps.forEach(s=>{const d=document.createElement('div');d.className='step '+s.state;const ic=s.state==='done'?'✓':(s.state==='active'?'▶':'○');d.innerHTML='<span class="ic">'+ic+'</span><span>'+esc(s.label)+(s.detail?' <span class="mut">· '+esc(s.detail)+'</span>':'')+'</span>';f.appendChild(d)});}
 
 function submitAnswer(ev){ev.preventDefault();const inp=document.getElementById('answer-input');const text=inp.value.trim();if(!text)return false;
   addBubble('me',text,false);inp.value='';inp.disabled=true;document.getElementById('working').style.display='block';
@@ -110,8 +111,8 @@ function submitAnswer(ev){ev.preventDefault();const inp=document.getElementById(
   return false;}
 
 function updateGlass(e){document.getElementById('route-v').textContent='route v'+e.route_version;
-  document.getElementById('evidence').innerHTML=(e.cited||[]).map(c=>'<div class="ev">'+c.chunk_id+': '+(c.text||'').slice(0,140)+'…</div>').join('');
-  document.getElementById('learner').innerHTML=(e.learner||[]).map(c=>'<div>'+c.name+' — m '+c.mastery+' · c '+c.confidence+'</div>').join('');
+  document.getElementById('evidence').innerHTML=(e.cited||[]).map(c=>'<div class="ev">'+esc(c.chunk_id)+': '+esc((c.text||'').slice(0,140))+'…</div>').join('');
+  document.getElementById('learner').innerHTML=(e.learner||[]).map(c=>'<div>'+esc(c.name)+' — m '+esc(c.mastery)+' · c '+esc(c.confidence)+'</div>').join('');
   if(e.rationale){document.getElementById('why').style.display='';document.getElementById('why-text').textContent=(e.decision||'')+' — '+e.rationale;}
   if(e.cost){document.getElementById('cost').textContent=e.cost.tokens+' tok ≈ $'+e.cost.usd;}}
 </script>

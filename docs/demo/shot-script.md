@@ -107,9 +107,9 @@ Open browser to `http://127.0.0.1:8000/tutor` before recording begins.
 **On-screen action:**
 1. In Terminal 2, run:
    ```bash
-   python -m litnav.app demo-m2 --answer wrong_prereq
+   python -m litnav.app demo-reroute
    ```
-   *(If the agents_reroute fixture is used, substitute the appropriate CLI command that triggers a route_version bump on the agents corpus.)*
+   *(Runs the `data/seed/agents_reroute.json` fixture: a wrong answer reveals a missing prerequisite (`tool_use` for `reflection`), so `replan` inserts it and `route_version` goes 1 → 2 — all on the agent corpus.)*
 2. After it completes, open the browser to the session panel:
    ```
    http://127.0.0.1:8000/sessions/<id>
@@ -228,7 +228,7 @@ Show them side-by-side or cut between them.
 - [ ] Shot 0: static hook card or PDF thumbnails
 - [ ] Shot 1: goal box → type "I want to understand ReAct" → right panel populates (route + route_version=1)
 - [ ] Shot 2: wrong answer → misconception detected → reteach → mastery 0.40→~0.80 (+ counterfactual cut)
-- [ ] Shot 3: CLI `demo-m2 --answer wrong_prereq` → sessions panel → route_version 1→2 (+ counterfactual cut)
+- [ ] Shot 3: CLI `demo-reroute` → sessions panel → route_version 1→2 (+ counterfactual cut)
 - [ ] Shot 4: goal "multi-agent debate" → induced edge + source='induced' + confidence_basis + cited chunks
 - [ ] Shot 5: `demo-intent` → two session panels → different routes same corpus
 - [ ] Shot 6: "teach me quantum chromodynamics" → honest decline + cost panel

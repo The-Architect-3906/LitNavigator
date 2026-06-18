@@ -27,6 +27,7 @@ from litnav.storage.schema import init_db, reset_db
 from litnav.storage.seed import seed_demo_data
 from litnav.ui.trace import build_trace
 
+_REROUTE_FIXTURE = "data/seed/agents_reroute.json"
 _M1_FIXTURE = "data/seed/rag_demo.json"
 _M2_FIXTURE = "data/seed/agents_m2.json"
 _M3_FIXTURE = "data/seed/agents_m3.json"
@@ -252,6 +253,7 @@ def main() -> int:
     p2 = sub.add_parser("demo-m2"); p2.add_argument("--answer", default="cot",
                                                     choices=sorted(_M2_ANSWERS))
     p3 = sub.add_parser("demo-m3"); p3.add_argument("--concept", default="multi_agent_debate")
+    sub.add_parser("demo-reroute")   # missing-prerequisite reroute on the agent corpus
     p4 = sub.add_parser("demo-intent")
     p4.add_argument("--intent", choices=["researcher", "journalist"], default=None,
                     help="show one intent; omit to compare both")
@@ -267,6 +269,9 @@ def main() -> int:
             _run(_M2_FIXTURE, _M2_ANSWERS[args.answer], targets=["react"], threshold=0.75)
         elif args.command == "demo-m3":
             _run_m3(args.concept)
+        elif args.command == "demo-reroute":
+            rdata = json.loads(Path(_REROUTE_FIXTURE).read_text(encoding="utf-8"))
+            _run(_REROUTE_FIXTURE, rdata["demo_wrong_prereq_answers"], rdata["targets"], threshold=0.8)
         elif args.command == "demo-intent":
             _run_intent(args.intent)
     return 0

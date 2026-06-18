@@ -125,14 +125,14 @@ Only add M4 work if M3 is already recordable. M4 should not risk the latest stab
 
 The current `litnav/ui` panel is **read-only observability** — it renders a session that already ran. The productized end-state is an **interactive agent interface**: the user types a goal, the tutor teaches, asks a quiz, the user actually answers, and the agent adapts live (reteach / replan / induce).
 
-**Status: a working prototype exists** at `GET /tutor` (`litnav/ui/interactive.py` + server routes): pick a session → teach → quiz → you answer in a text box → it adapts (reteach / induce) live, via `interrupt_after=["check"]` + resume, with per-session DB/checkpoint files. Teaching is LLM-grounded when a key is set (deterministic template offline); sessions are preset + in-memory today.
+**Status: shipped** at `GET /tutor` (`litnav/ui/interactive.py` + server routes): **type a free-text goal** → the agent plans, teaches (LLM-grounded, typewriter), quizzes, and adapts (reteach / replan / induce) live, via `interrupt_after=["check"]` + resume, with per-session DB/checkpoint files. Two switchable views — **Chat** and a **Glass box** that streams the agent's per-node flow + cited evidence + cost over SSE. Intent modes (researcher/journalist) are selectable in-UI; out-of-scope goals get an honest decline. Sessions are in-memory.
 
 This is **not** a competition gate (the gated core is M0–M3; the recordable demo uses the panel + CLI). It is the "real users use it" form. Architecturally the path is short because the backend already supports human-in-the-loop:
 
-- **Built:** the M1 `SqliteSaver` interrupt/resume, **plus** the chat front-end (`/tutor` + `tutor.html`), the submit-answer→resume endpoint, and per-session DB/checkpoint (`TutorSession`). (CLI demos still use batch `pending_answers`.)
-- **Remaining:** (a) free-text goal/topic entry (today `/tutor` offers preset sessions); (b) session persistence across server restart (sessions are in-memory) + cleanup of per-session files; (c) optional streaming of teaching text. *(LLM-grounded teach is wired — `teach` calls `complete_text`, deterministic template offline.)*
+- **Built:** the M1 `SqliteSaver` interrupt/resume; the two-view front-end (`/tutor` + `agent.html`: Chat + Glass box); free-text goal entry (`litnav/goal.py`); per-node SSE streaming (`/tutor/{sid}/events`); LLM-grounded teach; intent modes in-UI; per-session DB/checkpoint (`TutorSession`). (CLI demos still use batch `pending_answers`.)
+- **Remaining:** (a) session persistence across server restart (sessions are in-memory) + cleanup of per-session files; (b) wiring the missing-prerequisite reroute into the free-text UI (today it's a CLI/gate path, `demo-reroute`).
 
-So "panel → real agent UI" is *a new interaction front-end + swapping batch answers for interrupt/resume*, not an architecture rewrite. LLM-backed teach is already in place.
+So the productized agent UI is in place; what's left is persistence and folding the reroute path into the live UI — not an architecture rewrite.
 
 ## Timeline Checkpoints
 

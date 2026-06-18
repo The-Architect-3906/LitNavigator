@@ -145,7 +145,7 @@ G0 PASS: offline run
 | **M2** · Tutor | teach → reteach → concede on the agent corpus; misconception detection (LLM / offline fallback); grounded LLM teaching; parallel-form quizzes; learning gain (G2 green) | ✅ Done |
 | **M3** · Literature induction | `induce_scaffold` — induce a prereq edge + mine a misconception for an off-skeleton concept (LLM proposes it from the real chunks, offline candidate fallback), rule-computed confidence + provenance, panel marks curated vs induced (G3 green) | ✅ Done |
 | **M4** · Polish | intent/audience modes ✅ (`demo-intent`); semantic/vector retrieval ✅ (opt-in, `LITNAV_RETRIEVAL=vector`); live induction recording ✅; still: cross-session memory | 🟡 Mostly done |
-| **Product** · Interactive agent UI | ✅ interactive tutor at `/tutor`: pick a session → teach → quiz → **you answer in a text box** → it adapts live (reteach / induce), reusing the M1 interrupt/resume; LLM-grounded teach when a key is set. Today: preset sessions; remaining: free-text goal entry, restart persistence | 🟡 Prototype |
+| **Product** · Interactive agent UI | ✅ free-text agent at `/tutor`: **type a goal** → it plans, teaches (LLM-grounded, typewriter), quizzes, and adapts live (reteach / replan / induce); two switchable views — **Chat** and a **Glass box** whose agent-flow + cited evidence + cost stream node-by-node (SSE); intent modes (researcher/journalist) in-UI. Out-of-scope goals get an honest decline. Remaining: restart persistence | 🟢 Done |
 
 > **M0–M3 (the gated core) is complete and green** — `verify_m0/m1/m2/m3` all pass fully offline. M4 is icing; the interactive product UI is beyond the competition gates.
 
