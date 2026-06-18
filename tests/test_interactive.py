@@ -69,3 +69,21 @@ def test_current_exposes_live_glass_box_before_answering():
     assert any(step["concept_id"] == REACT for step in s["route"])
     assert s["evidence"], "the chunk(s) being taught now are visible before any answer"
     assert s["route_version"] == 1
+
+
+def _session_full():
+    """A session over the full 7-concept agent fixture (needed for intent re-scoping)."""
+    conn = sqlite3.connect(":memory:", check_same_thread=False)
+    init_db(conn)
+    seed_demo_data(conn, "data/seed/agents_m3.json")
+    ckpt = sqlite3.connect(":memory:", check_same_thread=False)
+    return TutorSession(conn, ckpt, str(uuid.uuid4()))
+
+
+def test_intent_modes_rescope_the_same_corpus_to_different_routes():
+    """Same corpus, different purpose -> different routes (the novelty contrast)."""
+    researcher = [s["concept_id"] for s in _session_full().start("agents", intent="researcher")["route"]]
+    journalist = [s["concept_id"] for s in _session_full().start("agents", intent="journalist")["route"]]
+    assert researcher and journalist
+    assert researcher != journalist, "intent must re-scope the route"
+    assert len(researcher) > len(journalist), "researcher route is the deeper one"

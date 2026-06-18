@@ -20,7 +20,7 @@
 </style></head>
 <body>
 <header><b>LitNavigator</b> &nbsp; goal: {{ concept_name or "…" }}
-  &nbsp;<span class="mut">corpus: {{ n_papers }} papers</span></header>
+  &nbsp;<span class="mut">corpus: {{ n_papers }} papers{% if intent %} · mode: {{ intent }} (depth {{ teach_depth }}, bar {{ mastery_threshold }}){% endif %}</span></header>
 <div class="cols">
  <div class="left">
   {% if teach %}<div class="card teach">{{ teach|replace('**','') }}</div>{% endif %}

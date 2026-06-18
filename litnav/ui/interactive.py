@@ -101,4 +101,7 @@ class TutorSession:
                  "confidence": e["confidence"]}
                 for e in repo.get_induced_edges(self.conn)
             ],
+            "intent": vals.get("intent"),
+            "teach_depth": vals.get("teach_depth"),
+            "mastery_threshold": vals.get("mastery_threshold"),
         }

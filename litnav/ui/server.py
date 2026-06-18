@@ -110,7 +110,8 @@ def _n_papers(data: dict) -> int:
     return len(ids) or len(data["concepts"])
 
 
-def _start_tutor(fixture: str, target_ids: list[int], pending_induction: dict | None) -> str:
+def _start_tutor(fixture: str, target_ids: list[int], pending_induction: dict | None,
+                 intent: str | None = None) -> str:
     # Per-session DB + checkpoint files so concurrent tutors never clobber each other
     # or the CLI/panel demo DB (no shared-file deletion).
     sid = str(uuid.uuid4())
@@ -123,7 +124,7 @@ def _start_tutor(fixture: str, target_ids: list[int], pending_induction: dict | 
     ckpt = sqlite3.connect(str(base / f"tutor-{sid}-ckpt.sqlite"), check_same_thread=False)
     ts = TutorSession(conn, ckpt, sid)
     ts.start(topic, target_concept_ids=target_ids, pending_induction=pending_induction,
-             mastery_threshold=0.75)
+             intent=intent, mastery_threshold=0.75)
     _TUTORS[sid] = ts
     return sid
 
@@ -135,7 +136,14 @@ def tutor_home(message: str = ""):
 
 
 @app.get("/tutor/start")
-def tutor_start(goal: str = ""):
+def tutor_start(goal: str = "", intent: str = ""):
+    # Intent/audience mode: re-scope the SAME corpus to a purpose (researcher vs journalist).
+    # The intent's preset targets/depth/bar drive the route, independent of a typed goal.
+    from litnav.intent import INTENTS
+    if intent in INTENTS:
+        sid = _start_tutor(_TUTOR_FIXTURE, [], None, intent=intent)
+        return RedirectResponse(f"/tutor/{sid}", status_code=303)
+
     data = _fixture_data()
     plan = resolve_goal(goal, data["concepts"], data["induction"]["off_skeleton"])
     if plan["kind"] == "concept":
