@@ -13,12 +13,13 @@
     h2 { font-size:.95rem; text-transform:uppercase; letter-spacing:.04em; color:#5b6678; margin:.2rem 0 .6rem; }
     .turn { border-left:3px solid #5b49c4; padding:.4rem .7rem; margin:.5rem 0; background:#faf9ff; border-radius:4px; }
     .turn.reteach { border-left-color:#b3700d; background:#fff8ec; }
+    .turn.lecture { border-left-color:#7a8699; background:#f6f8fc; }
     .badge { display:inline-block; font-size:.72rem; padding:.05rem .4rem; border-radius:6px; background:#eef0f6; margin-left:.3rem; }
     .decision { font-size:.86rem; padding:.35rem .6rem; margin:.35rem 0; border-radius:6px; background:#f1f4fa; }
     .decision .d { font-weight:700; }
-    .d-advance { color:#1f8a4c; } .d-reteach { color:#b3700d; } .d-diagnose,.d-replan { color:#cf4f24; } .d-concede { color:#8a1f4c; }
+    .d-advance { color:#1f8a4c; } .d-reteach { color:#b3700d; } .d-diagnose,.d-replan { color:#cf4f24; } .d-concede { color:#8a1f4c; } .d-lecture { color:#5b6678; }
     .step { padding:.3rem .5rem; border-radius:6px; margin:.25rem 0; font-size:.88rem; }
-    .s-done { background:#e6f6ec; } .s-pending { background:#eef0f6; } .s-conceded { background:#fbeaf0; }
+    .s-done { background:#e6f6ec; } .s-pending { background:#eef0f6; } .s-conceded { background:#fbeaf0; } .s-lectured { background:#eef3ff; }
     .concept { display:flex; align-items:center; gap:.5rem; margin:.35rem 0; font-size:.86rem; }
     .dot { width:10px; height:10px; border-radius:50%; flex:none; }
     .consensus { background:#258a51; } .contested { background:#b3700d; } .open { background:#cf4f24; }
@@ -48,7 +49,7 @@
     {% for ev in timeline %}
       <div class="turn {{ ev.turn_type }}">
         <b>[{{ ev.index }}] {{ ev.name }}</b>
-        <span class="badge">{{ ev.turn_type }} · {{ ev.strategy }}</span>
+        <span class="badge">{{ ev.turn_type }}{% if ev.strategy %} · {{ ev.strategy }}{% endif %}</span>
         {% if ev.answer is not none %}
           <div class="ans">answer: <i>“{{ ev.answer }}”</i> →
             <span class="{{ 'ok' if ev.score == 1.0 else 'bad' }}">{{ 'correct' if ev.score == 1.0 else 'wrong' }}</span>

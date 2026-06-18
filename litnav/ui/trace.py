@@ -70,9 +70,9 @@ def build_trace(conn: sqlite3.Connection, session_id: str) -> dict:
 
     decisions = [
         {"route_version": r[0], "from_node": r[1], "decision": r[2],
-         "rationale": r[3], "token_cost": r[4]}
+         "rationale": r[3], "token_cost": r[4], "state_snapshot": _loads(r[5], {})}
         for r in conn.execute(
-            "SELECT route_version, from_node, decision, rationale, token_cost "
+            "SELECT route_version, from_node, decision, rationale, token_cost, state_snapshot "
             "FROM decisions WHERE session_id=? ORDER BY id",
             (session_id,),
         ).fetchall()
@@ -115,26 +115,37 @@ def build_trace(conn: sqlite3.Connection, session_id: str) -> dict:
         ).fetchall()
     ]
 
-    # A single chronological view the CLI and panel can both render: each teaching
-    # turn, the answer that drove it, the learner state after, and the decision it triggered.
-    # Pair turns with per-turn ROUTING decisions only; 'induce' is a pre-loop decision
-    # (recorded before any teaching turn) and must not be attributed to a teach turn.
-    routing = [d for d in decisions
-               if d["decision"] in ("advance", "reteach", "diagnose", "replan", "concede")]
+    # A single chronological view the CLI and panel can both render. Walk the decisions in
+    # order: a ROUTING decision pairs with the next quizzed tutor_turn (1:1, in order); a
+    # 'lecture' decision is a quizless orientation turn (no tutor_turn / no answer / no
+    # mastery). 'induce' is pre-loop and shown in the induced/induction sections, not here.
+    _ROUTING = ("advance", "reteach", "diagnose", "replan", "concede")
+    names = {c["concept_id"]: c["name"] for c in concepts}
     timeline = []
-    for i, tt in enumerate(tutor_turns):
-        att = attempts[i] if i < len(attempts) else {}
-        dec = routing[i] if i < len(routing) else None
-        timeline.append({
-            "index": i + 1,
-            "name": tt["name"], "turn_type": tt["turn_type"], "strategy": tt["strategy"],
-            "cited_chunks": tt["cited_chunks"],
-            "answer": att.get("answer"), "score": att.get("score"),
-            "detected_misconception": att.get("detected_misconception"),
-            "mastery_after": tt["mastery_after"], "confidence_after": tt["confidence_after"],
-            "decision": dec["decision"] if dec else None,
-            "rationale": dec["rationale"] if dec else None,
-        })
+    j = 0
+    for d in decisions:
+        if d["decision"] in _ROUTING:
+            tt = tutor_turns[j] if j < len(tutor_turns) else {}
+            att = attempts[j] if j < len(attempts) else {}
+            j += 1
+            timeline.append({
+                "index": len(timeline) + 1,
+                "name": tt.get("name"), "turn_type": tt.get("turn_type"), "strategy": tt.get("strategy"),
+                "cited_chunks": tt.get("cited_chunks", []),
+                "answer": att.get("answer"), "score": att.get("score"),
+                "detected_misconception": att.get("detected_misconception"),
+                "mastery_after": tt.get("mastery_after"), "confidence_after": tt.get("confidence_after"),
+                "decision": d["decision"], "rationale": d["rationale"],
+            })
+        elif d["decision"] == "lecture":
+            timeline.append({
+                "index": len(timeline) + 1,
+                "name": names.get(d["state_snapshot"].get("concept_id")),
+                "turn_type": "lecture", "strategy": None, "cited_chunks": [],
+                "answer": None, "score": None, "detected_misconception": None,
+                "mastery_after": None, "confidence_after": None,
+                "decision": "lecture", "rationale": d["rationale"],
+            })
 
     cited_ids: list[str] = []
     for tt in tutor_turns:
