@@ -100,7 +100,17 @@ def build_graph(
     workflow.add_conditional_edges("select_next", route_after_select,
                                    {"retrieve": "retrieve", "__end__": END})
     workflow.add_edge("retrieve", "teach")
-    workflow.add_edge("teach", "check")
+
+    def _route_after_teach(s: NavState) -> str:
+        # A concept with no quiz can't be checked/graded — teach it (lecture) then advance,
+        # so a multi-concept route (e.g. an intent route) never stalls at an empty quiz.
+        from litnav.storage import repo
+        cid = s.get("current_concept_id")
+        items = repo.get_parallel_quiz_items(domain_conn, cid, exclude_ids=[]) if cid is not None else []
+        return "check" if items else "advance"
+
+    workflow.add_conditional_edges("teach", _route_after_teach,
+                                   {"check": "check", "advance": "advance"})
     workflow.add_edge("check", "grade")
     workflow.add_conditional_edges("grade", tutor_router, {
         "advance": "advance",

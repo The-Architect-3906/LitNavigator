@@ -222,8 +222,9 @@ class AgentSession:
         for ev in self.tutor._terminal_events():
             yield ev
 
-    def _grounded_aside(self, slug: str) -> str:
-        """A short answer to a side question, grounded ONLY in that concept's top chunk."""
+    def _grounded_aside(self, message: str, slug: str) -> str:
+        """A short answer to the learner's specific side question, grounded ONLY in that
+        concept's top chunk."""
         slug_to_id = {c["slug"]: c["id"] for c in self.concepts}
         cid = slug_to_id.get(slug)
         if cid is None:
@@ -234,8 +235,9 @@ class AgentSession:
         chunk = ev[0]
         from litnav.llm import client as llm_client
         det = chunk["text"][:200].rstrip() + "…"
-        prompt = ("Answer the learner's side question in ONE short sentence, grounded ONLY in "
-                  f"this evidence (do not add facts beyond it):\n{chunk['text']}")
+        prompt = (f"The learner asked: {message!r}\n"
+                  "Answer THAT question in ONE short sentence, grounded ONLY in the evidence "
+                  f"below; do not add facts beyond it.\nEvidence:\n{chunk['text']}")
         return llm_client.complete_text(prompt, fallback=det, max_tokens=80)
 
     def handle(self, message: str):
@@ -258,7 +260,7 @@ class AgentSession:
             from litnav.goal import resolve_goal
             r = resolve_goal(message, self.concepts, self.off)
             aside_slug = r["slug"] if r["kind"] == "concept" else None
-            yield {"type": "reply", "text": self._grounded_aside(aside_slug)}
+            yield {"type": "reply", "text": self._grounded_aside(message, aside_slug)}
             if question:
                 yield {"type": "question", "text": question}
             yield {"type": "done", "done": False}

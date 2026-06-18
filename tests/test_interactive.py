@@ -113,3 +113,14 @@ def test_stream_answer_emits_steps_and_terminal_events():
     assert all(not n.startswith("__") for n in nodes), "LangGraph control keys are filtered out"
     grade_ev = next(e for e in events if e.get("node") == "grade")
     assert "react_is_just_cot" in grade_ev["detail"], "grade step carries the detected misconception"
+
+
+def test_quizless_concept_lectures_and_advances_without_stall():
+    """A concept with no quiz must not stall the session at an empty quiz interrupt."""
+    conn = sqlite3.connect(":memory:", check_same_thread=False)
+    init_db(conn); seed_demo_data(conn, "data/seed/agents_m3.json")
+    ckpt = sqlite3.connect(":memory:", check_same_thread=False)
+    ts = TutorSession(conn, ckpt, str(uuid.uuid4()))
+    s = ts.start("agents", target_concept_ids=[2], mastery_threshold=0.75)  # tool_use: no quiz
+    assert s["done"] is True, "quizless concept should lecture then advance, not stall"
+    assert s["question"] is None
