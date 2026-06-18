@@ -87,3 +87,14 @@ def test_intent_modes_rescope_the_same_corpus_to_different_routes():
     assert researcher and journalist
     assert researcher != journalist, "intent must re-scope the route"
     assert len(researcher) > len(journalist), "researcher route is the deeper one"
+
+
+def test_current_cited_is_only_the_cited_chunk():
+    ts = _session()
+    s = ts.start("agents", target_concept_ids=[REACT], mastery_threshold=0.75)
+    assert s["cited"], "the cited chunk(s) are exposed for the glass box"
+    cited_ids = {c["chunk_id"] for c in s["cited"]}
+    ev_ids = {e["chunk_id"] for e in s["evidence"]}
+    assert cited_ids <= ev_ids, "cited is a subset of retrieved evidence"
+    assert len(s["cited"]) <= len(s["evidence"])
+    assert all(cid.startswith("c_react") for cid in cited_ids), "cited the curated react chunk"

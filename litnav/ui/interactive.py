@@ -85,6 +85,12 @@ class TutorSession:
                 for st in (vals.get("route") or [])
             ],
             "evidence": vals.get("current_evidence") or [],
+            "cited": [
+                {"chunk_id": cid,
+                 "text": (self.conn.execute("SELECT text FROM paper_chunks WHERE id=?", (cid,)).fetchone() or [""])[0],
+                 "paper_id": (self.conn.execute("SELECT paper_id FROM paper_chunks WHERE id=?", (cid,)).fetchone() or [None])[0]}
+                for cid in (vals.get("current_cited_chunks") or [])
+            ],
             "decision": vals.get("decision"),
             "rationale": vals.get("rationale"),
             "learner": [
