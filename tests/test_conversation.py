@@ -46,6 +46,28 @@ def test_llm_aside_keeps_quiz(monkeypatch):
     assert d["action"] == "aside" and d["slug"] == "tool_use"
 
 
+def test_llm_aside_on_declarative_answer_is_coerced_to_answer(monkeypatch):
+    """Harm-asymmetry guard: with a real provider the dispatcher can mislabel a terse
+    declarative answer (e.g. 'actions and observations') as an aside — which would block the
+    learner from ever being graded/advancing. A non-question message during a pending quiz
+    must be treated as an answer attempt, not a side comment."""
+    from litnav import conversation as conv
+    monkeypatch.setattr(conv.llm_client, "complete_json",
+                        lambda *a, **k: {"action": "aside", "slug": None, "reply": ""})
+    d = dispatch("actions and observations", **_ctx(quiz_pending=True, question="Q?"))
+    assert d["action"] == "answer"
+
+
+def test_llm_aside_on_real_question_stays_aside(monkeypatch):
+    """The guard must NOT swallow genuine side-questions: a message that reads as a question
+    (here, ends with '?') is still honored as an aside."""
+    from litnav import conversation as conv
+    monkeypatch.setattr(conv.llm_client, "complete_json",
+                        lambda *a, **k: {"action": "aside", "slug": "tool_use", "reply": ""})
+    d = dispatch("is it the same as a function call?", **_ctx(quiz_pending=True, question="Q?"))
+    assert d["action"] == "aside"
+
+
 def test_hallucinated_slug_rejected(monkeypatch):
     from litnav import conversation as conv
     monkeypatch.setattr(conv.llm_client, "complete_json",

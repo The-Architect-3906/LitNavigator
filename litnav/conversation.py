@@ -12,6 +12,20 @@ from litnav.llm import client as llm_client
 
 ACTIONS = {"chat", "set_goal", "answer", "aside", "out_of_scope"}
 
+# Words a genuine side-question tends to open with (when it isn't already punctuated with '?').
+_Q_LEADS = {"what", "why", "how", "when", "where", "who", "whom", "which", "whose",
+            "can", "could", "wait", "explain", "hmm", "huh"}
+
+
+def _looks_interrogative(message: str) -> bool:
+    """A cheap, deterministic 'is this a question?' test for the aside guard below."""
+    m = message.strip().lower()
+    if not m:
+        return False
+    if m.endswith("?"):
+        return True
+    return m.split()[0].strip(",.!") in _Q_LEADS
+
 
 def _fallback(message: str, concepts: list[dict], off: dict | None, quiz_pending: bool) -> dict:
     if quiz_pending:
@@ -37,10 +51,11 @@ def dispatch(message: str, *, concepts: list[dict], off: dict | None,
         f"Off-skeleton concept that can be INDUCED on request: {off['slug'] if off else None}\n"
         f"{q}\nUser message: {message!r}\n\n"
         "Choose ONE action:\n"
-        "- answer: only if a quiz is pending AND the message is an attempt to answer it.\n"
-        "- aside: a quiz is pending but the message is a side question/comment, not an answer. "
-        "Set slug ONLY to a listed concept whose name clearly matches the question; if the "
-        "question is about something NOT in the list (even if related), set slug to null.\n"
+        "- answer: a quiz is pending and the message is an attempt to answer it. When a quiz is "
+        "pending, DEFAULT to 'answer' — terse or partial replies still count as answer attempts.\n"
+        "- aside: ONLY when a quiz is pending AND the message is clearly phrased as a QUESTION "
+        "(not an answer attempt). Set slug ONLY to a listed concept whose name clearly matches "
+        "the question; if it is about something NOT in the list (even if related), set slug to null.\n"
         "- set_goal: no quiz pending and the user wants to learn a listed/off-skeleton concept; set slug.\n"
         "- chat: a greeting, small talk, or a question about you/your capabilities.\n"
         "- out_of_scope: the user wants to learn something NOT in the concept list.\n"
@@ -58,6 +73,13 @@ def dispatch(message: str, *, concepts: list[dict], off: dict | None,
         slug = None
     if action == "answer" and not quiz_pending:
         action = "chat"
+    # Harm-asymmetry guard: mislabeling a real answer as an aside blocks the learner from ever
+    # being graded/advancing, whereas mislabeling an aside as an answer just costs one stray
+    # grade + reteach (self-correcting). So while a quiz is pending, only honor 'aside' when the
+    # message actually reads as a question; otherwise treat it as an answer attempt. (Offline the
+    # fallback already returns 'answer', so this only ever corrects a live-LLM misclassification.)
+    if action == "aside" and quiz_pending and not _looks_interrogative(message):
+        action, slug = "answer", None
     if action == "set_goal" and slug is None:
         return fb                      # can't teach an unknown target -> deterministic route
     reply = res.get("reply") or fb.get("reply") or ""
