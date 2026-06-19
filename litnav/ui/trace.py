@@ -18,6 +18,57 @@ def _loads(value, default):
         return default
 
 
+def concept_graph(conn: sqlite3.Connection, session_id: str | None = None) -> dict:
+    """Pure-data concept map for the glass-box graph (rendered by litnav.ui.graph_svg).
+
+    nodes: {id, name, frontier_flag, state, induced} — 'state' is 'idle' when session_id is
+    None (base map); with a session it comes from the latest route: 'current' (first pending
+    step), 'mastered' (done), 'conceded' (conceded), 'lectured' (lectured), else 'idle'.
+    'induced' is a separate flag. edges: {prereq_id, target_id, source} over curated + induced
+    prerequisite edges, so the renderer can draw induced ones dashed.
+    """
+    nodes_rows = conn.execute(
+        "SELECT id, name, frontier_flag FROM concepts ORDER BY id"
+    ).fetchall()
+    edges = [
+        {"prereq_id": r[0], "target_id": r[1], "source": r[2] or "curated"}
+        for r in conn.execute(
+            "SELECT prereq_concept, target_concept, source FROM concept_edges "
+            "WHERE edge_type='prerequisite'"
+        ).fetchall()
+    ]
+    induced_targets = {e["target_id"] for e in edges if e["source"] == "induced"}
+
+    state_by_id: dict[int, str] = {}
+    if session_id is not None:
+        ver = conn.execute(
+            "SELECT MAX(route_version) FROM route_steps WHERE session_id=?", (session_id,)
+        ).fetchone()[0]
+        if ver is not None:
+            current_set = False
+            for cid, status in conn.execute(
+                "SELECT concept_id, status FROM route_steps "
+                "WHERE session_id=? AND route_version=? ORDER BY rowid",
+                (session_id, ver),
+            ).fetchall():
+                if status == "done":
+                    state_by_id[cid] = "mastered"
+                elif status == "conceded":
+                    state_by_id[cid] = "conceded"
+                elif status == "lectured":
+                    state_by_id[cid] = "lectured"
+                elif status == "pending" and not current_set:
+                    state_by_id[cid] = "current"  # first pending = concept being taught
+                    current_set = True
+
+    nodes = [
+        {"id": r[0], "name": r[1], "frontier_flag": r[2] or "consensus",
+         "state": state_by_id.get(r[0], "idle"), "induced": r[0] in induced_targets}
+        for r in nodes_rows
+    ]
+    return {"nodes": nodes, "edges": edges}
+
+
 def build_trace(conn: sqlite3.Connection, session_id: str) -> dict:
     sess_row = conn.execute(
         "SELECT id, topic, status FROM sessions WHERE id=?", (session_id,)

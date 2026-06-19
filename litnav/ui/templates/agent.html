@@ -32,6 +32,8 @@
  .bars span{display:inline-block;height:.55rem;border-radius:3px;vertical-align:middle}
  .barm{background:var(--accent)} .barc{background:#7fd1a6}
  .ev{font-size:.82rem;color:#3a4456;border-left:2px solid var(--accent);padding-left:.5rem;margin:.3rem 0}
+ .cmap{overflow-x:auto} .cmap svg{display:block}
+ .maplegend{margin-top:.4rem}
  .costp{background:#eef3ff;border-color:#cfe0ff}
  body.mode-chat #glass{display:none}
  body.mode-glass #chat{display:none}
@@ -61,6 +63,10 @@
   </div>
 
   <div id="glass">
+    <div class="card"><b>Concept map</b>
+      <div id="cmap" class="cmap">{{ graph|safe }}</div>
+      <div class="mut maplegend">current · <span style="color:var(--ok)">mastered</span> · lectured · <span style="color:#cf4f24">conceded</span> · dashed = induced</div>
+    </div>
     <div class="card"><b>Agent flow</b> <span class="mut" id="route-v">route v{{ route_version }}</span>
       <div id="flow"></div>
     </div>
@@ -122,6 +128,7 @@ function updateGlass(e){document.getElementById('route-v').textContent='route v'
   document.getElementById('evidence').innerHTML=(e.cited||[]).map(c=>'<div class="ev">'+esc(c.chunk_id)+': '+esc((c.text||'').slice(0,140))+'…</div>').join('');
   document.getElementById('learner').innerHTML=(e.learner||[]).map(c=>'<div>'+esc(c.name)+' — m '+esc(c.mastery)+' · c '+esc(c.confidence)+'</div>').join('');
   if(e.rationale){document.getElementById('why').style.display='';document.getElementById('why-text').textContent=(e.decision||'')+' — '+e.rationale;}
+  if(e.graph){document.getElementById('cmap').innerHTML=e.graph;}
   if(e.cost){document.getElementById('cost').textContent=e.cost.tokens+' tok ≈ $'+e.cost.usd;}}
 </script>
 </body></html>
