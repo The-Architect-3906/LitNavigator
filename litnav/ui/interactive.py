@@ -16,6 +16,8 @@ from litnav.graph.builder import build_graph, make_initial_state
 from litnav.nodes.retrieve import retrieve_node
 from litnav.storage import repo
 from litnav.ui.cost import session_cost
+from litnav.ui.graph_svg import to_svg
+from litnav.ui.trace import concept_graph
 
 
 class TutorSession:
@@ -82,6 +84,7 @@ class TutorSession:
             {"type": "state", "route": cur["route"], "route_version": cur["route_version"],
              "learner": cur["learner"], "cited": cur["cited"], "decision": cur["decision"],
              "rationale": cur["rationale"], "induced": cur["induced"], "intent": cur.get("intent"),
+             "graph": to_svg(concept_graph(self.conn, self.sid)),
              "cost": session_cost(self.conn, self.sid)},
             {"type": "done", "done": cur["done"], "mastery": cur.get("mastery"),
              "confidence": cur.get("confidence")},
@@ -169,6 +172,7 @@ class TutorSession:
             "intent": vals.get("intent"),
             "teach_depth": vals.get("teach_depth"),
             "mastery_threshold": vals.get("mastery_threshold"),
+            "graph": to_svg(concept_graph(self.conn, self.sid)),
         }
 
 
@@ -201,7 +205,9 @@ class AgentSession:
         return {"done": False, "concept_name": None, "teach": None, "question": None,
                 "route": [], "route_version": 1, "learner": [], "cited": [], "evidence": [],
                 "decision": None, "rationale": None, "induced": [], "intent": None,
-                "mastery": None, "confidence": None}
+                "mastery": None, "confidence": None,
+                # Base concept map (no session state yet) — orients the learner before teaching.
+                "graph": to_svg(concept_graph(self.conn, None))}
 
     def current_events(self):
         if self.tutor:
