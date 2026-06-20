@@ -21,13 +21,20 @@ def main() -> int:
     os.environ["LITNAV_LLM_STRICT"] = "1"
     conn = sqlite3.connect(":memory:"); init_db(conn)
 
-    # 1) a real call registers as live with metered tokens
+    # 1) a real call registers as live with metered tokens (budget-capped per the live-gate contract)
     out = router.complete_text("Reply with the single word: pong.", tier="cheap",
-                               stage="liveness", session_id="live", conn=conn, max_tokens=8)
+                               stage="liveness", session_id="live", conn=conn, max_tokens=8,
+                               fallback="<no-reply>", budget=5000)
     assert llm_client.was_live(), "G-liveness FAIL: real call did not register live (tokens=0/fallback)"
     spend = cost_repo.session_spend(conn, "live")
     assert spend["tokens"] > 0, "G-liveness FAIL: no tokens metered on a live call"
     print(f"G-liveness PASS: live call ok (reply={out!r}, tokens={spend['tokens']}, usd={spend['usd']})")
+
+    # cost table for the report
+    print("COST_LEDGER:")
+    for stage, tier, model, tok, usd in conn.execute(
+            "SELECT stage,tier,model,total_tokens,usd FROM cost_ledger ORDER BY id"):
+        print(f"  ROW stage={stage} tier={tier} model={model} tokens={tok} usd={usd}")
 
     # 2) a forced provider error RAISES (not silent fallback)
     saved = os.environ.get("LITNAV_LLM_MODEL")
