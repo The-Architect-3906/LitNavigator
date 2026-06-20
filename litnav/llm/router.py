@@ -49,3 +49,16 @@ def complete_json(prompt: str, *, tier: str, stage: str, fallback: dict,
     _meter(conn=conn, session_id=session_id, stage=stage, tier=tier, model=spec["model"],
            usd_per_1k=spec["usd_per_1k"], budget=budget)
     return out
+
+
+def embed_texts(texts: list[str], *, stage: str, tier: str = "embed",
+                session_id: str | None = None, conn: sqlite3.Connection | None = None,
+                budget: int | None = None) -> list[list[float]] | None:
+    """Metered embedding call. Returns one vector per text, or None offline (provider=none).
+    Records a cost_ledger row (0 tokens offline) and enforces the budget, exactly like the
+    completion paths -- so digest's embeddings count toward spend."""
+    spec = registry.resolve_tier(tier)               # raises if disabled/unknown
+    out = llm_client.embed_texts(texts)
+    _meter(conn=conn, session_id=session_id, stage=stage, tier=tier, model=spec["model"],
+           usd_per_1k=spec["usd_per_1k"], budget=budget)
+    return out

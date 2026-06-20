@@ -10,8 +10,9 @@ from __future__ import annotations
 
 # Enabled tiers. usd_per_1k = blended estimate per 1,000 total tokens.
 MODEL_REGISTRY: dict[str, dict] = {
-    "cheap":    {"model": "gpt-4o-mini", "usd_per_1k": 0.0004},
-    "frontier": {"model": "gpt-4o",      "usd_per_1k": 0.0050},
+    "cheap":    {"model": "gpt-4o-mini",             "usd_per_1k": 0.0004},
+    "frontier": {"model": "gpt-4o",                  "usd_per_1k": 0.0050},
+    "embed":    {"model": "text-embedding-3-small",   "usd_per_1k": 0.00002},
 }
 
 # Record-only: documented needs, DISABLED. Promote into MODEL_REGISTRY only on explicit approval.
