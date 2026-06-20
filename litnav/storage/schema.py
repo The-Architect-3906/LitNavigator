@@ -234,6 +234,14 @@ CREATE TABLE IF NOT EXISTS result_cache (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (stage, input_hash)
 );
+
+CREATE TABLE IF NOT EXISTS retention_log (
+    session_id TEXT,
+    concept_id INTEGER,
+    predicted REAL,
+    actual REAL,
+    probed_at TEXT
+);
 """
 
 
