@@ -86,7 +86,7 @@
     <div id="thread">
       <div class="bubble me">{{ concept_name or "Teach me" }}</div>
       {% for msg in teach_messages or ([] if not teach else [teach]) %}
-      <div class="bubble ai{% if loop.first %} initial-teach{% endif %}"{% if loop.first %} id="first-teach" data-text="{{ msg|replace('**','') }}"{% endif %}>{{ msg }}</div>
+      <div class="bubble ai">{{ msg }}</div>
       {% endfor %}
       {% if question %}<div class="bubble ai qa">{{ question }}</div>{% endif %}
     </div>
@@ -207,7 +207,6 @@ const saved=(()=>{try{return localStorage.getItem('litnav-mode')}catch(e){return
 if(saved)setMode(saved);
 
 function typewriter(el,text){el.textContent='';let i=0;(function tick(){if(i<=text.length){el.textContent=text.slice(0,i++);setTimeout(tick,12)}})();}
-const ft=document.getElementById('first-teach');if(ft)typewriter(ft,ft.dataset.text);
 
 function addBubble(cls,text,tw){
   const t=document.getElementById('thread');

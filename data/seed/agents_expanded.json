@@ -297,7 +297,7 @@
       "concept_id": 5,
       "section": "evidence",
       "chunk_index": 3,
-      "text": "the huge potential of LLMs, and brings unlimited possibilities for us for advancing artificial general intelligence. Despite these great successes, current LLM technologies are still imperfect and confront some urgent challenges on the way to building an advanced AI system. We discuss them from these aspects: 1) Limited to the input and output forms of text generation, current LLMs lack the ability to process complex information such as vision and speech, regardless of their significant achievements in NLP * The first two authors have equal contributions. This work was done when the first author was an intern at Microsoft Research Asia. \u2020 Corresponding author. 37th Conference on Neural Information"
+      "text": "the huge potential of LLMs, and brings unlimited possibilities for us for advancing artificial general intelligence. Despite these great successes, current LLM technologies are still imperfect and confront some urgent challenges on the way to building an advanced AI system. We discuss them from these aspects: 1) Limited to the input and output forms of text generation, current LLMs lack the ability to process complex information such as vision and speech, regardless of their significant achievements in NLP * The first two authors have equal contributions. This work was done when the first author was an intern at Microsoft Research Asia. † Corresponding author. 37th Conference on Neural Information"
     },
     {
       "id": "cx_2303.17580_4",
@@ -313,7 +313,7 @@
       "concept_id": 5,
       "section": "evidence",
       "chunk_index": 5,
-      "text": "Response Generation Task Planing \u2160 \u2163 Task Execution\u2162 Prediction Prediction Model Selection \u2161 LLM as Controller HuggingFace Can you describe this picture and count how many objects in the picture? Figure 1: Language serves as an interface for LLMs (e.g., ChatGPT) to connect numerous AI models (e.g., those in Hugging Face) for solving complicated AI tasks. In this concept, an LLM acts as a controller, managing and organizing the cooperation of expert models. The LLM first plans a list of tasks based on the user request and then assigns expert models to each task. After the experts execute the tasks, the LLM collects the results and responds to the user. tasks; 2) In real-world scenarios, some"
+      "text": "Response Generation Task Planing Ⅰ Ⅳ Task ExecutionⅢ Prediction Prediction Model Selection Ⅱ LLM as Controller HuggingFace Can you describe this picture and count how many objects in the picture? Figure 1: Language serves as an interface for LLMs (e.g., ChatGPT) to connect numerous AI models (e.g., those in Hugging Face) for solving complicated AI tasks. In this concept, an LLM acts as a controller, managing and organizing the cooperation of expert models. The LLM first plans a list of tasks based on the user request and then assigns expert models to each task. After the experts execute the tasks, the LLM collects the results and responds to the user. tasks; 2) In real-world scenarios, some"
     },
     {
       "id": "cx_2307.16789_0",
@@ -353,7 +353,7 @@
       "concept_id": 2,
       "section": "evidence",
       "chunk_index": 4,
-      "text": "on basic language tasks, with a relative neglect of the tool-use domain. On the other hand, current state-of-the-art (SOTA) LLMs (e.g., ChatGPT (OpenAI, \u2217 Indicates equal contribution. \u2020 Corresponding author. 1 arXiv:2307.16789v2 [cs.AI] 3 Oct 2023 Preprint Finance Jobs\u00b7\u00b7\u00b7 \u00b7\u00b7\u00b7 Movies GET GenresGET Search By Title\u00b7\u00b7\u00b7 API Name: Search By TitleAPI Description: Search movies and series by title, \u2026Required Parameters: Title (string, title to search for), Country (string, \u2026)Optional Parameters: Show type (string, Type of shows to include in the results, either \u201cmovie\u201d, \u201cseries\u201d, or \u201call\u201d. Default is \u201call\u201d), \u2026 Code Snippets: GET /v2/search/title?title=batman&country=us&show\u2026Example Response: type:\"movie\","
+      "text": "on basic language tasks, with a relative neglect of the tool-use domain. On the other hand, current state-of-the-art (SOTA) LLMs (e.g., ChatGPT (OpenAI, ∗ Indicates equal contribution. † Corresponding author. 1 arXiv:2307.16789v2 [cs.AI] 3 Oct 2023 Preprint Finance Jobs··· ··· Movies GET GenresGET Search By Title··· API Name: Search By TitleAPI Description: Search movies and series by title, …Required Parameters: Title (string, title to search for), Country (string, …)Optional Parameters: Show type (string, Type of shows to include in the results, either “movie”, “series”, or “all”. Default is “all”), … Code Snippets: GET /v2/search/title?title=batman&country=us&show…Example Response: type:\"movie\","
     },
     {
       "id": "cx_2307.16789_5",
@@ -361,7 +361,7 @@
       "concept_id": 2,
       "section": "evidence",
       "chunk_index": 5,
-      "text": "title:\"Batman\", overview:\"Japanese\u2026 ToolAPI API CollectionInstructionGenerationSolution PathAnnotation LLaMAToolLLaMARapidAPI Data Construction & Train& Inference ToolBenchSFT Instructions & relevant APIs API Retriever Food GET Services Category 1 2 3 APIs & API Documentation Instructions & Relevant APIs CategoryToolAPI \u00b7\u00b7\u00b7\u00b7\u00b7\u00b7 \u00b7\u00b7\u00b7\u00b7\u00b7\u00b7\u00b7\u00b7\u00b7\u00b7\u00b7\u00b7 \u00b7\u00b7\u00b7\u00b7\u00b7\u00b7 \u00b7\u00b7\u00b7\u00b7\u00b7\u00b7\u00b7\u00b7\u00b7\u00b7\u00b7\u00b7 \u00b7\u00b7\u00b7 Single-tool instructions Intra-category multi-tool instructions Intra-collection multi-tool instructions API Documentation Sampled API1API Name: xxxAPI Description: xxxRequired Parameters: xxx\u2026SampledAPI2API Name: xxx\u2026 Relevant APIs InstructionWe are planning a movie night in the mountains. Can you suggest \u2026API1, API2, API5\u2026 Sampled"
+      "text": "title:\"Batman\", overview:\"Japanese… ToolAPI API CollectionInstructionGenerationSolution PathAnnotation LLaMAToolLLaMARapidAPI Data Construction & Train& Inference ToolBenchSFT Instructions & relevant APIs API Retriever Food GET Services Category 1 2 3 APIs & API Documentation Instructions & Relevant APIs CategoryToolAPI ······ ············ ······ ············ ··· Single-tool instructions Intra-category multi-tool instructions Intra-collection multi-tool instructions API Documentation Sampled API1API Name: xxxAPI Description: xxxRequired Parameters: xxx…SampledAPI2API Name: xxx… Relevant APIs InstructionWe are planning a movie night in the mountains. Can you suggest …API1, API2, API5… Sampled"
     },
     {
       "id": "cx_2308.08155_0",
@@ -369,7 +369,7 @@
       "concept_id": 6,
       "section": "evidence",
       "chunk_index": 0,
-      "text": ", Chi Wang\u22171 \u2217Microsoft Research, \u2020Pennsylvania State University \u00b1University of Washington,\u2213Xidian University Agent Customization Conversable agent Flexible Conversation Patterns \u2026 \u2026 \u2026 \u2026 \u2026 \u2026 \u2026 Hierarchical chatJoint chat Multi-Agent Conversations \u2026Execute the following code\u2026 Got it! Here is the revised code \u2026 No, please plot % change! Plot a chart of META and TESLA stock price change YTD. Output:$Month Output:%Month Error package yfinanceis not installed Sorry! Please first pip install yfinanceand then execute the code Installing\u2026 Example Agent Chat Figure 1: AutoGen enables diverse LLM-based applications using multi-agent conversations. (Left) AutoGen agents are conversable, customizable, and"
+      "text": ", Chi Wang∗1 ∗Microsoft Research, †Pennsylvania State University ±University of Washington,∓Xidian University Agent Customization Conversable agent Flexible Conversation Patterns … … … … … … … Hierarchical chatJoint chat Multi-Agent Conversations …Execute the following code… Got it! Here is the revised code … No, please plot % change! Plot a chart of META and TESLA stock price change YTD. Output:$Month Output:%Month Error package yfinanceis not installed Sorry! Please first pip install yfinanceand then execute the code Installing… Example Agent Chat Figure 1: AutoGen enables diverse LLM-based applications using multi-agent conversations. (Left) AutoGen agents are conversable, customizable, and"
     },
     {
       "id": "cx_2308.08155_1",
@@ -417,7 +417,7 @@
       "concept_id": 7,
       "section": "evidence",
       "chunk_index": 0,
-      "text": "Abstract Language models are increasingly being deployed for general problem solving across a wide range of tasks, but are still confined to token-level, left-to-right decision-making processes during inference. This means they can fall short in tasks that require exploration, strategic lookahead, or where initial decisions play a pivotal role. To surmount these challenges, we introduce a new framework for language model inference, \u201cTree of Thoughts\u201d (ToT), which generalizes over the popular \u201cChain of Thought\u201d approach to prompting language models, and enables exploration over coherent units of text (\u201cthoughts\u201d) that serve as intermediate steps toward problem solving. ToT allows LMs to perform"
+      "text": "Abstract Language models are increasingly being deployed for general problem solving across a wide range of tasks, but are still confined to token-level, left-to-right decision-making processes during inference. This means they can fall short in tasks that require exploration, strategic lookahead, or where initial decisions play a pivotal role. To surmount these challenges, we introduce a new framework for language model inference, “Tree of Thoughts” (ToT), which generalizes over the popular “Chain of Thought” approach to prompting language models, and enables exploration over coherent units of text (“thoughts”) that serve as intermediate steps toward problem solving. ToT allows LMs to perform"
     },
     {
       "id": "cx_2305.10601_1",
@@ -425,7 +425,7 @@
       "concept_id": 1,
       "section": "evidence",
       "chunk_index": 1,
-      "text": "deliberate decision making by considering multiple different reasoning paths and self-evaluating choices to decide the next course of action, as well as looking ahead or backtracking when necessary to make global choices. Our experiments show that ToT significantly enhances language models\u2019 problem-solving abilities on three novel tasks requiring non-trivial planning or search: Game of 24, Creative Writing, and Mini Crosswords. For instance, in Game of 24, while GPT-4 with chain-of-thought prompting only solved 4% of tasks, our method achieved a success rate of 74%. Code repo with all prompts: https://github.com/princeton-nlp/tree-of-thought-llm . 1 Introduction Originally designed to generate"
+      "text": "deliberate decision making by considering multiple different reasoning paths and self-evaluating choices to decide the next course of action, as well as looking ahead or backtracking when necessary to make global choices. Our experiments show that ToT significantly enhances language models’ problem-solving abilities on three novel tasks requiring non-trivial planning or search: Game of 24, Creative Writing, and Mini Crosswords. For instance, in Game of 24, while GPT-4 with chain-of-thought prompting only solved 4% of tasks, our method achieved a success rate of 74%. Code repo with all prompts: https://github.com/princeton-nlp/tree-of-thought-llm . 1 Introduction Originally designed to generate"
     },
     {
       "id": "cx_2305.10601_2",
@@ -441,7 +441,7 @@
       "concept_id": 5,
       "section": "evidence",
       "chunk_index": 3,
-      "text": "to answer these questions. Research on \u201cdual process\u201d models suggests that people have two modes in which they engage with decisions \u2013 a fast, automatic, unconscious mode (\u201cSystem 1\u201d) and a slow, deliberate, conscious mode (\u201cSystem 2\u201d) [30, 31, 16, 15]. These two modes have previously been connected to a variety of mathematical models used in machine learning. For example, research on reinforcement learning in humans and other animals has explored the circumstances under which they engage in associative \u201cmodel free\u201d learning or more deliberative \u201cmodel based\u201d planning [7]. The simple associative token-level choices of LMs are also reminiscent of \u201cSystem 1\u201d, and thus might benefit from augmentation"
+      "text": "to answer these questions. Research on “dual process” models suggests that people have two modes in which they engage with decisions – a fast, automatic, unconscious mode (“System 1”) and a slow, deliberate, conscious mode (“System 2”) [30, 31, 16, 15]. These two modes have previously been connected to a variety of mathematical models used in machine learning. For example, research on reinforcement learning in humans and other animals has explored the circumstances under which they engage in associative “model free” learning or more deliberative “model based” planning [7]. The simple associative token-level choices of LMs are also reminiscent of “System 1”, and thus might benefit from augmentation"
     },
     {
       "id": "cx_2305.10601_4",
@@ -449,7 +449,7 @@
       "concept_id": 6,
       "section": "evidence",
       "chunk_index": 4,
-      "text": "by a more deliberate \u201cSystem 2\u201d planning process that (1) maintains and explores diverse alternatives for current 37th Conference on Neural Information Processing Systems (NeurIPS 2023). arXiv:2305.10601v2 [cs.CL] 3 Dec 2023 G\u012e\u0154\u0169\u019c j\u0169\u019c\u0154\u0169\u019c G\u012e\u0154\u0169\u019c j\u0169\u019c\u0154\u0169\u019c \u02b1\u00ca\u02b2\u02e4Gj \u02b1\u00e6\u02b2\u02e4 \u0135\u00c9 G\u012e\u0154\u0169\u019c \u02e4j\u0169\u019c\u0154\u0169\u019c \u02b1\u00e7\u02b2\u02e4 \u0135\u00c9\u02c1\u0092 \u029f\u029f \u029f\u029f a\u00ca\u0120\u0135\u0157\u0193\u0164\u0186\u02e4\u017f\u0135\u0164\u00f2 G\u012e\u0154\u0169\u019c \u02e4j\u0169\u019c\u0154\u0169\u019c \u02b1\u00ed\u02b2\u02e4\u00c9\u0135\u00c9\u02e4\u02b1\u0135\u0169\u0157\u015d\u02b2 \u029f\u029f \u029f\u029f \u029f\u029f \u02e4\u02e4\u029d\u02e4\u019b\u010e\u0135\u0169\u0108\u010e\u019c )L[\u0003FRORU\u0003 E\\\u0003<XTLDQ 0DUN\u0003GLIIHUHQFH\u0003E\\\u0003FRORU G\u012e\u0154\u0169\u019c j\u0169\u019c\u0154\u0169\u019c G\u012e\u0154\u0169\u019c j\u0169\u019c\u0154\u0169\u019c G\u012e\u0154\u0169\u019c \u02e4j\u0169\u019c\u0154\u0169\u019c \u02b1\u00e7\u02b2\u02e4\u0092\u00f2\u0126\u0199\u02e4 \u0135\u012e\u015d\u0193\u015d\u0164\u00f2\u012e\u00e7\u0186\u02e4 \u0180\u0193\u019c\u010e\u02e4 \u0135\u00c9\u02e4\u02b1 \u0135\u00c9\u02c1\u0092 \u02b2 a\u00ca\u0120\u0135\u0157\u0193\u0164\u0186\u02e4\u017f\u0135\u0164\u00f2 G\u012e\u0154\u0169\u019c \u02e4j\u0169\u019c\u0154\u0169\u019c \u02b1\u00ed\u02b2\u02e4\u00c9\u0157\u00f2\u00f2\u02e4\u0135\u0199\u02e4\u009a\u010e\u0135\u0169\u0108\u010e\u0164\u015d\u02e4\u02b1\u00c9\u0135\u00c9\u02b2 \u029f\u029f \u029f\u029f \u029f\u029f \u029f\u029f \u029f\u029f \u02e4\u02e4\u019b\u010e\u0135\u0169\u0108\u010e\u019c \u02b1\u00e7\u02b2\u02e4 \u010e\u00ca\u0111\u012e\u02e4\u0135\u0199\u02e4\u009a\u010e\u0135\u0169\u0108\u010e\u019c\u02e4 \u0089\u0157\u0135\u012d\u0154\u019c\u0111\u012e\u0108\u02e4\u02b1 \u0135\u00c9\u02b2 \u02b1\u00ca\u02b2\u02e4G\u012e\u0154\u0169\u019c\u02c1j\u0169\u019c\u0154\u0169\u019c\u02e4 \u0089\u0157\u0135\u012d\u0154\u019c\u0111\u012e\u0108\u02e4\u02b1Gj\u02b2 Figure 1: Schematic illustrating various approaches to problem"
+      "text": "by a more deliberate “System 2” planning process that (1) maintains and explores diverse alternatives for current 37th Conference on Neural Information Processing Systems (NeurIPS 2023). arXiv:2305.10601v2 [cs.CL] 3 Dec 2023 GĮŔũƜ jũƜŔũƜ GĮŔũƜ jũƜŔũƜ ʱÊʲˤGj ʱæʲˤ ĵÉ GĮŔũƜ ˤjũƜŔũƜ ʱçʲˤ ĵÉˁ ʟʟ ʟʟ aÊĠĵŗƓŤƆˤſĵŤò GĮŔũƜ ˤjũƜŔũƜ ʱíʲˤÉĵÉˤʱĵũŗŝʲ ʟʟ ʟʟ ʟʟ ˤˤʝˤƛĎĵũĈĎƜ )L[\u0003FRORU\u0003 E\\\u0003<XTLDQ 0DUN\u0003GLIIHUHQFH\u0003E\\\u0003FRORU GĮŔũƜ jũƜŔũƜ GĮŔũƜ jũƜŔũƜ GĮŔũƜ ˤjũƜŔũƜ ʱçʲˤòĦƙˤ ĵĮŝƓŝŤòĮçƆˤ ƀƓƜĎˤ ĵÉˤʱ ĵÉˁ ʲ aÊĠĵŗƓŤƆˤſĵŤò GĮŔũƜ ˤjũƜŔũƜ ʱíʲˤÉŗòòˤĵƙˤĎĵũĈĎŤŝˤʱÉĵÉʲ ʟʟ ʟʟ ʟʟ ʟʟ ʟʟ ˤˤƛĎĵũĈĎƜ ʱçʲˤ ĎÊđĮˤĵƙˤĎĵũĈĎƜˤ ŗĵĭŔƜđĮĈˤʱ ĵÉʲ ʱÊʲˤGĮŔũƜˁjũƜŔũƜˤ ŗĵĭŔƜđĮĈˤʱGjʲ Figure 1: Schematic illustrating various approaches to problem"
     },
     {
       "id": "cx_2305.10601_5",
@@ -465,7 +465,7 @@
       "concept_id": 1,
       "section": "evidence",
       "chunk_index": 0,
-      "text": "Abstract We introduce Graph of Thoughts (GoT): a framework that advances prompting capabilities in large language models (LLMs) beyond those offered by paradigms such as Chain-of- Thought or Tree of Thoughts (ToT). The key idea and primary advantage of GoT is the ability to model the information gen- erated by an LLM as anarbitrary graph, where units of infor- mation (\u201cLLM thoughts\u201d) are vertices, and edges correspond to dependencies between these vertices. This approach en- ables combining arbitrary LLM thoughts into synergistic out- comes, distilling the essence of whole networks of thoughts, or enhancing thoughts using feedback loops. We illustrate that GoT offers advantages over state of"
+      "text": "Abstract We introduce Graph of Thoughts (GoT): a framework that advances prompting capabilities in large language models (LLMs) beyond those offered by paradigms such as Chain-of- Thought or Tree of Thoughts (ToT). The key idea and primary advantage of GoT is the ability to model the information gen- erated by an LLM as anarbitrary graph, where units of infor- mation (“LLM thoughts”) are vertices, and edges correspond to dependencies between these vertices. This approach en- ables combining arbitrary LLM thoughts into synergistic out- comes, distilling the essence of whole networks of thoughts, or enhancing thoughts using feedback loops. We illustrate that GoT offers advantages over state of"
     },
     {
       "id": "cx_2308.09687_1",
@@ -489,7 +489,7 @@
       "concept_id": 1,
       "section": "evidence",
       "chunk_index": 3,
-      "text": "in which one includes the intermediate steps of rea- soning within the prompt (intermediate \u201cthoughts\u201d), besides the task input/output. CoT was shown to significantly im- prove the capability of LLMs to solve problems without re- sorting to any model updates. One major improvement over *Equal contribution CoT, Self-Consistency with CoT (CoT-SC) [67], is a scheme where multiple CoTs are generated, and then the best one is selected as the outcome. More recently, CoT and CoT-SC were extended with Tree of Thoughts (ToT) [43, 75, 77], which models the LLM reasoning process with a tree. This facilitates using different paths of thoughts, and offers novel capabilities such as backtracking from non-promising"
+      "text": "in which one includes the intermediate steps of rea- soning within the prompt (intermediate “thoughts”), besides the task input/output. CoT was shown to significantly im- prove the capability of LLMs to solve problems without re- sorting to any model updates. One major improvement over *Equal contribution CoT, Self-Consistency with CoT (CoT-SC) [67], is a scheme where multiple CoTs are generated, and then the best one is selected as the outcome. More recently, CoT and CoT-SC were extended with Tree of Thoughts (ToT) [43, 75, 77], which models the LLM reasoning process with a tree. This facilitates using different paths of thoughts, and offers novel capabilities such as backtracking from non-promising"
     },
     {
       "id": "cx_2308.09687_4",
@@ -521,7 +521,7 @@
       "concept_id": 5,
       "section": "evidence",
       "chunk_index": 1,
-      "text": "response generation to mathematical reasoning, using state-of-the-art ( GPT-3.5 and GPT-4) LLM s. Across all evaluated tasks, outputs generated with SELF -REFINE are preferred by humans and automatic metrics over those generated with the same LLM using conventional one-step generation, improving by \u223c20% absolute on average in task performance. Our work demonstrates that even state-of-the-art LLMs like GPT-4 can be further improved at test-time using our simple, standalone approach.1. 1 Introduction Although large language models ( LLM s) can generate coherent outputs, they often fall short in addressing intricate requirements. This mostly includes tasks with multifaceted objectives, such as"
+      "text": "response generation to mathematical reasoning, using state-of-the-art ( GPT-3.5 and GPT-4) LLM s. Across all evaluated tasks, outputs generated with SELF -REFINE are preferred by humans and automatic metrics over those generated with the same LLM using conventional one-step generation, improving by ∼20% absolute on average in task performance. Our work demonstrates that even state-of-the-art LLMs like GPT-4 can be further improved at test-time using our simple, standalone approach.1. 1 Introduction Although large language models ( LLM s) can generate coherent outputs, they often fall short in addressing intricate requirements. This mostly includes tasks with multifaceted objectives, such as"
     },
     {
       "id": "cx_2303.17651_2",
@@ -529,7 +529,7 @@
       "concept_id": 5,
       "section": "evidence",
       "chunk_index": 2,
-      "text": "dialogue response generation, or tasks with hard-to-define goals, such as enhancing program readability. In these scenarios, modern LLM s may produce an intelligible initial output, yet may benefit from further iterative refinement\u2014i.e., iteratively mapping a candidate output to an improved one\u2014to ensure that the desired quality is achieved. Iterative refinement typically involves training a refinement model that relies on domain-specific data (e.g., Reid and Neubig (2022); Schick et al. (2022a); Welleck et al. (2022)). Other approaches that rely on external supervision or reward models require large training sets or expensive human annotations (Madaan et al., 2021; Ouyang et al., 2022), which"
+      "text": "dialogue response generation, or tasks with hard-to-define goals, such as enhancing program readability. In these scenarios, modern LLM s may produce an intelligible initial output, yet may benefit from further iterative refinement—i.e., iteratively mapping a candidate output to an improved one—to ensure that the desired quality is achieved. Iterative refinement typically involves training a refinement model that relies on domain-specific data (e.g., Reid and Neubig (2022); Schick et al. (2022a); Welleck et al. (2022)). Other approaches that rely on external supervision or reward models require large training sets or expensive human annotations (Madaan et al., 2021; Ouyang et al., 2022), which"
     },
     {
       "id": "cx_2303.17651_3",
@@ -537,7 +537,7 @@
       "concept_id": 3,
       "section": "evidence",
       "chunk_index": 3,
-      "text": "may not always be feasible to obtain. These limitations underscore the need for an effective refinement approach that can be applied to various tasks without requiring extensive supervision. Iterative self -refinement is a fundamental characteristic of human problem-solving (Simon, 1962; Flower and Hayes, 1981; Amabile, 1983). Iterative self-refinement is a process that involves creating an initial draft and subsequently refining it based on self-provided feedback. For example, when 1Code and data at https://selfrefine.info/ Preprint. Under review. arXiv:2303.17651v2 [cs.CL] 25 May 2023 Refine Feedback Use M to get feedback on its own output Input Use M to re\ufb01ne its previous output, given its"
+      "text": "may not always be feasible to obtain. These limitations underscore the need for an effective refinement approach that can be applied to various tasks without requiring extensive supervision. Iterative self -refinement is a fundamental characteristic of human problem-solving (Simon, 1962; Flower and Hayes, 1981; Amabile, 1983). Iterative self-refinement is a process that involves creating an initial draft and subsequently refining it based on self-provided feedback. For example, when 1Code and data at https://selfrefine.info/ Preprint. Under review. arXiv:2303.17651v2 [cs.CL] 25 May 2023 Refine Feedback Use M to get feedback on its own output Input Use M to reﬁne its previous output, given its"
     },
     {
       "id": "cx_2303.17651_4",
@@ -545,7 +545,7 @@
       "concept_id": 3,
       "section": "evidence",
       "chunk_index": 4,
-      "text": "feedback Model M 1 2 0 Figure 1: Given an input ( 0\u20dd), SELF -R EFINE starts by generating an output and passing it back to the same model M to get feedback ( 1\u20dd). The feedback is passed back to M, which refines the previously generated output ( 2\u20dd). Steps ( 1\u20dd) and ( 2\u20dd) iterate until a stopping condition is met. SELF -R EFINE is instantiated with a language model such as GPT-3.5 and does not involve human assistance. drafting an email to request a document from a colleague, an individual may initially write a direct request such as \u201c Send me the data ASAP \u201d. Upon reflection, however, the writer recognizes the potential impoliteness of the phrasing and revises it to \u201cHi Ashley, could you please"
+      "text": "feedback Model M 1 2 0 Figure 1: Given an input ( 0⃝), SELF -R EFINE starts by generating an output and passing it back to the same model M to get feedback ( 1⃝). The feedback is passed back to M, which refines the previously generated output ( 2⃝). Steps ( 1⃝) and ( 2⃝) iterate until a stopping condition is met. SELF -R EFINE is instantiated with a language model such as GPT-3.5 and does not involve human assistance. drafting an email to request a document from a colleague, an individual may initially write a direct request such as “ Send me the data ASAP ”. Upon reflection, however, the writer recognizes the potential impoliteness of the phrasing and revises it to “Hi Ashley, could you please"
     },
     {
       "id": "cx_2303.17651_5",
@@ -553,7 +553,7 @@
       "concept_id": 3,
       "section": "evidence",
       "chunk_index": 5,
-      "text": "send me the data at your earliest convenience?\". When writing code, a programmer may implement an initial \u201cquick and dirty\u201d implementation, and then, upon reflection, refactor their code to a solution that is more efficient and readable. In this paper, we demonstrate that LLMs can provide iterative self-refinement without additional training, leading to higher-quality outputs on a wide range of tasks. We present SELF -REFINE : an iterative self-refinement algorithm that alternates between two gener- ative steps\u2013FEEDBACK and REFINE . These steps work in tandem to generate high-quality outputs. Given an initial output generated by a model M, we pass it back to the same model M to get feedback."
+      "text": "send me the data at your earliest convenience?\". When writing code, a programmer may implement an initial “quick and dirty” implementation, and then, upon reflection, refactor their code to a solution that is more efficient and readable. In this paper, we demonstrate that LLMs can provide iterative self-refinement without additional training, leading to higher-quality outputs on a wide range of tasks. We present SELF -REFINE : an iterative self-refinement algorithm that alternates between two gener- ative steps–FEEDBACK and REFINE . These steps work in tandem to generate high-quality outputs. Given an initial output generated by a model M, we pass it back to the same model M to get feedback."
     },
     {
       "id": "cx_2305.18323_0",
@@ -561,7 +561,7 @@
       "concept_id": 1,
       "section": "evidence",
       "chunk_index": 0,
-      "text": "Abstract Augmented Language Models (ALMs) blend the reasoning capabilities of Large Language Models (LLMs) with tools that allow for knowledge retrieval and action execution. Existing ALM systems trigger LLM thought processes while pulling observations from these tools in an interleaved fashion. Specifically, an LLM reasons to call an external tool, gets halted to fetch the tool\u2019s response, and then decides the next action based on all preceding response tokens. Such a paradigm, though straightforward and easy to implement, often leads to huge computation complexity from redundant prompts and repeated execution. This study addresses such challenges for the first time, proposing a modular paradigmReWOO"
+      "text": "Abstract Augmented Language Models (ALMs) blend the reasoning capabilities of Large Language Models (LLMs) with tools that allow for knowledge retrieval and action execution. Existing ALM systems trigger LLM thought processes while pulling observations from these tools in an interleaved fashion. Specifically, an LLM reasons to call an external tool, gets halted to fetch the tool’s response, and then decides the next action based on all preceding response tokens. Such a paradigm, though straightforward and easy to implement, often leads to huge computation complexity from redundant prompts and repeated execution. This study addresses such challenges for the first time, proposing a modular paradigmReWOO"
     },
     {
       "id": "cx_2305.18323_1",
@@ -569,7 +569,7 @@
       "concept_id": 1,
       "section": "evidence",
       "chunk_index": 1,
-      "text": "(Reasoning WithOut Observation) that detaches the reasoning process from external observa- tions, thus significantly reducing token consumption. Comprehensive evaluations across six public NLP benchmarks and a curated dataset reveal consistent perfor- mance enhancements with our proposed methodology. Notably, ReWOO achieves 5\u00d7 token efficiency and 4% accuracy improvement on HotpotQA, a multi-step rea- soning benchmark. Furthermore, ReWOO demonstrates robustness under tool-failure scenarios. Beyond prompt efficiency, decoupling parametric modules from non- parametric tool calls enables instruction fine-tuning to offload LLMs into smaller language models, thus substantially reducing model parameters."
+      "text": "(Reasoning WithOut Observation) that detaches the reasoning process from external observa- tions, thus significantly reducing token consumption. Comprehensive evaluations across six public NLP benchmarks and a curated dataset reveal consistent perfor- mance enhancements with our proposed methodology. Notably, ReWOO achieves 5× token efficiency and 4% accuracy improvement on HotpotQA, a multi-step rea- soning benchmark. Furthermore, ReWOO demonstrates robustness under tool-failure scenarios. Beyond prompt efficiency, decoupling parametric modules from non- parametric tool calls enables instruction fine-tuning to offload LLMs into smaller language models, thus substantially reducing model parameters."
     },
     {
       "id": "cx_2305.18323_2",
@@ -593,7 +593,7 @@
       "concept_id": 1,
       "section": "evidence",
       "chunk_index": 4,
-      "text": "in terms of token consumption. Thereby, prompt redundancy 1Project repo: https://github.com/billxbf/ReWOO. Preprint. Under review. arXiv:2305.18323v1 [cs.CL] 23 May 2023 <Context prompt> For the following tasks, \u2026 <Exemplars> For example \u2026 What is the name of the cognac house that makes the main ingredient in The Hennchata? Plan: Search for more information about The Hennchata. #E1 = Wikipedia[The Hennchata] Plan: Find out the main ingredient of The Hennchata. #E2 = LLM[What is the main ingredient of The Hennchata? Given context: #E1] Plan: Search for more information about the main ingredient. #E3 = Wikipedia[#E2] Plan: Find out the cognac house that makes the main ingredient. #E4 = LLM[What"
+      "text": "in terms of token consumption. Thereby, prompt redundancy 1Project repo: https://github.com/billxbf/ReWOO. Preprint. Under review. arXiv:2305.18323v1 [cs.CL] 23 May 2023 <Context prompt> For the following tasks, … <Exemplars> For example … What is the name of the cognac house that makes the main ingredient in The Hennchata? Plan: Search for more information about The Hennchata. #E1 = Wikipedia[The Hennchata] Plan: Find out the main ingredient of The Hennchata. #E2 = LLM[What is the main ingredient of The Hennchata? Given context: #E1] Plan: Search for more information about the main ingredient. #E3 = Wikipedia[#E2] Plan: Find out the cognac house that makes the main ingredient. #E4 = LLM[What"
     },
     {
       "id": "cx_2305.18323_5",
@@ -601,7 +601,7 @@
       "concept_id": 1,
       "section": "evidence",
       "chunk_index": 5,
-      "text": "is the name of the cognac house that makes the main ingredient #E2? Given context: #E3] #E1 = Wikipedia[The Hennchata] Evidence: The Hennchata is a cocktail consisting of Hennessy cognac\u2026 #E2 = LLM[What is the main ingredient of The Hennchata? Given context: The Hennchata is a cocktail consisting of Hennessy cognac\u2026] Evidence: Hennessy cognac #E4 = LLM[What is the name of the cognac house that makes the main ingredient Hennessy cognac? Given context: Jas Hennessy & Co., commonly known \u2026] Evidence: Jas Hennessy & Co. #E3 = Wikipedia[Hennessy cognac] Evidence: Jas Hennessy & Co., commonly known \u2026 <Context prompt> Solve the task given provided plans and evidence \u2026 Plan: Search for more information"
+      "text": "is the name of the cognac house that makes the main ingredient #E2? Given context: #E3] #E1 = Wikipedia[The Hennchata] Evidence: The Hennchata is a cocktail consisting of Hennessy cognac… #E2 = LLM[What is the main ingredient of The Hennchata? Given context: The Hennchata is a cocktail consisting of Hennessy cognac…] Evidence: Hennessy cognac #E4 = LLM[What is the name of the cognac house that makes the main ingredient Hennessy cognac? Given context: Jas Hennessy & Co., commonly known …] Evidence: Jas Hennessy & Co. #E3 = Wikipedia[Hennessy cognac] Evidence: Jas Hennessy & Co., commonly known … <Context prompt> Solve the task given provided plans and evidence … Plan: Search for more information"
     },
     {
       "id": "cx_2305.04091_0",
@@ -609,7 +609,7 @@
       "concept_id": 1,
       "section": "evidence",
       "chunk_index": 0,
-      "text": "Abstract Large language models (LLMs) have recently been shown to deliver impressive performance in various NLP tasks. To tackle multi-step rea- soning tasks, few-shot chain-of-thought (CoT) prompting includes a few manually crafted step-by-step reasoning demonstrations which enable LLMs to explicitly generate reasoning steps and improve their reasoning task accu- racy. To eliminate the manual effort, Zero- shot-CoT concatenates the target problem state- ment with \u201cLet\u2019s think step by step\u201d as an in- put prompt to LLMs. Despite the success of Zero-shot-CoT, it still suffers from three pit- falls: calculation errors, missing-step errors, and semantic misunderstanding errors. To ad- dress the missing-step"
+      "text": "Abstract Large language models (LLMs) have recently been shown to deliver impressive performance in various NLP tasks. To tackle multi-step rea- soning tasks, few-shot chain-of-thought (CoT) prompting includes a few manually crafted step-by-step reasoning demonstrations which enable LLMs to explicitly generate reasoning steps and improve their reasoning task accu- racy. To eliminate the manual effort, Zero- shot-CoT concatenates the target problem state- ment with “Let’s think step by step” as an in- put prompt to LLMs. Despite the success of Zero-shot-CoT, it still suffers from three pit- falls: calculation errors, missing-step errors, and semantic misunderstanding errors. To ad- dress the missing-step"
     },
     {
       "id": "cx_2305.04091_1",
@@ -625,7 +625,7 @@
       "concept_id": 5,
       "section": "evidence",
       "chunk_index": 2,
-      "text": "and has comparable performance with 8-shot CoT prompting on the math reasoning problem. The code can be found at https://github.com/AGI- Edgerunners/Plan-and-Solve-Prompting. 1 Introduction Large language models (LLMs) (Brown et al., 2020; Thoppilan et al., 2022; Chowdhery et al., 2022) have recently proven highly effective in var- ious NLP tasks. Unlike the previous pre-trained language models (PTMs) (Devlin et al., 2019; Liu \u2217Corresponding author. 5 10 15 20 25 30 35Ratio (%) 7 12 27 Calculation Error Step Missing Error Semantic Misunderstanding Figure 1: Error analysis of 46 GSM8K problems with in- correct answers returned by Zero-shot-CoT using GPT- 3 LLM. Following Wei et al. (2022b) and"
+      "text": "and has comparable performance with 8-shot CoT prompting on the math reasoning problem. The code can be found at https://github.com/AGI- Edgerunners/Plan-and-Solve-Prompting. 1 Introduction Large language models (LLMs) (Brown et al., 2020; Thoppilan et al., 2022; Chowdhery et al., 2022) have recently proven highly effective in var- ious NLP tasks. Unlike the previous pre-trained language models (PTMs) (Devlin et al., 2019; Liu ∗Corresponding author. 5 10 15 20 25 30 35Ratio (%) 7 12 27 Calculation Error Step Missing Error Semantic Misunderstanding Figure 1: Error analysis of 46 GSM8K problems with in- correct answers returned by Zero-shot-CoT using GPT- 3 LLM. Following Wei et al. (2022b) and"
     },
     {
       "id": "cx_2305.04091_3",
@@ -633,7 +633,7 @@
       "concept_id": 5,
       "section": "evidence",
       "chunk_index": 3,
-      "text": "Wang et al. (2022a), we assign \u201cCalculation Error\u201d (7%), \u201cStep Missing Error\u201d (12%), or \u201cSemantic misunderstanding Error\u201d (27%) to each incorrect answer. et al., 2019), these LLMs are typically provided as a service, with no access to model parameters due to commercial considerations and potential risks of misuse (Sun et al., 2022). Thus, it is challenging to fine-tune LLMs for downstream tasks (He et al., 2021; Houlsby et al., 2019; Devlin et al., 2019). Instead, we leverage LLMs to solve complex rea- soning problems by eliciting their strong reasoning abilities over their embedded knowledge using in- structions (or trigger sentences). So far, LLMs have shown impressive abilities to solve new"
+      "text": "Wang et al. (2022a), we assign “Calculation Error” (7%), “Step Missing Error” (12%), or “Semantic misunderstanding Error” (27%) to each incorrect answer. et al., 2019), these LLMs are typically provided as a service, with no access to model parameters due to commercial considerations and potential risks of misuse (Sun et al., 2022). Thus, it is challenging to fine-tune LLMs for downstream tasks (He et al., 2021; Houlsby et al., 2019; Devlin et al., 2019). Instead, we leverage LLMs to solve complex rea- soning problems by eliciting their strong reasoning abilities over their embedded knowledge using in- structions (or trigger sentences). So far, LLMs have shown impressive abilities to solve new"
     },
     {
       "id": "cx_2305.04091_4",
@@ -641,7 +641,7 @@
       "concept_id": 1,
       "section": "evidence",
       "chunk_index": 4,
-      "text": "reasoning problems by simply conditioning them on a few illustrative examples (i.e., few-shot learning) or a prompt to solve new problems without illustrative examples (i.e., zero-shot learning). To tackle multi-step complex reasoning tasks us- ing LLMs, Wei et al. (2022b) proposes few-shot chain-of-thought (CoT) prompting, which enables LLMs to explicitly generate the intermediate rea- soning steps before predicting the final answer with a few manual step-by-step reasoning demonstra- tion examples. In (Kojima et al., 2022), Zero-shot CoT eliminates the need for manually crafted ex- amples in prompts by appending \u201cLet\u2019s think step by step\u201d to the target problem fed to LLMs such arXiv:2305.04091v3"
+      "text": "reasoning problems by simply conditioning them on a few illustrative examples (i.e., few-shot learning) or a prompt to solve new problems without illustrative examples (i.e., zero-shot learning). To tackle multi-step complex reasoning tasks us- ing LLMs, Wei et al. (2022b) proposes few-shot chain-of-thought (CoT) prompting, which enables LLMs to explicitly generate the intermediate rea- soning steps before predicting the final answer with a few manual step-by-step reasoning demonstra- tion examples. In (Kojima et al., 2022), Zero-shot CoT eliminates the need for manually crafted ex- amples in prompts by appending “Let’s think step by step” to the target problem fed to LLMs such arXiv:2305.04091v3"
     },
     {
       "id": "cx_2305.04091_5",
@@ -689,7 +689,7 @@
       "concept_id": 5,
       "section": "evidence",
       "chunk_index": 4,
-      "text": "Numerous studies use deep learning to im- prove specific phases of the waterfall model in soft- ware development, such as design, coding, and test- ing (Pudlitz et al., 2019; Mart\u00edn and Abran, 2015; arXiv:2307.07924v5 [cs.SE] 5 Jun 2024 Gao et al., 2019; Wang et al., 2016). Due to these technical inconsistencies, methods employed in different phases remain isolated until now. Every phase, from data collection and labeling to model training and inference, requires its unique designs, leading to a fragmented and less efficient devel- opment process in the field (Freeman et al., 2001; Ernst, 2017; Winkler et al., 2020). Motivated by the expert-like potential of au- tonomous agents, we aim to establish"
+      "text": "Numerous studies use deep learning to im- prove specific phases of the waterfall model in soft- ware development, such as design, coding, and test- ing (Pudlitz et al., 2019; Martín and Abran, 2015; arXiv:2307.07924v5 [cs.SE] 5 Jun 2024 Gao et al., 2019; Wang et al., 2016). Due to these technical inconsistencies, methods employed in different phases remain isolated until now. Every phase, from data collection and labeling to model training and inference, requires its unique designs, leading to a fragmented and less efficient devel- opment process in the field (Freeman et al., 2001; Ernst, 2017; Winkler et al., 2020). Motivated by the expert-like potential of au- tonomous agents, we aim to establish"
     },
     {
       "id": "cx_2307.07924_5",
@@ -697,7 +697,7 @@
       "concept_id": 6,
       "section": "evidence",
       "chunk_index": 5,
-      "text": "language as a unifying bridge\u2014utilizing multiple LLM-powered agents with specialized roles for cooperative soft- ware development through language-based com- munication across different phases; solutions in different phases are derived from their multi-turn dialogues, whether dealing with text or code. Nev- ertheless, due to the tendency of LLM hallucina- tions (Dhuliawala et al., 2023; Zhang et al., 2023b), the strategy of generating software through com- municative agents could lead to the non-trivial chal- lenge of coding hallucinations, which involves the generation of source code that is incomplete, unex- ecutable, or inaccurate, ultimately failing to fulfill the intended requirements (Agnihotri"
+      "text": "language as a unifying bridge—utilizing multiple LLM-powered agents with specialized roles for cooperative soft- ware development through language-based com- munication across different phases; solutions in different phases are derived from their multi-turn dialogues, whether dealing with text or code. Nev- ertheless, due to the tendency of LLM hallucina- tions (Dhuliawala et al., 2023; Zhang et al., 2023b), the strategy of generating software through com- municative agents could lead to the non-trivial chal- lenge of coding hallucinations, which involves the generation of source code that is incomplete, unex- ecutable, or inaccurate, ultimately failing to fulfill the intended requirements (Agnihotri"
     },
     {
       "id": "cx_2308.03688_0",
@@ -705,7 +705,7 @@
       "concept_id": 6,
       "section": "evidence",
       "chunk_index": 0,
-      "text": "ABSTRACT The potential of Large Language Model (LLM) as agents has been widely acknowl- edged recently. Thus, there is an urgent need to quantitativelyevaluate LLMs as agentson challenging tasks in interactive environments. We present AGENTBENCH, a multi-dimensional benchmark that consists of 8 distinct environments to assess LLM-as-Agent\u2019s reasoning and decision-making abilities. Our extensive test over 29 API-based and open-sourced (OSS) LLMs shows that, while top commercial LLMs present a strong ability of acting as agents in complex environments, there is a significant disparity in performance between them and many OSS competitors that are no larger than 70B. We identify the typical reasons"
+      "text": "ABSTRACT The potential of Large Language Model (LLM) as agents has been widely acknowl- edged recently. Thus, there is an urgent need to quantitativelyevaluate LLMs as agentson challenging tasks in interactive environments. We present AGENTBENCH, a multi-dimensional benchmark that consists of 8 distinct environments to assess LLM-as-Agent’s reasoning and decision-making abilities. Our extensive test over 29 API-based and open-sourced (OSS) LLMs shows that, while top commercial LLMs present a strong ability of acting as agents in complex environments, there is a significant disparity in performance between them and many OSS competitors that are no larger than 70B. We identify the typical reasons"
     },
     {
       "id": "cx_2308.03688_1",
@@ -721,7 +721,7 @@
       "concept_id": 5,
       "section": "evidence",
       "chunk_index": 2,
-      "text": "glm-4 codellama-34b-instruct vicuna-13b-v1.5 llama-2-70b (a) Typical LLMs\u2019 AgentBench performance (rela- tive) against the best in each environment. 0 1 2 3 4 AgentBench Overall Score gpt-4 claude-3 glm-4 claude-2 claude gpt-3.5-turbo text-davinci-003 claude-instant chat-bison-001 text-davinci-002 codellama-34b vicuna-13b llama-2-70b llama-2-13b ...... dolly-12b chatglm-6b oasst-12b API-based Commercial LLMs OSS LLMs 4.01 3.11 2.89 2.49 2.44 2.32 1.71 1.60 1.39 1.25 0.96 0.93 0.78 0.77 0.14 0.11 0.03 Avg:2.32Avg:0.51 (b) Overall scores of AgentBench across 8 environ- ments. Dashed lines for two LLM types\u2019 average. Figure 1: An overview of LLMs on AGENTBENCH. While LLMs begin to manifest their"
+      "text": "glm-4 codellama-34b-instruct vicuna-13b-v1.5 llama-2-70b (a) Typical LLMs’ AgentBench performance (rela- tive) against the best in each environment. 0 1 2 3 4 AgentBench Overall Score gpt-4 claude-3 glm-4 claude-2 claude gpt-3.5-turbo text-davinci-003 claude-instant chat-bison-001 text-davinci-002 codellama-34b vicuna-13b llama-2-70b llama-2-13b ...... dolly-12b chatglm-6b oasst-12b API-based Commercial LLMs OSS LLMs 4.01 3.11 2.89 2.49 2.44 2.32 1.71 1.60 1.39 1.25 0.96 0.93 0.78 0.77 0.14 0.11 0.03 Avg:2.32Avg:0.51 (b) Overall scores of AgentBench across 8 environ- ments. Dashed lines for two LLM types’ average. Figure 1: An overview of LLMs on AGENTBENCH. While LLMs begin to manifest their"
     },
     {
       "id": "cx_2308.03688_3",
@@ -737,7 +737,7 @@
       "concept_id": 2,
       "section": "evidence",
       "chunk_index": 4,
-      "text": "zhanghanchen77}@gmail.com \u2021Corresponding authors: YD and JT. Email:{yuxiaod,jietang}@tsinghua.edu.cn \u2020Work done when HY , YG visited Tsinghua University. 1 arXiv:2308.03688v3 [cs.AI] 4 Oct 2025 Published as a conference paper at ICLR 2024 Database (On an Ubuntu bash terminal) Recursively set all \ufb01les in the directory to read-only, except those of mine. (Given Freebase APIs) What musical instruments do Minnesota- born Nobel Prize winners play? (On the GUI of Aquawar) This is a two-player battle game, you are a player with four pet \ufb01sh cards \u2026\u2026 A man walked into a restaurant, ordered a bowl of turtle soup, and after \ufb01nishing it, he committed suicide. Why did he do that? (In the middle of a kitchen"
+      "text": "zhanghanchen77}@gmail.com ‡Corresponding authors: YD and JT. Email:{yuxiaod,jietang}@tsinghua.edu.cn †Work done when HY , YG visited Tsinghua University. 1 arXiv:2308.03688v3 [cs.AI] 4 Oct 2025 Published as a conference paper at ICLR 2024 Database (On an Ubuntu bash terminal) Recursively set all ﬁles in the directory to read-only, except those of mine. (Given Freebase APIs) What musical instruments do Minnesota- born Nobel Prize winners play? (On the GUI of Aquawar) This is a two-player battle game, you are a player with four pet ﬁsh cards …… A man walked into a restaurant, ordered a bowl of turtle soup, and after ﬁnishing it, he committed suicide. Why did he do that? (In the middle of a kitchen"
     },
     {
       "id": "cx_2308.03688_5",
@@ -745,7 +745,7 @@
       "concept_id": 5,
       "section": "evidence",
       "chunk_index": 5,
-      "text": "in a simulator) Please put a pan on the dinning table. (On the o\ufb03cial website of an airline) Book the cheapest \ufb02ight from Beijing to Los Angeles in the last week of July. LLM-as-Agent Agent Environ Interaction Large Language Models Operating System Knowledge Graph Digital Card Game Lateral Think -ing Puzzles House Holding Web Browsing Interactive Environments Web Shopping Real-world Challenges 8 Distinct Environments -ment \uff08Given MySQL APIs and existed tables) Grade students over 60 as PASS in the table. Figure 2: AGENTBENCHis the first systematic benchmark to evaluate LLM-as-Agent on a wide array of real-world challenges and 8 distinct environments. In total, 29 LLMs are examined in this edition."
+      "text": "in a simulator) Please put a pan on the dinning table. (On the oﬃcial website of an airline) Book the cheapest ﬂight from Beijing to Los Angeles in the last week of July. LLM-as-Agent Agent Environ Interaction Large Language Models Operating System Knowledge Graph Digital Card Game Lateral Think -ing Puzzles House Holding Web Browsing Interactive Environments Web Shopping Real-world Challenges 8 Distinct Environments -ment （Given MySQL APIs and existed tables) Grade students over 60 as PASS in the table. Figure 2: AGENTBENCHis the first systematic benchmark to evaluate LLM-as-Agent on a wide array of real-world challenges and 8 distinct environments. In total, 29 LLMs are examined in this edition."
     },
     {
       "id": "cx_2305.15334_0",
@@ -753,7 +753,7 @@
       "concept_id": 5,
       "section": "evidence",
       "chunk_index": 0,
-      "text": "Abstract Large Language Models (LLMs) have seen an impressive wave of advances re- cently, with models now excelling in a variety of tasks, such as mathematical reasoning and program synthesis. However, their potential to effectively use tools via API calls remains unfulfilled. This is a challenging task even for today\u2019s state-of- the-art LLMs such as GPT-4, largely due to their inability to generate accurate input arguments and their tendency to hallucinate the wrong usage of an API call. We release Gorilla, a finetuned LLaMA-based model that surpasses the performance of GPT-4 on writing API calls. When combined with a document retriever, Gorilla demonstrates a strong capability to adapt to"
+      "text": "Abstract Large Language Models (LLMs) have seen an impressive wave of advances re- cently, with models now excelling in a variety of tasks, such as mathematical reasoning and program synthesis. However, their potential to effectively use tools via API calls remains unfulfilled. This is a challenging task even for today’s state-of- the-art LLMs such as GPT-4, largely due to their inability to generate accurate input arguments and their tendency to hallucinate the wrong usage of an API call. We release Gorilla, a finetuned LLaMA-based model that surpasses the performance of GPT-4 on writing API calls. When combined with a document retriever, Gorilla demonstrates a strong capability to adapt to"
     },
     {
       "id": "cx_2305.15334_1",
@@ -761,7 +761,7 @@
       "concept_id": 2,
       "section": "evidence",
       "chunk_index": 1,
-      "text": "test-time document changes, enabling flexible user updates or version changes. It also substantially mitigates the issue of hallucination, commonly encountered when prompting LLMs directly. To evaluate the model\u2019s ability, we introduce APIBench, a comprehensive dataset consisting of HuggingFace, TorchHub, and TensorHub APIs. The successful integration of the retrieval system with Gorilla demonstrates the potential for LLMs to use tools more accurately, keep up with frequently updated documentation, and consequently increase the reliability and applicability of their outputs. Gorilla\u2019s code, model, data, and demo are available athttps://gorilla.cs.berkeley.edu 1 Introduction Recent advances in"
+      "text": "test-time document changes, enabling flexible user updates or version changes. It also substantially mitigates the issue of hallucination, commonly encountered when prompting LLMs directly. To evaluate the model’s ability, we introduce APIBench, a comprehensive dataset consisting of HuggingFace, TorchHub, and TensorHub APIs. The successful integration of the retrieval system with Gorilla demonstrates the potential for LLMs to use tools more accurately, keep up with frequently updated documentation, and consequently increase the reliability and applicability of their outputs. Gorilla’s code, model, data, and demo are available athttps://gorilla.cs.berkeley.edu 1 Introduction Recent advances in"
     },
     {
       "id": "cx_2305.15334_2",
@@ -785,7 +785,7 @@
       "concept_id": 6,
       "section": "evidence",
       "chunk_index": 4,
-      "text": "has access to the flight, car rental, hotel, catering, and entertainment web APIs. However, much of the prior work [35, 24] integrating tools into LLMs considered a small well documented set of APIs that can be easily injected into the prompt. \u2217Equal contribution. Preprint. Under review. arXiv:2305.15334v1 [cs.CL] 24 May 2023 GPT-4<domain>:Speech-to-Text<api_provider>:TorchHub<code>:asr_model= torch.hub.load('snakers4/silero-models', 'asr', source='local')result = asr_model.transcribe(audio_path) Claude<domain>:Audio-Translation<api_provider>:Pytorch<code>:import torchaudiotranslation = Torchaudio.pipelines.WAV2VEC2_ASR_PIPELINE(\"audio.wav\") Gorilla<domain>:Speech-to-Text<api_provider>:TorchHub<code>:asr_model"
+      "text": "has access to the flight, car rental, hotel, catering, and entertainment web APIs. However, much of the prior work [35, 24] integrating tools into LLMs considered a small well documented set of APIs that can be easily injected into the prompt. ∗Equal contribution. Preprint. Under review. arXiv:2305.15334v1 [cs.CL] 24 May 2023 GPT-4<domain>:Speech-to-Text<api_provider>:TorchHub<code>:asr_model= torch.hub.load('snakers4/silero-models', 'asr', source='local')result = asr_model.transcribe(audio_path) Claude<domain>:Audio-Translation<api_provider>:Pytorch<code>:import torchaudiotranslation = Torchaudio.pipelines.WAV2VEC2_ASR_PIPELINE(\"audio.wav\") Gorilla<domain>:Speech-to-Text<api_provider>:TorchHub<code>:asr_model"
     },
     {
       "id": "cx_2305.15334_5",
@@ -793,7 +793,7 @@
       "concept_id": 2,
       "section": "evidence",
       "chunk_index": 5,
-      "text": "= torch.hub.load('snakers4/silero-models', 'silero_sst\u2019)result = asr_model.transcribe(audio_path) Hallucinate!Wrong library!Good to go! Prompt: Help me find an API to convert the spoken language in a recorded audio to text using Torch Hub. Figure 1: Examples of API calls. Example API calls generated by GPT-4 [29], Claude [3], and Gorilla for the given prompt. In this example, GPT-4 presents a model that doesn\u2019t exist, and Claude picks an incorrect library. In contrast, our Gorilla model can identify the task correctly and suggest a fully-qualified API call. Better Figure 2: Accuracy (vs) hallucination in four settings, that is, zero-shot (i.e., without any retriever), and with retrievers. BM25"
+      "text": "= torch.hub.load('snakers4/silero-models', 'silero_sst’)result = asr_model.transcribe(audio_path) Hallucinate!Wrong library!Good to go! Prompt: Help me find an API to convert the spoken language in a recorded audio to text using Torch Hub. Figure 1: Examples of API calls. Example API calls generated by GPT-4 [29], Claude [3], and Gorilla for the given prompt. In this example, GPT-4 presents a model that doesn’t exist, and Claude picks an incorrect library. In contrast, our Gorilla model can identify the task correctly and suggest a fully-qualified API call. Better Figure 2: Accuracy (vs) hallucination in four settings, that is, zero-shot (i.e., without any retriever), and with retrievers. BM25"
     },
     {
       "id": "cx_2306.06070_0",
@@ -833,7 +833,7 @@
       "concept_id": 6,
       "section": "evidence",
       "chunk_index": 4,
-      "text": "real-world websites, which can be dynamic, complex, and noisy. Most modern websites are dynamic, generating and rendering different content in response to user actions. This necessitates the agent to model each website as a partially-observable environment instead of assuming full knowledge a priori. The agent should also not make strong simplifying assumptions \u2217Corresponding authors: {deng.595, sun.397, su.809}@osu.edu 37th Conference on Neural Information Processing Systems (NeurIPS 2023) Track on Datasets and Benchmarks. arXiv:2306.06070v3 [cs.CL] 9 Dec 2023 (a) Find one-way flights from New York to Toronto. (b) Book a roundtrip on July 1 from Mumbai to London and vice versa on July 5 for"
+      "text": "real-world websites, which can be dynamic, complex, and noisy. Most modern websites are dynamic, generating and rendering different content in response to user actions. This necessitates the agent to model each website as a partially-observable environment instead of assuming full knowledge a priori. The agent should also not make strong simplifying assumptions ∗Corresponding authors: {deng.595, sun.397, su.809}@osu.edu 37th Conference on Neural Information Processing Systems (NeurIPS 2023) Track on Datasets and Benchmarks. arXiv:2306.06070v3 [cs.CL] 9 Dec 2023 (a) Find one-way flights from New York to Toronto. (b) Book a roundtrip on July 1 from Mumbai to London and vice versa on July 5 for"
     },
     {
       "id": "cx_2306.06070_5",
@@ -881,7 +881,7 @@
       "concept_id": 6,
       "section": "evidence",
       "chunk_index": 4,
-      "text": "resource (Shi et al., 2017; Deng et al., 2023) where agents are confined to accessing only those states that were previously cached during data collection, thus limiting the breadth and diversity of exploration. For evaluation, many environments focus on comparing the textual surface form of the predicted \u2217Lead contributors. \u2020Equal contribution. 1 arXiv:2307.13854v4 [cs.AI] 16 Apr 2024 Published as a conference paper at ICLR 2024 Tell me how much I spent on food purchase in March 2023 15 WebArena Environment \u201d \u201d \u201c \u201cCreate a \u2018NolanFans' repo, listing Nolan's Oscar-winning \ufb01lms in a README \ufb01le Action Feedback AI Agent Tool Sites Knowledge resources Web applications from popular domains check_repo"
+      "text": "resource (Shi et al., 2017; Deng et al., 2023) where agents are confined to accessing only those states that were previously cached during data collection, thus limiting the breadth and diversity of exploration. For evaluation, many environments focus on comparing the textual surface form of the predicted ∗Lead contributors. †Equal contribution. 1 arXiv:2307.13854v4 [cs.AI] 16 Apr 2024 Published as a conference paper at ICLR 2024 Tell me how much I spent on food purchase in March 2023 15 WebArena Environment ” ” “ “Create a ‘NolanFans' repo, listing Nolan's Oscar-winning ﬁlms in a README ﬁle Action Feedback AI Agent Tool Sites Knowledge resources Web applications from popular domains check_repo"
     },
     {
       "id": "cx_2307.13854_5",
@@ -913,7 +913,7 @@
       "concept_id": 6,
       "section": "evidence",
       "chunk_index": 2,
-      "text": "the extensive applications of LLM-based agents in three aspects: single-agent scenarios, multi-agent scenarios, and human- agent cooperation. Following this, we delve into agent societies, exploring the behavior and personality of LLM-based agents, the social phenomena that emerge from an agent society, and the insights they offer for human society. Finally, we discuss several key topics and open problems within the field. A repository for the related papers at https://github.com/WooooDyy/LLM-Agent-Paper-List. \u2020 Correspondence to: zhxi22@m.fudan.edu.cn, {qz, tgui}@fudan.edu.cn \u2217 Equal Contribution. arXiv:2309.07864v3 [cs.AI] 19 Sep 2023 Contents 1 Introduction 4 2 Background 6 2.1 Origin of"
+      "text": "the extensive applications of LLM-based agents in three aspects: single-agent scenarios, multi-agent scenarios, and human- agent cooperation. Following this, we delve into agent societies, exploring the behavior and personality of LLM-based agents, the social phenomena that emerge from an agent society, and the insights they offer for human society. Finally, we discuss several key topics and open problems within the field. A repository for the related papers at https://github.com/WooooDyy/LLM-Agent-Paper-List. † Correspondence to: zhxi22@m.fudan.edu.cn, {qz, tgui}@fudan.edu.cn ∗ Equal Contribution. arXiv:2309.07864v3 [cs.AI] 19 Sep 2023 Contents 1 Introduction 4 2 Background 6 2.1 Origin of"
     },
     {
       "id": "cx_2309.07864_3",
@@ -921,7 +921,7 @@
       "concept_id": 5,
       "section": "evidence",
       "chunk_index": 3,
-      "text": "AI Agent . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 6 2.2 Technological Trends in Agent Research . . . . . . . . . . . . . . . . . . . . . . . 7 2.3 Why is LLM suitable as the primary component of an Agent\u2019s brain? . . . . . . . . 9 3 The Birth of An Agent: Construction of LLM-based Agents 10 3.1 Brain . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 11 3.1.1 Natural Language Interaction . . . . . . . . . . . . . . . . . . . . . . . . 12 3.1.2 Knowledge . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 13 3.1.3 Memory . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 14 3.1.4 Reasoning and Planning"
+      "text": "AI Agent . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 6 2.2 Technological Trends in Agent Research . . . . . . . . . . . . . . . . . . . . . . . 7 2.3 Why is LLM suitable as the primary component of an Agent’s brain? . . . . . . . . 9 3 The Birth of An Agent: Construction of LLM-based Agents 10 3.1 Brain . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 11 3.1.1 Natural Language Interaction . . . . . . . . . . . . . . . . . . . . . . . . 12 3.1.2 Knowledge . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 13 3.1.3 Memory . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 14 3.1.4 Reasoning and Planning"
     },
     {
       "id": "cx_2309.07864_4",
@@ -945,7 +945,7 @@
       "concept_id": 6,
       "section": "evidence",
       "chunk_index": 0,
-      "text": "Abstract We investigate the challenge of task planning for multi-task embodied agents in open-world environments.2 Two main difficulties are identified: 1) executing plans in an open-world environment (e.g., Minecraft) necessitates accurate and multi-step reasoning due to the long-term nature of tasks, and 2) as vanilla planners do not consider how easy the current agent can achieve a given sub-task when ordering parallel sub-goals within a complicated plan, the resulting plan could be inefficient or even infeasible. To this end, we propose \u201c Describe, Explain, Plan and Select\u201d (DEPS), an interactive planning approach based on Large Language Models (LLMs). DEPS facilitates better error correction"
+      "text": "Abstract We investigate the challenge of task planning for multi-task embodied agents in open-world environments.2 Two main difficulties are identified: 1) executing plans in an open-world environment (e.g., Minecraft) necessitates accurate and multi-step reasoning due to the long-term nature of tasks, and 2) as vanilla planners do not consider how easy the current agent can achieve a given sub-task when ordering parallel sub-goals within a complicated plan, the resulting plan could be inefficient or even infeasible. To this end, we propose “ Describe, Explain, Plan and Select” (DEPS), an interactive planning approach based on Large Language Models (LLMs). DEPS facilitates better error correction"
     },
     {
       "id": "cx_2302.01560_1",
@@ -953,7 +953,7 @@
       "concept_id": 5,
       "section": "evidence",
       "chunk_index": 1,
-      "text": "on initial LLM-generated plan by integrating description of the plan execution process and providing self- explanation of feedback when encountering failures during the extended planning phases. Furthermore, it includes a goal selector, which is a trainable module that ranks parallel candidate sub-goals based on the estimated steps of completion, consequently refining the initial plan. Our experiments mark the milestone of the first zero-shot multi-task agent that can robustly accomplish 70+ Minecraft tasks and nearly double the overall performances. Further testing reveals our method\u2019s general effectiveness in popularly adopted non-open-ended domains as well (i.e., ALFWorld and tabletop manipulation)."
+      "text": "on initial LLM-generated plan by integrating description of the plan execution process and providing self- explanation of feedback when encountering failures during the extended planning phases. Furthermore, it includes a goal selector, which is a trainable module that ranks parallel candidate sub-goals based on the estimated steps of completion, consequently refining the initial plan. Our experiments mark the milestone of the first zero-shot multi-task agent that can robustly accomplish 70+ Minecraft tasks and nearly double the overall performances. Further testing reveals our method’s general effectiveness in popularly adopted non-open-ended domains as well (i.e., ALFWorld and tabletop manipulation)."
     },
     {
       "id": "cx_2302.01560_2",
@@ -969,7 +969,7 @@
       "concept_id": 5,
       "section": "evidence",
       "chunk_index": 3,
-      "text": "architecture has been delivering promising progress in \u2217Corresponding Author. 2We borrow the term \u201copen world\u201d from the game community. It highlights that the agent can navigate inside a diverse environment and accomplish open-ended tasks freely. 37th Conference on Neural Information Processing Systems (NeurIPS 2023). arXiv:2302.01560v3 [cs.AI] 8 Jul 2024 Reachable region within 3 minsUnachievable routesOptional routes Challenge #2: State-dependent Task Feasibility Challenge #1: Complex Sub-taskDependency Mine diamond in Minecraft environment 99% 42%23% 80% 9% 0%10%20%30%40%50%60%70%80%90%100%123 Planner w/ Learned ControllerPlanner w/ Oracle ControllerTabletop EnvironmentALFWorldMinecraft Success"
+      "text": "architecture has been delivering promising progress in ∗Corresponding Author. 2We borrow the term “open world” from the game community. It highlights that the agent can navigate inside a diverse environment and accomplish open-ended tasks freely. 37th Conference on Neural Information Processing Systems (NeurIPS 2023). arXiv:2302.01560v3 [cs.AI] 8 Jul 2024 Reachable region within 3 minsUnachievable routesOptional routes Challenge #2: State-dependent Task Feasibility Challenge #1: Complex Sub-taskDependency Mine diamond in Minecraft environment 99% 42%23% 80% 9% 0%10%20%30%40%50%60%70%80%90%100%123 Planner w/ Learned ControllerPlanner w/ Oracle ControllerTabletop EnvironmentALFWorldMinecraft Success"
     },
     {
       "id": "cx_2302.01560_4",
@@ -993,7 +993,7 @@
       "concept_id": 5,
       "section": "evidence",
       "chunk_index": 0,
-      "text": "Abstract We introduce SWIFT SAGE, a novel agent framework inspired by the dual-process theory of human cognition, designed to excel in action planning for complex interactive reasoning tasks. SWIFT SAGE integrates the strengths of behavior cloning and prompting large language models (LLMs) to enhance task completion performance. The framework comprises two primary modules: the SWIFT module, representing fast and intuitive thinking, and theSAGE module, emulating deliberate thought processes. The SWIFT module is a small encoder-decoder LM fine-tuned on the oracle agent\u2019s action trajectories, while the SAGE module employs LLMs such as GPT-4 for subgoal planning and grounding. We develop a heuristic"
+      "text": "Abstract We introduce SWIFT SAGE, a novel agent framework inspired by the dual-process theory of human cognition, designed to excel in action planning for complex interactive reasoning tasks. SWIFT SAGE integrates the strengths of behavior cloning and prompting large language models (LLMs) to enhance task completion performance. The framework comprises two primary modules: the SWIFT module, representing fast and intuitive thinking, and theSAGE module, emulating deliberate thought processes. The SWIFT module is a small encoder-decoder LM fine-tuned on the oracle agent’s action trajectories, while the SAGE module employs LLMs such as GPT-4 for subgoal planning and grounding. We develop a heuristic"
     },
     {
       "id": "cx_2305.17390_1",
@@ -1025,7 +1025,7 @@
       "concept_id": 2,
       "section": "evidence",
       "chunk_index": 4,
-      "text": "For Each Timestep t: \u2193 Action 1: go to kitchen> you moved to kitchenAction 2: look around > In this kitchen, you can see \u2026\u2026..Actiont-1: pick up metal pot> metal pot in inventory now Demo: An oracle path for the task of boiling water. Kbest generations for Action t Action t: put metal pot on stoveReranking Task: Your task is to boil tin. Action 1: go to kitchen> you moved to kitchenAction 2: look around > In this kitchen, you can see \u2026\u2026..Action t-2: think:now I need to place the metal pot on a heater.> OK.Actiont-1: pick up metal pot> metal pot in inventory now Demo: oracle path + manually annotated subgoals LLMAction t: put metal pot on stove For Each Timestep t: \u2193 Task: Your task is to boil"
+      "text": "For Each Timestep t: ↓ Action 1: go to kitchen> you moved to kitchenAction 2: look around > In this kitchen, you can see ……..Actiont-1: pick up metal pot> metal pot in inventory now Demo: An oracle path for the task of boiling water. Kbest generations for Action t Action t: put metal pot on stoveReranking Task: Your task is to boil tin. Action 1: go to kitchen> you moved to kitchenAction 2: look around > In this kitchen, you can see ……..Action t-2: think:now I need to place the metal pot on a heater.> OK.Actiont-1: pick up metal pot> metal pot in inventory now Demo: oracle path + manually annotated subgoals LLMAction t: put metal pot on stove For Each Timestep t: ↓ Task: Your task is to boil"
     },
     {
       "id": "cx_2305.17390_5",
@@ -1033,7 +1033,7 @@
       "concept_id": 1,
       "section": "evidence",
       "chunk_index": 5,
-      "text": "tin. + the of previously failed trials in the last round.Action history(<= t-1) for this round. (same as ReAct) Demo: ReAct\u2019sversion. Action t: put tin into metal pot For Each Round: \u2193 LLM LLM SwiftSage Task: Your task is to boil tin. Actionhistory<= t-1Demo: w/o manual annotations Action Buffer:Action t, Action t+1, Action t+2 , \u2026 Only when needed: \u2193 Small LM (e.g., GPT-4) Oracle pathsfortraining data. offline imitation learning LLMreflection The full action history of the previous failed round. reflection Prompts for objectlocating, planning & trackingsubgoals, and online exceptionhandling. LLMGrounding Templates LLMNext subgoals >>For Each Timestep t: \u2193 Figure 1: Comparing methods of prompting"
+      "text": "tin. + the of previously failed trials in the last round.Action history(<= t-1) for this round. (same as ReAct) Demo: ReAct’sversion. Action t: put tin into metal pot For Each Round: ↓ LLM LLM SwiftSage Task: Your task is to boil tin. Actionhistory<= t-1Demo: w/o manual annotations Action Buffer:Action t, Action t+1, Action t+2 , … Only when needed: ↓ Small LM (e.g., GPT-4) Oracle pathsfortraining data. offline imitation learning LLMreflection The full action history of the previous failed round. reflection Prompts for objectlocating, planning & trackingsubgoals, and online exceptionhandling. LLMGrounding Templates LLMNext subgoals >>For Each Timestep t: ↓ Figure 1: Comparing methods of prompting"
     }
   ],
   "quiz_items": [
@@ -1046,7 +1046,15 @@
       "answer_key": "actions and observations",
       "evidence_chunk_id": "c_react_2",
       "source_paper_id": 1,
-      "targets_misconception": "react_is_just_cot"
+      "targets_misconception": "react_is_just_cot",
+      "keypoint_id": "kp_react_2",
+      "bloom_level": "recall",
+      "rubric": "Must mention that ReAct uses real actions and external observations, not just internal reasoning chains",
+      "expected_keypoints": [
+        "actions",
+        "observations",
+        "external"
+      ]
     },
     {
       "id": 2,
@@ -1056,7 +1064,16 @@
       "question": "In a multi-agent system like MetaGPT, what do the specialized role agents do with their intermediate work?",
       "answer_key": "collaborate and hand off",
       "evidence_chunk_id": "c_multi_1",
-      "source_paper_id": 7
+      "source_paper_id": 7,
+      "keypoint_id": "kp_multi_1",
+      "bloom_level": "recall",
+      "rubric": "Must mention that agents pass their outputs to other agents — collaboration and handoff of artifacts between roles",
+      "expected_keypoints": [
+        "collaborate",
+        "hand off",
+        "intermediate",
+        "artefacts"
+      ]
     },
     {
       "id": 3,
@@ -1065,6 +1082,111 @@
       "difficulty": 1,
       "question": "What do surveys of LLM-based autonomous agents provide to make sense of the field?",
       "answer_key": "concept map",
+      "evidence_chunk_id": "c_taxonomy_1",
+      "source_paper_id": 6,
+      "keypoint_id": "kp_taxonomy_1",
+      "bloom_level": "recall",
+      "rubric": "Must mention that surveys provide a structured map or taxonomy organizing the field's concepts",
+      "expected_keypoints": [
+        "concept map",
+        "taxonomy",
+        "organize",
+        "framework"
+      ]
+    },
+    {
+      "id": 101,
+      "concept_id": 1,
+      "keypoint_id": "kp_react_1",
+      "bloom_level": "recall",
+      "qtype": "explain",
+      "difficulty": 1,
+      "question": "What three types of output does a ReAct agent generate in each step?",
+      "answer_key": "reasoning trace, action, and observation",
+      "rubric": "Must name all three: a reasoning/thought step, a task-specific action, and an observation from the environment",
+      "expected_keypoints": [
+        "reasoning",
+        "action",
+        "observation"
+      ],
+      "evidence_chunk_id": "c_react_1",
+      "source_paper_id": 1
+    },
+    {
+      "id": 102,
+      "concept_id": 1,
+      "keypoint_id": "kp_react_1",
+      "bloom_level": "comprehension",
+      "qtype": "explain",
+      "difficulty": 2,
+      "question": "Why does feeding observations back into the next reasoning step improve performance on long-horizon tasks compared to generating reasoning in one shot?",
+      "answer_key": "observations ground reasoning and allow error correction",
+      "rubric": "Should explain that real feedback from the environment (observations) lets the agent course-correct mid-task, preventing compounding errors that one-shot CoT cannot catch",
+      "expected_keypoints": [
+        "grounding",
+        "error correction",
+        "iterative",
+        "feedback"
+      ],
+      "evidence_chunk_id": "c_react_1",
+      "source_paper_id": 1
+    },
+    {
+      "id": 103,
+      "concept_id": 1,
+      "keypoint_id": "kp_react_2",
+      "bloom_level": "comprehension",
+      "qtype": "explain",
+      "difficulty": 2,
+      "question": "How does ReAct's use of external observations prevent the hallucination problems that pure chain-of-thought reasoning produces?",
+      "answer_key": "external sources replace fabricated facts",
+      "rubric": "Should connect that CoT relies on internal knowledge which can hallucinate, while ReAct's observations come from real external sources (search, APIs), grounding the output in actual retrieved facts",
+      "expected_keypoints": [
+        "hallucination",
+        "external",
+        "grounding",
+        "retrieved"
+      ],
+      "evidence_chunk_id": "c_react_2",
+      "source_paper_id": 1,
+      "targets_misconception": "react_is_just_cot"
+    },
+    {
+      "id": 201,
+      "concept_id": 6,
+      "keypoint_id": "kp_multi_1",
+      "bloom_level": "comprehension",
+      "qtype": "explain",
+      "difficulty": 2,
+      "question": "Why does encoding standardized operating procedures (SOPs) into a multi-agent system improve output quality compared to letting agents coordinate freely?",
+      "answer_key": "SOPs reduce coordination errors and enforce workflow consistency",
+      "rubric": "Should explain that SOPs give each agent a defined role and handoff protocol, reducing ambiguity and coordination overhead that would arise from free-form agent interaction",
+      "expected_keypoints": [
+        "SOP",
+        "role",
+        "consistency",
+        "workflow",
+        "coordination"
+      ],
+      "evidence_chunk_id": "c_multi_1",
+      "source_paper_id": 7
+    },
+    {
+      "id": 301,
+      "concept_id": 7,
+      "keypoint_id": "kp_taxonomy_1",
+      "bloom_level": "comprehension",
+      "qtype": "explain",
+      "difficulty": 2,
+      "question": "Surveys organize LLM agents around construction, planning, memory, tool use, and evaluation. Why is having these five axes useful when comparing different agent architectures?",
+      "answer_key": "common dimensions enable systematic comparison",
+      "rubric": "Should explain that shared axes let researchers compare architectures on the same dimensions, highlight gaps, and identify which component each paper addresses",
+      "expected_keypoints": [
+        "comparison",
+        "dimensions",
+        "systematic",
+        "gaps"
+      ],
       "evidence_chunk_id": "c_taxonomy_1",
       "source_paper_id": 6
     }
@@ -1114,5 +1236,39 @@
       "qtype": "explain",
       "difficulty": 1
     }
-  }
+  },
+  "keypoints": [
+    {
+      "id": "kp_react_1",
+      "concept_id": 1,
+      "name": "Interleaved Reasoning and Acting",
+      "objective": "Understand how ReAct alternates between Thought, Action, and Observation steps to solve tasks",
+      "evidence_chunk_id": "c_react_1",
+      "sort_order": 1
+    },
+    {
+      "id": "kp_react_2",
+      "concept_id": 1,
+      "name": "Advantages over Chain-of-Thought",
+      "objective": "Know why grounding reasoning in external observations prevents hallucinations that pure CoT cannot avoid",
+      "evidence_chunk_id": "c_react_2",
+      "sort_order": 2
+    },
+    {
+      "id": "kp_multi_1",
+      "concept_id": 6,
+      "name": "Role-based Collaboration via SOPs",
+      "objective": "Understand how encoding standardized operating procedures enables specialized agents to collaborate and hand off work",
+      "evidence_chunk_id": "c_multi_1",
+      "sort_order": 1
+    },
+    {
+      "id": "kp_taxonomy_1",
+      "concept_id": 7,
+      "name": "Survey Taxonomy of LLM Agents",
+      "objective": "Know the major axes (construction, planning, memory, tools, evaluation) that surveys use to organize the agent landscape",
+      "evidence_chunk_id": "c_taxonomy_1",
+      "sort_order": 1
+    }
+  ]
 }

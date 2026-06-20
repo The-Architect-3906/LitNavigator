@@ -112,7 +112,9 @@ class TutorSession:
             return []
 
         teach_events = {"teach", "reteach", "teach_kp", "reteach_kp"}
-        boundary_events = {"assess_next", "check"}
+        # "lecture" marks the end of a no-quiz concept — treat it as a boundary so
+        # we still find the preceding "teach" event and surface its content.
+        boundary_events = {"assess_next", "check", "lecture"}
 
         idx = len(history) - 1
         if history[idx].get("event") in boundary_events:
