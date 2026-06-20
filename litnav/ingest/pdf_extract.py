@@ -19,29 +19,46 @@ TOPIC = "LLM-based autonomous agents"
 
 # Curated concept skeleton (human-confirmed), shared with the demo fixtures.
 CONCEPTS = [
+    {"id": 8, "slug": "cot_reasoning", "name": "Chain-of-thought reasoning", "frontier_flag": "consensus"},
     {"id": 1, "slug": "react", "name": "ReAct (reasoning + acting)", "is_demo_core": 1, "frontier_flag": "consensus"},
     {"id": 2, "slug": "tool_use", "name": "Tool use", "frontier_flag": "consensus"},
+    {"id": 9, "slug": "planning", "name": "Planning and search", "frontier_flag": "consensus"},
     {"id": 3, "slug": "reflection", "name": "Reflection and self-correction", "frontier_flag": "consensus"},
     {"id": 4, "slug": "agent_memory", "name": "Agent memory", "frontier_flag": "consensus"},
     {"id": 5, "slug": "skill_learning", "name": "Skill learning and lifelong agents", "frontier_flag": "consensus"},
     {"id": 6, "slug": "multi_agent", "name": "Multi-agent collaboration", "frontier_flag": "contested"},
+    {"id": 10, "slug": "code_agents", "name": "Code agents and software engineering", "frontier_flag": "consensus"},
+    {"id": 11, "slug": "agent_evaluation", "name": "Agent evaluation and benchmarks", "frontier_flag": "consensus"},
     {"id": 7, "slug": "agent_taxonomy", "name": "Agent architecture taxonomy", "frontier_flag": "consensus"},
 ]
 EDGES = [
-    (1, 2), (1, 3), (1, 4), (3, 5), (1, 6), (1, 7),
+    (8, 1),   # chain-of-thought -> react
+    (8, 9),   # chain-of-thought -> planning
+    (1, 2), (1, 3), (1, 4), (1, 6), (1, 7),
+    (3, 5),   # reflection -> skill learning
+    (9, 10), (2, 10), (6, 10),   # planning/tool use/multi-agent -> code agents
+    (2, 11), (6, 11), (10, 11),  # capabilities feed evaluation
 ]
 SLUG_TO_ID = {c["slug"]: c["id"] for c in CONCEPTS}
 
 # Curated paper -> concept binding (arxiv_id, paper_id, title, year, concept_slug).
 PAPERS = [
+    ("2201.11903", 9, "Chain-of-Thought Prompting Elicits Reasoning in Large Language Models", 2022, "cot_reasoning"),
     ("2210.03629", 1, "ReAct: Synergizing Reasoning and Acting in Language Models", 2022, "react"),
     ("2302.04761", 2, "Toolformer: Language Models Can Teach Themselves to Use Tools", 2023, "tool_use"),
     ("2303.11366", 3, "Reflexion: Language Agents with Verbal Reinforcement Learning", 2023, "reflection"),
+    ("2305.10601", 10, "Tree of Thoughts: Deliberate Problem Solving with Large Language Models", 2023, "planning"),
     ("2304.03442", 4, "Generative Agents: Interactive Simulacra of Human Behavior", 2023, "agent_memory"),
     ("2305.16291", 5, "Voyager: An Open-Ended Embodied Agent with Large Language Models", 2023, "skill_learning"),
+    ("2310.08560", 11, "MemGPT: Towards LLMs as Operating Systems", 2023, "agent_memory"),
     ("2308.11432", 6, "A Survey on Large Language Model Based Autonomous Agents", 2023, "agent_taxonomy"),
     ("2308.00352", 7, "MetaGPT: Meta Programming for a Multi-Agent Collaborative Framework", 2023, "multi_agent"),
     ("2303.17760", 8, "CAMEL: Communicative Agents for Mind Exploration of LLM Society", 2023, "multi_agent"),
+    ("2308.08155", 12, "AutoGen: Enabling Next-Gen LLM Applications via Multi-Agent Conversation", 2023, "multi_agent"),
+    ("2305.15334", 13, "Gorilla: Large Language Model Connected with Massive APIs", 2023, "tool_use"),
+    ("2405.15793", 14, "SWE-agent: Agent-Computer Interfaces Enable Automated Software Engineering", 2024, "code_agents"),
+    ("2308.03688", 15, "AgentBench: Evaluating LLMs as Agents", 2023, "agent_evaluation"),
+    ("2310.06770", 16, "SWE-bench: Can Language Models Resolve Real-World GitHub Issues?", 2023, "agent_evaluation"),
 ]
 
 
@@ -125,7 +142,11 @@ def build_corpus() -> dict:
 
     return {
         "topic": TOPIC,
-        "targets": ["react", "reflection", "tool_use"],
+        "targets": [
+            "cot_reasoning", "react", "tool_use", "planning",
+            "reflection", "agent_memory", "multi_agent",
+            "code_agents", "agent_evaluation",
+        ],
         "concepts": CONCEPTS,
         "edges": [{"prereq_concept": p, "target_concept": t, "edge_type": "prerequisite",
                    "source": "curated", "confidence": 1.0} for p, t in EDGES],

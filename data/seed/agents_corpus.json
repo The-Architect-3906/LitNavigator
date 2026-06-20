@@ -1,11 +1,23 @@
 {
   "topic": "LLM-based autonomous agents",
   "targets": [
+    "cot_reasoning",
     "react",
+    "tool_use",
+    "planning",
     "reflection",
-    "tool_use"
+    "agent_memory",
+    "multi_agent",
+    "code_agents",
+    "agent_evaluation"
   ],
   "concepts": [
+    {
+      "id": 8,
+      "slug": "cot_reasoning",
+      "name": "Chain-of-thought reasoning",
+      "frontier_flag": "consensus"
+    },
     {
       "id": 1,
       "slug": "react",
@@ -17,6 +29,12 @@
       "id": 2,
       "slug": "tool_use",
       "name": "Tool use",
+      "frontier_flag": "consensus"
+    },
+    {
+      "id": 9,
+      "slug": "planning",
+      "name": "Planning and search",
       "frontier_flag": "consensus"
     },
     {
@@ -44,6 +62,18 @@
       "frontier_flag": "contested"
     },
     {
+      "id": 10,
+      "slug": "code_agents",
+      "name": "Code agents and software engineering",
+      "frontier_flag": "consensus"
+    },
+    {
+      "id": 11,
+      "slug": "agent_evaluation",
+      "name": "Agent evaluation and benchmarks",
+      "frontier_flag": "consensus"
+    },
+    {
       "id": 7,
       "slug": "agent_taxonomy",
       "name": "Agent architecture taxonomy",
@@ -51,6 +81,20 @@
     }
   ],
   "edges": [
+    {
+      "prereq_concept": 8,
+      "target_concept": 1,
+      "edge_type": "prerequisite",
+      "source": "curated",
+      "confidence": 1.0
+    },
+    {
+      "prereq_concept": 8,
+      "target_concept": 9,
+      "edge_type": "prerequisite",
+      "source": "curated",
+      "confidence": 1.0
+    },
     {
       "prereq_concept": 1,
       "target_concept": 2,
@@ -73,13 +117,6 @@
       "confidence": 1.0
     },
     {
-      "prereq_concept": 3,
-      "target_concept": 5,
-      "edge_type": "prerequisite",
-      "source": "curated",
-      "confidence": 1.0
-    },
-    {
       "prereq_concept": 1,
       "target_concept": 6,
       "edge_type": "prerequisite",
@@ -92,9 +129,64 @@
       "edge_type": "prerequisite",
       "source": "curated",
       "confidence": 1.0
+    },
+    {
+      "prereq_concept": 3,
+      "target_concept": 5,
+      "edge_type": "prerequisite",
+      "source": "curated",
+      "confidence": 1.0
+    },
+    {
+      "prereq_concept": 9,
+      "target_concept": 10,
+      "edge_type": "prerequisite",
+      "source": "curated",
+      "confidence": 1.0
+    },
+    {
+      "prereq_concept": 2,
+      "target_concept": 10,
+      "edge_type": "prerequisite",
+      "source": "curated",
+      "confidence": 1.0
+    },
+    {
+      "prereq_concept": 6,
+      "target_concept": 10,
+      "edge_type": "prerequisite",
+      "source": "curated",
+      "confidence": 1.0
+    },
+    {
+      "prereq_concept": 2,
+      "target_concept": 11,
+      "edge_type": "prerequisite",
+      "source": "curated",
+      "confidence": 1.0
+    },
+    {
+      "prereq_concept": 6,
+      "target_concept": 11,
+      "edge_type": "prerequisite",
+      "source": "curated",
+      "confidence": 1.0
+    },
+    {
+      "prereq_concept": 10,
+      "target_concept": 11,
+      "edge_type": "prerequisite",
+      "source": "curated",
+      "confidence": 1.0
     }
   ],
   "papers": [
+    {
+      "id": 9,
+      "arxiv_id": "2201.11903",
+      "title": "Chain-of-Thought Prompting Elicits Reasoning in Large Language Models",
+      "year": 2022
+    },
     {
       "id": 1,
       "arxiv_id": "2210.03629",
@@ -114,6 +206,12 @@
       "year": 2023
     },
     {
+      "id": 10,
+      "arxiv_id": "2305.10601",
+      "title": "Tree of Thoughts: Deliberate Problem Solving with Large Language Models",
+      "year": 2023
+    },
+    {
       "id": 4,
       "arxiv_id": "2304.03442",
       "title": "Generative Agents: Interactive Simulacra of Human Behavior",
@@ -123,6 +221,12 @@
       "id": 5,
       "arxiv_id": "2305.16291",
       "title": "Voyager: An Open-Ended Embodied Agent with Large Language Models",
+      "year": 2023
+    },
+    {
+      "id": 11,
+      "arxiv_id": "2310.08560",
+      "title": "MemGPT: Towards LLMs as Operating Systems",
       "year": 2023
     },
     {
@@ -142,9 +246,63 @@
       "arxiv_id": "2303.17760",
       "title": "CAMEL: Communicative Agents for Mind Exploration of LLM Society",
       "year": 2023
+    },
+    {
+      "id": 12,
+      "arxiv_id": "2308.08155",
+      "title": "AutoGen: Enabling Next-Gen LLM Applications via Multi-Agent Conversation",
+      "year": 2023
+    },
+    {
+      "id": 13,
+      "arxiv_id": "2305.15334",
+      "title": "Gorilla: Large Language Model Connected with Massive APIs",
+      "year": 2023
+    },
+    {
+      "id": 14,
+      "arxiv_id": "2405.15793",
+      "title": "SWE-agent: Agent-Computer Interfaces Enable Automated Software Engineering",
+      "year": 2024
+    },
+    {
+      "id": 15,
+      "arxiv_id": "2308.03688",
+      "title": "AgentBench: Evaluating LLMs as Agents",
+      "year": 2023
+    },
+    {
+      "id": 16,
+      "arxiv_id": "2310.06770",
+      "title": "SWE-bench: Can Language Models Resolve Real-World GitHub Issues?",
+      "year": 2023
     }
   ],
   "chunks": [
+    {
+      "id": "c_2201.11903_1",
+      "paper_id": 9,
+      "concept_id": 8,
+      "text": "Abstract We explore how generating a chain of thought\u2014a series of intermediate reasoning steps\u2014signi\ufb01cantly improves the ability of large language models to perform complex reasoning. In particular, we show how such reasoning abilities emerge naturally in suf\ufb01ciently large language models via a simple method called chain-ofthought prompting, where a few chain of thought demonstrations are provided as exemplars in prompting. Experiments on three large language models show that chain-of-thought prompting improves performance on a range of arithmetic, commonsense, and symbolic reasoning tasks. The empirical gains can be striking. For instance, prompting a PaLM 540B with just eight chain-of-thought"
+    },
+    {
+      "id": "c_2201.11903_2",
+      "paper_id": 9,
+      "concept_id": 8,
+      "text": "exemplars achieves state-of-the-art accuracy on the GSM8K benchmark of math word problems, surpassing even \ufb01netuned GPT-3 with a veri\ufb01er. A: The cafeteria had 23 apples originally. They used 20 to make lunch. So they had 23 - 20 = 3. They bought 6 more apples, so they have 3 + 6 = 9. The answer is 9. Chain-of-Thought Prompting Q: Roger has 5 tennis balls. He buys 2 more cans of tennis balls. Each can has 3 tennis balls. How many tennis balls does he have now? A: The answer is 11. Q: The cafeteria had 23 apples. If they used 20 to make lunch and bought 6 more, how many apples do they have? A: The answer is 27. Standard Prompting Q: Roger has 5 tennis balls. He buys 2 more cans of tennis balls."
+    },
+    {
+      "id": "c_2201.11903_3",
+      "paper_id": 9,
+      "concept_id": 8,
+      "text": "Each can has 3 tennis balls. How many tennis balls does he have now? A: Roger started with 5 balls. 2 cans of 3 tennis balls each is 6 tennis balls. 5 + 6 = 11. The answer is 11. Q: The cafeteria had 23 apples. If they used 20 to make lunch and bought 6 more, how many apples do they have? Model Input Model Output Model Output Model Input Figure 1: Chain-of-thought prompting enables large language models to tackle complex arithmetic, commonsense, and symbolic reasoning tasks. Chain-of-thought reasoning processes are highlighted. 36th Conference on Neural Information Processing Systems (NeurIPS 2022). [cs.CL] 10 Jan 2023 1 Introduction Math Word Problems (GSM8K) 0 20 40 60 80 100 33 55 18 57 Solve"
+    },
+    {
+      "id": "c_2201.11903_4",
+      "paper_id": 9,
+      "concept_id": 8,
+      "text": "rate (%) Finetuned GPT-3 175B Prior best PaLM 540B: standard prompting PaLM 540B: chain-of-thought prompting Figure 2: PaLM 540B uses chain-ofthought prompting to achieve new stateof-the-art performance on the GSM8K benchmark of math word problems. Finetuned GPT-3 and prior best are from Cobbe et al. (2021). The NLP landscape has recently been revolutionized by language models (Peters et al., 2018; Devlin et al., 2019; Brown et al., 2020, inter alia). Scaling up the size of language models has been shown to confer a range of bene\ufb01ts, such as improved performance and sample ef\ufb01ciency (Kaplan et al., 2020; Brown et al., 2020, inter alia). However, scaling up model size alone has not proved suf\ufb01cient"
+    },
     {
       "id": "c_2210.03629_1",
       "paper_id": 1,
@@ -218,6 +376,30 @@
       "text": "Preprint. Under review. [cs.AI] 10 Oct 2023 In this paper, we propose an alternative approach called Reflexion that uses verbal reinforcement to help agents learn from prior failings. Reflexion converts binary or scalar feedback from the environment into verbal feedback in the form of a textual summary, which is then added as additional context for the LLM agent in the next episode. This self-reflective feedback acts as a \u2018semantic\u2019 gradient signal by providing the agent with a concrete direction to improve upon, helping it learn from prior mistakes to perform better on the task. This is akin to how humans iteratively learn to accomplish complex tasks in a few-shot manner \u2013 by reflecting on"
     },
     {
+      "id": "c_2305.10601_1",
+      "paper_id": 10,
+      "concept_id": 9,
+      "text": "Abstract Language models are increasingly being deployed for general problem solving across a wide range of tasks, but are still confined to token-level, left-to-right decision-making processes during inference. This means they can fall short in tasks that require exploration, strategic lookahead, or where initial decisions play a pivotal role. To surmount these challenges, we introduce a new framework for language model inference, \u201cTree of Thoughts\u201d (ToT), which generalizes over the popular \u201cChain of Thought\u201d approach to prompting language models, and enables exploration over coherent units of text (\u201cthoughts\u201d) that serve as intermediate steps toward problem solving. ToT allows LMs to perform"
+    },
+    {
+      "id": "c_2305.10601_2",
+      "paper_id": 10,
+      "concept_id": 9,
+      "text": "deliberate decision making by considering multiple different reasoning paths and self-evaluating choices to decide the next course of action, as well as looking ahead or backtracking when necessary to make global choices. Our experiments show that ToT significantly enhances language models\u2019 problem-solving abilities on three novel tasks requiring non-trivial planning or search: Game of 24, Creative Writing, and Mini Crosswords. For instance, in Game of 24, while GPT-4 with chain-of-thought prompting only solved 4% of tasks, our method achieved a success rate of 74%. Code repo with all prompts: https://github.com/princeton-nlp/tree-of-thought-llm . 1 Introduction Originally designed to generate"
+    },
+    {
+      "id": "c_2305.10601_3",
+      "paper_id": 10,
+      "concept_id": 9,
+      "text": "text, scaled-up versions of language models (LMs) such as GPT [25, 26, 1, 23] and PaLM [5] have been shown to be increasingly capable of performing an ever wider range of tasks requiring mathematical, symbolic, commonsense, and knowledge reasoning. It is perhaps surprising that underlying all this progress is still the original autoregressive mechanism for generating text, which makes token-level decisions one by one and in a left-to-right fashion. Is such a simple mechanism sufficient for a LM to be built toward a general problem solver? If not, what problems would challenge the current paradigm, and what should be alternative mechanisms? The literature on human cognition provides some clues"
+    },
+    {
+      "id": "c_2305.10601_4",
+      "paper_id": 10,
+      "concept_id": 9,
+      "text": "to answer these questions. Research on \u201cdual process\u201d models suggests that people have two modes in which they engage with decisions \u2013 a fast, automatic, unconscious mode (\u201cSystem 1\u201d) and a slow, deliberate, conscious mode (\u201cSystem 2\u201d) [30, 31, 16, 15]. These two modes have previously been connected to a variety of mathematical models used in machine learning. For example, research on reinforcement learning in humans and other animals has explored the circumstances under which they engage in associative \u201cmodel free\u201d learning or more deliberative \u201cmodel based\u201d planning [7]. The simple associative token-level choices of LMs are also reminiscent of \u201cSystem 1\u201d, and thus might benefit from augmentation"
+    },
+    {
       "id": "c_2304.03442_1",
       "paper_id": 4,
       "concept_id": 4,
@@ -264,6 +446,30 @@
       "paper_id": 5,
       "concept_id": 5,
       "text": "Introduction Building generally capable embodied agents that continuously explore, plan, and develop new skills in open-ended worlds is a grand challenge for the AI community [ 1\u20135]. Classical approaches employ reinforcement learning (RL) [6, 7] and imitation learning [8\u201310] that operate on primitive actions, which could be challenging for systematic exploration [11\u201315], interpretability [16\u201318], and generalization [19\u201321]. Recent advances in large language model (LLM) based agents harness the world knowledge encapsulated in pre-trained LLMs to generate consistent action plans or executable policies [16, 22, 19]. They are applied to embodied tasks like games and robotics [23\u201327], as well as"
+    },
+    {
+      "id": "c_2310.08560_1",
+      "paper_id": 11,
+      "concept_id": 4,
+      "text": "Abstract Large language models (LLMs) have revolutionized AI, but are constrained by limited context windows, hindering their utility in tasks like extended conversations and document analysis. To enable using context beyond limited context windows, we propose virtual context management, a technique drawing inspiration from hierarchical memory systems in traditional operating systems which provide the illusion of an extended virtual memory via paging between physical memory and disk. Using this technique, we introduce MemGPT (MemoryGPT), a system that intelligently manages different storage tiers in order to effectively provide extended context within the LLM\u2019s limited context window. We evaluate"
+    },
+    {
+      "id": "c_2310.08560_2",
+      "paper_id": 11,
+      "concept_id": 4,
+      "text": "our OS-inspired design in two domains where the limited context windows of modern LLMs severely handicaps their performance: document analysis, where MemGPT is able to analyze large documents that far exceed the underlying LLM\u2019s context window, and multi-session chat, where MemGPT can create conversational agents that remember, reflect, and evolve dynamically through long-term interactions with their users. We release MemGPT code and data for our experiments at https://research.memgpt.ai. 1. Introduction In recent years, large language models (LLMs) and their underlying transformer architecture (Vaswani et al., 2017; Devlin et al., 2018; Brown et al., 2020; Ouyang et al., 2022) have become the"
+    },
+    {
+      "id": "c_2310.08560_3",
+      "paper_id": 11,
+      "concept_id": 4,
+      "text": "cornerstone of conversational AI and have led to a wide array of consumer and enterprise applications. Despite these advances, the limited fixed-length context windows used by LLMs significantly hinders their applicability to long conversations or reasoning about long documents. For example, the most widely used open-source 1University of California, Berkeley. Correspondence to: Charles Packer <cpacker@berkeley.edu>. LLMs can only support a few dozen back-and-forth messages or reason about a short document before exceeding their maximum input length (Touvron et al., 2023). Directly extending the context length of transformers incurs a quadratic increase in computational time and memory cost"
+    },
+    {
+      "id": "c_2310.08560_4",
+      "paper_id": 11,
+      "concept_id": 4,
+      "text": "due to the transformer architecture\u2019s self-attention mechanism, making the design of new long-context architectures a pressing research challenge (Dai et al., 2019; Kitaev et al., 2020; Beltagy et al., 2020). While developing longer models is an active area of research (Dong et al., 2023), even if we could overcome the computational challenges of context scaling, recent research shows that longcontext models struggle to utilize additional context effectively (Liu et al., 2023a). As consequence, given the considerable resources needed to train state-of-the-art LLMs and diminishing returns of context scaling, there is a critical need for alternative techniques to support long context. In this"
     },
     {
       "id": "c_2308.11432_1",
@@ -336,6 +542,126 @@
       "paper_id": 8,
       "concept_id": 6,
       "text": "can be challenging, time-consuming, and sometimes impossible. Crafting effective prompts often demands a deep understanding and expertise of a particular domain of knowledge. Consider an individual who lacks trading expertise; they would find it difficult to create suitable prompts for directing a chat agent to develop a trading application. This predicament is raising a crucial question: can we replace human intervention with an autonomous communicative agent capable of steering the conversation toward task completion with minimal human supervision? To tackle this issue, it is crucial to conduct more research exploring the potential, \u2217Equal contribution 37th Conference on Neural Information"
+    },
+    {
+      "id": "c_2308.08155_1",
+      "paper_id": 12,
+      "concept_id": 6,
+      "text": ", Chi Wang\u22171 \u2217Microsoft Research, \u2020Pennsylvania State University \u00b1University of Washington,\u2213Xidian University Agent Customization Conversable agent Flexible Conversation Patterns \u2026 \u2026 \u2026 \u2026 \u2026 \u2026 \u2026 Hierarchical chatJoint chat Multi-Agent Conversations \u2026Execute the following code\u2026 Got it! Here is the revised code \u2026 No, please plot % change! Plot a chart of META and TESLA stock price change YTD. Output:$Month Output:%Month Error package yfinanceis not installed Sorry! Please first pip install yfinanceand then execute the code Installing\u2026 Example Agent Chat Figure 1: AutoGen enables diverse LLM-based applications using multi-agent conversations. (Left) AutoGen agents are conversable, customizable, and"
+    },
+    {
+      "id": "c_2308.08155_2",
+      "paper_id": 12,
+      "concept_id": 6,
+      "text": "can be based on LLMs, tools, humans, or even a combination of them. (Top-middle) Agents can converse to solve tasks. (Right) They can form a chat, potentially with humans in the loop. (Bottom-middle) The framework supports flexible conversation patterns. Abstract AutoGen2 is an open-source framework that allows developers to build LLM applications via multiple agents that can converse with each other to accomplish tasks. AutoGen agents are customizable, conversable, and can operate in various modes that employ combinations of LLMs, human inputs, and tools. Using AutoGen, developers can also flexibly define agent interaction behaviors. Both natural language and computer code can be used to program"
+    },
+    {
+      "id": "c_2308.08155_3",
+      "paper_id": 12,
+      "concept_id": 6,
+      "text": "flexible conversation patterns for different applications. AutoGen serves as a generic framework for building diverse applications of various complexities and LLM capacities. Empirical studies demonstrate the effectiveness of the framework in many example applications, with domains ranging from mathematics, coding, question answering, operations research, online decision-making, entertainment, etc. 1Corresponding author. Email: auto-gen@outlook.com 2https://github.com/microsoft/autogen [cs.AI] 3 Oct 2023 1 Introduction Large language models (LLMs) are becoming a crucial building block in developing powerfulagents that utilize LLMs for reasoning, tool usage, and adapting to new observations (Yao"
+    },
+    {
+      "id": "c_2308.08155_4",
+      "paper_id": 12,
+      "concept_id": 6,
+      "text": "et al., 2022; Xi et al., 2023; Wang et al., 2023b) in many real-world tasks. Given the expanding tasks that could benefit from LLMs and the growing task complexity, an intuitive approach to scale up the power of agents is to use multiple agents that cooperate. Prior work suggests that multiple agents can help encourage divergent thinking (Liang et al., 2023), improve factuality and reasoning (Du et al., 2023), and provide validation (Wu et al., 2023). In light of the intuition and early evidence of promise, it is intriguing to ask the following question:how can we facilitate the development of LLM applications that could span a broad spectrum of domains and complexities based on the multi-agent"
+    },
+    {
+      "id": "c_2305.15334_1",
+      "paper_id": 13,
+      "concept_id": 2,
+      "text": "Abstract Large Language Models (LLMs) have seen an impressive wave of advances recently, with models now excelling in a variety of tasks, such as mathematical reasoning and program synthesis. However, their potential to effectively use tools via API calls remains unfulfilled. This is a challenging task even for today\u2019s state-ofthe-art LLMs such as GPT-4, largely due to their inability to generate accurate input arguments and their tendency to hallucinate the wrong usage of an API call. We release Gorilla, a finetuned LLaMA-based model that surpasses the performance of GPT-4 on writing API calls. When combined with a document retriever, Gorilla demonstrates a strong capability to adapt to test-time"
+    },
+    {
+      "id": "c_2305.15334_2",
+      "paper_id": 13,
+      "concept_id": 2,
+      "text": "document changes, enabling flexible user updates or version changes. It also substantially mitigates the issue of hallucination, commonly encountered when prompting LLMs directly. To evaluate the model\u2019s ability, we introduce APIBench, a comprehensive dataset consisting of HuggingFace, TorchHub, and TensorHub APIs. The successful integration of the retrieval system with Gorilla demonstrates the potential for LLMs to use tools more accurately, keep up with frequently updated documentation, and consequently increase the reliability and applicability of their outputs. Gorilla\u2019s code, model, data, and demo are available athttps://gorilla.cs.berkeley.edu 1 Introduction Recent advances in large language"
+    },
+    {
+      "id": "c_2305.15334_3",
+      "paper_id": 13,
+      "concept_id": 2,
+      "text": "models (LLMs) [10, 5, 32, 6, 29, 30] have enabled significant new capabilities including natural dialogue, mathematical reasoning, and program synthesis. However, despite these advances, LLMs are still fundamentally limited by the information they can store in a fixed set of weights and the things they can compute using a static computation graph and limited context. Furthermore, as the world changes, LLMs require retraining to update their knowledge and reasoning capabilities. By empowering LLMs to use tools [33], we can grant access to vastly larger and changing knowledge bases and accomplish complex computational tasks. By providing access to search technologies and databases, [26, 39, 37]"
+    },
+    {
+      "id": "c_2305.15334_4",
+      "paper_id": 13,
+      "concept_id": 2,
+      "text": "demonstrated that we can augment LLMs to address a significantly larger and more dynamic knowledge space. Similarly, by providing access to computational tools, [39, 2] demonstrated that LLMs can accomplish complex computational tasks. Consequently, leading LLM providers[29], have started to integrate plugins to allow LLMs to invoke external tools through APIs. This transition from a small set of hand-coded tools, to the ability to invoke a vast space of changing cloud APIs could transform LLMs into the primary interface to computing infrastructure and the web. Tasks ranging from booking an entire vacation to hosting a conference, could become as simple as talking to an LLM that has access to"
+    },
+    {
+      "id": "c_2405.15793_1",
+      "paper_id": 14,
+      "concept_id": 10,
+      "text": "Abstract Language model (LM) agents are increasingly being used to automate complicated tasks in digital environments. Just as humans benefit from powerful software applications, such as integrated development environments, for complex tasks like software engineering, we posit that LM agents represent a new category of end users with their own needs and abilities, and would benefit from specially-built interfaces to the software they use. We investigate how interface design affects the performance of language model agents. As a result of this exploration, we introduce SWE-agent: a system that facilitates LM agents to autonomously use computers to solve software engineering tasks. SWE-agent\u2019s"
+    },
+    {
+      "id": "c_2405.15793_2",
+      "paper_id": 14,
+      "concept_id": 10,
+      "text": "custom agent-computer interface (ACI) significantly enhances an agent\u2019s ability to create and edit code files, navigate entire repositories, and execute tests and other programs. We evaluate SWE-agent on SWE-bench and HumanEvalFix, achieving state-of-the-art performance on both with a pass@1 rate of 12.5% and 87.7%, respectively, far exceeding the previous state-of-the-art achieved with non-interactive LMs. Finally, we provide insight on how the design of the ACI can impact agents\u2019 behavior and performance. 1 Introduction Recent work has demonstrated the efficacy of LM agents for code generation with execution feedback [39]. However, applying agents to more complex code tasks like software engineering"
+    },
+    {
+      "id": "c_2405.15793_3",
+      "paper_id": 14,
+      "concept_id": 10,
+      "text": "remains unexplored. To solve programming tasks, LM agents are typically designed to use existing applications, such as the Linux shell or Python interpreter [53, 57, 59]. However, to perform more complex programming tasks such as software engineering [20], human engineers benefit from sophisticated applications like VSCode with powerful tools and extensions. Inspired by human-computer interaction (HCI) studies on the efficacy of user interfaces for humans [7], we investigate whether LM agents could similarly benefit from better-designed interfaces for performing software engineering tasks. SWE-agent Filesystem sklearn/ examples/ README.rst Terminal Computer LM Agent Agent-Computer Interface"
+    },
+    {
+      "id": "c_2405.15793_4",
+      "paper_id": 14,
+      "concept_id": 10,
+      "text": "Navigate repo View files LM-friendly commands Search files Edit lines LM-friendly environment feedback Figure 1: SWE-agent is an LM interacting with a computer through an agent-computer interface (ACI), which includes the commands the agent uses and the format of the feedback from the computer. \u2217Equal contribution. Correspondence tojohnby@stanford.edu,carlosej@princeton.edu. Data, code, and leaderboard at swe-agent.com 38th Conference on Neural Information Processing Systems (NeurIPS 2024). [cs.SE] 11 Nov 2024 Consider the simple setting of an agent interacting directly with a Linux shell [59]. In practice, we find that LM agents can struggle to reliably take actions in this environment. For"
+    },
+    {
+      "id": "c_2308.03688_1",
+      "paper_id": 15,
+      "concept_id": 11,
+      "text": "ABSTRACT The potential of Large Language Model (LLM) as agents has been widely acknowledged recently. Thus, there is an urgent need to quantitativelyevaluate LLMs as agentson challenging tasks in interactive environments. We present AGENTBENCH, a multi-dimensional benchmark that consists of 8 distinct environments to assess LLM-as-Agent\u2019s reasoning and decision-making abilities. Our extensive test over 29 API-based and open-sourced (OSS) LLMs shows that, while top commercial LLMs present a strong ability of acting as agents in complex environments, there is a significant disparity in performance between them and many OSS competitors that are no larger than 70B. We identify the typical reasons"
+    },
+    {
+      "id": "c_2308.03688_2",
+      "paper_id": 15,
+      "concept_id": 11,
+      "text": "of failures in environments and LLMs, showing that poor long-term reasoning, decision-making, and instruction following abilities are the main obstacles for developing usable LLM agents. Improving instruction following and training on high quality multi-round alignment data could improve agent performance. And different from existing assumptions, training on code present ambivalent impacts on different agent tasks. Datasets, environments, and an integrated evaluation package for AGENTBENCH are released athttps://github.com/THUDM/AgentBench. Operating System Database Knowledge Graph Digital Card Game Lateral Thinking Puzzle House-holding Web Shopping Web Browsing gpt-4 (0613) claude-3 (opus)"
+    },
+    {
+      "id": "c_2308.03688_3",
+      "paper_id": 15,
+      "concept_id": 11,
+      "text": "glm-4 codellama-34b-instruct vicuna-13b-v1.5 llama-2-70b (a) Typical LLMs\u2019 AgentBench performance (relative) against the best in each environment. 0 1 2 3 4 AgentBench Overall Score gpt-4 claude-3 glm-4 claude-2 claude gpt-3.5-turbo text-davinci-003 claude-instant chat-bison-001 text-davinci-002 codellama-34b vicuna-13b llama-2-70b llama-2-13b ...... dolly-12b chatglm-6b oasst-12b API-based Commercial LLMs OSS LLMs 4.01 3.11 2.89 2.49 2.44 2.32 1.71 1.60 1.39 1.25 0.96 0.93 0.78 0.77 0.14 0.11 0.03 Avg:2.32Avg:0.51 (b) Overall scores of AgentBench across 8 environments. Dashed lines for two LLM types\u2019 average. Figure 1: An overview of LLMs on AGENTBENCH. While LLMs begin to manifest their proficiency"
+    },
+    {
+      "id": "c_2308.03688_4",
+      "paper_id": 15,
+      "concept_id": 11,
+      "text": "in LLM-as-Agent, gaps between models and the distance toward practical usability are significant. 1 INTRODUCTION Intelligent agents and autonomous entities (Searle, 1970; Maes, 1994; Wooldridge & Jennings, 1995) that are capable of decision-making and action execution in particular environments have been key concepts of artificial intelligence (AI) historically. Notwithstanding substantial advancements in deep learning algorithms applied in both computer vision and natural language processing (NLP), their potential for developing efficient and practically usable assisting agents remains largely unexplored. *XL and HY and HZ are lead authors that contributed equally. Email: {shawliu9,longinyh,"
+    },
+    {
+      "id": "c_2310.06770_1",
+      "paper_id": 16,
+      "concept_id": 11,
+      "text": "ABSTRACT Language models have outpaced our ability to evaluate them effectively, but for their future development it is essential to study the frontier of their capabilities. We find real-world software engineering to be a rich, sustainable, and challenging testbed for evaluating the next generation of language models. To this end, we introduce SWE-bench, an evaluation framework consisting of 2,294 software engineering problems drawn from real GitHub issues and corresponding pull requests across 12 popular Python repositories. Given a codebase along with a description of an issue to be resolved, a language model is tasked with editing the codebase to address the issue. Resolving issues in SWE-bench"
+    },
+    {
+      "id": "c_2310.06770_2",
+      "paper_id": 16,
+      "concept_id": 11,
+      "text": "frequently requires understanding and coordinating changes across multiple functions, classes, and even files simultaneously, calling for models to interact with execution environments, process extremely long contexts and perform complex reasoning that goes far beyond traditional code generation tasks. Our evaluations show that both state-ofthe-art proprietary models and our fine-tuned model SWE-Llama can resolve only the simplest issues. The best-performing model, Claude 2, is able to solve a mere 1.96% of the issues. Advances on SWE-bench represent steps towards LMs that are more practical, intelligent, and autonomous. 1 I NTRODUCTION Language models (LMs) are rapidly being deployed in commercial"
+    },
+    {
+      "id": "c_2310.06770_3",
+      "paper_id": 16,
+      "concept_id": 11,
+      "text": "products such as chatbots and coding assistants. At the same time, existing benchmarks have become saturated (Kiela et al., 2021; Ott et al., 2022) and fail to capture the frontier of what state-of-the-art LMs can and cannot do. There is a need for challenging benchmarks that more accurately reflect real-world applications of LMs to help shape their future development and usage (Srivastava et al., 2023). euclidean_diff matrix_transform dstack_struct_col vstack_struct_col join_struct_col Pre PR Post PR Tests Unit Tests data leak in GBDT due to warm start (This is about the nonhistogram-based version of... Issue Codebase sklearn/ examples/ setup.cfg setup.pyREADME.rst reqs.txt Language Model Generated"
+    },
+    {
+      "id": "c_2310.06770_4",
+      "paper_id": 16,
+      "concept_id": 11,
+      "text": "PR sklearn gradient_boosting.py utils helper.py +20 -12 Figure 1: SWE-bench sources task instances from real-world Python repositories by connecting GitHub issues to merged pull request solutions that resolve related tests. Provided with the issue text and a codebase snapshot, models generate a patch that is evaluated against real tests. Building a good benchmark is difficult since tasks must be challenging enough to stump existing models, but model predictions must also be easy to verify (Mart \u00b4\u0131nez-Plumed et al., 2021). Coding \u2217Equal contribution. Correspondence to carlosej@princeton.edu, johnby@stanford.edu. Data, code, and leaderboard at swebench.com 1 [cs.CL] 11 Nov 2024 Published as a"
     }
   ],
   "misconceptions": [

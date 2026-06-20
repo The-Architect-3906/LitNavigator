@@ -21,7 +21,7 @@ def test_extract_real_text_from_react_pdf():
 
 def test_corpus_fixture_is_real_and_well_formed():
     data = json.loads(Path(CORPUS).read_text(encoding="utf-8"))
-    assert len(data["papers"]) == 8
+    assert len(data["papers"]) == 16
     concept_ids = {c["id"] for c in data["concepts"]}
     # every chunk is tagged to a real concept and has substantial real text
     for ch in data["chunks"]:
@@ -49,10 +49,14 @@ def test_corpus_seeds_into_db_with_real_chunks():
     init_db(conn)
     seed_demo_data(conn, CORPUS)
     n_chunks = conn.execute("SELECT COUNT(*) FROM paper_chunks").fetchone()[0]
-    assert n_chunks >= 24
+    assert n_chunks >= 48
     react = repo.get_concept_by_slug(conn, "react")
     react_chunks = conn.execute(
         "SELECT text FROM paper_chunks WHERE concept_id=?", (react["id"],)
     ).fetchall()
     assert react_chunks, "react concept has ingested chunks"
     assert any("act" in r[0].lower() for r in react_chunks)
+    assert repo.get_concept_by_slug(conn, "cot_reasoning") is not None
+    assert repo.get_concept_by_slug(conn, "planning") is not None
+    assert repo.get_concept_by_slug(conn, "code_agents") is not None
+    assert repo.get_concept_by_slug(conn, "agent_evaluation") is not None

@@ -2,7 +2,7 @@
 
 This folder stores a small paper pack for LitNavigator's agent-focused competition track.
 
-Selection date: 2026-06-16
+Selection date: 2026-06-20
 
 ## Included papers
 
@@ -37,3 +37,35 @@ Selection date: 2026-06-16
 8. CAMEL: Communicative Agents for "Mind" Exploration of Large Language Model Society
    Source: https://arxiv.org/abs/2303.17760
    Why: role-playing, inter-agent communication, cooperative frameworks.
+
+9. Chain-of-Thought Prompting Elicits Reasoning in Large Language Models
+   Source: https://arxiv.org/abs/2201.11903
+   Why: reasoning prerequisite for ReAct and planning-heavy agent work.
+
+10. Tree of Thoughts: Deliberate Problem Solving with Large Language Models
+    Source: https://arxiv.org/abs/2305.10601
+    Why: planning and search over reasoning trajectories.
+
+11. MemGPT: Towards LLMs as Operating Systems
+    Source: https://arxiv.org/abs/2310.08560
+    Why: long-context memory architecture beyond simple memory primitives.
+
+12. SWE-agent: Agent-Computer Interfaces Enable Automated Software Engineering
+    Source: https://arxiv.org/abs/2405.15793
+    Why: code-agent loop design and practical software-task execution.
+
+13. AgentBench: Evaluating LLMs as Agents
+    Source: https://arxiv.org/abs/2308.03688
+    Why: benchmark coverage for agent capabilities across environments.
+
+14. AutoGen: Enabling Next-Gen LLM Applications via Multi-Agent Conversation
+    Source: https://arxiv.org/abs/2308.08155
+    Why: engineering-oriented multi-agent orchestration framework.
+
+15. Gorilla: Large Language Model Connected with Massive APIs
+    Source: https://arxiv.org/abs/2305.15334
+    Why: broad API-scale tool use beyond Toolformer's limited demonstrations.
+
+16. SWE-bench: Can Language Models Resolve Real-World GitHub Issues?
+    Source: https://arxiv.org/abs/2310.06770
+    Why: code-agent evaluation benchmark paired naturally with SWE-agent.
