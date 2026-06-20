@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import sqlite3
 
-from litnav.llm import client as llm_client
+from litnav.llm import router
 from litnav.state import BLOOM_LADDER, KP_CONF_THRESHOLD, KP_MASTERY_THRESHOLD, NavState, kp_bump, kp_confidence
 from litnav.storage import repo
 
@@ -30,7 +30,7 @@ def grade_kp_node(state: NavState, conn: sqlite3.Connection) -> dict:
     fallback_correct = bool(
         answer.strip() and quiz.get("answer_key", "").lower() in answer.lower()
     )
-    verdict = llm_client.complete_json(
+    verdict = router.complete_json(
         f"Grade this answer strictly against the rubric. Return JSON only.\n"
         f"Question: {quiz.get('question', '')}\n"
         f"Rubric: {rubric}\n"
@@ -39,11 +39,15 @@ def grade_kp_node(state: NavState, conn: sqlite3.Connection) -> dict:
         f"Learner's answer: {answer!r}\n"
         '{"correct": bool, "feedback": "one sentence", '
         '"misconception_resolved": ["list of misconception ids cleared, or empty"]}',
+        tier="cheap",
+        stage="grade",
         fallback={
             "correct": fallback_correct,
             "feedback": "Correct." if fallback_correct else f"Expected: {quiz.get('answer_key', '')}",
             "misconception_resolved": [],
         },
+        session_id=state["session_id"],
+        conn=conn,
     )
 
     correct = bool(verdict.get("correct"))

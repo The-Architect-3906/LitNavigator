@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import sqlite3
 
-from litnav.llm import client as llm_client
+from litnav.llm import router
 from litnav.state import ConceptProgress, KeyPointState, NavState
 from litnav.storage import repo
 
@@ -56,14 +56,18 @@ def teach_kp_node(state: NavState, conn: sqlite3.Connection) -> dict:
         f"Objective: {kp_meta['objective']}\n\n"
         f"From the paper: {evidence}"
     )
-    explanation = llm_client.complete_text(
+    explanation = router.complete_text(
         f"You are tutoring a researcher who is new to this subfield. "
         f"Teach ONLY the following key point, grounded strictly in the provided evidence. "
         f"Do NOT quiz or ask questions. Be clear and concise (3-5 sentences).\n\n"
         f"Key point: {kp_meta['name']}\n"
         f"Learning objective: {kp_meta['objective']}\n"
         f"Evidence (cite this as your source): {evidence}",
+        tier="cheap",
+        stage="teach",
         fallback=fallback,
+        session_id=state["session_id"],
+        conn=conn,
         max_tokens=300,
     )
 

@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import sqlite3
 
-from litnav.llm import client as llm_client
+from litnav.llm import router
 from litnav.state import TEACH_STRATEGIES, NavState
 from litnav.storage import repo
 
@@ -42,7 +42,7 @@ def reteach_kp_node(state: NavState, conn: sqlite3.Connection) -> dict:
         f"{instruction}\n\n"
         f"From the paper: {evidence}"
     )
-    explanation = llm_client.complete_text(
+    explanation = router.complete_text(
         f"A learner answered a {bloom}-level question about this key point incorrectly. "
         f"Re-teach ONLY this key point using the '{strategy}' strategy. "
         f"{instruction} Ground your explanation strictly in the evidence. "
@@ -50,7 +50,11 @@ def reteach_kp_node(state: NavState, conn: sqlite3.Connection) -> dict:
         f"Key point: {kp_meta['name']}\n"
         f"Objective: {kp_meta['objective']}\n"
         f"Evidence: {evidence}",
+        tier="cheap",
+        stage="reteach",
         fallback=fallback,
+        session_id=state["session_id"],
+        conn=conn,
         max_tokens=250,
     )
 

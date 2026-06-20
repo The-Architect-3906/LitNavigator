@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import sqlite3
 
-from litnav.llm import client as llm_client
+from litnav.llm import router
 from litnav.state import BLOOM_LADDER, NavState
 from litnav.storage import repo
 
@@ -20,6 +20,7 @@ def _get_or_generate(
     keypoint_id: str,
     bloom: str,
     used_ids: list[int],
+    session_id: str | None = None,
 ) -> dict | None:
     """Cache-first quiz retrieval. Falls back to LLM generation on miss."""
     # 1) Cache hit (quiz_items table keyed by keypoint_id + bloom_level)
@@ -43,7 +44,7 @@ def _get_or_generate(
         "application":   "Application: give a concrete scenario and ask whether/how this concept applies. Short answer.",
     }.get(bloom, "Short answer quiz question.")
 
-    result = llm_client.complete_json(
+    result = router.complete_json(
         f"Generate ONE quiz question STRICTLY grounded in the evidence below. "
         f"Do not add facts not in the evidence. JSON only:\n"
         f'{{"question": "<question text>", "answer_key": "<key phrase>", '
@@ -52,7 +53,11 @@ def _get_or_generate(
         f"Key point: {kp_meta['name']}\n"
         f"Objective: {kp_meta['objective']}\n"
         f"Evidence: {evidence}",
+        tier="cheap",
+        stage="assess",
         fallback=None,
+        session_id=session_id,
+        conn=conn,
     )
     if not result or not result.get("question"):
         return None
@@ -108,7 +113,8 @@ def assess_next_node(state: NavState, conn: sqlite3.Connection) -> dict:
             bloom = BLOOM_LADDER[cur_idx + 1]
             target_kp_id = last_kp  # stay on same keypoint at higher level
 
-    quiz = _get_or_generate(conn, cp["concept_id"], target_kp_id, bloom, used_ids)
+    quiz = _get_or_generate(conn, cp["concept_id"], target_kp_id, bloom, used_ids,
+                            session_id=state["session_id"])
     reused = False
     if quiz is None and kp_states.get(target_kp_id, {}).get("last_result") == "wrong":
         # After a reteach, the learner still needs a same-level check. If the fixture only
