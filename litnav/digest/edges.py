@@ -16,7 +16,7 @@ from litnav.llm import router
 
 # Mirror of induce's strength keys (declared locally to avoid importing a private name).
 _VALID_STRENGTH = {"weak_hint", "general_statement", "explicit_assertion"}
-_SIM_COS_MIN = 0.55   # below this cosine, two concepts are not "similar"
+_SIM_COS_MIN = 0.55   # heuristic: below this cosine, two concepts are not "similar" (tune via edge-accuracy)
 
 
 def _label_strength(chunk_texts: list[str], fallback: str, *, session_id, conn, budget) -> str:
@@ -82,7 +82,8 @@ def build_edges(di: DigestInput, concepts: list[dict], *, candidate: dict,
         a, b = e["a_slug"], e["b_slug"]
         if a not in slugs or b not in slugs:
             continue
-        if centroid and _cosine(centroid[a], centroid[b]) < _SIM_COS_MIN:
+        if (centroid and a in centroid and b in centroid
+                and _cosine(centroid[a], centroid[b]) < _SIM_COS_MIN):
             continue                                   # live: drop pairs that are not actually close
         conf = induced_confidence(len(e["evidence_chunks"]), e["max_strength"],
                                   e.get("multi_paper", False))
