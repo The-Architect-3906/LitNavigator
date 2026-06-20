@@ -91,6 +91,23 @@ Extends `main`'s schema (additive; existing tables keep working).
 - `papers(id, source_type ∈ {arxiv, wikipedia, youtube, pdf, web}, source_id, title, url)` —
   **new: `source_type`, `url`.**
 
+> **Impl note (2026-06-20):** Several intentional deviations exist between the schema above and the
+> code as built through OW-3 — all functionally equivalent or improvements, recorded here:
+>
+> - **Embeddings storage:** chunk embeddings live in a separate `chunk_vectors` table (JSON vector
+>   column), NOT as an `embedding BLOB` column on `paper_chunks`. This is the pre-existing M4 design
+>   choice; it separates large vector data from chunk metadata (functionally equivalent).
+> - **IRT difficulty:** `quiz_items.irt_b REAL` carries the Rasch IRT difficulty parameter as
+>   specced; the legacy `quiz_items.difficulty` column remains as `INTEGER` (not changed to `REAL`).
+>   For all IRT computations `irt_b` is authoritative.
+> - **JSON column naming:** the JSON-holding columns in the live schema omit the `_json` suffix:
+>   `concept_edges.evidence` (not `evidence_json`), `learner_state.held_misconceptions` (not
+>   `held_misconceptions_json`), `learner_state.tried_strategies` (not `tried_strategies_json`).
+>   They hold JSON; the naming is cosmetic.
+> - **`papers.source_id`:** the live schema has only `arxiv_id TEXT UNIQUE`; non-arXiv source ids
+>   were written into `arxiv_id`. A generic `source_id` column is being added as part of this
+>   remediation (closes audit finding D3) — the spec entry above already reflects the target state.
+
 ### 4.2 Learner model (the ground truth)
 - `learner_state(session_id, concept_id, mastery REAL, confidence REAL, n_observations,
   held_misconceptions_json, tried_strategies_json, irt_theta REAL NULL)` — extend with Rasch/IRT
@@ -138,6 +155,21 @@ A single chokepoint: `litnav/llm/router.py` wraps `llm/client.py`.
   `record-only` (disabled) with a one-line rationale and surfaced for approval. **Never enable a new
   model silently.**
 
+> **Deferred → OW-4:** The escalation gate (start-cheap → frontier-on-signal), reason-logging per
+> escalation decision, and pedagogical-error-cost routing are implemented at OW-4 (teach/assess
+> extensions). OW-0 ships the metered chokepoint, `MODEL_REGISTRY`, per-session budget hard cap,
+> and (now, as of this remediation) the 80% spend alert + a hard refusal of any model not present
+> in `MODEL_REGISTRY` (closes audit finding D7 — the qwen-plus silent bypass).
+>
+> **Impl note (2026-06-20):** The semantic result cache (exact hash + cosine ≥ 0.92) is
+> implemented in `litnav/llm/result_cache.py` and is enabled for digest structured calls (closes
+> audit finding D4 for the result-cache half). Prompt-prefix caching is handled server-side by
+> OpenAI's automatic prefix cache — no client-side code is required or maintained.
+>
+> **Deferred → OW-6:** The Glass-box live meter is not yet wired to `cost_ledger`. The current
+> `ui/cost.py` reads the legacy `tutor_turns` table; rewiring to `cost_ledger` is part of the
+> dual-frontend milestone (OW-6).
+
 ## 6. Stage skills — contracts
 
 Each is an Anthropic Skill (`SKILL.md` + scripts) the outer agent invokes. Contracts are JSON;
@@ -151,6 +183,16 @@ each must run offline-deterministically when `provider=none` (return a fixture o
   youtube-transcript) → BM25 prefilter → SPECTER rerank → dedup → authority score. 2–3 iterative
   rounds for systematic/deep intents.
 - **Cost:** metadata-only first; full-text fetch only top-k. Semantic query cache.
+
+> **Impl note (2026-06-20):** BM25 keyword prefilter and the semantic query cache are now
+> implemented (closes audit findings D2 and D5). SPECTER rerank is substituted by
+> `text-embedding-3-small` cosine similarity (SPECTER deferred — recorded in OW-3 plan/SKILL.md).
+> Adapters shipped: **OpenAlex** + **Wikipedia** (plus arXiv full-text fetch for top-k results via
+> OpenAlex ids). arXiv is currently reached through OpenAlex ids; there is no standalone arXiv
+> *search* adapter.
+>
+> **Deferred (recorded):** Semantic Scholar + youtube-transcript adapters; a standalone arXiv
+> search adapter; 2–3 iterative rounds for systematic intent (recorded in OW-3 plan as A-iter).
 
 ### 6.2 `digest-corpus` (DIGEST)
 - **In:** `{sources, domain_key}`
@@ -174,6 +216,20 @@ each must run offline-deterministically when `provider=none` (return a fixture o
   similarity fallback (KnowLP) + user/teacher override; **cache the result** (`digest_cache`) so the
   identical slice is a cache hit next time. No predicted allowlist — the cache only remembers real
   past requests.
+
+> **Impl note (2026-06-20):** Prereq edges use **RefD-style + LLM** as specced: a non-LLM corpus
+> reference-distance signal (`litnav/digest/refd.py`) is blended with the LLM judge, and RefD can
+> corroborate a judge-rejected high-impact edge (closes audit finding D1). Multi-source digest is
+> supported by the code — `sources` is a list, chunks are globally indexed; single-source vs
+> multi-source live validation is tracked as action A4.
+>
+> **Deferred → OW-4/OW-7:** Incremental graph extension ("extend the graph as the learner strays
+> into new sub-areas") — this requires the teach/assess outer-loop awareness built in OW-4 and the
+> live cold-start path from OW-7.
+>
+> **Deferred → OW-6:** User/teacher edge override UI; streaming digest progress to the frontend
+> ("finding sources → extracting concepts → building map") — both require the dual-frontend work
+> in OW-6.
 
 ### 6.3 TEACH/ASSESS — **LangGraph inner loop, not a skill** (reuse + extend `main`)
 - Add **goal elicitation** node (1 turn → `learner_goal.goal_type`), which sets the Bloom ceiling
@@ -269,6 +325,10 @@ the Glass-box.
   `verify_artifact` (deck/map renders from fixture).
 - **Live smoke tests** are manual and metered (one per skill), never in the offline gate.
 
+> **Cross-link (2026-06-20):** See `docs/2026-06-20-spec-compliance-audit.md` (2026-06-20 full
+> OW-0..OW-3 audit) and `docs/2026-06-20-open-world-live-first-reaudit.md` (live-first doctrine
+> that supersedes the original §10 offline-gate posture).
+
 ## 11. Decisions (resolved 2026-06-20)
 1. ✅ **Learner-model backbone:** extend `main`'s BKT-lite + a lightweight **Rasch placement**;
    adopt a CAT library only if/when item-selection is needed.
@@ -303,3 +363,7 @@ evidence is genuinely thin. We do not pretend otherwise; each has a designed-in 
 Two further evidence-driven design choices (consensus, not risk): **the tutor LLM never judges
 correctness/mastery** (externalize to KT — "Confirming Correct, Missing the Rest"; "Specialised KT
 Models Outperform LLMs"); **routing is priced against pedagogical-error cost, not token cost** (§5).
+
+> **Cross-link (2026-06-20):** See `docs/2026-06-20-spec-compliance-audit.md` (2026-06-20 full
+> OW-0..OW-3 audit) and `docs/2026-06-20-open-world-live-first-reaudit.md` (live-first doctrine
+> that supersedes the original §10 offline-gate posture).
