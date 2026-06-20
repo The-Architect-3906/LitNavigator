@@ -20,6 +20,7 @@ class BudgetExceeded(RuntimeError):
 
 def _meter(*, conn, session_id, stage, tier, model, usd_per_1k, budget):
     """Record this call's cost; enforce the budget AFTER recording. Returns nothing."""
+    import warnings
     tokens = int(llm_client.last_token_cost() or 0)
     usd = round(tokens / 1000 * usd_per_1k, 6)
     actual_model = llm_client.last_model() or model
@@ -27,7 +28,13 @@ def _meter(*, conn, session_id, stage, tier, model, usd_per_1k, budget):
         cost_repo.record_cost(conn, session_id=session_id, stage=stage, tier=tier,
                               model=actual_model, total_tokens=tokens, usd=usd, cache_hit=False)
     if budget is not None and conn is not None and session_id is not None:
-        if cost_repo.session_spend(conn, session_id)["tokens"] >= budget:
+        spent = cost_repo.session_spend(conn, session_id)["tokens"]
+        if 0.8 * budget <= spent < budget:
+            warnings.warn(
+                f"session {session_id!r} at {spent}/{budget} tokens (>=80% of budget, stage={stage})",
+                stacklevel=2,
+            )
+        if spent >= budget:
             raise BudgetExceeded(
                 f"session {session_id!r} reached token budget {budget} (stage={stage})")
 
@@ -63,3 +70,10 @@ def embed_texts(texts: list[str], *, stage: str, tier: str = "embed",
     _meter(conn=conn, session_id=session_id, stage=stage, tier=tier, model=spec["model"],
            usd_per_1k=spec["usd_per_1k"], budget=budget)
     return out
+
+
+def over_budget_fraction(conn: sqlite3.Connection, session_id: str, budget: int | None) -> float:
+    """Return the fraction of budget consumed by session_id (0.0 if budget is falsy)."""
+    if not budget:
+        return 0.0
+    return round(cost_repo.session_spend(conn, session_id)["tokens"] / budget, 4)

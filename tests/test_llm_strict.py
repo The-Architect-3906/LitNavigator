@@ -123,3 +123,37 @@ def test_temperature_override_respected(monkeypatch):
     monkeypatch.setattr(c, "_client", lambda: _CapClient())
     c.complete_text("p", fallback="x", temperature=0.7)
     assert captured.get("temperature") == 0.7
+
+
+def test_unregistered_model_refused_before_call(monkeypatch):
+    # provider=qwen -> actual model "qwen-plus" is NOT in MODEL_REGISTRY -> must be REFUSED (ValueError),
+    # not silently fall back. The refusal must happen before any network/_client build.
+    monkeypatch.setenv("LITNAV_LLM_PROVIDER", "qwen")
+    monkeypatch.setenv("LITNAV_LLM_STRICT", "")        # even non-strict must refuse (it's a model-enablement guard)
+    import pytest as _pytest
+    with _pytest.raises(ValueError):
+        c.complete_text("p", fallback="fb")
+    with _pytest.raises(ValueError):
+        c.complete_json("p", fallback={})
+
+
+def test_registered_model_allowed(monkeypatch):
+    # provider=openai default model gpt-4o-mini IS registered -> no refusal
+    monkeypatch.setenv("LITNAV_LLM_PROVIDER", "openai")
+    monkeypatch.setattr(c, "_client", lambda: _FakeClient(resp=_Resp("hi", 5)))
+    assert c.complete_text("p", fallback="fb") == "hi"
+
+
+def test_budget_80pct_alert(monkeypatch):
+    import sqlite3, warnings
+    from litnav.llm import router
+    from litnav.storage.schema import init_db
+    monkeypatch.setattr(c, "complete_text", lambda *a, **k: "x")   # bypass real client in router test
+    monkeypatch.setattr(c, "last_token_cost", lambda: 850)
+    monkeypatch.setattr(c, "last_model", lambda: "gpt-4o-mini")
+    conn = sqlite3.connect(":memory:"); init_db(conn)
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        router.complete_text("p", tier="cheap", stage="x", session_id="s", conn=conn, fallback="fb", budget=1000)
+    assert any("80%" in str(x.message) or ">=80" in str(x.message).lower() for x in w)  # alert fired at 850/1000
+    assert router.over_budget_fraction(conn, "s", 1000) == 0.85

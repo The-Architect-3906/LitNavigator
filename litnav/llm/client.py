@@ -14,6 +14,8 @@ from __future__ import annotations
 import os
 import threading
 
+from litnav.llm import registry
+
 # Per-thread token cost: each calling thread sees its own counter so concurrent
 # sessions do not bleed cost into each other's records.
 _tls = threading.local()
@@ -75,10 +77,15 @@ def complete_json(prompt: str, *, schema_hint: str = "", fallback: dict, model: 
     _tls.model = None
     if _provider() == "none":
         return fallback
+    actual = "qwen-plus" if _provider() == "qwen" else (model or _chat_model())
+    if actual not in registry.enabled_model_names():
+        raise ValueError(
+            f"model {actual!r} is not in MODEL_REGISTRY (enable it there first; "
+            f"provider={_provider()!r}). Enabled: {sorted(registry.enabled_model_names())}."
+        )
+    _tls.model = actual
     try:
         import json
-        actual = "qwen-plus" if _provider() == "qwen" else (model or _chat_model())
-        _tls.model = actual
         response = _client().chat.completions.create(
             model=actual,
             messages=[{"role": "user", "content": prompt}],
@@ -106,9 +113,14 @@ def complete_text(prompt: str, *, fallback: str, max_tokens: int = 400, model: s
     _tls.model = None
     if _provider() == "none":
         return fallback
+    actual = "qwen-plus" if _provider() == "qwen" else (model or _chat_model())
+    if actual not in registry.enabled_model_names():
+        raise ValueError(
+            f"model {actual!r} is not in MODEL_REGISTRY (enable it there first; "
+            f"provider={_provider()!r}). Enabled: {sorted(registry.enabled_model_names())}."
+        )
+    _tls.model = actual
     try:
-        actual = "qwen-plus" if _provider() == "qwen" else (model or _chat_model())
-        _tls.model = actual
         response = _client().chat.completions.create(
             model=actual,
             messages=[{"role": "user", "content": prompt}],
