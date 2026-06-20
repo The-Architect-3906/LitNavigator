@@ -99,8 +99,12 @@ Extends `main`'s schema (additive; existing tables keep working).
 - `review_queue(session_id, concept_id, due_at, fsrs_state_json)` — **new (FSRS spacing).**
 
 ### 4.3 Digest cache & cost
-- `domain_digest(domain_key, status ∈ {warm, cold, building}, graph_version, built_at,
-  human_checked BOOL)` — warm = precomputed + human-checked; demo main domain is warm.
+- `domain_digest(domain_key, status ∈ {cached, building}, graph_version, built_at,
+  human_checked BOOL)` — a **demand-driven cache, NOT a predicted allowlist**. First request for a
+  slice = cache miss → live digest once → store. Subsequent requests = cache hit ("warm") =
+  instant + cheap. The cache self-warms from real usage; no domain is predicted ahead of time.
+  (The demo merely pre-runs the digest for the topic it will show — a staging convenience, not a
+  product assumption.)
 - `cost_ledger(session_id, ts, stage, model, input_tokens, output_tokens, usd, cache_hit BOOL)` —
   **new; backs the live cost meter and per-session budget cap.**
 
@@ -149,7 +153,13 @@ each must run offline-deterministically when `provider=none` (return a fixture o
   LLM) AND similarity edges** → keypoint+evidence binding + Bloom tag → **verify pass (frontier
   model) on high-impact edges only** → confidence scores. Writes to concept graph; low-confidence
   edges flagged, not silently trusted.
-- **Cost/quality:** warm domains precomputed+human-checked; cold domains live behind the gate.
+- **Just-in-time, sliced — this is what makes live digest realistic.** Digest **only the
+  goal-relevant slice** (the concepts the learner's current goal/question actually needs), NOT the
+  whole field. Incremental: extend the graph as the learner strays, reusing cached neighbours.
+- **Latency/cost/quality controls:** stream progress to the UI ("finding sources → extracting
+  concepts → building map"); cheap-extract + verify-only-high-impact; cap depth; confidence +
+  similarity fallback (KnowLP) + user/teacher override; **cache the result** so the same slice is
+  warm next time. No predicted allowlist — the cache fills from demand.
 
 ### 6.3 TEACH/ASSESS — **LangGraph inner loop, not a skill** (reuse + extend `main`)
 - Add **goal elicitation** node (1 turn → `learner_goal.goal_type`), which sets the Bloom ceiling
@@ -212,9 +222,10 @@ the Glass-box.
   *Gate:* every existing test still green; a synthetic run shows per-call metering. **Build first.**
 - **OW-1 — Data model:** schema additions (similarity edges, goal, review_queue, distractors,
   irt_b, source_type, cost_ledger) + repo writers + migration of `main`'s fixtures.
-- **OW-2 — `digest-corpus` skill (offline-fixture first):** extraction + prereq/similarity edges +
-  verify pass + confidence; warm-domain precompute path. *Gate:* digest a fixed source set → graph
-  matches a golden graph offline.
+- **OW-2 — `digest-corpus` skill (offline-fixture first):** just-in-time **sliced** extraction +
+  prereq/similarity edges + verify pass + confidence + **result caching** (`domain_digest`).
+  *Gate:* digest a fixed source set → graph matches a golden graph offline; a second request for the
+  same slice hits the cache.
 - **OW-3 — `find-sources` skill:** intent routing + adapters (arXiv/Wikipedia/youtube first) +
   ranking + cache. *Gate:* offline fixture sources; one live smoke test.
 - **OW-4 — TEACH/ASSESS extensions:** goal elicitation + metacognitive reteach + Bloom/distractor/
@@ -223,8 +234,9 @@ the Glass-box.
   worked-example, with the §6.4 selection matrix. *Gate:* render map/notes/deck offline from a
   fixture graph; format-selector picks the right form per scenario.
 - **OW-6 — `recommend-next` + outer agent loop wiring + dual-frontend panels.**
-- **OW-7 — live high-light:** cold-domain live digest demo path (pre-warmed main domain stays the
-  default).
+- **OW-7 — live cold-start digest:** end-to-end "ask a brand-new topic → live sliced digest →
+  teach" with streamed progress. (For the demo, the shown topic's cache is pre-filled so it's
+  instant; a genuinely fresh topic shows the real cold path.)
 
 ## 10. Verification strategy
 - **Offline determinism preserved:** all skills have a `provider=none` fixture path; the existing
@@ -240,8 +252,10 @@ the Glass-box.
    specifically use **Marp** first. Mind-map/notes/worked-example are first-class forms.
 3. ✅ **Models:** only today's `gpt-4o-mini` + `gpt-4o` are enabled. **Any** other need or better
    option — *including non-OpenAI* — is **record-only** until approved (§5 protocol).
-4. ⏳ **Deferred to OW-2:** which subject is the pre-digested "warm" baseline vs the live-digested
-   "cold" demo domain. Not blocking; decide when building `digest-corpus`.
+4. ✅ **No predicted "warm domain" allowlist.** "Warm/cold" = a **demand-driven cache** (§4.3):
+   first request live-digests the goal-relevant *slice* and caches it; later requests hit the cache.
+   The cache self-warms from usage. The demo just pre-runs the digest for its chosen topic (staging
+   convenience). Live cold-start digest is realistic *because* it is just-in-time and sliced (§6.2).
 
 ## 12. Cost & responsible-AI notes
 - Honest framing: ITS gains are modest (meta-analysis g≈0.27); mastery is an **estimate**, surfaced
