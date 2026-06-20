@@ -4,9 +4,10 @@
 
 Synthesis of 5 parallel research threads (source-discovery, digest→concept-graph, adaptive
 pedagogy, agent-architecture+cost, multi-format+assessment+next-step) plus their nested
-sub-searches. Live search hit a transient outage mid-run but all threads ultimately returned
-adversarially-verified, cited briefs. Specific `26xx` arXiv IDs are 2026 papers (plausible given
-today's date); confirm before formal citation. This brief feeds the architecture spec.
+sub-searches. Live search hit a transient outage + session-limit mid-run; the affected
+threads (DIGEST prerequisite-extraction; load-bearing IDs) were **re-verified live on
+2026-06-20** — see §11 Verification log. `26xx`/`25xx` arXiv IDs are 2025–2026 papers and the
+decision-critical ones are now confirmed. This brief feeds the architecture spec.
 
 ---
 
@@ -38,13 +39,18 @@ model cascade + precompute + caching** from day one.
 ## 2. DIGEST — sources → concept graph + keypoints + evidence (the core novelty)
 
 - **Prerequisite-relation extraction** is the distinctive, hard part (wiki/KG tools don't produce
-  it). Classic signal: **RefD (Reference Distance)** over Wikipedia; "concept prerequisite
-  learning" is an established sub-field. LLM distillation: **CLLMRec** (LLM distills prereq
-  relations from course text → cognitive-aligned graph, arXiv:2511.17041).
+  it). Classic signal: **RefD (Reference Distance)** (Liang et al.) over Wikipedia page-links —
+  asymmetric, irreflexive, beat early supervised methods. Established sub-field with datasets:
+  **LectureBank** (arXiv:1811.12181, prerequisite-chain learning for NLP education), AAAI "Concept
+  Extraction and Prerequisite Relation Learning", textbook-based prereq (arXiv:2011.10337), BERT
+  extraction (Bai 2021). LLM distillation: **CLLMRec** (LLM distills prereq relations from course
+  text → cognitive-aligned graph, arXiv:2511.17041).
 - **Graph construction at scale:** Microsoft **GraphRAG** (entity+typed-relation extraction →
   community detection → hierarchical summary) and **RAPTOR** (recursive summary tree).
-  **EDU-GraphRAG / KnowLP** auto-generates prereq + similarity graphs from raw educational data
-  (AAAI 2025, arXiv:2506.22303).
+  **EDU-GraphRAG / KnowLP** (AAAI 2025, arXiv:2506.22303) auto-generates **prereq + similarity**
+  graphs from raw data (TextGrad-optimized to cut hallucination) and **falls back to similarity
+  when a strict prereq chain blocks the learner** → our DIGEST should emit prereq *and* similarity
+  edges, not prereq alone.
 - **Inductive concept handling:** **SINKT** (CIKM 2024, arXiv:2407.01245) tracks knowledge on
   *unseen* concepts via LLM semantic embeddings — solves cold-start for arbitrary concepts.
 - **Survey + the key risk:** *Personalized Learning Path Recommendation Based on Knowledge
@@ -174,7 +180,8 @@ Ranked by impact:
     Haiku-class or DPO-tuned small tutor model later (record only).
   - a **retrieval re-ranker** — decide if needed beyond BM25 + free SPECTER.
   - embeddings: keep `text-embedding-3-small`.
-- [ ] Confirm specific `26xx` arXiv IDs before formal citation in the spec/paper.
+- [x] Confirm decision-critical arXiv IDs (done 2026-06-20 — see §11). Non-load-bearing IDs in the
+  long appendix lists still warrant a glance before formal paper citation.
 - [ ] Pick the demo's warm (pre-digested) domain(s) and the one cold domain for the live high-light.
 - [ ] Evaluate `catsim` vs `jsCAT` vs `girth` for our learner-model backbone (Rasch + EAP).
 
@@ -208,6 +215,25 @@ Ranked by impact:
 - **Bloom level is linearly decodable from LLM activations** (arXiv:2602.17229, ~95% via linear
   probing) — supports Bloom-targeted prompting; but **fine-tuned discriminative classifiers
   (SVM/DistilBERT, 91–94%) beat zero-shot LLMs (~72%)** at *classifying* Bloom level on small data.
+
+## 11. Verification log (live re-check, 2026-06-20)
+
+The threads/IDs that the mid-run outage had left on training-knowledge or "verify" status were
+re-checked live and **confirmed**:
+
+| Claim / paper | arXiv / venue | Status |
+|---|---|---|
+| RefD prereq metric + datasets (LectureBank, AAAI concept-extraction, textbook-prereq, BERT) | 1811.12181, 2011.10337, AAAI | ✅ confirmed — closes the DIGEST prereq-extraction gap |
+| Specialised KT models outperform LLMs (BKT-not-LLM decision) | 2603.02830 | ✅ exact title confirmed |
+| Confirming Correct, Missing the Rest (LLM over-validates → anti-over-help) | 2605.16207 | ✅ confirmed (7 agents, 10,836 pairs) |
+| KnowLP / GraphRAG-Induced Dual Knowledge Structure Graphs (DIGEST dual graph) | 2506.22303, **AAAI 2025** | ✅ confirmed + similarity-fallback insight |
+| Take Out Your Calculators (difficulty via LLM sim + IRT) | 2601.09953, UMD | ✅ confirmed (NAEP, r≈0.82) |
+| Distractor SOTA: DiVERT / LookAlike / DisGeM / D-GEN / PlausibleQA | 2406.19356 / 2505.01903 / 2409.18263 / 2504.13439 / 2502.16358 | ✅ all adversarially fact-checked |
+
+Remaining honest caveat: the *long appendix paper lists* (dozens of secondary citations) were
+gathered by sub-agents and corroborated across searches but not each individually fetched; glance
+before quoting any single one in a paper. No load-bearing design decision rests on an unverified
+citation.
 
 ## Appendix — key tools/libraries shortlist
 
