@@ -22,9 +22,10 @@ def _meter(*, conn, session_id, stage, tier, model, usd_per_1k, budget):
     """Record this call's cost; enforce the budget AFTER recording. Returns nothing."""
     tokens = int(llm_client.last_token_cost() or 0)
     usd = round(tokens / 1000 * usd_per_1k, 6)
+    actual_model = llm_client.last_model() or model
     if conn is not None:
-        cost_repo.record_cost(conn, session_id=session_id, stage=stage, tier=tier, model=model,
-                              total_tokens=tokens, usd=usd, cache_hit=False)
+        cost_repo.record_cost(conn, session_id=session_id, stage=stage, tier=tier,
+                              model=actual_model, total_tokens=tokens, usd=usd, cache_hit=False)
     if budget is not None and conn is not None and session_id is not None:
         if cost_repo.session_spend(conn, session_id)["tokens"] >= budget:
             raise BudgetExceeded(

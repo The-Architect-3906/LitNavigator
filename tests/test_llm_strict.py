@@ -71,3 +71,17 @@ def test_router_propagates_liveness_error_and_records_no_cost(monkeypatch):
     with pytest.raises(c.LivenessError):
         router.complete_text("p", tier="cheap", stage="x", session_id="s", conn=conn, fallback="fb")
     assert cost_repo.session_spend(conn, "s")["tokens"] == 0  # no cost row for a raised call
+
+
+def test_ledger_records_actual_model_not_registry_name(monkeypatch):
+    import sqlite3
+    from litnav.llm import router
+    from litnav.storage.schema import init_db
+    monkeypatch.setenv("LITNAV_LLM_PROVIDER", "openai")
+    monkeypatch.setenv("LITNAV_LLM_MODEL", "gpt-4o-mini-2024-07-18")
+    monkeypatch.setenv("LITNAV_LLM_STRICT", "")
+    monkeypatch.setattr(c, "_client", lambda: _FakeClient(resp=_Resp("hi", 10)))
+    conn = sqlite3.connect(":memory:"); init_db(conn)
+    router.complete_text("p", tier="cheap", stage="x", session_id="s", conn=conn, fallback="fb")
+    m = conn.execute("SELECT model FROM cost_ledger WHERE session_id='s'").fetchone()[0]
+    assert m == "gpt-4o-mini-2024-07-18"   # the ACTUAL env model, not registry "gpt-4o-mini"

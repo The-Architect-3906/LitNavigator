@@ -38,6 +38,11 @@ def last_token_cost() -> int:
     return getattr(_tls, "cost", 0)
 
 
+def last_model() -> str | None:
+    """Actual model string used by the most recent call on this thread (None when offline)."""
+    return getattr(_tls, "model", None)
+
+
 def _provider() -> str:
     return os.getenv("LITNAV_LLM_PROVIDER", "none")
 
@@ -67,11 +72,13 @@ def complete_json(prompt: str, *, schema_hint: str = "", fallback: dict) -> dict
     """Return a JSON dict from the configured LLM, or `fallback` when provider=none / on error."""
     _tls.cost = 0
     _tls.was_live = False
+    _tls.model = None
     if _provider() == "none":
         return fallback
     try:
         import json
         model = "qwen-plus" if _provider() == "qwen" else _chat_model()
+        _tls.model = model
         response = _client().chat.completions.create(
             model=model,
             messages=[{"role": "user", "content": prompt}],
@@ -95,10 +102,12 @@ def complete_text(prompt: str, *, fallback: str, max_tokens: int = 400) -> str:
     """Return a free-text completion (e.g. a grounded teaching turn), or `fallback` offline/on error."""
     _tls.cost = 0
     _tls.was_live = False
+    _tls.model = None
     if _provider() == "none":
         return fallback
     try:
         model = "qwen-plus" if _provider() == "qwen" else _chat_model()
+        _tls.model = model
         response = _client().chat.completions.create(
             model=model,
             messages=[{"role": "user", "content": prompt}],
@@ -121,9 +130,11 @@ def embed_texts(texts: list[str]) -> list[list[float]] | None:
     """Return one embedding vector per text, or None when offline (provider=none) / on error."""
     _tls.cost = 0
     _tls.was_live = False
+    _tls.model = None
     if _provider() == "none" or not texts:
         return None
     try:
+        _tls.model = _embed_model()
         response = _client().embeddings.create(model=_embed_model(), input=list(texts))
         try:
             _tls.cost = int(response.usage.total_tokens or 0)
