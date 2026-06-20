@@ -390,11 +390,12 @@ def get_chunk_paper_id(conn: sqlite3.Connection, chunk_id: str) -> int | None:
     return row[0] if row else None
 
 
-def create_paper(conn: sqlite3.Connection, *, arxiv_id: str | None, title: str,
+def create_paper(conn: sqlite3.Connection, *, source_id: str | None = None,
+                 arxiv_id: str | None = None, title: str,
                  source_type: str | None = None, url: str | None = None) -> int:
     cur = conn.execute(
-        "INSERT INTO papers (arxiv_id, title, source_type, url) VALUES (?,?,?,?)",
-        (arxiv_id, title, source_type, url),
+        "INSERT INTO papers (arxiv_id, title, source_type, url, source_id) VALUES (?,?,?,?,?)",
+        (arxiv_id, title, source_type, url, source_id),
     )
     conn.commit()
     return int(cur.lastrowid)

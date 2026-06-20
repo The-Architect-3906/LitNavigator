@@ -241,6 +241,7 @@ def init_db(conn: sqlite3.Connection) -> None:
         "ALTER TABLE concepts ADD COLUMN slice_key TEXT",
         "ALTER TABLE concept_edges ADD COLUMN slice_key TEXT",
         "ALTER TABLE digest_cache ADD COLUMN model_key TEXT",
+        "ALTER TABLE papers ADD COLUMN source_id TEXT",
     ]:
         try:
             conn.execute(stmt)
