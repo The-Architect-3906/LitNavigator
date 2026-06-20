@@ -249,7 +249,7 @@ def _digest_demo() -> int:
     from litnav.storage.schema import init_db
     from litnav.digest.contract import DigestInput, SourceDoc
     from litnav.digest import pipeline
-    os.environ.setdefault("LITNAV_LLM_PROVIDER", "none")
+    os.environ["LITNAV_LLM_PROVIDER"] = "none"  # demo is deterministic + $0; live digest is OW-7
     raw = json.loads(Path("data/seed/digest_sources_fixture.json").read_text(encoding="utf-8"))
     di = DigestInput(raw["domain_key"],
                      [SourceDoc(s["source_type"], s["source_id"], s["title"], s.get("url"), s["chunks"])
