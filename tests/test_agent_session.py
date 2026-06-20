@@ -59,6 +59,22 @@ def test_aside_answers_then_reposes_quiz(monkeypatch):
     assert _types(evs2)[-1] == "done"
 
 
+def test_reteach_request_during_quiz_is_not_graded_as_answer(monkeypatch):
+    monkeypatch.setenv("LITNAV_LLM_PROVIDER", "none")
+    a = _agent()
+    list(a.handle("I want to understand ReAct"))   # quiz now pending
+
+    before = a.conn.execute("SELECT count(*) FROM quiz_attempts").fetchone()[0]
+    evs = list(a.handle("I want to understand ReAct"))
+    after = a.conn.execute("SELECT count(*) FROM quiz_attempts").fetchone()[0]
+
+    t = _types(evs)
+    assert "reply" in t
+    assert "question" in t
+    assert "state" not in t
+    assert after == before
+
+
 def test_offline_aside_fallback_interrogative(monkeypatch):
     """Offline fallback routes interrogative messages as aside, not answer."""
     monkeypatch.setenv("LITNAV_LLM_PROVIDER", "none")

@@ -19,6 +19,18 @@ _Q_LEADS = {"what", "why", "how", "when", "where", "who", "whom", "which", "whos
             "will", "would", "should", "shall", "may", "might", "must",
             "can", "could", "wait", "explain", "hmm", "huh"}
 
+_RETEACH_CUES = (
+    "i want to understand",
+    "i want to learn",
+    "help me understand",
+    "teach me",
+    "explain again",
+    "can you explain",
+    "could you explain",
+    "i don't understand",
+    "i dont understand",
+)
+
 
 def _looks_interrogative(message: str) -> bool:
     """A cheap, deterministic 'is this a question?' test for the aside guard below."""
@@ -30,8 +42,20 @@ def _looks_interrogative(message: str) -> bool:
     return m.split()[0].strip(",.!") in _Q_LEADS
 
 
+def _looks_reteach_request(message: str) -> bool:
+    """Detect meta-requests for explanation that should not be graded as answers."""
+    m = " ".join(message.strip().lower().split())
+    if not m:
+        return False
+    return any(m.startswith(prefix) for prefix in _RETEACH_CUES)
+
+
 def _fallback(message: str, concepts: list[dict], off: dict | None, quiz_pending: bool) -> dict:
     if quiz_pending:
+        if _looks_reteach_request(message):
+            r = resolve_goal(message, concepts, off)
+            slug = r["slug"] if r["kind"] in ("concept", "induce") else None
+            return {"action": "aside", "slug": slug, "reply": ""}
         # If the message reads like a question rather than an answer attempt, treat it as an
         # aside even offline — the LLM dispatcher handles this more precisely when online.
         if _looks_interrogative(message):
@@ -62,9 +86,11 @@ def dispatch(message: str, *, concepts: list[dict], off: dict | None,
         "Choose ONE action:\n"
         "- answer: a quiz is pending and the message is an attempt to answer it. When a quiz is "
         "pending, DEFAULT to 'answer' — terse or partial replies still count as answer attempts.\n"
-        "- aside: ONLY when a quiz is pending AND the message is clearly phrased as a QUESTION "
-        "(not an answer attempt). Set slug ONLY to a listed concept whose name clearly matches "
-        "the question; if it is about something NOT in the list (even if related), set slug to null.\n"
+        "- aside: ONLY when a quiz is pending AND the message is either a clear QUESTION OR a "
+        "meta-request to re-explain/understand the concept (for example: 'I want to understand "
+        "ReAct', 'teach me again', 'I don't understand'). Set slug ONLY to a listed concept "
+        "whose name clearly matches the message; if it is about something NOT in the list "
+        "(even if related), set slug to null.\n"
         "- set_goal: no quiz pending and the user wants to learn a listed/off-skeleton concept; set slug.\n"
         "- chat: a greeting, small talk, or a question about you/your capabilities.\n"
         "- out_of_scope: the user wants to learn something NOT in the concept list.\n"
@@ -87,7 +113,9 @@ def dispatch(message: str, *, concepts: list[dict], off: dict | None,
     # grade + reteach (self-correcting). So while a quiz is pending, only honor 'aside' when the
     # message actually reads as a question; otherwise treat it as an answer attempt. (Offline the
     # fallback already returns 'answer', so this only ever corrects a live-LLM misclassification.)
-    if action == "aside" and quiz_pending and not _looks_interrogative(message):
+    if action == "aside" and quiz_pending and not (
+        _looks_interrogative(message) or _looks_reteach_request(message)
+    ):
         action, slug = "answer", None
     if action == "set_goal" and slug is None:
         return fb                      # can't teach an unknown target -> deterministic route

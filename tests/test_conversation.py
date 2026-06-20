@@ -17,6 +17,13 @@ def test_offline_quiz_pending_is_answer(monkeypatch):
     assert d["action"] == "answer"
 
 
+def test_offline_quiz_pending_reteach_request_is_aside(monkeypatch):
+    monkeypatch.setenv("LITNAV_LLM_PROVIDER", "none")
+    d = dispatch("I want to understand ReAct", **_ctx(quiz_pending=True, question="Q?"))
+    assert d["action"] == "aside"
+    assert d["slug"] == "react"
+
+
 def test_offline_goal_is_set_goal(monkeypatch):
     monkeypatch.setenv("LITNAV_LLM_PROVIDER", "none")
     d = dispatch("I want to understand ReAct", **_ctx())
@@ -66,6 +73,15 @@ def test_llm_aside_on_real_question_stays_aside(monkeypatch):
                         lambda *a, **k: {"action": "aside", "slug": "tool_use", "reply": ""})
     d = dispatch("is it the same as a function call?", **_ctx(quiz_pending=True, question="Q?"))
     assert d["action"] == "aside"
+
+
+def test_llm_aside_on_reteach_request_stays_aside(monkeypatch):
+    from litnav import conversation as conv
+    monkeypatch.setattr(conv.llm_client, "complete_json",
+                        lambda *a, **k: {"action": "aside", "slug": "react", "reply": ""})
+    d = dispatch("I want to understand ReAct", **_ctx(quiz_pending=True, question="Q?"))
+    assert d["action"] == "aside"
+    assert d["slug"] == "react"
 
 
 def test_hallucinated_slug_rejected(monkeypatch):
