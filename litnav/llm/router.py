@@ -51,11 +51,21 @@ def complete_text(prompt: str, *, tier: str, stage: str, fallback: str,
 
 def complete_json(prompt: str, *, tier: str, stage: str, fallback: dict,
                   session_id: str | None = None, conn: sqlite3.Connection | None = None,
-                  schema_hint: str = "", budget: int | None = None) -> dict:
+                  schema_hint: str = "", budget: int | None = None, cache: bool = False) -> dict:
     spec = registry.resolve_tier(tier)
+    if cache and conn is not None:
+        from litnav.llm import result_cache
+        hit, cached = result_cache.lookup(conn, stage, prompt, embedder=llm_client.embed_texts)
+        if hit:
+            cost_repo.record_cost(conn, session_id=session_id, stage=stage, tier=tier,
+                                  model=spec["model"], total_tokens=0, usd=0.0, cache_hit=True)
+            return cached
     out = llm_client.complete_json(prompt, schema_hint=schema_hint, fallback=fallback, model=spec["model"])
     _meter(conn=conn, session_id=session_id, stage=stage, tier=tier, model=spec["model"],
            usd_per_1k=spec["usd_per_1k"], budget=budget)
+    if cache and conn is not None:
+        from litnav.llm import result_cache
+        result_cache.store(conn, stage, prompt, out, embedder=llm_client.embed_texts)
     return out
 
 

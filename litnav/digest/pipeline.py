@@ -101,7 +101,7 @@ def _propose_quiz_seeds(concepts: list[dict], by_chunk: dict, candidate: dict, *
     )
     fallback = {"quiz_seeds": candidate.get("quiz_seeds", [])}
     result = router.complete_json(prompt, tier="cheap", stage="digest", fallback=fallback,
-                                  session_id=session_id, conn=conn, budget=budget)
+                                  session_id=session_id, conn=conn, budget=budget, cache=True)
     seeds = result.get("quiz_seeds") if isinstance(result, dict) else None
     if not isinstance(seeds, list):
         seeds = candidate.get("quiz_seeds", [])

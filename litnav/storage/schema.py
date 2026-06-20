@@ -225,6 +225,15 @@ CREATE TABLE IF NOT EXISTS discover_results (
     result_json TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS result_cache (
+    stage TEXT,
+    input_hash TEXT,
+    embedding TEXT,
+    result_json TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (stage, input_hash)
+);
 """
 
 

@@ -42,7 +42,7 @@ def extract_concepts(di: DigestInput, *, candidate: dict, session_id: str | None
         '"keypoints": [{"kp_id","concept_slug","name","objective","evidence_chunk_id","bloom_level"}]}'
     )
     result = router.complete_json(prompt, tier="cheap", stage="digest", fallback=candidate,
-                                  session_id=session_id, conn=conn, budget=budget)
+                                  session_id=session_id, conn=conn, budget=budget, cache=True)
 
     raw_concepts = result.get("concepts") if isinstance(result, dict) else None
     if isinstance(raw_concepts, list):

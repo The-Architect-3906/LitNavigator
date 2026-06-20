@@ -73,7 +73,7 @@ def _propose_edges(concepts: list[dict], by_chunk: dict, candidate: dict, *,
     fallback = {"prereq_edges": candidate.get("prereq_edges", []),
                 "similarity_edges": candidate.get("similarity_edges", [])}
     result = router.complete_json(prompt, tier="cheap", stage="digest", fallback=fallback,
-                                  session_id=session_id, conn=conn, budget=budget)
+                                  session_id=session_id, conn=conn, budget=budget, cache=True)
     if not isinstance(result, dict):
         return fallback
     return {"prereq_edges": result.get("prereq_edges") or [],
