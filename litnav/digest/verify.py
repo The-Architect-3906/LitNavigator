@@ -32,6 +32,9 @@ def _judge(edge: dict, judge_labels: dict, *, session_id, conn, budget) -> bool:
 def verify_edges(edges: list[dict], *, judge_labels: dict, session_id: str | None,
                  conn: sqlite3.Connection | None, budget: int | None = None
                  ) -> tuple[list[dict], list[dict]]:
+    """Gate prerequisite edges. Returns (all_edges_with_verified_flag, downgraded_edges):
+    every edge gets a `verified` bool; low-confidence or judge-rejected prereq edges are
+    downgraded to soft `similarity` edges and also collected into the second list."""
     out: list[dict] = []
     unverified: list[dict] = []
     for e in edges:
