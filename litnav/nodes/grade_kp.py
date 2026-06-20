@@ -109,6 +109,7 @@ def grade_kp_node(state: NavState, conn: sqlite3.Connection) -> dict:
             "bloom": bloom,
             "correct": correct,
             "mastery": s["mastery"],
+            "quiz_id": quiz.get("id"),   # needed by assess_next de-dup
         }],
     }
 
@@ -137,6 +138,6 @@ def assess_decider(state: NavState) -> str:
     if s.get("reteach_count", 0) < 2:
         return "reteach_kp"
 
-    # Exhausted reteaches → concept-level route decision
+    # Exhausted reteaches → check thresholds; 'hold' means concede and move on
     dec = route_decider_node(state)
-    return {"advance": "advance_kp", "replan": "diagnose", "hold": "assess_next"}[dec]
+    return {"advance": "advance_kp", "hold": "advance_kp"}[dec]

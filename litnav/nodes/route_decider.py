@@ -24,22 +24,22 @@ def _concept_confidence(kp_states: dict) -> float:
 
 
 def route_decider_node(state: NavState) -> str:
-    """Return 'advance' | 'hold' | 'replan' based on dual-threshold logic."""
+    """Return 'advance' | 'hold' based on dual-threshold logic.
+
+    Misconceptions within TEACH/ASSESS are concept-internal (flagged by quiz items).
+    They do NOT trigger 'replan' here — replan is only for the legacy tutor_router
+    path that calls diagnose() to detect missing prerequisites.
+    After reteach exhaustion, assess_decider maps 'hold' to advance_kp (concede).
+    """
     cp = state["concept_progress"]
     kp_states = cp["keypoint_state"]
 
     m = _concept_mastery(kp_states)
     c = _concept_confidence(kp_states)
-    unresolved = [mid for mid, held in cp.get("misconceptions", {}).items() if held]
 
-    if m >= KP_MASTERY_THRESHOLD and c >= KP_CONF_THRESHOLD and not unresolved:
+    if m >= KP_MASTERY_THRESHOLD and c >= KP_CONF_THRESHOLD:
         return "advance"
 
-    if unresolved:
-        # Persistent misconceptions → may need prereq — replan
-        return "replan"
-
-    # mastery OK but confidence insufficient (not enough observations) → quiz again
     return "hold"
 
 
@@ -75,7 +75,7 @@ def advance_kp_node(state: NavState, conn: sqlite3.Connection) -> dict:
 
     return {
         "route": route,
-        "concept_progress": {**cp, "phase": "done"},
+        "concept_progress": None,   # clear so next concept starts fresh (P2 fix)
         "rationale": rationale,
         "history": [{"event": "advance_kp", "concept_id": concept_id, "mastery": m, "confidence": c}],
     }

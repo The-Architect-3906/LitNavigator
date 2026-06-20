@@ -151,10 +151,9 @@ def build_graph(
     # assess_next is an interrupt point; user answers; graph resumes at grade_kp
     workflow.add_edge("assess_next", "grade_kp")
     workflow.add_conditional_edges("grade_kp", assess_decider, {
-        "assess_next": "assess_next",   # bloom upgrade or hold
-        "reteach_kp": "reteach_kp",    # wrong, reteach_count < 2
-        "advance_kp": "advance_kp",    # mastery + confidence both met
-        "diagnose": "diagnose",        # unresolved misconceptions → replan
+        "assess_next": "assess_next",   # correct → bloom upgrade; or hold → next question
+        "reteach_kp": "reteach_kp",    # wrong + reteach_count < 2
+        "advance_kp": "advance_kp",    # mastery+confidence met, OR reteach exhausted (concede)
     })
     workflow.add_edge("reteach_kp", "assess_next")
     workflow.add_edge("advance_kp", "select_next")
