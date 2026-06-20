@@ -3,6 +3,31 @@ from __future__ import annotations
 import operator
 from typing import Annotated, Dict, List, Literal, Optional, TypedDict
 
+BLOOM_LADDER = ["recall", "comprehension", "application"]
+TEACH_STRATEGIES = ["direct", "analogy", "contrast", "worked_example"]
+KP_MASTERY_THRESHOLD = 0.75
+KP_CONF_THRESHOLD = 0.50    # requires correct_obs >= 2 to pass
+
+
+class KeyPointState(TypedDict):
+    keypoint_id: str
+    mastery: float            # [0,1]
+    correct_obs: int          # independent correct observations (drives confidence)
+    last_result: Optional[str]          # "correct" | "wrong" | None
+    reteach_count: int
+    strategies_used: List[str]
+
+
+class ConceptProgress(TypedDict):
+    concept_id: int
+    phase: str                          # "teaching" | "assessing" | "done"
+    keypoints: List[str]                # ordered keypoint ids
+    taught_idx: int                     # how many keypoints have been taught
+    current_keypoint_id: Optional[str]
+    current_bloom: Optional[str]        # recall | comprehension | application
+    keypoint_state: Dict[str, KeyPointState]
+    misconceptions: Dict[str, bool]     # misconception_id -> still held
+
 
 class ConceptState(TypedDict):
     mastery: float
@@ -71,12 +96,28 @@ class NavState(TypedDict):
     mastery_threshold: float
     reteach_count: dict                     # {concept_id: int}
 
+    # Per-keypoint TEACH/ASSESS progress (None for concepts without keypoints)
+    concept_progress: Optional[ConceptProgress]
+
     # Append-only audit history (LangGraph merges with operator.add)
     history: Annotated[List[dict], operator.add]
 
 
 # Explanation strategies, tried in order; reteach picks the first not yet used.
 RETEACH_STRATEGIES = ["direct", "analogy", "worked_example", "contrast_case", "simpler_decomposition"]
+
+
+def kp_confidence(correct_obs: int) -> float:
+    """0 obs→0, 1 obs→0.30 (below threshold), 2 obs→0.60 (passes), saturates at 1.0."""
+    return round(min(1.0, 0.30 * correct_obs), 3)
+
+
+def kp_bump(mastery: float, bloom: str, correct: bool) -> float:
+    """Mastery update per keypoint: correct answers converge faster at higher bloom."""
+    gain = {"recall": 0.25, "comprehension": 0.40, "application": 0.55}.get(bloom, 0.25)
+    if correct:
+        return round(mastery + (1 - mastery) * gain, 3)
+    return round(max(0.0, mastery - 0.20), 3)
 
 
 def initial_concept_state() -> ConceptState:

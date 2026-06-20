@@ -188,14 +188,95 @@
       "text": "A common assumption is that adding more agents or more debate rounds always improves the answer. In practice the gains are task-dependent, and debate can amplify a shared error rather than correct it, so its benefit over a single strong agent remains contested."
     }
   ],
+  "keypoints": [
+    {
+      "id": "kp_react_1",
+      "concept_id": 1,
+      "name": "Interleaved Reasoning and Acting",
+      "objective": "Understand how ReAct alternates between Thought, Action, and Observation steps to solve tasks",
+      "evidence_chunk_id": "c_react_1",
+      "sort_order": 1
+    },
+    {
+      "id": "kp_react_2",
+      "concept_id": 1,
+      "name": "Advantages over Chain-of-Thought",
+      "objective": "Know why grounding reasoning in external observations prevents hallucinations that pure CoT cannot avoid",
+      "evidence_chunk_id": "c_react_2",
+      "sort_order": 2
+    },
+    {
+      "id": "kp_multi_1",
+      "concept_id": 6,
+      "name": "Role-based Collaboration via SOPs",
+      "objective": "Understand how encoding standardized operating procedures enables specialized agents to collaborate and hand off work",
+      "evidence_chunk_id": "c_multi_1",
+      "sort_order": 1
+    },
+    {
+      "id": "kp_taxonomy_1",
+      "concept_id": 7,
+      "name": "Survey Taxonomy of LLM Agents",
+      "objective": "Know the major axes (construction, planning, memory, tools, evaluation) that surveys use to organize the agent landscape",
+      "evidence_chunk_id": "c_taxonomy_1",
+      "sort_order": 1
+    }
+  ],
   "quiz_items": [
     {
       "id": 1,
       "concept_id": 1,
+      "keypoint_id": "kp_react_2",
+      "bloom_level": "recall",
       "qtype": "explain",
       "difficulty": 1,
       "question": "In one sentence, what makes ReAct different from plain chain-of-thought prompting?",
       "answer_key": "actions and observations",
+      "rubric": "Must mention that ReAct uses real actions and external observations, not just internal reasoning chains",
+      "expected_keypoints": ["actions", "observations", "external"],
+      "evidence_chunk_id": "c_react_2",
+      "source_paper_id": 1,
+      "targets_misconception": "react_is_just_cot"
+    },
+    {
+      "id": 101,
+      "concept_id": 1,
+      "keypoint_id": "kp_react_1",
+      "bloom_level": "recall",
+      "qtype": "explain",
+      "difficulty": 1,
+      "question": "What three types of output does a ReAct agent generate in each step?",
+      "answer_key": "reasoning trace, action, and observation",
+      "rubric": "Must name all three: a reasoning/thought step, a task-specific action, and an observation from the environment",
+      "expected_keypoints": ["reasoning", "action", "observation"],
+      "evidence_chunk_id": "c_react_1",
+      "source_paper_id": 1
+    },
+    {
+      "id": 102,
+      "concept_id": 1,
+      "keypoint_id": "kp_react_1",
+      "bloom_level": "comprehension",
+      "qtype": "explain",
+      "difficulty": 2,
+      "question": "Why does feeding observations back into the next reasoning step improve performance on long-horizon tasks compared to generating reasoning in one shot?",
+      "answer_key": "observations ground reasoning and allow error correction",
+      "rubric": "Should explain that real feedback from the environment (observations) lets the agent course-correct mid-task, preventing compounding errors that one-shot CoT cannot catch",
+      "expected_keypoints": ["grounding", "error correction", "iterative", "feedback"],
+      "evidence_chunk_id": "c_react_1",
+      "source_paper_id": 1
+    },
+    {
+      "id": 103,
+      "concept_id": 1,
+      "keypoint_id": "kp_react_2",
+      "bloom_level": "comprehension",
+      "qtype": "explain",
+      "difficulty": 2,
+      "question": "How does ReAct's use of external observations prevent the hallucination problems that pure chain-of-thought reasoning produces?",
+      "answer_key": "external sources replace fabricated facts",
+      "rubric": "Should connect that CoT relies on internal knowledge which can hallucinate, while ReAct's observations come from real external sources (search, APIs), grounding the output in actual retrieved facts",
+      "expected_keypoints": ["hallucination", "external", "grounding", "retrieved"],
       "evidence_chunk_id": "c_react_2",
       "source_paper_id": 1,
       "targets_misconception": "react_is_just_cot"
@@ -203,20 +284,56 @@
     {
       "id": 2,
       "concept_id": 6,
+      "keypoint_id": "kp_multi_1",
+      "bloom_level": "recall",
       "qtype": "explain",
       "difficulty": 1,
       "question": "In a multi-agent system like MetaGPT, what do the specialized role agents do with their intermediate work?",
       "answer_key": "collaborate and hand off",
+      "rubric": "Must mention that agents pass their outputs to other agents — collaboration and handoff of artifacts between roles",
+      "expected_keypoints": ["collaborate", "hand off", "intermediate", "artefacts"],
+      "evidence_chunk_id": "c_multi_1",
+      "source_paper_id": 7
+    },
+    {
+      "id": 201,
+      "concept_id": 6,
+      "keypoint_id": "kp_multi_1",
+      "bloom_level": "comprehension",
+      "qtype": "explain",
+      "difficulty": 2,
+      "question": "Why does encoding standardized operating procedures (SOPs) into a multi-agent system improve output quality compared to letting agents coordinate freely?",
+      "answer_key": "SOPs reduce coordination errors and enforce workflow consistency",
+      "rubric": "Should explain that SOPs give each agent a defined role and handoff protocol, reducing ambiguity and coordination overhead that would arise from free-form agent interaction",
+      "expected_keypoints": ["SOP", "role", "consistency", "workflow", "coordination"],
       "evidence_chunk_id": "c_multi_1",
       "source_paper_id": 7
     },
     {
       "id": 3,
       "concept_id": 7,
+      "keypoint_id": "kp_taxonomy_1",
+      "bloom_level": "recall",
       "qtype": "explain",
       "difficulty": 1,
       "question": "What do surveys of LLM-based autonomous agents provide to make sense of the field?",
       "answer_key": "concept map",
+      "rubric": "Must mention that surveys provide a structured map or taxonomy organizing the field's concepts",
+      "expected_keypoints": ["concept map", "taxonomy", "organize", "framework"],
+      "evidence_chunk_id": "c_taxonomy_1",
+      "source_paper_id": 6
+    },
+    {
+      "id": 301,
+      "concept_id": 7,
+      "keypoint_id": "kp_taxonomy_1",
+      "bloom_level": "comprehension",
+      "qtype": "explain",
+      "difficulty": 2,
+      "question": "Surveys organize LLM agents around construction, planning, memory, tool use, and evaluation. Why is having these five axes useful when comparing different agent architectures?",
+      "answer_key": "common dimensions enable systematic comparison",
+      "rubric": "Should explain that shared axes let researchers compare architectures on the same dimensions, highlight gaps, and identify which component each paper addresses",
+      "expected_keypoints": ["comparison", "dimensions", "systematic", "gaps"],
       "evidence_chunk_id": "c_taxonomy_1",
       "source_paper_id": 6
     }

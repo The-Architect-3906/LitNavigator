@@ -1,0 +1,134 @@
+"""ASSESS phase: select and pose the next quiz item.
+
+Quiz source: get_or_generate — hits cache (quiz_items table) first;
+generates via LLM with evidence grounding only on a cache miss.
+Demo core concepts should have their questions pre-generated offline
+so the live demo never depends on a live LLM call for question generation.
+"""
+from __future__ import annotations
+
+import sqlite3
+
+from litnav.llm import client as llm_client
+from litnav.state import BLOOM_LADDER, NavState
+from litnav.storage import repo
+
+
+def _get_or_generate(
+    conn: sqlite3.Connection,
+    concept_id: int,
+    keypoint_id: str,
+    bloom: str,
+    used_ids: list[int],
+) -> dict | None:
+    """Cache-first quiz retrieval. Falls back to LLM generation on miss."""
+    # 1) Cache hit (quiz_items table keyed by keypoint_id + bloom_level)
+    item = repo.get_quiz_by_kp_bloom(conn, keypoint_id, bloom, exclude_ids=used_ids)
+    if item:
+        return item
+
+    # 2) Cache miss — generate grounded quiz via LLM
+    kps = repo.get_keypoints(conn, concept_id)
+    kp_meta = next((k for k in kps if k["id"] == keypoint_id), None)
+    if not kp_meta:
+        return None
+
+    evidence = repo.get_chunk_text(conn, kp_meta.get("evidence_chunk_id") or "")
+    if not evidence:
+        return None
+
+    spec = {
+        "recall":        "Direct recall: ask what this key point IS. Short answer.",
+        "comprehension": "Comprehension: ask the learner to explain WHY or HOW, or distinguish it from a common misconception. Short answer.",
+        "application":   "Application: give a concrete scenario and ask whether/how this concept applies. Short answer.",
+    }.get(bloom, "Short answer quiz question.")
+
+    result = llm_client.complete_json(
+        f"Generate ONE quiz question STRICTLY grounded in the evidence below. "
+        f"Do not add facts not in the evidence. JSON only:\n"
+        f'{{"question": "<question text>", "answer_key": "<key phrase>", '
+        f'"rubric": "<grading rubric>", "expected_keypoints": ["keyword1", "keyword2"]}}\n'
+        f"Bloom level: {bloom} — {spec}\n"
+        f"Key point: {kp_meta['name']}\n"
+        f"Objective: {kp_meta['objective']}\n"
+        f"Evidence: {evidence}",
+        fallback=None,
+    )
+    if not result or not result.get("question"):
+        return None
+
+    # 3) Cache generated item back into quiz_items table
+    generated_id = repo.create_quiz_item(
+        conn,
+        concept_id=concept_id,
+        question=result["question"],
+        answer_key=result.get("answer_key", ""),
+        qtype="explain",
+        difficulty={"recall": 1, "comprehension": 2, "application": 3}.get(bloom, 1),
+        evidence_chunk_id=kp_meta["evidence_chunk_id"],
+        source_paper_id=None,
+        rubric=result.get("rubric"),
+        expected_keypoints=str(result.get("expected_keypoints", [])),
+        keypoint_id=keypoint_id,
+        bloom_level=bloom,
+    )
+    return {
+        "id": generated_id,
+        "concept_id": concept_id,
+        "keypoint_id": keypoint_id,
+        "bloom_level": bloom,
+        "question": result["question"],
+        "answer_key": result.get("answer_key", ""),
+        "rubric": result.get("rubric"),
+        "expected_keypoints": str(result.get("expected_keypoints", [])),
+        "evidence_chunk_id": kp_meta["evidence_chunk_id"],
+    }
+
+
+def assess_next_node(state: NavState, conn: sqlite3.Connection) -> dict:
+    """Select the next quiz item and pose it. Graph interrupts here to await user answer."""
+    cp = state["concept_progress"]
+    bloom = cp.get("current_bloom") or BLOOM_LADDER[0]
+
+    used_ids: list[int] = []
+    for qr_entry in (state.get("history") or []):
+        if qr_entry.get("event") == "grade_kp" and qr_entry.get("quiz_id"):
+            used_ids.append(qr_entry["quiz_id"])
+
+    # Pick the keypoint with the lowest mastery to quiz next
+    kp_states = cp["keypoint_state"]
+    target_kp_id = min(kp_states.items(), key=lambda kv: kv[1].get("mastery", 0.3))[0]
+
+    # After a correct answer, upgrade bloom for the same keypoint
+    last_kp = cp.get("current_keypoint_id")
+    last_result = kp_states.get(last_kp, {}).get("last_result") if last_kp else None
+    if last_result == "correct" and last_kp:
+        cur_idx = BLOOM_LADDER.index(bloom)
+        if cur_idx + 1 < len(BLOOM_LADDER):
+            bloom = BLOOM_LADDER[cur_idx + 1]
+            target_kp_id = last_kp  # stay on same keypoint at higher level
+
+    quiz = _get_or_generate(conn, cp["concept_id"], target_kp_id, bloom, used_ids)
+    if quiz is None:
+        # No quiz available at this bloom — fall through to route_decider
+        return {
+            "concept_progress": {**cp, "current_keypoint_id": target_kp_id, "current_bloom": bloom},
+            "current_quiz_item": None,
+            "rationale": f"No quiz available for keypoint '{target_kp_id}' at bloom={bloom} — skipping",
+            "history": [{"event": "assess_skip", "keypoint_id": target_kp_id, "bloom": bloom}],
+        }
+
+    updated_cp = {**cp, "current_keypoint_id": target_kp_id, "current_bloom": bloom}
+
+    return {
+        "concept_progress": updated_cp,
+        "current_quiz_item": quiz,
+        "rationale": f"ASSESS bloom={bloom} on keypoint '{target_kp_id}'",
+        "history": [{
+            "event": "assess_next",
+            "keypoint_id": target_kp_id,
+            "bloom": bloom,
+            "quiz_id": quiz.get("id"),
+            "question": quiz["question"],
+        }],
+    }

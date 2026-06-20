@@ -47,9 +47,20 @@ CREATE TABLE IF NOT EXISTS paper_chunks (
     embedding_id TEXT
 );
 
+CREATE TABLE IF NOT EXISTS keypoints (
+    id TEXT PRIMARY KEY,
+    concept_id INTEGER REFERENCES concepts(id),
+    name TEXT NOT NULL,
+    objective TEXT,
+    evidence_chunk_id TEXT REFERENCES paper_chunks(id),
+    sort_order INTEGER DEFAULT 0
+);
+
 CREATE TABLE IF NOT EXISTS quiz_items (
     id INTEGER PRIMARY KEY,
     concept_id INTEGER REFERENCES concepts(id),
+    keypoint_id TEXT REFERENCES keypoints(id),
+    bloom_level TEXT DEFAULT 'recall',
     question TEXT NOT NULL,
     answer_key TEXT NOT NULL,
     qtype TEXT DEFAULT 'mcq',
@@ -57,7 +68,7 @@ CREATE TABLE IF NOT EXISTS quiz_items (
     evidence_chunk_id TEXT REFERENCES paper_chunks(id),
     source_paper_id INTEGER REFERENCES papers(id),
     rubric TEXT,
-    expected_concepts TEXT,
+    expected_keypoints TEXT,
     targets_misconception TEXT
 );
 
@@ -170,6 +181,17 @@ CREATE TABLE IF NOT EXISTS induction_log (
 
 def init_db(conn: sqlite3.Connection) -> None:
     conn.executescript(DDL)
+    # Idempotent migrations for existing file-based DBs
+    for stmt in [
+        "ALTER TABLE quiz_items ADD COLUMN keypoint_id TEXT",
+        "ALTER TABLE quiz_items ADD COLUMN bloom_level TEXT DEFAULT 'recall'",
+        "ALTER TABLE quiz_items ADD COLUMN rubric TEXT",
+        "ALTER TABLE quiz_items ADD COLUMN expected_keypoints TEXT",
+    ]:
+        try:
+            conn.execute(stmt)
+        except Exception:
+            pass  # column already exists
     conn.commit()
 
 

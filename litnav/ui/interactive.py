@@ -25,7 +25,8 @@ class TutorSession:
                  session_id: str):
         self.conn = domain_conn
         self.sid = session_id
-        self.app = build_graph(domain_conn, checkpoint_conn, interrupt_after=["check"])
+        self.app = build_graph(domain_conn, checkpoint_conn,
+                               interrupt_after=["check", "assess_next"])
         self.config = {"configurable": {"thread_id": session_id}, "recursion_limit": 200}
 
     def start(self, topic: str, target_concept_ids: Optional[List[int]] = None,
@@ -50,6 +51,7 @@ class TutorSession:
         "induce": "Inducing scaffold from the papers",
         "select_next": "Selecting the next concept",
         "retrieve": "Retrieving evidence",
+        # Legacy path
         "teach": "Teaching (grounded in evidence)",
         "check": "Posing a quiz",
         "grade": "Grading your answer",
@@ -58,6 +60,13 @@ class TutorSession:
         "advance": "Advancing",
         "reteach": "Re-teaching with a new strategy",
         "concede": "Conceding honestly",
+        # TEACH/ASSESS path
+        "init_kp": "Initializing keypoint progress",
+        "teach_kp": "Teaching key point",
+        "assess_next": "Posing adaptive quiz",
+        "grade_kp": "Grading against rubric",
+        "reteach_kp": "Re-teaching key point with new strategy",
+        "advance_kp": "Checking advance criteria",
     }
 
     def _step_event(self, node: str, delta: dict) -> dict:

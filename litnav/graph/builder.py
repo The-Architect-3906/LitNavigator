@@ -10,9 +10,11 @@ from typing import List, Optional
 # skeleton (run_m0_session below) and verify_m0 can run without langgraph installed.
 from litnav.graph.router import tutor_router
 from litnav.nodes.advance import advance_node
+from litnav.nodes.assess_next import assess_next_node
 from litnav.nodes.check import check_node
 from litnav.nodes.diagnose import diagnose_node
 from litnav.nodes.grade import grade_node
+from litnav.nodes.grade_kp import assess_decider, grade_kp_node
 from litnav.nodes.planner import planner_node
 from litnav.nodes.replan import replan_node
 from litnav.nodes.retrieve import retrieve_node
@@ -20,9 +22,13 @@ from litnav.nodes.concede import concede_node
 from litnav.nodes.induce import induce_scaffold_node
 from litnav.nodes.lecture import lecture_node
 from litnav.nodes.reteach import reteach_node
+from litnav.nodes.reteach_kp import reteach_kp_node
+from litnav.nodes.route_decider import advance_kp_node
 from litnav.nodes.select_next import route_after_select, select_next_node
 from litnav.nodes.teach import teach_node
+from litnav.nodes.teach_kp import init_concept_progress, route_after_teach_kp, teach_kp_node
 from litnav.state import NavState
+from litnav.storage import repo
 
 
 def _file_checkpoint_conn() -> sqlite3.Connection:
@@ -59,18 +65,24 @@ def build_graph(
         checkpoint_conn = _file_checkpoint_conn()
 
     # Each wrapper captures domain_conn in a closure — no shared global state.
-    def _planner(s: NavState) -> dict:      return planner_node(s, domain_conn)
-    def _select_next(s: NavState) -> dict:  return select_next_node(s)
-    def _retrieve(s: NavState) -> dict:     return retrieve_node(s, domain_conn)
-    def _teach(s: NavState) -> dict:        return teach_node(s, domain_conn)
-    def _check(s: NavState) -> dict:        return check_node(s, domain_conn)
-    def _grade(s: NavState) -> dict:        return grade_node(s, domain_conn)
-    def _diagnose(s: NavState) -> dict:     return diagnose_node(s, domain_conn)
-    def _replan(s: NavState) -> dict:       return replan_node(s, domain_conn)
-    def _advance(s: NavState) -> dict:      return advance_node(s, domain_conn)
-    def _reteach(s: NavState) -> dict:      return reteach_node(s, domain_conn)
-    def _concede(s: NavState) -> dict:      return concede_node(s, domain_conn)
-    def _lecture(s: NavState) -> dict:      return lecture_node(s, domain_conn)
+    def _planner(s: NavState) -> dict:          return planner_node(s, domain_conn)
+    def _select_next(s: NavState) -> dict:      return select_next_node(s)
+    def _retrieve(s: NavState) -> dict:         return retrieve_node(s, domain_conn)
+    def _teach(s: NavState) -> dict:            return teach_node(s, domain_conn)
+    def _check(s: NavState) -> dict:            return check_node(s, domain_conn)
+    def _grade(s: NavState) -> dict:            return grade_node(s, domain_conn)
+    def _diagnose(s: NavState) -> dict:         return diagnose_node(s, domain_conn)
+    def _replan(s: NavState) -> dict:           return replan_node(s, domain_conn)
+    def _advance(s: NavState) -> dict:          return advance_node(s, domain_conn)
+    def _reteach(s: NavState) -> dict:          return reteach_node(s, domain_conn)
+    def _concede(s: NavState) -> dict:          return concede_node(s, domain_conn)
+    def _lecture(s: NavState) -> dict:          return lecture_node(s, domain_conn)
+    # TEACH/ASSESS new path
+    def _teach_kp(s: NavState) -> dict:         return teach_kp_node(s, domain_conn)
+    def _assess_next(s: NavState) -> dict:      return assess_next_node(s, domain_conn)
+    def _grade_kp(s: NavState) -> dict:         return grade_kp_node(s, domain_conn)
+    def _reteach_kp(s: NavState) -> dict:       return reteach_kp_node(s, domain_conn)
+    def _advance_kp(s: NavState) -> dict:       return advance_kp_node(s, domain_conn)
 
     def _induce(s: NavState) -> dict:
         updates = induce_scaffold_node(s, domain_conn)   # reads s["pending_induction"]
@@ -85,6 +97,7 @@ def build_graph(
     workflow.add_node("planner", _planner)
     workflow.add_node("select_next", _select_next)
     workflow.add_node("retrieve", _retrieve)
+    # Legacy path (concepts without keypoints)
     workflow.add_node("teach", _teach)
     workflow.add_node("check", _check)
     workflow.add_node("grade", _grade)
@@ -95,6 +108,12 @@ def build_graph(
     workflow.add_node("concede", _concede)
     workflow.add_node("lecture", _lecture)
     workflow.add_node("induce", _induce)
+    # TEACH/ASSESS new path (concepts with keypoints)
+    workflow.add_node("teach_kp", _teach_kp)
+    workflow.add_node("assess_next", _assess_next)
+    workflow.add_node("grade_kp", _grade_kp)
+    workflow.add_node("reteach_kp", _reteach_kp)
+    workflow.add_node("advance_kp", _advance_kp)
 
     workflow.set_entry_point("planner")
     workflow.add_conditional_edges("planner", _route_after_planner,
@@ -102,13 +121,46 @@ def build_graph(
     workflow.add_edge("induce", "select_next")
     workflow.add_conditional_edges("select_next", route_after_select,
                                    {"retrieve": "retrieve", "__end__": END})
-    workflow.add_edge("retrieve", "teach")
 
+    def _init_kp(s: NavState) -> dict:
+        """Initialize ConceptProgress when entering the TEACH phase."""
+        cid = s.get("current_concept_id")
+        if cid is None:
+            return {}
+        cp = init_concept_progress(cid, domain_conn)
+        return {"concept_progress": cp}
+
+    def _route_after_retrieve(s: NavState) -> str:
+        """Route: concepts with keypoints → init_kp (new TEACH/ASSESS path);
+        others → teach (legacy path; teach always runs so lecture_node gets cited_chunks)."""
+        cid = s.get("current_concept_id")
+        if cid is not None and repo.get_keypoints(domain_conn, cid):
+            return "init_kp"
+        return "teach"
+
+    workflow.add_node("init_kp", _init_kp)
+    workflow.add_conditional_edges("retrieve", _route_after_retrieve,
+                                   {"init_kp": "init_kp", "teach": "teach"})
+    workflow.add_edge("init_kp", "teach_kp")
+
+    # ── TEACH phase loop ────────────────────────────────────────────────────
+    workflow.add_conditional_edges("teach_kp", route_after_teach_kp,
+                                   {"teach_kp": "teach_kp", "assess_next": "assess_next"})
+
+    # ── ASSESS phase ────────────────────────────────────────────────────────
+    # assess_next is an interrupt point; user answers; graph resumes at grade_kp
+    workflow.add_edge("assess_next", "grade_kp")
+    workflow.add_conditional_edges("grade_kp", assess_decider, {
+        "assess_next": "assess_next",   # bloom upgrade or hold
+        "reteach_kp": "reteach_kp",    # wrong, reteach_count < 2
+        "advance_kp": "advance_kp",    # mastery + confidence both met
+        "diagnose": "diagnose",        # unresolved misconceptions → replan
+    })
+    workflow.add_edge("reteach_kp", "assess_next")
+    workflow.add_edge("advance_kp", "select_next")
+
+    # ── Legacy path ─────────────────────────────────────────────────────────
     def _route_after_teach(s: NavState) -> str:
-        # A concept with no quiz can't be checked/graded — teach it (lecture) then move on
-        # via the lecture node (honest "no mastery claim"), so a multi-concept route (e.g. an
-        # intent route) never stalls at an empty quiz.
-        from litnav.storage import repo
         cid = s.get("current_concept_id")
         items = repo.get_parallel_quiz_items(domain_conn, cid, exclude_ids=[]) if cid is not None else []
         return "check" if items else "lecture"
@@ -125,9 +177,9 @@ def build_graph(
     workflow.add_edge("diagnose", "replan")
     workflow.add_edge("replan", "select_next")
     workflow.add_edge("advance", "select_next")
-    workflow.add_edge("reteach", "teach")     # reteach loops back to teaching with a new strategy
+    workflow.add_edge("reteach", "teach")
     workflow.add_edge("concede", "select_next")
-    workflow.add_edge("lecture", "select_next")  # quizless concept: lectured, no mastery claim
+    workflow.add_edge("lecture", "select_next")
 
     compile_kwargs: dict = {"checkpointer": _make_checkpointer(checkpoint_conn)}
     if interrupt_after:
@@ -178,6 +230,7 @@ def make_initial_state(
         "pending_induction": pending_induction,
         "intent": intent,
         "teach_depth": _cfg["depth"] if _cfg else None,
+        "concept_progress": None,
         "history": [],
     }
 

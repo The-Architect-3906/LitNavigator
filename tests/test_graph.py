@@ -30,20 +30,15 @@ def test_to_svg_renders_without_dependency():
     assert "ReAct" in svg  # a node label made it in
 
 
-def test_session_graph_marks_current_and_conceded():
-    from litnav.graph.builder import build_graph, make_initial_state
+def test_session_graph_quiz_posed_after_teach_phase():
+    """After teaching all keypoints, the graph poses a quiz (assess phase starts)."""
+    from litnav.ui.interactive import TutorSession
     conn = _conn()
     sid = str(uuid.uuid4())
-    react_id = 1
-    app = build_graph(conn, sqlite3.connect(":memory:", check_same_thread=False))
-    # One wrong answer with no recognized misconception -> concede.
-    state = make_initial_state(sid, "agents", [react_id],
-                               pending_answers=["totally unrelated"], mastery_threshold=0.75)
-    app.invoke(state, config={"configurable": {"thread_id": sid}, "recursion_limit": 50})
-
-    g = concept_graph(conn, sid)
-    react = next(n for n in g["nodes"] if n["id"] == react_id)
-    assert react["state"] == "conceded"
+    ts = TutorSession(conn, sqlite3.connect(":memory:", check_same_thread=False), sid)
+    snap = ts.start("agents", target_concept_ids=[1], mastery_threshold=0.75)
+    # After start(), all keypoints are taught and a quiz should be pending
+    assert snap.get("question"), "a quiz must be posed after the TEACH phase completes"
 
 
 def test_glassbox_meaningful_at_first_pause_then_fills():
@@ -61,7 +56,8 @@ def test_glassbox_meaningful_at_first_pause_then_fills():
     assert t0["concepts"], "learner_state seeded before the first pause"
     assert t0["timeline"] == []
 
-    ts.answer("actions and observations from the environment")
+    # Answer that explicitly contains the kp_react_2 recall answer_key phrase
+    ts.answer("it uses actions and observations from the environment unlike CoT")
     t1 = build_trace(conn, sid)
-    assert t1["timeline"], "a graded turn appears after the first answer"
+    assert t1["timeline"], "a graded turn (reteach or advance) appears after the first answer"
     assert t1["decisions"], "a routing decision is recorded after the first answer"

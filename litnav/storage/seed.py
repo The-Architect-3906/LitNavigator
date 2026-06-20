@@ -38,13 +38,24 @@ def seed_demo_data(conn: sqlite3.Connection, fixture_path: str) -> None:
     for q in data["quiz_items"]:
         conn.execute(
             "INSERT OR IGNORE INTO quiz_items "
-            "(id, concept_id, question, answer_key, qtype, difficulty, "
-            " evidence_chunk_id, source_paper_id, targets_misconception) "
-            "VALUES (?,?,?,?,?,?,?,?,?)",
-            (q["id"], q["concept_id"], q["question"], q["answer_key"],
-             q.get("qtype", "mcq"), q.get("difficulty", 1),
+            "(id, concept_id, keypoint_id, bloom_level, question, answer_key, qtype, difficulty, "
+            " evidence_chunk_id, source_paper_id, rubric, expected_keypoints, targets_misconception) "
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            (q["id"], q["concept_id"], q.get("keypoint_id"), q.get("bloom_level", "recall"),
+             q["question"], q["answer_key"], q.get("qtype", "mcq"), q.get("difficulty", 1),
              q.get("evidence_chunk_id"), q.get("source_paper_id"),
+             q.get("rubric"), str(q["expected_keypoints"]) if q.get("expected_keypoints") else None,
              q.get("targets_misconception")),
+        )
+
+    # Optional: keypoints (present from M4/TEACH-ASSESS flow onward).
+    for kp in data.get("keypoints", []):
+        conn.execute(
+            "INSERT OR IGNORE INTO keypoints "
+            "(id, concept_id, name, objective, evidence_chunk_id, sort_order) "
+            "VALUES (?,?,?,?,?,?)",
+            (kp["id"], kp["concept_id"], kp.get("name", ""),
+             kp.get("objective"), kp.get("evidence_chunk_id"), kp.get("sort_order", 0)),
         )
 
     # Optional: misconception library (present from M2 onward).

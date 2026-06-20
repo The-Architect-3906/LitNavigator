@@ -312,13 +312,18 @@ def assign_chunk_concept(conn: sqlite3.Connection, chunk_id: str, concept_id: in
 def create_quiz_item(conn: sqlite3.Connection, concept_id: int, question: str, answer_key: str,
                      evidence_chunk_id: str | None = None, source_paper_id: int | None = None,
                      qtype: str = "explain", difficulty: int = 1,
-                     targets_misconception: str | None = None) -> int:
+                     targets_misconception: str | None = None,
+                     rubric: str | None = None,
+                     expected_keypoints: str | None = None,
+                     keypoint_id: str | None = None,
+                     bloom_level: str = "recall") -> int:
     cur = conn.execute(
         "INSERT INTO quiz_items "
-        "(concept_id, question, answer_key, qtype, difficulty, evidence_chunk_id, "
-        " source_paper_id, targets_misconception) VALUES (?,?,?,?,?,?,?,?)",
-        (concept_id, question, answer_key, qtype, difficulty, evidence_chunk_id,
-         source_paper_id, targets_misconception),
+        "(concept_id, keypoint_id, bloom_level, question, answer_key, qtype, difficulty, "
+        " evidence_chunk_id, source_paper_id, rubric, expected_keypoints, targets_misconception) "
+        "VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+        (concept_id, keypoint_id, bloom_level, question, answer_key, qtype, difficulty,
+         evidence_chunk_id, source_paper_id, rubric, expected_keypoints, targets_misconception),
     )
     conn.commit()
     return int(cur.lastrowid)
@@ -374,3 +379,54 @@ def get_chunk_vectors(conn: sqlite3.Connection) -> list[dict]:
 
 def count_chunk_vectors(conn: sqlite3.Connection) -> int:
     return conn.execute("SELECT COUNT(*) FROM chunk_vectors").fetchone()[0]
+
+
+# ── Keypoint / TEACH-ASSESS helpers ─────────────────────────────────────────
+
+def get_keypoints(conn: sqlite3.Connection, concept_id: int) -> list[dict]:
+    """Return keypoints for a concept in sort_order. Empty list if none seeded."""
+    rows = conn.execute(
+        "SELECT id, concept_id, name, objective, evidence_chunk_id, sort_order "
+        "FROM keypoints WHERE concept_id=? ORDER BY sort_order",
+        (concept_id,),
+    ).fetchall()
+    return [
+        {"id": r[0], "concept_id": r[1], "name": r[2],
+         "objective": r[3], "evidence_chunk_id": r[4], "sort_order": r[5]}
+        for r in rows
+    ]
+
+
+def get_chunk_text(conn: sqlite3.Connection, chunk_id: str) -> str:
+    """Return raw text of a paper chunk (empty string if not found)."""
+    row = conn.execute(
+        "SELECT text FROM paper_chunks WHERE id=?", (chunk_id,)
+    ).fetchone()
+    return row[0] if row else ""
+
+
+def get_quiz_by_kp_bloom(
+    conn: sqlite3.Connection,
+    keypoint_id: str,
+    bloom_level: str,
+    exclude_ids: list[int] | None = None,
+) -> dict | None:
+    """Return one quiz item for a keypoint at the given bloom level, skipping used ids."""
+    exclude = set(exclude_ids or [])
+    rows = conn.execute(
+        "SELECT id, concept_id, keypoint_id, bloom_level, question, answer_key, "
+        "qtype, difficulty, evidence_chunk_id, source_paper_id, rubric, "
+        "expected_keypoints, targets_misconception "
+        "FROM quiz_items WHERE keypoint_id=? AND bloom_level=? ORDER BY id",
+        (keypoint_id, bloom_level),
+    ).fetchall()
+    for r in rows:
+        if r[0] not in exclude:
+            return {
+                "id": r[0], "concept_id": r[1], "keypoint_id": r[2],
+                "bloom_level": r[3], "question": r[4], "answer_key": r[5],
+                "qtype": r[6], "difficulty": r[7], "evidence_chunk_id": r[8],
+                "source_paper_id": r[9], "rubric": r[10],
+                "expected_keypoints": r[11], "targets_misconception": r[12],
+            }
+    return None

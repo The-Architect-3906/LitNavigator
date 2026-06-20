@@ -92,29 +92,23 @@ def test_offline_aside_fallback_interrogative(monkeypatch):
     assert r3["action"] == "answer"
 
 
-def test_wrong_answer_triggers_replan_in_live_ui(monkeypatch):
-    """A wrong answer for a concept with an unmastered prereq replans and teaches the prereq.
+def test_wrong_answer_triggers_reteach_kp(monkeypatch):
+    """A wrong answer in the TEACH/ASSESS flow triggers per-keypoint reteach (not replan).
 
-    multi_agent has react as prereq AND has a quiz item, so it can trigger the
-    diagnose→replan path. (tool_use has no quiz — it lectures and advances, so it
-    can never expose a prereq gap via grading.)
+    multi_agent now has a keypoint (kp_multi_1) so it uses the new TEACH/ASSESS path.
+    Wrong answer → reteach_kp with a fresh strategy; same bloom level re-quizzed.
     """
     monkeypatch.setenv("LITNAV_LLM_PROVIDER", "none")
     a = _agent()
-    # multi_agent has react as prerequisite and has a quiz item
     list(a.handle("I want to understand multi agent systems"))
     cur = a.tutor.current()
-    # Confirm we're actually at a quiz (not lectured-and-done)
-    assert cur.get("question"), "multi_agent must have a quiz for this test to be meaningful"
-    # Give a clearly wrong answer — grade marks it wrong, tutor_router sees unmastered prereq
+    assert cur.get("question"), "multi_agent must pose a quiz after teaching all keypoints"
+    # Give a clearly wrong answer
     evs = list(a.handle("it just stores data"))
     t = _types(evs)
-    # The graph should have run diagnose → replan → teach (react, the prereq)
     step_labels = [e.get("label", "") for e in evs if e["type"] == "step"]
-    assert any("plan" in lbl.lower() for lbl in step_labels), \
-        f"expected a replan step, got: {step_labels}"
-    assert "teach" in t, "expected teaching of the prereq (react) after replan"
-    # route_version should have incremented to 2
-    state_ev = next((e for e in evs if e["type"] == "state"), None)
-    assert state_ev is not None and state_ev["route_version"] == 2, \
-        f"expected route_version=2, got: {state_ev}"
+    # New behavior: wrong answer → reteach_kp (not replan)
+    assert any("re-teach" in lbl.lower() or "reteach" in lbl.lower() for lbl in step_labels), \
+        f"expected a reteach_kp step, got: {step_labels}"
+    # A new quiz must be posed after reteach
+    assert "question" in t, "quiz must be re-posed after reteach"
