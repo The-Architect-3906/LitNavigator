@@ -100,6 +100,23 @@ def test_current_cited_is_only_the_cited_chunk():
     assert all(cid.startswith("c_react") for cid in cited_ids), "cited the curated react chunk"
 
 
+def test_keypoint_concept_shows_teach_phase_before_first_quiz():
+    conn = sqlite3.connect(":memory:", check_same_thread=False)
+    init_db(conn)
+    seed_demo_data(conn, "data/seed/agents_m3.json")
+    ckpt = sqlite3.connect(":memory:", check_same_thread=False)
+    ts = TutorSession(conn, ckpt, str(uuid.uuid4()))
+
+    s = ts.start("agents", target_concept_ids=[REACT], mastery_threshold=0.75)
+
+    assert not s["done"], "keypoint concept should pause for the first quiz, not complete early"
+    assert s["question"], "the first adaptive quiz should be ready after the teach phase"
+    assert len(s["teach_messages"]) >= 2, "all keypoint teach turns should be visible before quizzing"
+    assert any("reasoning and acting" in msg.lower() for msg in s["teach_messages"])
+    assert any("plain chain-of-thought" in msg.lower() or "chain-of-thought" in msg.lower()
+               for msg in s["teach_messages"])
+
+
 def test_stream_answer_emits_steps_and_terminal_events():
     ts = _session()
     ts.start("agents", target_concept_ids=[REACT], mastery_threshold=0.75)

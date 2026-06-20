@@ -1,10 +1,9 @@
 """Interactive tutor session — real human-in-the-loop over the LangGraph tutor.
 
-The graph runs with `interrupt_after=["check"]`, so it teaches a concept, presents a quiz,
-and *pauses*. The user submits a real answer; we inject it and resume (grade -> route ->
-teach -> check -> pause again) until the route finishes. This reuses the SqliteSaver
-checkpoint/interrupt proven in M1. Teaching is deterministic today; swap Qwen into `teach`
-later without changing this loop.
+The graph runs with `interrupt_after=["check", "assess_next"]`, so it can pause at either
+the legacy concept quiz or the new keypoint-based adaptive quiz. The user submits a real
+answer; we inject it and resume until the route finishes. This reuses the SqliteSaver
+checkpoint/interrupt proven in M1.
 """
 from __future__ import annotations
 
@@ -21,6 +20,8 @@ from litnav.ui.trace import concept_graph
 
 
 class TutorSession:
+    _TERMINAL_ROUTE_STATUSES = {"done", "conceded", "lectured"}
+
     def __init__(self, domain_conn: sqlite3.Connection, checkpoint_conn: sqlite3.Connection,
                  session_id: str):
         self.conn = domain_conn
@@ -87,8 +88,12 @@ class TutorSession:
 
     def _terminal_events(self) -> list[dict]:
         cur = self.current()
-        return [
-            {"type": "teach", "text": cur.get("teach") or "", "cited": cur.get("cited") or []},
+        events = [
+            {"type": "teach", "text": text, "cited": cur.get("cited") or []}
+            for text in (cur.get("teach_messages") or [])
+            if text
+        ]
+        events.extend([
             {"type": "question", "text": cur.get("question") or ""},
             {"type": "state", "route": cur["route"], "route_version": cur["route_version"],
              "learner": cur["learner"], "cited": cur["cited"], "decision": cur["decision"],
@@ -97,7 +102,31 @@ class TutorSession:
              "cost": session_cost(self.conn, self.sid)},
             {"type": "done", "done": cur["done"], "mastery": cur.get("mastery"),
              "confidence": cur.get("confidence")},
-        ]
+        ])
+        return events
+
+    @staticmethod
+    def _recent_teach_messages(history: list[dict]) -> list[str]:
+        """Return the teach/reteach block that most recently led to the current question."""
+        if not history:
+            return []
+
+        teach_events = {"teach", "reteach", "teach_kp", "reteach_kp"}
+        boundary_events = {"assess_next", "check"}
+
+        idx = len(history) - 1
+        if history[idx].get("event") in boundary_events:
+            idx -= 1
+
+        collected: list[str] = []
+        while idx >= 0 and history[idx].get("event") in teach_events:
+            text = history[idx].get("message") or history[idx].get("text") or ""
+            closing = history[idx].get("closing") or ""
+            if text:
+                collected.append(text + closing)
+            idx -= 1
+        collected.reverse()
+        return collected
 
     def stream_answer(self, text: str):
         """Inject the answer and resume, yielding one event per executed node, then the
@@ -114,13 +143,13 @@ class TutorSession:
     def current(self) -> dict:
         snap = self.app.get_state(self.config)
         vals = snap.values
-        done = not snap.next  # no next node queued -> the route finished
+        route = vals.get("route") or []
+        done = bool(route) and all(
+            st.get("status") in self._TERMINAL_ROUTE_STATUSES for st in route
+        )
 
-        teach_msg = None
-        for ev in reversed(vals.get("history", [])):
-            if ev.get("event") in ("teach", "reteach") and ev.get("message"):
-                teach_msg = ev["message"]
-                break
+        teach_messages = self._recent_teach_messages(vals.get("history", []))
+        teach_msg = teach_messages[-1] if teach_messages else None
 
         quiz = vals.get("current_quiz_item") or {}
         last = vals.get("quiz_result") or {}
@@ -142,7 +171,8 @@ class TutorSession:
             "concept_id": concept_id,
             "concept_name": name,
             "teach": teach_msg,
-            "question": (quiz.get("question") if not done else None),
+            "teach_messages": teach_messages,
+            "question": quiz.get("question"),
             "mastery": round(cs.get("mastery", 0.0), 3) if cs else None,
             "confidence": round(cs.get("confidence", 0.0), 3) if cs else None,
             "last_feedback": last.get("feedback"),
@@ -153,7 +183,7 @@ class TutorSession:
                  "name": (self.conn.execute("SELECT name FROM concepts WHERE id=?",
                                             (st.get("concept_id"),)).fetchone() or [None])[0],
                  "status": st.get("status")}
-                for st in (vals.get("route") or [])
+                for st in route
             ],
             "evidence": vals.get("current_evidence") or [],
             "cited": [
@@ -211,7 +241,7 @@ class AgentSession:
         """Snapshot for the initial page render (empty 'conversing' state before teaching)."""
         if self.tutor:
             return self.tutor.current()
-        return {"done": False, "concept_name": None, "teach": None, "question": None,
+        return {"done": False, "concept_name": None, "teach": None, "teach_messages": [], "question": None,
                 "route": [], "route_version": 1, "learner": [], "cited": [], "evidence": [],
                 "decision": None, "rationale": None, "induced": [], "intent": None,
                 "mastery": None, "confidence": None,

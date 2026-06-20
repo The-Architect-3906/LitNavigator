@@ -85,7 +85,9 @@
   <div id="chat">
     <div id="thread">
       <div class="bubble me">{{ concept_name or "Teach me" }}</div>
-      {% if teach %}<div class="bubble ai" id="first-teach" data-text="{{ teach|replace('**','') }}"></div>{% endif %}
+      {% for msg in teach_messages or ([] if not teach else [teach]) %}
+      <div class="bubble ai{% if loop.first %} initial-teach{% endif %}"{% if loop.first %} id="first-teach" data-text="{{ msg|replace('**','') }}"{% endif %}>{{ msg }}</div>
+      {% endfor %}
       {% if question %}<div class="bubble ai qa">{{ question }}</div>{% endif %}
     </div>
     <div class="working" id="working" style="display:none">● agent working…</div>
