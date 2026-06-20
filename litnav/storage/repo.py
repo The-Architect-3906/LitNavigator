@@ -372,14 +372,18 @@ def create_quiz_item(conn: sqlite3.Connection, concept_id: int, question: str, a
                      rubric: str | None = None,
                      expected_keypoints: str | None = None,
                      keypoint_id: str | None = None,
-                     bloom_level: str = "recall") -> int:
+                     bloom_level: str = "recall",
+                     distractors_json: str | None = None,
+                     irt_b: float | None = None) -> int:
     cur = conn.execute(
         "INSERT INTO quiz_items "
         "(concept_id, keypoint_id, bloom_level, question, answer_key, qtype, difficulty, "
-        " evidence_chunk_id, source_paper_id, rubric, expected_keypoints, targets_misconception) "
-        "VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+        " evidence_chunk_id, source_paper_id, rubric, expected_keypoints, targets_misconception, "
+        " distractors_json, irt_b) "
+        "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
         (concept_id, keypoint_id, bloom_level, question, answer_key, qtype, difficulty,
-         evidence_chunk_id, source_paper_id, rubric, expected_keypoints, targets_misconception),
+         evidence_chunk_id, source_paper_id, rubric, expected_keypoints, targets_misconception,
+         distractors_json, irt_b),
     )
     conn.commit()
     return int(cur.lastrowid)

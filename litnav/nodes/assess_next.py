@@ -7,8 +7,10 @@ so the live demo never depends on a live LLM call for question generation.
 """
 from __future__ import annotations
 
+import json
 import sqlite3
 
+from litnav.assess import quizgen
 from litnav.llm import router
 from litnav.state import BLOOM_LADDER, NavState
 from litnav.storage import repo
@@ -62,12 +64,43 @@ def _get_or_generate(
     if not result or not result.get("question"):
         return None
 
-    # 3) Cache generated item back into quiz_items table
+    # 3) Generate MCQ distractors (overgenerate-rank), flaw-gate, estimate IRT difficulty
+    question_text = result["question"]
+    answer_key_text = result.get("answer_key", "")
+
+    distractors = quizgen.make_distractors(
+        question_text, answer_key_text,
+        conn=conn, session_id=session_id,
+        fallback=result.get("distractors") or [],
+    )
+    item_for_gate = {"question": question_text, "answer_key": answer_key_text,
+                     "distractors": distractors}
+    ok, reason = quizgen.flaw_gate(item_for_gate)
+    if not ok:
+        # Regenerate distractors once more on flaw failure
+        distractors = quizgen.make_distractors(
+            question_text, answer_key_text,
+            conn=conn, session_id=session_id,
+            fallback=result.get("distractors") or [],
+        )
+        item_for_gate = {"question": question_text, "answer_key": answer_key_text,
+                         "distractors": distractors}
+        ok2, _ = quizgen.flaw_gate(item_for_gate)
+        if not ok2:
+            # Still flawed: fall back to short-answer (empty distractors), do NOT crash
+            distractors = []
+
+    irt_b = quizgen.estimate_difficulty(
+        {"question": question_text, "answer_key": answer_key_text},
+        conn=conn, session_id=session_id,
+    )
+
+    # 4) Cache generated item back into quiz_items table
     generated_id = repo.create_quiz_item(
         conn,
         concept_id=concept_id,
-        question=result["question"],
-        answer_key=result.get("answer_key", ""),
+        question=question_text,
+        answer_key=answer_key_text,
         qtype="explain",
         difficulty={"recall": 1, "comprehension": 2, "application": 3}.get(bloom, 1),
         evidence_chunk_id=kp_meta["evidence_chunk_id"],
@@ -76,17 +109,21 @@ def _get_or_generate(
         expected_keypoints=str(result.get("expected_keypoints", [])),
         keypoint_id=keypoint_id,
         bloom_level=bloom,
+        distractors_json=json.dumps(distractors),
+        irt_b=irt_b,
     )
     return {
         "id": generated_id,
         "concept_id": concept_id,
         "keypoint_id": keypoint_id,
         "bloom_level": bloom,
-        "question": result["question"],
-        "answer_key": result.get("answer_key", ""),
+        "question": question_text,
+        "answer_key": answer_key_text,
         "rubric": result.get("rubric"),
         "expected_keypoints": str(result.get("expected_keypoints", [])),
         "evidence_chunk_id": kp_meta["evidence_chunk_id"],
+        "distractors": distractors,
+        "irt_b": irt_b,
     }
 
 
