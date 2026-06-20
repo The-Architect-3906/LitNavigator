@@ -121,8 +121,11 @@ A single chokepoint: `litnav/llm/router.py` wraps `llm/client.py`.
   behind a quality gate.
 - **Metering & budget:** every call writes `cost_ledger`; a per-session `token_budget` hard-caps
   spend; alert at 80%; tool-loop caps prevent runaway. Glass-box shows the live meter.
-- **Model-need protocol:** new model tiers are added to `MODEL_REGISTRY` as `record-only` (disabled)
-  and surfaced to the user for approval before enabling. **Never enable a paid model silently.**
+- **Model-need protocol:** the only ENABLED models are today's (`gpt-4o-mini` cheap, `gpt-4o`
+  frontier). **Any** other need or better option — **including non-OpenAI providers** (Anthropic,
+  open-weights, a DPO-tuned tutor model, a reranker, etc.) — is added to `MODEL_REGISTRY` as
+  `record-only` (disabled) with a one-line rationale and surfaced for approval. **Never enable a new
+  model silently.**
 
 ## 6. Stage skills — contracts
 
@@ -160,13 +163,26 @@ each must run offline-deterministically when `provider=none` (return a fixture o
 - **Spacing:** mastered concepts enter the FSRS `review_queue`; cadence scales inverse to recall
   probability; over-practice fast-forward at `P(mastery) ≥ 0.95`.
 
-### 6.4 `make-artifact` (multi-format output)
-- **In:** `{concept_ids, format ∈ {notes, mindmap, slides}, goal_type}`
+### 6.4 `make-artifact` (multi-format output — **format is CHOSEN per scenario, not fixed**)
+- **In:** `{concept_ids, scenario: {goal_type, user_request, content_kind}, format?}`
+  (`format` optional override; otherwise the skill **selects** it).
 - **Out:** `{artifact_path, format, citations}`
-- **How:** one grounded knowledge structure → render. **notes** = Markdown study guide; **mindmap**
-  = Mermaid/markmap from `concept_graph()`; **slides** = LLM→JSON-schema→`python-pptx` (or Marp for
-  Markdown→pptx), multi-stage decomposition + strict schema + thin DSL over python-pptx. Every
-  artifact carries source citations.
+- **Format-selection matrix** (research-grounded — Mayer's multimedia principles; concept-map &
+  worked-example literature; testing effect):
+
+  | Scenario / goal | Best artifact | Why |
+  |---|---|---|
+  | Understand how concepts relate / see structure (survey, systematic) | **concept-map / mind-map** (Mermaid/markmap from `concept_graph()`) | maps win for relationships, dependencies, cross-links |
+  | Quick recall / reference / crash-course | **concise notes** (Cornell-style: cues + summary, NOT verbatim) | forces selective processing; verbatim notes hurt |
+  | Learn a procedure / applied / "how to do X" | **worked example** (+ one practice item) | lowest cognitive load for novices; pair with practice for transfer |
+  | Present / teach others / structured linear walkthrough | **slides** (Marp Markdown→pptx now; python-pptx if editable decks needed) | linear narrative format |
+  | Deep mastery | **combination**: map (structure) + notes (detail) + worked examples (procedure) | cover all three |
+- **Cross-cutting rules (all formats):** follow Mayer (concise, graphics+text, exclude extraneous);
+  **end each segment with a retrieval prompt** (testing effect); every artifact carries source
+  citations. Slides pipeline = multi-stage decompose → strict JSON schema → thin DSL over the
+  renderer.
+- **Build order:** mind-map first (reuses `concept_graph()`, ~free), then notes, then slides
+  (Marp), then worked-example. Renderer choice is researched per format, not defaulted to PPT.
 
 ### 6.5 `recommend-next` (NEXT-STEP)
 - **In:** `{session_id}`
@@ -203,8 +219,9 @@ the Glass-box.
   ranking + cache. *Gate:* offline fixture sources; one live smoke test.
 - **OW-4 — TEACH/ASSESS extensions:** goal elicitation + metacognitive reteach + Bloom/distractor/
   difficulty/uncertainty grading + FSRS queue. *Gate:* reuse + extend existing verify_m* gates.
-- **OW-5 — `make-artifact` skill:** notes + mindmap + slides. *Gate:* render a deck/map offline
-  from a fixture graph.
+- **OW-5 — `make-artifact` skill (scenario-selected format):** mind-map → notes → slides (Marp) →
+  worked-example, with the §6.4 selection matrix. *Gate:* render map/notes/deck offline from a
+  fixture graph; format-selector picks the right form per scenario.
 - **OW-6 — `recommend-next` + outer agent loop wiring + dual-frontend panels.**
 - **OW-7 — live high-light:** cold-domain live digest demo path (pre-warmed main domain stays the
   default).
@@ -216,15 +233,15 @@ the Glass-box.
   `verify_artifact` (deck/map renders from fixture).
 - **Live smoke tests** are manual and metered (one per skill), never in the offline gate.
 
-## 11. Open decisions to confirm before writing-plans
-1. **Learner-model backbone:** extend `main`'s BKT-lite with a Rasch placement (lightweight), or
-   adopt a library (`catsim`/`jsCAT`/`girth`)? *Recommendation: extend BKT-lite + add a tiny Rasch
-   placement; adopt a lib only if CAT item-selection is needed.*
-2. **Slides renderer:** `python-pptx` (editable, more code) vs **Marp** (Markdown→pptx, image text)?
-   *Recommendation: Marp for speed now, python-pptx later if editable decks are required.*
-3. **Recorded model needs (approve before enabling):** a `mid`-tier model for QG/grading beyond
-   `gpt-4o-mini`? a retrieval re-ranker beyond BM25+SPECTER? *Default: none until a measured need.*
-4. **Demo warm domain(s)** and the one cold domain for the live high-light.
+## 11. Decisions (resolved 2026-06-20)
+1. ✅ **Learner-model backbone:** extend `main`'s BKT-lite + a lightweight **Rasch placement**;
+   adopt a CAT library only if/when item-selection is needed.
+2. ✅ **Artifacts are scenario-adaptive, not slides-by-default** (see §6.4 matrix). Slides
+   specifically use **Marp** first. Mind-map/notes/worked-example are first-class forms.
+3. ✅ **Models:** only today's `gpt-4o-mini` + `gpt-4o` are enabled. **Any** other need or better
+   option — *including non-OpenAI* — is **record-only** until approved (§5 protocol).
+4. ⏳ **Deferred to OW-2:** which subject is the pre-digested "warm" baseline vs the live-digested
+   "cold" demo domain. Not blocking; decide when building `digest-corpus`.
 
 ## 12. Cost & responsible-AI notes
 - Honest framing: ITS gains are modest (meta-analysis g≈0.27); mastery is an **estimate**, surfaced
