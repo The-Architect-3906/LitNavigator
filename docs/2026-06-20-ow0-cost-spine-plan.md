@@ -1,5 +1,9 @@
 # OW-0 Cost Spine — Implementation Plan
 
+> ✅ **COMPLETED 2026-06-20.** Tasks 1–5 done (commits `aff4774`, `76bfc57`, `3e32065`, `117e1cb`,
+> `9182519`) + utcnow cleanup. Full suite **134 passed**; `verify_cost` + `verify_m0/m2/m3` all PASS.
+> (Pre-existing `verify_m1` failure is unrelated — OW-0 touched only the 6 cost files; see chat.)
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build the metering chokepoint every open-world LLM call must pass through — a model

@@ -11,7 +11,7 @@ def record_cost(conn: sqlite3.Connection, *, session_id: str | None, stage: str,
     conn.execute(
         "INSERT INTO cost_ledger (session_id, ts, stage, tier, model, total_tokens, usd, cache_hit) "
         "VALUES (?,?,?,?,?,?,?,?)",
-        (session_id, _dt.datetime.utcnow().isoformat(timespec="seconds"), stage, tier, model,
+        (session_id, _dt.datetime.now(_dt.UTC).isoformat(timespec="seconds"), stage, tier, model,
          int(total_tokens), float(usd), 1 if cache_hit else 0),
     )
     conn.commit()
