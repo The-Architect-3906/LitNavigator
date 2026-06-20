@@ -24,6 +24,13 @@
  .answer{display:flex;gap:.5rem;margin-top:.6rem}
  .answer input{flex:1;padding:.55rem .7rem;border:1px solid #c5ccd8;border-radius:8px;font-size:1rem}
  .answer button{padding:.55rem 1rem;border:0;border-radius:8px;background:var(--accent);color:#fff;cursor:pointer}
+ .storyband{background:linear-gradient(135deg,#fff 0%,#f3f0ff 100%);border:1px solid #ded8ff}
+ .storygrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.7rem}
+ .storycell{background:#fff;border:1px solid #e2e6ee;border-radius:10px;padding:.75rem}
+ .storyk{font-size:.73rem;letter-spacing:.04em;color:#7a8699;text-transform:uppercase}
+ .storychips{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.45rem}
+ .storychip{background:#f6f7fb;border:1px solid #e2e6ee;border-radius:999px;padding:.22rem .55rem;font-size:.78rem}
+ .storypapers{margin-top:.5rem;color:#4d5766;font-size:.84rem}
 
  /* ── Glass box ── */
  #glass{flex:1;min-width:0;font-size:.9rem}
@@ -83,6 +90,32 @@
 <div class="cols">
   <!-- ── Chat ── -->
   <div id="chat">
+    <div class="card storyband">
+      <div class="storygrid">
+        <div class="storycell">
+          <div class="storyk">Discover</div>
+          <b>{{ story_domain }}</b>
+          <div class="storypapers">{{ story_paper_count }} papers were collected offline for this domain.</div>
+        </div>
+        <div class="storycell">
+          <div class="storyk">Digest</div>
+          <b>{{ story_concept_count }}-concept map</b>
+          <div class="storychips">
+            {% for concept in story_concept_names[:5] %}
+            <span class="storychip">{{ concept }}</span>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="storycell">
+          <div class="storyk">Representative 5</div>
+          <div class="storypapers">
+            {% for paper in story_representative_papers %}
+            {{ paper.title }}{% if not loop.last %}<br>{% endif %}
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
     <div id="thread">
       <div class="bubble me">{{ concept_name or "Teach me" }}</div>
       {% for msg in teach_messages or ([] if not teach else [teach]) %}
@@ -167,7 +200,7 @@
     <!-- Decision rationale -->
     <div class="card" id="why" {% if not rationale %}style="display:none"{% endif %}>
       <b>Why this step</b>
-      <div class="mut" id="why-text">{{ decision }} — {{ rationale }}</div>
+      <div class="mut" id="why-text">{{ decision or '' }}{% if decision %} — {% endif %}{{ rationale }}</div>
     </div>
 
     <!-- Induced -->
@@ -203,8 +236,8 @@ function setMode(m){
   document.getElementById('t-glass').classList.toggle('on',m==='glass');
   try{localStorage.setItem('litnav-mode',m)}catch(e){}
 }
-const saved=(()=>{try{return localStorage.getItem('litnav-mode')}catch(e){return null}})();
-if(saved)setMode(saved);
+// Always start in chat mode so the learner sees teaching content first.
+// Glass box is opt-in per-session (button top-right); we don't persist across sessions.
 
 function typewriter(el,text){el.textContent='';let i=0;(function tick(){if(i<=text.length){el.textContent=text.slice(0,i++);setTimeout(tick,12)}})();}
 
