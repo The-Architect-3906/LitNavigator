@@ -4,7 +4,7 @@
 
 ### Give it any learning goal. It finds the most suitable real sources, digests them into a teachable concept map, and tutors *you* through it — adaptively, grounded in the literature, under strict cost control.
 
-![Status](https://img.shields.io/badge/open--world-OW--0..3%20complete%20(live)-brightgreen)
+![Status](https://img.shields.io/badge/open--world-OW--0..4%20complete%20(live)-brightgreen)
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
 ![Agent](https://img.shields.io/badge/agent-LangGraph%20%2B%20ReAct-black)
 ![Live](https://img.shields.io/badge/validation-live--first-orange)
@@ -65,7 +65,7 @@ flowchart TD
 |:--|:--:|:--|
 | **find-sources** (DISCOVER) | ✅ live | goal + intent → real OpenAlex/Wikipedia sources, ranked by relevance × authority, top-k full text fetched |
 | **digest-corpus** (DIGEST) | ✅ live | sources → distinct concepts → prerequisite (RefD **+** LLM) and similarity edges → `gpt-4o` verify → grounded, cited graph |
-| **teach / assess** (inner loop) | ⏳ OW-4 | per-keypoint adaptive teaching; Bloom-leveled quizzes; mastery from answers (BKT/Rasch), never LLM self-judgment |
+| **teach / assess** (inner loop) | ✅ live | per-keypoint adaptive teaching; goal-elicited Bloom ceiling; metered grade with frontier escalation near the mastery threshold; MCQ distractors + flaw gate + IRT difficulty; FSRS spacing + retention probe; mastery from answers (BKT/Rasch), never LLM self-judgment |
 | **make-artifact** | ⏳ OW-5 | mind-map / notes / slides / worked-example, format chosen per scenario |
 | **recommend-next** | ⏳ OW-6 | hard-prereq filter + soft mastery-gain ranker |
 
@@ -122,8 +122,8 @@ python -m litnav.ui.server     # http://127.0.0.1:8000/tutor — Chat + Glass-bo
 | **OW-1** · Data model (concept-graph + learner + cache + ledger schema) | ✅ done | schema + repo tests |
 | **OW-2** · digest-corpus (RefD+LLM edges, gpt-4o verify, cache) | ✅ done · live | `verify_digest_live` |
 | **OW-3** · find-sources (OpenAlex+Wikipedia, BM25+rerank, full text) | ✅ done · live | `verify_discover_live` |
-| **OW-4** · TEACH/ASSESS (goal elicitation, Bloom quiz, distractors, IRT, FSRS, retention probe, escalation) | ⏳ next | — |
-| **OW-5** · make-artifact (map/notes/slides/worked-example) | ⏳ pending | — |
+| **OW-4** · TEACH/ASSESS (goal elicitation, Bloom quiz, distractors, IRT, FSRS, retention probe, escalation) | ✅ done · live | `verify_teach_assess_live` |
+| **OW-5** · make-artifact (map/notes/slides/worked-example) | ⏳ next | — |
 | **OW-6** · recommend-next + dual frontend (Glass-box on `cost_ledger`, teacher override) | ⏳ pending | — |
 | **OW-7** · live cold-start (streamed real-topic digest→teach) | ⏳ pending (digest path already live) | — |
 

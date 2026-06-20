@@ -1,6 +1,6 @@
 # Open-World LitNavigator — Status & Progress
 
-**Branch:** `feat/open-world-digest` · **Updated:** 2026-06-20 · **Tests:** 231 passed (56 files)
+**Branch:** `feat/open-world-digest` · **Updated:** 2026-06-20 · **Tests:** 252 passed
 
 This is the single source of truth for *where the open-world build is*. It is organized by the
 architecture spec's milestones (§9). Detailed execution records, the live-first re-audit, the
@@ -34,8 +34,8 @@ silent fallback** (a dead provider raises, never silently returns a fixture).
 | **OW-1** — Data model | ✅ done | ✅ (via digest) | concept-graph + learner + cache + ledger schema; repo writers |
 | **OW-2** — digest-corpus | ✅ done | ✅ `verify_digest_live` | sources → 8 concepts → RefD+LLM edges → gpt-4o judge → digested graph; deterministic; ~$0.003/run |
 | **OW-3** — find-sources | ✅ done | ✅ `verify_discover_live` | intent → OpenAlex+Wikipedia → BM25+rerank+dedup+authority → top-k full text; ~$0.0001/run |
-| **OW-4** — TEACH/ASSESS | ⏳ next | — | goal elicitation, Bloom quiz, distractors, IRT difficulty, uncertainty grading, FSRS, retention probe, escalation gate |
-| **OW-5** — make-artifact | ⏳ pending | — | mind-map / notes / slides / worked-example, scenario-selected format |
+| **OW-4** — TEACH/ASSESS | ✅ done | ✅ `verify_teach_assess_live` | goal elicit → Bloom ceiling; metered grade with frontier **escalation**; MCQ distractors + flaw gate + weaker-simulator IRT; FSRS spacing + retention probe; teach-strategy policy + metacognitive reteach |
+| **OW-5** — make-artifact | ⏳ next | — | mind-map / notes / slides / worked-example, scenario-selected format |
 | **OW-6** — recommend-next + dual frontend | ⏳ pending | — | next-step ranker; Glass-box wired to `cost_ledger`; teacher override; progress streaming |
 | **OW-7** — live cold-start | ⏳ pending | partial | end-to-end real-topic digest→teach (digest path already live); streamed progress + demo cache pre-fill |
 
@@ -72,11 +72,17 @@ silent fallback** (a dead provider raises, never silently returns a fixture).
 - **Live result:** ALL PASS. 6 real sources with authority, intent classified, top-k full text. ~$0.0001/discover.
 - **Deferred (recorded):** Semantic Scholar + youtube-transcript adapters; standalone arXiv search; SPECTER rerank (→ embedding cosine); 2–3 iterative rounds for systematic intent.
 
+### OW-4 — TEACH/ASSESS ✅ (spec §6.3)
+- **Code:** inner-loop LLM calls routed through the metered `router` (`assess_next`/`grade_kp`/`teach_kp`/`reteach_kp`); `litnav/nodes/goal_elicit.py` (goal_type → `bloom_ceiling`, graph entry); `grade_kp` **uncertainty escalation** (low-conf + near-threshold → frontier re-grade, the OW-0-deferred escalation gate / pedagogical-error-cost routing); `litnav/assess/quizgen.py` (distractors overgenerate-rank + SAQUET flaw gate + weaker-simulator `irt_b`); `litnav/assess/spacing.py` (FSRS-lite `review_queue` + `retention_log` predicted-vs-actual); `litnav/assess/strategy.py` (goal×expertise×KT policy) + metacognitive anti-over-help reteach.
+- **Gate:** `verify_teach_assess` (offline determinism unit) + `verify_teach_assess_live` (LIVE capability).
+- **Live result:** ALL PASS — goal classified live (`mastery`), 3 distractors pass the flaw gate, grade metered. Cost = goal-elicit $0.000043 + grade $0.000068 + quizgen $0.000039 = **$0.00015**. (No escalation fired — the answer was confidently correct + mastery below the band; escalation is selective by design.)
+- **Deferred:** none new (escalation gate, deferred from OW-0, is now implemented here).
+
 ---
 
 ## Consolidated verification
 
-**Offline gates (deterministic, $0):** `verify_m0` `verify_m1` `verify_m2` `verify_m3` `verify_cost` `verify_digest` `verify_discover` — all green. `pytest -q` = **231 passed**.
+**Offline gates (deterministic, $0):** `verify_m0` `verify_m1` `verify_m2` `verify_m3` `verify_cost` `verify_digest` `verify_discover` `verify_teach_assess` — all green. `pytest -q` = **252 passed**.
 
 **LIVE gates (real provider, metered):**
 | gate | result | cost |
@@ -85,11 +91,13 @@ silent fallback** (a dead provider raises, never silently returns a fixture).
 | `verify_cost_live` | ALL PASS (cap fires) | ~$0.00001 |
 | `verify_digest_live` | ALL PASS (gpt-4o judge fires) | ~$0.0014 |
 | `verify_discover_live` | ALL PASS (6 sources) | ~$0.0021 |
+| `verify_teach_assess_live` | ALL PASS (goal/distractors/metered grade) | ~$0.00015 |
 
 **Spec compliance:** OW-0..OW-3 fully aligned (research↔spec↔plan↔code↔tests); 7 prior deviations (RefD, query cache, papers.source_id, result cache, BM25, 80% alert, qwen bypass) all fixed; deferred items flagged inline in the spec. (Audit detail in `archive/`.)
 
 ## Action log (open)
 - **A4** — multi-source digest live validation across many sources (code supports it; one multi-source run done). Candidate for OW-7.
-- **Escalation gate / pedagogical-error-cost routing** — OW-4.
+- **Escalation gate / pedagogical-error-cost routing** — ✅ done in OW-4 (`grade_kp` frontier escalation near the mastery threshold).
 - **Glass-box meter → cost_ledger; teacher override; progress streaming** — OW-6.
+- **learner_goal slug↔ID reconciliation** — partially addressed by goal_elicit (OW-4); full reconciliation when the live cold-start path (OW-7) resolves slugs→ids.
 - No model need recorded — `gpt-4o-mini` (extract/propose) + `gpt-4o` (judge) + RefD are adequate; bottlenecks were code/prompt, not model tier.
