@@ -16,9 +16,11 @@
 
  /* ── Chat ── */
  #chat{flex:1;min-width:0}
- .bubble{max-width:85%;padding:.6rem .85rem;border-radius:14px;margin:.5rem 0;line-height:1.5;white-space:pre-wrap;word-wrap:break-word}
- .me{margin-left:auto;background:#e6e2fb;color:#2a2270}
+ .bubble{max-width:85%;padding:.6rem .85rem;border-radius:14px;margin:.5rem 0;line-height:1.5;word-wrap:break-word}
+ .me{margin-left:auto;background:#e6e2fb;color:#2a2270;white-space:pre-wrap}
  .ai{background:#fff;border:1px solid #e2e6ee}
+ .ai p{margin:.3rem 0}.ai p:first-child{margin-top:0}.ai p:last-child{margin-bottom:0}
+ .ai ul,.ai ol{margin:.3rem 0;padding-left:1.3rem}.ai li{margin:.15rem 0}
  .qa{font-weight:500}
  .working{color:var(--accent);font-size:.85rem;margin:.3rem 0}
  .answer{display:flex;gap:.5rem;margin-top:.6rem}
@@ -119,9 +121,9 @@
     <div id="thread">
       <div class="bubble me">{{ concept_name or "Teach me" }}</div>
       {% for msg in teach_messages or ([] if not teach else [teach]) %}
-      <div class="bubble ai">{{ msg }}</div>
+      <div class="bubble ai" data-md>{{ msg | e }}</div>
       {% endfor %}
-      {% if question %}<div class="bubble ai qa">{{ question }}</div>{% endif %}
+      {% if question %}<div class="bubble ai qa">{{ question | e }}</div>{% endif %}
     </div>
     <div class="working" id="working" style="display:none">● agent working…</div>
     {% if done %}
@@ -239,14 +241,49 @@ function setMode(m){
 // Always start in chat mode so the learner sees teaching content first.
 // Glass box is opt-in per-session (button top-right); we don't persist across sessions.
 
-function typewriter(el,text){el.textContent='';let i=0;(function tick(){if(i<=text.length){el.textContent=text.slice(0,i++);setTimeout(tick,12)}})();}
+// Lightweight markdown → HTML (bold, italic, lists, paragraphs).
+// Input text must NOT already contain HTML — we escape first then add tags.
+function md(raw){
+  if(!raw)return '';
+  // 1. escape raw HTML characters
+  let s=raw.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  // 2. split into lines and assemble blocks
+  const lines=s.split('\n');
+  const blocks=[];let lt=null,li=[];
+  function flush(){if(li.length){blocks.push({t:lt,items:[...li]});li=[];lt=null;}}
+  for(const ln of lines){
+    const ol=ln.match(/^(\d+)\.\s+(.*)/);
+    const ul=ln.match(/^[-•*]\s+(.*)/);
+    if(ol){if(lt!=='ol')flush();lt='ol';li.push(ol[2]);}
+    else if(ul){if(lt!=='ul')flush();lt='ul';li.push(ul[1]);}
+    else{flush();blocks.push({t:'p',text:ln});}
+  }
+  flush();
+  // 3. group consecutive 'p' lines into paragraphs
+  let html='';let buf=[];
+  function flushPara(){if(buf.length){html+='<p>'+buf.join('<br>')+'</p>';buf=[];}}
+  for(const b of blocks){
+    if(b.t==='ol'||b.t==='ul'){
+      flushPara();
+      html+='<'+b.t+'>'+b.items.map(i=>'<li>'+i+'</li>').join('')+'</'+b.t+'>';
+    }else if(b.text.trim()===''){flushPara();}
+    else{buf.push(b.text);}
+  }
+  flushPara();
+  // 4. inline: **bold** and *italic*
+  html=html.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+           .replace(/\*([^*\n]+?)\*/g,'<em>$1</em>');
+  return html;
+}
 
-function addBubble(cls,text,tw){
+function addBubble(cls,text,_tw){
   const t=document.getElementById('thread');
   const d=document.createElement('div');
   d.className='bubble '+cls;
   t.appendChild(d);
-  if(tw){typewriter(d,text)}else{d.textContent=text}
+  // AI bubbles: render markdown; user bubbles: plain text (white-space:pre-wrap handles newlines)
+  if(cls.includes('ai')){d.innerHTML=md(text);}else{d.textContent=text;}
+  t.scrollTop=t.scrollHeight;
   return d;
 }
 
@@ -412,5 +449,10 @@ async function submitAnswer(ev){
   }
   return false;
 }
+
+// Apply markdown to server-rendered AI bubbles on initial page load
+document.querySelectorAll('.bubble.ai[data-md]').forEach(el=>{
+  el.innerHTML=md(el.textContent);
+});
 </script>
 </body></html>
