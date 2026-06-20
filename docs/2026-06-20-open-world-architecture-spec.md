@@ -99,12 +99,14 @@ Extends `main`'s schema (additive; existing tables keep working).
 - `review_queue(session_id, concept_id, due_at, fsrs_state_json)` — **new (FSRS spacing).**
 
 ### 4.3 Digest cache & cost
-- `domain_digest(domain_key, status ∈ {cached, building}, graph_version, built_at,
-  human_checked BOOL)` — a **demand-driven cache, NOT a predicted allowlist**. First request for a
-  slice = cache miss → live digest once → store. Subsequent requests = cache hit ("warm") =
-  instant + cheap. The cache self-warms from real usage; no domain is predicted ahead of time.
-  (The demo merely pre-runs the digest for the topic it will show — a staging convenience, not a
-  product assumption.)
+- `digest_cache(slice_key, status ∈ {cached, building}, graph_version, built_at,
+  human_checked BOOL)` — **the default is live digest on demand (every slice is "cold").** This
+  table is a **pure results cache (memoization)**: a slice already digested once is not re-digested
+  — an optimization, not a prediction, and required by the minimal-spend rule. It only ever remembers
+  *real past requests*; there is **no pre-picked "warm domain" allowlist** (that would be
+  unrealistic). The system works with an empty cache (just slower/costlier). (The demo merely
+  pre-runs the digest for the topic it will show, to fill that one cache entry — a staging
+  convenience, not a product assumption.)
 - `cost_ledger(session_id, ts, stage, model, input_tokens, output_tokens, usd, cache_hit BOOL)` —
   **new; backs the live cost meter and per-session budget cap.**
 
@@ -158,8 +160,9 @@ each must run offline-deterministically when `provider=none` (return a fixture o
   whole field. Incremental: extend the graph as the learner strays, reusing cached neighbours.
 - **Latency/cost/quality controls:** stream progress to the UI ("finding sources → extracting
   concepts → building map"); cheap-extract + verify-only-high-impact; cap depth; confidence +
-  similarity fallback (KnowLP) + user/teacher override; **cache the result** so the same slice is
-  warm next time. No predicted allowlist — the cache fills from demand.
+  similarity fallback (KnowLP) + user/teacher override; **cache the result** (`digest_cache`) so the
+  identical slice is a cache hit next time. No predicted allowlist — the cache only remembers real
+  past requests.
 
 ### 6.3 TEACH/ASSESS — **LangGraph inner loop, not a skill** (reuse + extend `main`)
 - Add **goal elicitation** node (1 turn → `learner_goal.goal_type`), which sets the Bloom ceiling
@@ -223,7 +226,7 @@ the Glass-box.
 - **OW-1 — Data model:** schema additions (similarity edges, goal, review_queue, distractors,
   irt_b, source_type, cost_ledger) + repo writers + migration of `main`'s fixtures.
 - **OW-2 — `digest-corpus` skill (offline-fixture first):** just-in-time **sliced** extraction +
-  prereq/similarity edges + verify pass + confidence + **result caching** (`domain_digest`).
+  prereq/similarity edges + verify pass + confidence + **result caching** (`digest_cache`).
   *Gate:* digest a fixed source set → graph matches a golden graph offline; a second request for the
   same slice hits the cache.
 - **OW-3 — `find-sources` skill:** intent routing + adapters (arXiv/Wikipedia/youtube first) +
@@ -252,10 +255,12 @@ the Glass-box.
    specifically use **Marp** first. Mind-map/notes/worked-example are first-class forms.
 3. ✅ **Models:** only today's `gpt-4o-mini` + `gpt-4o` are enabled. **Any** other need or better
    option — *including non-OpenAI* — is **record-only** until approved (§5 protocol).
-4. ✅ **No predicted "warm domain" allowlist.** "Warm/cold" = a **demand-driven cache** (§4.3):
-   first request live-digests the goal-relevant *slice* and caches it; later requests hit the cache.
-   The cache self-warms from usage. The demo just pre-runs the digest for its chosen topic (staging
-   convenience). Live cold-start digest is realistic *because* it is just-in-time and sliced (§6.2).
+4. ✅ **Default = live digest on demand (every slice is "cold"); no pre-picked "warm domain"**
+   (that's unrealistic). The only "warm" is a **pure results cache** (§4.3) — don't re-digest an
+   identical slice already computed; it remembers only real past requests, never predictions, and
+   the system runs fine with an empty cache. Live cold-start digest is realistic *because* it is
+   just-in-time and **sliced** (§6.2). The demo pre-fills one cache entry for its shown topic
+   (staging convenience).
 
 ## 12. Cost & responsible-AI notes
 - Honest framing: ITS gains are modest (meta-analysis g≈0.27); mastery is an **estimate**, surfaced
