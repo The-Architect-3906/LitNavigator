@@ -12,6 +12,7 @@ import sqlite3
 
 from litnav.digest.contract import DigestInput, DigestResult, slice_key
 from litnav.digest import extract, edges as edges_mod, verify as verify_mod
+from litnav.llm import router
 from litnav.storage import repo, openworld_repo
 
 
@@ -81,6 +82,27 @@ def _write_graph(conn: sqlite3.Connection, di: DigestInput, concepts: list[dict]
     return ids
 
 
+def _propose_quiz_seeds(concepts: list[dict], by_chunk: dict, candidate: dict, *,
+                        session_id: str | None, conn: sqlite3.Connection | None,
+                        budget: int | None) -> list[dict]:
+    """LLM proposes one seed question per concept (live); offline returns candidate quiz_seeds."""
+    slug_lines = "\n".join(f"- {c['slug']}: {c.get('name', c['slug'])}" for c in concepts)
+    prompt = (
+        "For each concept below, write ONE short recall-level seed question and its answer, "
+        "grounded in the evidence. Use only these concept slugs.\n"
+        f"Concepts:\n{slug_lines}\n\n"
+        'Respond JSON: {"quiz_seeds": [{"concept_slug","question","answer_key","bloom_level":"recall"}]}'
+    )
+    fallback = {"quiz_seeds": candidate.get("quiz_seeds", [])}
+    result = router.complete_json(prompt, tier="cheap", stage="digest", fallback=fallback,
+                                  session_id=session_id, conn=conn, budget=budget)
+    seeds = result.get("quiz_seeds") if isinstance(result, dict) else None
+    if not isinstance(seeds, list):
+        seeds = candidate.get("quiz_seeds", [])
+    slugs = {c["slug"] for c in concepts}
+    return [s for s in seeds if isinstance(s, dict) and s.get("concept_slug") in slugs]
+
+
 def digest(di: DigestInput, *, conn: sqlite3.Connection, candidate: dict,
            session_id: str | None = None, budget: int | None = None,
            write: bool = True, model_key: str | None = None) -> DigestResult:
@@ -103,13 +125,10 @@ def digest(di: DigestInput, *, conn: sqlite3.Connection, candidate: dict,
     scored = edges_mod.build_edges(di, concepts, candidate=candidate,
                                    session_id=session_id, conn=conn, budget=budget)
     labels = candidate.get("judge_labels", {})
-    # NOTE: edge_accuracy and verify_edges each call _judge on the high-impact prereq edges, so a
-    # LIVE run judges them twice. Free with provider=none; a live-cost de-dup is deferred to OW-7.
-    accuracy = verify_mod.edge_accuracy(scored, judge_labels=labels, session_id=session_id,
-                                        conn=conn, budget=budget)           # BEFORE downgrade
-    verified, unverified = verify_mod.verify_edges(scored, judge_labels=labels,
-                                                   session_id=session_id, conn=conn, budget=budget)
-    quiz_seeds = candidate.get("quiz_seeds", [])
+    accuracy, (verified, unverified) = verify_mod.verify_pass(
+        scored, judge_labels=labels, session_id=session_id, conn=conn, budget=budget)
+    quiz_seeds = _propose_quiz_seeds(concepts, {}, candidate, session_id=session_id,
+                                     conn=conn, budget=budget)
 
     if write:
         _write_graph(conn, di, concepts, verified, keypoints, quiz_seeds, slice_key=key)

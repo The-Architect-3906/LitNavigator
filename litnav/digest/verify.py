@@ -8,6 +8,7 @@ judge-agreement fraction surfaced in the Glass-box (OW-6).
 """
 from __future__ import annotations
 
+import random
 import sqlite3
 
 from litnav.digest.contract import VERIFY_THRESHOLD
@@ -68,3 +69,50 @@ def edge_accuracy(edges: list[dict], *, judge_labels: dict, session_id: str | No
     agreed = sum(1 for e in prereq
                  if _judge(e, judge_labels, session_id=session_id, conn=conn, budget=budget))
     return round(agreed / len(prereq), 4)
+
+
+def verify_pass(edges: list[dict], *, judge_labels: dict, session_id: str | None,
+                conn: sqlite3.Connection | None, budget: int | None = None,
+                sample_n: int = 10) -> tuple[float, tuple[list[dict], list[dict]]]:
+    """Judge each HIGH-IMPACT prereq edge ONCE for the downgrade decision; REUSE those verdicts to
+    compute edge_accuracy over a shuffled sample of ALL proposed prereq edges (proposal quality).
+    Returns (edge_accuracy, (out, unverified)). Replaces the edge_accuracy+verify_edges double-judge.
+    """
+    prereq_idx = [i for i, e in enumerate(edges) if e["edge_type"] == "prerequisite"]
+    verdict: dict[int, bool] = {}
+
+    def judged(i: int) -> bool:
+        if i not in verdict:
+            verdict[i] = _judge(edges[i], judge_labels, session_id=session_id, conn=conn,
+                                budget=budget)
+        return verdict[i]
+
+    out: list[dict] = []
+    unverified: list[dict] = []
+    for i, e in enumerate(edges):
+        e = dict(e)
+        if e["edge_type"] != "prerequisite":
+            e["verified"] = True
+            out.append(e)
+            continue
+        ok = e["confidence"] >= VERIFY_THRESHOLD
+        if ok and e.get("high_impact"):
+            ok = judged(i)
+        if ok:
+            e["verified"] = True
+        else:
+            e["edge_type"] = "similarity"
+            e["verified"] = False
+            unverified.append(e)
+        out.append(e)
+
+    # accuracy: shuffled (seeded -> deterministic) sample of ALL proposed prereq edges; reuse verdicts
+    sample = prereq_idx[:]
+    random.Random(len(prereq_idx)).shuffle(sample)
+    sample = sample[:sample_n]
+    if not sample:
+        acc = 1.0
+    else:
+        agreed = sum(1 for i in sample if judged(i))
+        acc = round(agreed / len(sample), 4)
+    return acc, (out, unverified)
