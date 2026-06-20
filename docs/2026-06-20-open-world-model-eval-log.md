@@ -115,3 +115,20 @@ the prereq/similarity graph live** (the graph is the core output).
 - [ ] **A1 (revised) — prereq-survival on real evidence is now measurable but low**; re-evaluate after A2 stabilizes extraction + over several papers before concluding "cheap model too weak." Still nothing recorded in `RECORDED_NEEDS`.
 - [ ] `verify_discover_live`'s "top source by char count" picked a broad survey (poor for prereqs); prefer a focused paper or test multiple — minor gate refinement.
 - **No new model enabled.** The earlier A1 over-attribution is fully retracted: the 0-edges was a chunk-id bug.
+
+---
+
+## 2026-06-20 — A2 done (temperature=0) + new finding: extraction is too COARSE
+
+**Change:** `temperature=0` on `complete_json`/`complete_text` (commit `d031026`).
+
+**Result (ReAct paper, 3 live runs):** now **fully deterministic** — all 3 runs returned the SAME extraction. ✅ Reproducibility achieved (was 1/5/1 concepts; now 1/1/1).
+
+**But the stable output is BAD:** at temp=0, `gpt-4o-mini` extracts **only 1 umbrella concept (`'react'`)** for the entire paper → 0 edges (needs ≥2). The non-determinism had been *masking* an extraction-granularity problem: the most-likely (temp=0) output collapses the paper into one concept.
+
+**A1 status:** still can't get a clean edge/judge read because extraction yields 1 concept → no edges. BUT the machinery is proven (the earlier 5-concept run built 3 edges, all judged by gpt-4o, downgraded). So A1 is blocked on granular extraction, not on the edge/judge path.
+
+**ACTIONS:**
+- [ ] **A3 (new, top) — improve the extraction PROMPT for granularity.** Ask for N (e.g. 4–8) DISTINCT teachable sub-concepts (not one umbrella term), with a few-shot example and an explicit "do not return a single concept for a whole paper" instruction. This is the next lever to get a multi-concept graph + edges; it is prompt engineering, NOT a model swap.
+- [ ] A1 — re-evaluate edge/judge quality once A3 yields ≥3 concepts per paper.
+- **No new model needed/recorded.** The bottleneck is the extraction prompt, not the model tier.
