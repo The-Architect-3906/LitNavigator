@@ -255,10 +255,12 @@ def next_concept_id(conn: sqlite3.Connection) -> int:
 
 
 def create_concept(conn: sqlite3.Connection, concept_id: int, slug: str, name: str,
-                   frontier_flag: str | None = None) -> None:
+                   frontier_flag: str | None = None, *, source: str = "curated",
+                   domain: str | None = None) -> None:
     conn.execute(
-        "INSERT OR IGNORE INTO concepts (id, slug, name, frontier_flag) VALUES (?,?,?,?)",
-        (concept_id, slug, name, frontier_flag),
+        "INSERT OR IGNORE INTO concepts (id, slug, name, frontier_flag, source, domain) "
+        "VALUES (?,?,?,?,?,?)",
+        (concept_id, slug, name, frontier_flag, source, domain),
     )
     conn.commit()
 
@@ -271,6 +273,47 @@ def record_induced_edge(conn: sqlite3.Connection, prereq_concept: int, target_co
         "VALUES (?,?,?,?,?,?)",
         (prereq_concept, target_concept, "prerequisite", "induced", confidence,
          json.dumps(evidence_chunks)),
+    )
+    conn.commit()
+
+
+def record_edge(conn: sqlite3.Connection, prereq_concept: int, target_concept: int, *,
+                edge_type: str, source: str, confidence: float,
+                evidence_chunks: list[str]) -> None:
+    """Generic typed edge writer. edge_type in {prerequisite, similarity, ...}; source in
+    {curated, induced, digested}. Idempotent on (prereq, target, edge_type)."""
+    conn.execute(
+        "INSERT OR IGNORE INTO concept_edges "
+        "(prereq_concept, target_concept, edge_type, source, confidence, evidence) "
+        "VALUES (?,?,?,?,?,?)",
+        (prereq_concept, target_concept, edge_type, source, confidence,
+         json.dumps(evidence_chunks)),
+    )
+    conn.commit()
+
+
+def get_concept_edges(conn: sqlite3.Connection, source: str | None = None) -> list[dict]:
+    """All edges, optionally filtered by source. evidence is decoded from JSON."""
+    sql = ("SELECT prereq_concept, target_concept, edge_type, source, confidence, evidence "
+           "FROM concept_edges")
+    params: tuple = ()
+    if source is not None:
+        sql += " WHERE source=?"
+        params = (source,)
+    rows = conn.execute(sql, params).fetchall()
+    return [{"prereq_concept": r[0], "target_concept": r[1], "edge_type": r[2],
+             "source": r[3], "confidence": r[4],
+             "evidence": json.loads(r[5]) if r[5] else []} for r in rows]
+
+
+def create_keypoint(conn: sqlite3.Connection, kp_id: str, concept_id: int, name: str,
+                    objective: str, evidence_chunk_id: str | None = None,
+                    sort_order: int = 0, bloom_level: str = "recall") -> None:
+    conn.execute(
+        "INSERT OR IGNORE INTO keypoints "
+        "(id, concept_id, name, objective, evidence_chunk_id, sort_order, bloom_level) "
+        "VALUES (?,?,?,?,?,?,?)",
+        (kp_id, concept_id, name, objective, evidence_chunk_id, sort_order, bloom_level),
     )
     conn.commit()
 
@@ -386,13 +429,14 @@ def count_chunk_vectors(conn: sqlite3.Connection) -> int:
 def get_keypoints(conn: sqlite3.Connection, concept_id: int) -> list[dict]:
     """Return keypoints for a concept in sort_order. Empty list if none seeded."""
     rows = conn.execute(
-        "SELECT id, concept_id, name, objective, evidence_chunk_id, sort_order "
+        "SELECT id, concept_id, name, objective, evidence_chunk_id, sort_order, bloom_level "
         "FROM keypoints WHERE concept_id=? ORDER BY sort_order",
         (concept_id,),
     ).fetchall()
     return [
         {"id": r[0], "concept_id": r[1], "name": r[2],
-         "objective": r[3], "evidence_chunk_id": r[4], "sort_order": r[5]}
+         "objective": r[3], "evidence_chunk_id": r[4], "sort_order": r[5],
+         "bloom_level": r[6]}
         for r in rows
     ]
 
