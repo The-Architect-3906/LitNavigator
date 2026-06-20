@@ -44,6 +44,22 @@ def test_wrong_answer_triggers_reteach_then_pass():
     assert s["mastery"] >= 0.75
 
 
+def test_keypoint_wrong_answer_reteaches_and_reasks():
+    conn = sqlite3.connect(":memory:", check_same_thread=False)
+    init_db(conn)
+    seed_demo_data(conn, "data/seed/agents_m3.json")
+    ckpt = sqlite3.connect(":memory:", check_same_thread=False)
+    ts = TutorSession(conn, ckpt, str(uuid.uuid4()))
+
+    ts.start("agents", target_concept_ids=[REACT], mastery_threshold=0.75)
+    s = ts.answer("I don't know")
+
+    assert not s["done"], "wrong answer should not end the session"
+    assert s["question"], "after reteach the learner should receive another quiz prompt"
+    assert s["teach_messages"], "reteach explanation should remain visible in the live state"
+    assert "different approach" in s["teach_messages"][-1].lower()
+
+
 def test_interactive_induction_then_teach():
     """Off-skeleton request: the live session induces the scaffold, then teaches it interactively."""
     import json

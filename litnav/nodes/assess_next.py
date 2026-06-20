@@ -109,6 +109,13 @@ def assess_next_node(state: NavState, conn: sqlite3.Connection) -> dict:
             target_kp_id = last_kp  # stay on same keypoint at higher level
 
     quiz = _get_or_generate(conn, cp["concept_id"], target_kp_id, bloom, used_ids)
+    reused = False
+    if quiz is None and kp_states.get(target_kp_id, {}).get("last_result") == "wrong":
+        # After a reteach, the learner still needs a same-level check. If the fixture only
+        # has one cached quiz at this bloom, re-use it instead of dropping into a no-question
+        # state. This preserves the teach -> reteach -> re-quiz loop offline.
+        quiz = repo.get_quiz_by_kp_bloom(conn, target_kp_id, bloom, exclude_ids=[])
+        reused = quiz is not None
     if quiz is None:
         # No quiz available at this bloom — fall through to route_decider
         return {
@@ -123,12 +130,16 @@ def assess_next_node(state: NavState, conn: sqlite3.Connection) -> dict:
     return {
         "concept_progress": updated_cp,
         "current_quiz_item": quiz,
-        "rationale": f"ASSESS bloom={bloom} on keypoint '{target_kp_id}'",
+        "rationale": (
+            f"ASSESS bloom={bloom} on keypoint '{target_kp_id}'"
+            + (" (re-using prior quiz after reteach)" if reused else "")
+        ),
         "history": [{
             "event": "assess_next",
             "keypoint_id": target_kp_id,
             "bloom": bloom,
             "quiz_id": quiz.get("id"),
             "question": quiz["question"],
+            "reused": reused,
         }],
     }
