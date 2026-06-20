@@ -60,6 +60,19 @@ def test_second_identical_request_is_cache_hit(monkeypatch):
     assert openworld_repo.cache_get(c, key)["status"] == "cached"
     res2 = pipeline.digest(_input(), conn=c, candidate=CANDIDATE, session_id="s")
     assert res2.cache_hit is True
+    assert res2.concepts == [] and res2.edges == []   # graph in DB, not in result on cache-hit
+    assert c.execute("SELECT COUNT(*) FROM concepts WHERE source='digested'").fetchone()[0] >= 1
+
+
+def test_write_false_returns_result_without_touching_db(monkeypatch):
+    monkeypatch.setenv("LITNAV_LLM_PROVIDER", "none")
+    c = _conn()
+    res = pipeline.digest(_input(), conn=c, candidate=CANDIDATE, session_id="s", write=False)
+    assert c.execute("SELECT COUNT(*) FROM concepts").fetchone()[0] == 0  # nothing written
+    assert res.concepts and res.cache_hit is False                        # result still populated
+    from litnav.digest.contract import slice_key
+    from litnav.storage import openworld_repo
+    assert openworld_repo.cache_get(c, slice_key("llm-agents", ["2302.04761"], [])) is None  # not cached
 
 
 def test_digest_is_zero_cost_offline(monkeypatch):

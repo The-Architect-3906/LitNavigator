@@ -32,6 +32,9 @@ def _write_graph(conn: sqlite3.Connection, di: DigestInput, concepts: list[dict]
         repo.create_concept(conn, cid, c["slug"], c["name"], c.get("frontier_flag"),
                             source="digested", domain=c.get("domain", di.domain_key))
         ids[c["slug"]] = cid
+    # Edges are written INSERT-OR-IGNORE on PK (prereq, target, edge_type). A prereq edge that
+    # verify_edges downgraded to 'similarity' can therefore collide with a pre-existing similarity
+    # edge on the same (A,B) pair — first writer wins, silently. Task 8's gate exercises this.
     for e in scored_edges:
         if e["prereq_slug"] in ids and e["target_slug"] in ids:
             repo.record_edge(conn, ids[e["prereq_slug"]], ids[e["target_slug"]],
@@ -54,6 +57,13 @@ def _write_graph(conn: sqlite3.Connection, di: DigestInput, concepts: list[dict]
 def digest(di: DigestInput, *, conn: sqlite3.Connection, candidate: dict,
            session_id: str | None = None, budget: int | None = None,
            write: bool = True) -> DigestResult:
+    """Digest a source slice into the concept graph and return a DigestResult.
+
+    Cache-hit fast path: when the slice is already digested, returns a DigestResult with
+    cache_hit=True and ALL list fields empty — the digested graph lives in the DB, not in the
+    result. Callers MUST check `cache_hit` before consuming concepts/edges/keypoints.
+    (Re-reading the populated slice from the DB on cache-hit is deferred to OW-6.)
+    """
     key = _slice_key(di)
     cached = openworld_repo.cache_get(conn, key)
     if cached and cached["status"] == "cached":
@@ -64,6 +74,8 @@ def digest(di: DigestInput, *, conn: sqlite3.Connection, candidate: dict,
     scored = edges_mod.build_edges(di, concepts, candidate=candidate,
                                    session_id=session_id, conn=conn, budget=budget)
     labels = candidate.get("judge_labels", {})
+    # NOTE: edge_accuracy and verify_edges each call _judge on the high-impact prereq edges, so a
+    # LIVE run judges them twice. Free with provider=none; a live-cost de-dup is deferred to OW-7.
     accuracy = verify_mod.edge_accuracy(scored, judge_labels=labels, session_id=session_id,
                                         conn=conn, budget=budget)           # BEFORE downgrade
     verified, unverified = verify_mod.verify_edges(scored, judge_labels=labels,
