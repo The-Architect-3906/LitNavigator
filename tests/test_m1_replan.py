@@ -68,72 +68,64 @@ def test_wrong_answer_stays_below_threshold(tmp_path):
     assert mastery < 0.8
 
 
-def test_prereq_gap_triggers_diagnose(tmp_path):
+def test_expanded_route_covers_prereq_gap(tmp_path):
+    """topo-sort now expands the full prereq closure upfront.
+    targets [dense_retrieval, contrastive_learning] auto-includes negative_sampling."""
+    conn = _setup(tmp_path)
+    ids = _slug_to_id(conn)
+    targets = [ids["dense_retrieval"], ids["contrastive_learning"]]
+    s = make_initial_state(str(uuid.uuid4()), "RAG for scientific QA", targets)
+    out = planner_node(s, conn)
+    route_ids = [step["concept_id"] for step in out["route"]]
+
+    assert ids["negative_sampling"] in route_ids, "prereq must be auto-included in route"
+    neg_pos = route_ids.index(ids["negative_sampling"])
+    cl_pos = route_ids.index(ids["contrastive_learning"])
+    assert neg_pos < cl_pos, "prereq must appear before its dependent"
+
+
+def test_prereq_already_in_route_replan_noop(tmp_path):
+    """When the prereq is already in the expanded route, replan_noop runs:
+    version still increments (as an event record) and the prereq stays in the route."""
     conn = _setup(tmp_path)
     ids = _slug_to_id(conn)
     targets = [ids["dense_retrieval"], ids["contrastive_learning"]]
     s = make_initial_state(str(uuid.uuid4()), "RAG for scientific QA", targets)
     s = _apply(s, planner_node(s, conn))
 
-    # Advance through dense_retrieval correctly
-    s = _apply(s, select_next_node(s))
-    s = _run_concept(s, conn, "embedding vectors")
-    s = _apply(s, advance_node(s, conn))
+    # Force current_concept_id to contrastive_learning so diagnose can find negative_sampling
+    # as an unmastered prereq (mastery defaults to 0 → below 0.8 threshold).
+    s2 = {**s, "current_concept_id": ids["contrastive_learning"]}
+    old_version = s2["route_version"]
+    s2 = _apply(s2, diagnose_node(s2, conn))
+    missing_id = s2["diagnosis"]["missing_concept_id"]
 
-    # Wrong answer on contrastive_learning → prereq gap
-    s = _apply(s, select_next_node(s))
-    assert s["current_concept_id"] == ids["contrastive_learning"]
-    s = _run_concept(s, conn, "keyword matching")
-    assert tutor_router(s) == "diagnose"
+    # negative_sampling is unmastered AND already in the expanded route
+    assert missing_id == ids["negative_sampling"]
+    s2 = _apply(s2, replan_node(s2, conn))
 
-
-def test_replan_inserts_prereq_and_increments_version(tmp_path):
-    conn = _setup(tmp_path)
-    ids = _slug_to_id(conn)
-    targets = [ids["dense_retrieval"], ids["contrastive_learning"]]
-    s = make_initial_state(str(uuid.uuid4()), "RAG for scientific QA", targets)
-    s = _apply(s, planner_node(s, conn))
-
-    s = _apply(s, select_next_node(s))
-    s = _run_concept(s, conn, "embedding vectors")
-    s = _apply(s, advance_node(s, conn))
-
-    s = _apply(s, select_next_node(s))
-    s = _run_concept(s, conn, "keyword matching")
-
-    old_version = s["route_version"]
-    s = _apply(s, diagnose_node(s, conn))
-    missing_id = s["diagnosis"]["missing_concept_id"]
-    s = _apply(s, replan_node(s, conn))
-
-    assert s["route_version"] == old_version + 1
-    route_ids = [step["concept_id"] for step in s["route"]]
-    assert missing_id in route_ids
-
-    prereq_pos = route_ids.index(missing_id)
-    blocked_pos = route_ids.index(ids["contrastive_learning"])
-    assert prereq_pos < blocked_pos
+    # replan_noop still increments the version as an event record
+    assert s2["route_version"] == old_version + 1
+    route_ids = [step["concept_id"] for step in s2["route"]]
+    assert missing_id in route_ids  # already in route — no duplicate insertion
 
 
 def test_replan_rationale_in_db(tmp_path):
+    """replan_noop (prereq already in route) records a rationale row in the decisions table."""
     conn = _setup(tmp_path)
     ids = _slug_to_id(conn)
     targets = [ids["dense_retrieval"], ids["contrastive_learning"]]
     s = make_initial_state(str(uuid.uuid4()), "RAG for scientific QA", targets)
     s = _apply(s, planner_node(s, conn))
 
-    s = _apply(s, select_next_node(s))
-    s = _run_concept(s, conn, "embedding vectors")
-    s = _apply(s, advance_node(s, conn))
-
-    s = _apply(s, select_next_node(s))
-    s = _run_concept(s, conn, "keyword matching")
-    s = _apply(s, diagnose_node(s, conn))
-    s = _apply(s, replan_node(s, conn))
+    # Force diagnose+replan_noop on contrastive_learning (prereq already in expanded route)
+    s2 = {**s, "current_concept_id": ids["contrastive_learning"]}
+    s2 = _apply(s2, diagnose_node(s2, conn))
+    s2 = _apply(s2, replan_node(s2, conn))
 
     row = conn.execute(
-        "SELECT rationale FROM decisions WHERE session_id=? AND decision='replan'",
-        (s["session_id"],),
+        "SELECT rationale FROM decisions WHERE session_id=? AND decision='replan_noop'",
+        (s2["session_id"],),
     ).fetchone()
     assert row is not None
     assert len(row[0]) > 10
@@ -188,7 +180,9 @@ def test_graph_advance_via_invoke(tmp_path):
     assert row is not None
 
 
-def test_graph_replan_via_invoke(tmp_path):
+def test_graph_prereq_route_via_invoke(tmp_path):
+    """Expanded route [dense_retrieval, negative_sampling, contrastive_learning] runs
+    end-to-end without replan: topo-sort ensures the prereq is always present upfront."""
     from litnav.graph.builder import build_graph, make_initial_state
     conn = _setup(tmp_path)
     ids = _slug_to_id(conn)
@@ -197,13 +191,14 @@ def test_graph_replan_via_invoke(tmp_path):
     state = make_initial_state(
         sid, "RAG for scientific QA",
         [ids["dense_retrieval"], ids["contrastive_learning"]],
-        pending_answers=["embedding vectors", "keyword matching"],
+        pending_answers=["embedding vectors", "keyword matching", "keyword matching"],
     )
     app.invoke(state, config={"configurable": {"thread_id": sid}, "recursion_limit": 50})
     ver = conn.execute(
         "SELECT MAX(route_version) FROM route_steps WHERE session_id=?", (sid,)
     ).fetchone()[0]
-    assert ver >= 2
+    # No replan needed: prereq is already in the expanded route, so route_version stays at 1
+    assert ver == 1
 
 
 def test_checkpoint_durability(tmp_path):

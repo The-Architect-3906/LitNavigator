@@ -76,6 +76,7 @@ def advance_kp_node(state: NavState, conn: sqlite3.Connection) -> dict:
     return {
         "route": route,
         "concept_progress": None,   # clear so next concept starts fresh (P2 fix)
+        "current_quiz_item": None,  # no active question after concept advance
         "rationale": rationale,
         "history": [{"event": "advance_kp", "concept_id": concept_id, "mastery": m, "confidence": c}],
     }

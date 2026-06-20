@@ -25,7 +25,9 @@ def test_intents_produce_different_routes_and_bars():
     conn = _conn()
     sr, route_res = _plan(conn, "researcher")
     sj, route_jou = _plan(conn, "journalist")
-    assert len(route_res) == 7 and len(route_jou) == 3       # different breadth
+    # cot_reasoning (id=8) is a prereq of react in agents_corpus.json; topo-sort
+    # now expands full transitive closure: researcher 7→8, journalist 3→4
+    assert len(route_res) == 8 and len(route_jou) == 4       # different breadth
     assert sr["mastery_threshold"] == 0.8 and sj["mastery_threshold"] == 0.6
     assert sr["teach_depth"] == "explain" and sj["teach_depth"] == "recall"
     assert route_res != route_jou
@@ -46,5 +48,6 @@ def test_no_intent_uses_explicit_targets():
     conn = _conn()
     state = make_initial_state("s", "agents", target_concept_ids=[1], intent=None)
     out = planner_node(state, conn)
-    assert [s["concept_id"] for s in out["route"]] == [1]
+    # react (id=1) has cot_reasoning (id=8) as prereq → topo-sort expands to [8, 1]
+    assert [s["concept_id"] for s in out["route"]] == [8, 1]
     assert state["mastery_threshold"] == 0.8  # default, untouched

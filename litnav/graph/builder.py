@@ -23,6 +23,8 @@ from litnav.nodes.induce import induce_scaffold_node
 from litnav.nodes.lecture import lecture_node
 from litnav.nodes.reteach import reteach_node
 from litnav.nodes.reteach_kp import reteach_kp_node
+from litnav.nodes.handle_lost import handle_lost_node
+from litnav.nodes.orient_tour import orient_tour_node
 from litnav.nodes.route_decider import advance_kp_node
 from litnav.nodes.select_next import route_after_select, select_next_node
 from litnav.nodes.teach import teach_node
@@ -89,12 +91,20 @@ def build_graph(
         updates["pending_induction"] = None              # consume the request so we don't re-induce
         return updates
 
+    def _orient(s: NavState) -> dict:        return orient_tour_node(s, domain_conn)
+    def _handle_lost(s: NavState) -> dict:   return handle_lost_node(s, domain_conn)
+
     def _route_after_planner(s: NavState) -> str:
-        # Off-skeleton request present -> induce its scaffolding before the inner loop.
-        return "induce" if s.get("pending_induction") else "select_next"
+        if s.get("pending_induction"):
+            return "induce"
+        # Show roadmap overview once per session when route has multiple stops
+        if not s.get("orient_done") and len(s.get("route", [])) > 1:
+            return "orient_tour"
+        return "select_next"
 
     workflow = StateGraph(NavState)
     workflow.add_node("planner", _planner)
+    workflow.add_node("orient_tour", _orient)
     workflow.add_node("select_next", _select_next)
     workflow.add_node("retrieve", _retrieve)
     # Legacy path (concepts without keypoints)
@@ -114,11 +124,14 @@ def build_graph(
     workflow.add_node("grade_kp", _grade_kp)
     workflow.add_node("reteach_kp", _reteach_kp)
     workflow.add_node("advance_kp", _advance_kp)
+    workflow.add_node("handle_lost", _handle_lost)
 
     workflow.set_entry_point("planner")
     workflow.add_conditional_edges("planner", _route_after_planner,
-                                   {"induce": "induce", "select_next": "select_next"})
+                                   {"induce": "induce", "orient_tour": "orient_tour",
+                                    "select_next": "select_next"})
     workflow.add_edge("induce", "select_next")
+    workflow.add_edge("orient_tour", "select_next")
     workflow.add_conditional_edges("select_next", route_after_select,
                                    {"retrieve": "retrieve", "__end__": END})
 
@@ -148,8 +161,14 @@ def build_graph(
                                    {"teach_kp": "teach_kp", "assess_next": "assess_next"})
 
     # ── ASSESS phase ────────────────────────────────────────────────────────
-    # assess_next is an interrupt point; user answers; graph resumes at grade_kp
-    workflow.add_edge("assess_next", "grade_kp")
+    # assess_next is an interrupt point; user answers; graph resumes.
+    # user_intent=="lost" → handle_lost (re-explain, no grade); else → grade_kp
+    def _route_after_assess_next(s: NavState) -> str:
+        return "handle_lost" if s.get("user_intent") == "lost" else "grade_kp"
+
+    workflow.add_conditional_edges("assess_next", _route_after_assess_next,
+                                   {"grade_kp": "grade_kp", "handle_lost": "handle_lost"})
+    workflow.add_edge("handle_lost", "assess_next")
     workflow.add_conditional_edges("grade_kp", assess_decider, {
         "assess_next": "assess_next",   # correct → bloom upgrade; or hold → next question
         "reteach_kp": "reteach_kp",    # wrong + reteach_count < 2
@@ -230,6 +249,8 @@ def make_initial_state(
         "intent": intent,
         "teach_depth": _cfg["depth"] if _cfg else None,
         "concept_progress": None,
+        "orient_done": None,
+        "user_intent": None,
         "history": [],
     }
 

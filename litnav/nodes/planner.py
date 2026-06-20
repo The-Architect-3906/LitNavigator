@@ -18,37 +18,76 @@ def _build_dag(conn: sqlite3.Connection) -> dict[int, list[int]]:
 
 
 def _topo_sort(target_ids: list[int], dag: dict[int, list[int]]) -> list[int]:
+    """Topological order with full transitive prerequisite expansion.
+
+    Previously this guarded with `if prereq in target_ids`, which silently dropped
+    any prereq not explicitly requested. Now we expand to the full transitive closure
+    so that asking for a downstream concept automatically queues its prereq chain.
+    """
+    # 1. Collect the full transitive closure (target + all ancestors)
+    full_set: set[int] = set()
+
+    def _collect(cid: int) -> None:
+        if cid in full_set:
+            return
+        full_set.add(cid)
+        for prereq in dag.get(cid, []):
+            _collect(prereq)
+
+    for cid in target_ids:
+        _collect(cid)
+
+    # 2. Standard DFS topological sort over the expanded set
     visited: set[int] = set()
     order: list[int] = []
 
-    def visit(cid: int) -> None:
+    def _visit(cid: int) -> None:
         if cid in visited:
             return
         visited.add(cid)
         for prereq in dag.get(cid, []):
-            if prereq in target_ids:
-                visit(prereq)
+            if prereq in full_set:
+                _visit(prereq)
         order.append(cid)
 
-    for cid in sorted(target_ids):
-        visit(cid)
+    for cid in sorted(full_set):
+        _visit(cid)
     return order
 
 
 def _topo_sort_priority(target_ids: list[int], dag: dict[int, list[int]],
                         priority: dict[int, int]) -> list[int]:
     """Topological order (prereqs first) that, among available concepts, prefers lower
-    priority rank (ties broken by id). Used for intent frontier-first ordering."""
+    priority rank (ties broken by id). Used for intent frontier-first ordering.
+
+    Like _topo_sort, expands the full transitive closure first so that prereqs not
+    explicitly listed in target_ids are still included."""
     import heapq
-    targets = set(target_ids)
-    indeg = {t: 0 for t in target_ids}
-    adj: dict[int, list[int]] = {t: [] for t in target_ids}
-    for t in target_ids:
+
+    # Expand to full transitive closure (same as _topo_sort)
+    full_set: set[int] = set()
+
+    def _collect(cid: int) -> None:
+        if cid in full_set:
+            return
+        full_set.add(cid)
+        for prereq in dag.get(cid, []):
+            _collect(prereq)
+
+    for cid in target_ids:
+        _collect(cid)
+
+    # Assign lower priority to implicitly-added prereqs (they have no frontier flag)
+    full_priority = {cid: priority.get(cid, 1) for cid in full_set}
+
+    indeg = {t: 0 for t in full_set}
+    adj: dict[int, list[int]] = {t: [] for t in full_set}
+    for t in full_set:
         for p in dag.get(t, []):
-            if p in targets:
+            if p in full_set:
                 indeg[t] += 1
                 adj[p].append(t)
-    avail = [(priority.get(t, 0), t) for t in target_ids if indeg[t] == 0]
+    avail = [(full_priority.get(t, 1), t) for t in full_set if indeg[t] == 0]
     heapq.heapify(avail)
     order: list[int] = []
     while avail:
@@ -57,7 +96,7 @@ def _topo_sort_priority(target_ids: list[int], dag: dict[int, list[int]],
         for d in adj[t]:
             indeg[d] -= 1
             if indeg[d] == 0:
-                heapq.heappush(avail, (priority.get(d, 0), d))
+                heapq.heappush(avail, (full_priority.get(d, 1), d))
     return order
 
 

@@ -6,7 +6,10 @@ from litnav.storage.seed import seed_demo_data
 FIXTURE = "data/seed/agents_reroute.json"
 
 
-def test_wrong_prereq_reroutes_on_agents():
+def test_prereq_auto_included_in_route():
+    """topo-sort includes tool_use (prereq of reflection) in the initial route.
+    No replan is needed: the prerequisite is present from the start, and the
+    session completes in route_version 1."""
     data = json.loads(open(FIXTURE, encoding="utf-8").read())
     conn = sqlite3.connect(":memory:", check_same_thread=False)
     init_db(conn); seed_demo_data(conn, FIXTURE)
@@ -21,4 +24,10 @@ def test_wrong_prereq_reroutes_on_agents():
     app.invoke(state, {"configurable": {"thread_id": sid}, "recursion_limit": 80})
     versions = [r[0] for r in conn.execute(
         "SELECT DISTINCT route_version FROM route_steps WHERE session_id=?", (sid,)).fetchall()]
-    assert max(versions) >= 2, "a prerequisite gap must bump route_version"
+    concepts_in_route = [r[0] for r in conn.execute(
+        "SELECT DISTINCT concept_id FROM route_steps WHERE session_id=?", (sid,)).fetchall()]
+    # Both tool_use (prereq) and reflection (target) are in the route from the start
+    assert slug_to_id["tool_use"] in concepts_in_route
+    assert slug_to_id["reflection"] in concepts_in_route
+    # No replan needed because the prereq was already included by topo-sort
+    assert max(versions) == 1, "expanded route needs no replan"

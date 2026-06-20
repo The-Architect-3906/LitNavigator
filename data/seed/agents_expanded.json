@@ -1189,6 +1189,82 @@
       ],
       "evidence_chunk_id": "c_taxonomy_1",
       "source_paper_id": 6
+    },
+    {
+      "id": 302,
+      "concept_id": 6,
+      "keypoint_id": "kp_multi_2",
+      "bloom_level": "recall",
+      "qtype": "explain",
+      "difficulty": 1,
+      "question": "In a role-based multi-agent pipeline, what do specialized agents pass to each other to complete a task?",
+      "answer_key": "intermediate artifacts",
+      "rubric": "Should mention that agents hand off partial results (code, plans, reviews, etc.) as structured artifacts to downstream agents",
+      "expected_keypoints": [
+        "intermediate",
+        "artifacts",
+        "handoff",
+        "specialized"
+      ],
+      "evidence_chunk_id": "cx_2303.17580_1",
+      "source_paper_id": null
+    },
+    {
+      "id": 303,
+      "concept_id": 6,
+      "keypoint_id": "kp_multi_3",
+      "bloom_level": "recall",
+      "qtype": "explain",
+      "difficulty": 1,
+      "question": "Why can multi-agent debate sometimes make answers worse rather than better?",
+      "answer_key": "shared errors get amplified",
+      "rubric": "Should explain that when all agents share the same wrong belief, debate reinforces the error instead of correcting it",
+      "expected_keypoints": [
+        "amplify",
+        "shared",
+        "error",
+        "debate"
+      ],
+      "evidence_chunk_id": "cx_2308.08155_0",
+      "source_paper_id": null
+    },
+    {
+      "id": 304,
+      "concept_id": 3,
+      "keypoint_id": "kp_reflect_1",
+      "bloom_level": "recall",
+      "qtype": "explain",
+      "difficulty": 1,
+      "question": "In the reflection paradigm, what does the agent do after producing an initial output?",
+      "answer_key": "critiques and revises its own output",
+      "rubric": "Should mention self-critique: the agent evaluates its own answer and produces an improved version",
+      "expected_keypoints": [
+        "critique",
+        "revise",
+        "self",
+        "feedback"
+      ],
+      "evidence_chunk_id": "cx_2303.17651_0",
+      "source_paper_id": null
+    },
+    {
+      "id": 305,
+      "concept_id": 3,
+      "keypoint_id": "kp_reflect_2",
+      "bloom_level": "comprehension",
+      "qtype": "explain",
+      "difficulty": 2,
+      "question": "Why do iterative revision passes outperform one-shot generation on complex tasks like coding or essay writing?",
+      "answer_key": "each pass catches different errors the previous pass missed",
+      "rubric": "Should explain the compounding benefit: revisions surface new issues, and the final output integrates multiple rounds of targeted improvements",
+      "expected_keypoints": [
+        "iterative",
+        "revision",
+        "improve",
+        "error"
+      ],
+      "evidence_chunk_id": "cx_2303.17651_3",
+      "source_paper_id": null
     }
   ],
   "misconceptions": [
@@ -1269,6 +1345,38 @@
       "objective": "Know the major axes (construction, planning, memory, tools, evaluation) that surveys use to organize the agent landscape",
       "evidence_chunk_id": "c_taxonomy_1",
       "sort_order": 1
+    },
+    {
+      "id": "kp_multi_2",
+      "concept_id": 6,
+      "name": "Emergent Division of Labour",
+      "objective": "Understand how specialized agents in a pipeline self-select roles and produce intermediate artifacts that downstream agents consume",
+      "evidence_chunk_id": "cx_2303.17580_1",
+      "sort_order": 2
+    },
+    {
+      "id": "kp_multi_3",
+      "concept_id": 6,
+      "name": "Limitations: When Multi-Agent Debate Fails",
+      "objective": "Know that debate can amplify shared errors rather than correct them, so its benefit over a single strong agent is task-dependent",
+      "evidence_chunk_id": "cx_2308.08155_0",
+      "sort_order": 3
+    },
+    {
+      "id": "kp_reflect_1",
+      "concept_id": 3,
+      "name": "Self-Critique Loop",
+      "objective": "Understand how an agent critiques its own output and regenerates an improved version using its own feedback",
+      "evidence_chunk_id": "cx_2303.17651_0",
+      "sort_order": 1
+    },
+    {
+      "id": "kp_reflect_2",
+      "concept_id": 3,
+      "name": "Iterative Refinement vs One-Shot Generation",
+      "objective": "Know why multiple revision passes outperform single-shot generation on complex writing and coding tasks",
+      "evidence_chunk_id": "cx_2303.17651_3",
+      "sort_order": 2
     }
   ]
 }

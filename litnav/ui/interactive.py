@@ -68,6 +68,9 @@ class TutorSession:
         "grade_kp": "Grading against rubric",
         "reteach_kp": "Re-teaching key point with new strategy",
         "advance_kp": "Checking advance criteria",
+        # ORIENT + LOST
+        "orient_tour": "Walking the concept roadmap",
+        "handle_lost": "Re-explaining from a different angle",
     }
 
     def _step_event(self, node: str, delta: dict) -> dict:
@@ -111,7 +114,7 @@ class TutorSession:
         if not history:
             return []
 
-        teach_events = {"teach", "reteach", "teach_kp", "reteach_kp"}
+        teach_events = {"teach", "reteach", "teach_kp", "reteach_kp", "orient_tour", "handle_lost"}
         # "lecture" marks the end of a no-quiz concept — treat it as a boundary so
         # we still find the preceding "teach" event and surface its content.
         boundary_events = {"assess_next", "check", "lecture"}
@@ -133,10 +136,23 @@ class TutorSession:
     def stream_answer(self, text: str):
         """Inject the answer and resume, yielding one event per executed node, then the
         terminal teach/question/state/done events. Used by the SSE endpoint."""
-        self.app.update_state(self.config, {"user_answer": text, "pending_answers": []})
+        self.app.update_state(self.config, {"user_answer": text, "pending_answers": [],
+                                            "user_intent": None})
         for update in self.app.stream(None, self.config, stream_mode="updates"):
             for node, delta in update.items():
                 if node.startswith("__"):   # skip LangGraph control keys (e.g. __interrupt__)
+                    continue
+                yield self._step_event(node, delta or {})
+        for ev in self._terminal_events():
+            yield ev
+
+    def stream_lost(self):
+        """Learner said they're lost: set user_intent='lost', resume through handle_lost."""
+        self.app.update_state(self.config, {"user_intent": "lost", "user_answer": None,
+                                            "pending_answers": []})
+        for update in self.app.stream(None, self.config, stream_mode="updates"):
+            for node, delta in update.items():
+                if node.startswith("__"):
                     continue
                 yield self._step_event(node, delta or {})
         for ev in self._terminal_events():
@@ -298,6 +314,8 @@ class AgentSession:
 
         if d["action"] == "answer":
             yield from self.tutor.stream_answer(message)
+        elif d["action"] == "lost":
+            yield from self.tutor.stream_lost()
         elif d["action"] == "set_goal":
             yield from self._start_teaching(d["slug"])
         elif d["action"] == "aside":

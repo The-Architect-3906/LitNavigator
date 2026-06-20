@@ -99,6 +99,13 @@ class NavState(TypedDict):
     # Per-keypoint TEACH/ASSESS progress (None for concepts without keypoints)
     concept_progress: Optional[ConceptProgress]
 
+    # ORIENT phase: True once the roadmap overview has been shown for this session
+    orient_done: Optional[bool]
+
+    # Conversation intent set by the dispatcher for the current turn
+    # "lost" → handle_lost node; None → normal flow
+    user_intent: Optional[str]
+
     # Append-only audit history (LangGraph merges with operator.add)
     history: Annotated[List[dict], operator.add]
 

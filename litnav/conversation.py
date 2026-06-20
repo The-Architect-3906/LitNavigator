@@ -10,7 +10,7 @@ from __future__ import annotations
 from litnav.goal import resolve_goal
 from litnav.llm import client as llm_client
 
-ACTIONS = {"chat", "set_goal", "answer", "aside", "out_of_scope"}
+ACTIONS = {"chat", "set_goal", "answer", "aside", "out_of_scope", "lost"}
 
 # Words a genuine side-question tends to open with (when it isn't already punctuated with '?').
 # Yes/no starters ("is", "are", "does" …) and open question words.
@@ -29,6 +29,27 @@ _RETEACH_CUES = (
     "could you explain",
     "i don't understand",
     "i dont understand",
+)
+
+_LOST_CUES = (
+    "i'm lost",
+    "im lost",
+    "i am lost",
+    "too hard",
+    "too difficult",
+    "back up",
+    "back me up",
+    "slow down",
+    "give me the basics",
+    "start from the beginning",
+    "i'm confused",
+    "im confused",
+    "i am confused",
+    "i don't get it",
+    "i dont get it",
+    "i have no idea",
+    "what does that mean",
+    "i need more context",
 )
 
 
@@ -50,7 +71,18 @@ def _looks_reteach_request(message: str) -> bool:
     return any(m.startswith(prefix) for prefix in _RETEACH_CUES)
 
 
+def _looks_lost(message: str) -> bool:
+    """Detect 'I'm lost / too hard / back up' — learner needs simpler re-explanation."""
+    m = " ".join(message.strip().lower().split())
+    if not m:
+        return False
+    return any(cue in m for cue in _LOST_CUES)
+
+
 def _fallback(message: str, concepts: list[dict], off: dict | None, quiz_pending: bool) -> dict:
+    # "lost / too hard / back up" is a first-class intent regardless of quiz state
+    if _looks_lost(message):
+        return {"action": "lost", "slug": None, "reply": ""}
     if quiz_pending:
         if _looks_reteach_request(message):
             r = resolve_goal(message, concepts, off)
@@ -113,7 +145,10 @@ def dispatch(message: str, *, concepts: list[dict], off: dict | None,
     # grade + reteach (self-correcting). So while a quiz is pending, only honor 'aside' when the
     # message actually reads as a question; otherwise treat it as an answer attempt. (Offline the
     # fallback already returns 'answer', so this only ever corrects a live-LLM misclassification.)
-    if action == "aside" and quiz_pending and not (
+    # Lost is a higher-priority override — never let the LLM downgrade it to "answer"
+    if _looks_lost(message):
+        action, slug = "lost", None
+    elif action == "aside" and quiz_pending and not (
         _looks_interrogative(message) or _looks_reteach_request(message)
     ):
         action, slug = "answer", None
