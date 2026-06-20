@@ -13,7 +13,10 @@ from litnav.llm import client as llm_client
 ACTIONS = {"chat", "set_goal", "answer", "aside", "out_of_scope"}
 
 # Words a genuine side-question tends to open with (when it isn't already punctuated with '?').
+# Yes/no starters ("is", "are", "does" …) and open question words.
 _Q_LEADS = {"what", "why", "how", "when", "where", "who", "whom", "which", "whose",
+            "is", "are", "was", "were", "does", "do", "did", "has", "have", "had",
+            "will", "would", "should", "shall", "may", "might", "must",
             "can", "could", "wait", "explain", "hmm", "huh"}
 
 
@@ -29,6 +32,12 @@ def _looks_interrogative(message: str) -> bool:
 
 def _fallback(message: str, concepts: list[dict], off: dict | None, quiz_pending: bool) -> dict:
     if quiz_pending:
+        # If the message reads like a question rather than an answer attempt, treat it as an
+        # aside even offline — the LLM dispatcher handles this more precisely when online.
+        if _looks_interrogative(message):
+            r = resolve_goal(message, concepts, off)
+            slug = r["slug"] if r["kind"] in ("concept", "induce") else None
+            return {"action": "aside", "slug": slug, "reply": ""}
         return {"action": "answer", "slug": None, "reply": ""}
     r = resolve_goal(message, concepts, off)
     if r["kind"] in ("concept", "induce"):
