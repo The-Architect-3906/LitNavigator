@@ -4,6 +4,22 @@ import operator
 from typing import Annotated, Dict, List, Literal, Optional, TypedDict
 
 BLOOM_LADDER = ["recall", "comprehension", "application"]
+
+
+def bloom_ceiling_for(goal_type: str) -> str:
+    """Return the Bloom-ladder ceiling for a learner goal type.
+
+    survey     → comprehension (2nd level — broad recognition, no deep application)
+    functional → application   (top — must be able to USE the knowledge)
+    mastery    → application   (top — same ceiling; mastery affects pacing, not ceiling)
+    Unknown types default to the top level so existing flows are unaffected.
+    """
+    ceilings = {
+        "survey":     BLOOM_LADDER[1],   # "comprehension"
+        "functional": BLOOM_LADDER[-1],  # "application"
+        "mastery":    BLOOM_LADDER[-1],  # "application"
+    }
+    return ceilings.get(goal_type, BLOOM_LADDER[-1])
 TEACH_STRATEGIES = ["direct", "analogy", "contrast", "worked_example"]
 KP_MASTERY_THRESHOLD = 0.75
 KP_CONF_THRESHOLD = 0.50    # requires correct_obs >= 2 to pass
@@ -101,6 +117,11 @@ class NavState(TypedDict):
 
     # ORIENT phase: True once the roadmap overview has been shown for this session
     orient_done: Optional[bool]
+
+    # Goal elicitation (OW-4): set once at the start of the session
+    goal_type: Optional[str]       # "mastery" | "functional" | "survey"
+    goal_text: Optional[str]       # raw learner goal text
+    bloom_ceiling: Optional[str]   # Bloom level cap derived from goal_type
 
     # Conversation intent set by the dispatcher for the current turn
     # "lost" → handle_lost node; None → normal flow

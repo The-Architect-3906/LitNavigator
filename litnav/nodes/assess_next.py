@@ -110,8 +110,16 @@ def assess_next_node(state: NavState, conn: sqlite3.Connection) -> dict:
     if last_result == "correct" and last_kp:
         cur_idx = BLOOM_LADDER.index(bloom)
         if cur_idx + 1 < len(BLOOM_LADDER):
-            bloom = BLOOM_LADDER[cur_idx + 1]
-            target_kp_id = last_kp  # stay on same keypoint at higher level
+            candidate = BLOOM_LADDER[cur_idx + 1]
+            # Respect bloom_ceiling if set (OW-4 goal elicitation)
+            ceiling = state.get("bloom_ceiling")
+            if ceiling and ceiling in BLOOM_LADDER:
+                ceiling_idx = BLOOM_LADDER.index(ceiling)
+                if cur_idx + 1 > ceiling_idx:
+                    candidate = None   # already at or beyond ceiling — don't upgrade
+            if candidate is not None:
+                bloom = candidate
+                target_kp_id = last_kp  # stay on same keypoint at higher level
 
     quiz = _get_or_generate(conn, cp["concept_id"], target_kp_id, bloom, used_ids,
                             session_id=state["session_id"])
