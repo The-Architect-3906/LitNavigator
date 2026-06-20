@@ -1,0 +1,15 @@
+{
+  "concepts": [
+    {"slug": "tool_use", "source": "digested", "domain": "llm-agents"},
+    {"slug": "reason_act", "source": "digested", "domain": "llm-agents"},
+    {"slug": "self_reflection", "source": "digested", "domain": "llm-agents"}
+  ],
+  "edge_tuples": [
+    ["tool_use", "reason_act", "prerequisite"],
+    ["reason_act", "self_reflection", "similarity"]
+  ],
+  "prereq_confidence": 0.75,
+  "keypoint_ids": ["kp_tool_1", "kp_ra_1", "kp_sr_1"],
+  "edge_accuracy": 0.5,
+  "unverified_count": 1
+}

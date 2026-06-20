@@ -1,0 +1,33 @@
+{
+  "domain_key": "llm-agents",
+  "target_slugs": [],
+  "sources": [
+    {"source_type": "arxiv", "source_id": "2210.03629", "title": "ReAct", "url": null,
+     "chunks": ["ReAct interleaves reasoning traces and actions.", "Tools let the agent act on the world."]},
+    {"source_type": "arxiv", "source_id": "2303.11366", "title": "Reflexion", "url": null,
+     "chunks": ["Reflexion adds verbal self-reflection over past failures."]}
+  ],
+  "candidate": {
+    "concepts": [
+      {"slug": "tool_use", "name": "Tool Use", "domain": "llm-agents", "frontier_flag": null},
+      {"slug": "reason_act", "name": "Reasoning + Acting", "domain": "llm-agents", "frontier_flag": "consensus"},
+      {"slug": "self_reflection", "name": "Self-Reflection", "domain": "llm-agents", "frontier_flag": "consensus"}
+    ],
+    "keypoints": [
+      {"kp_id": "kp_tool_1", "concept_slug": "tool_use", "name": "What a tool call is", "objective": "define tool use", "evidence_chunk_id": "c1", "bloom_level": "recall"},
+      {"kp_id": "kp_ra_1", "concept_slug": "reason_act", "name": "Interleave thought and action", "objective": "explain ReAct", "evidence_chunk_id": "c0", "bloom_level": "understand"},
+      {"kp_id": "kp_sr_1", "concept_slug": "self_reflection", "name": "Verbal self-critique", "objective": "explain Reflexion", "evidence_chunk_id": "c2", "bloom_level": "understand"}
+    ],
+    "prereq_edges": [
+      {"prereq_slug": "tool_use", "target_slug": "reason_act", "evidence_chunks": ["c0"], "max_strength": "explicit_assertion", "multi_paper": false},
+      {"prereq_slug": "reason_act", "target_slug": "self_reflection", "evidence_chunks": ["c2"], "max_strength": "weak_hint", "multi_paper": false}
+    ],
+    "similarity_edges": [
+      {"a_slug": "reason_act", "b_slug": "self_reflection", "evidence_chunks": ["c0", "c2"], "max_strength": "general_statement", "multi_paper": true}
+    ],
+    "quiz_seeds": [
+      {"concept_slug": "reason_act", "question": "What does ReAct interleave?", "answer_key": "reasoning traces and actions", "keypoint_id": "kp_ra_1", "bloom_level": "understand"}
+    ],
+    "judge_labels": {"tool_use->reason_act": true, "reason_act->self_reflection": false}
+  }
+}
