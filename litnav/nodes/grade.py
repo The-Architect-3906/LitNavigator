@@ -36,6 +36,27 @@ def grade_node(state: NavState, conn: sqlite3.Connection) -> dict:
     score, feedback = grade_answer(answer, quiz_item["answer_key"])
     correct = score == 1.0
 
+    # LLM semantic grading seam: exact-match often rejects correct answers that are
+    # worded differently from the answer_key.  When a provider is set, ask the LLM
+    # to judge whether the learner captured the key idea; exact-match is the offline
+    # fallback (so all offline tests still pass).
+    if not correct and answer.strip():
+        grade_prompt = (
+            "A learner answered a quiz question. Judge whether their answer correctly "
+            "captures the key idea, even if worded differently from the expected answer.\n"
+            f"Question: {quiz_item['question']}\n"
+            f"Key idea to look for: {quiz_item['answer_key']!r}\n"
+            f"Learner's answer: {answer!r}\n"
+            'Respond as JSON: {"correct": true/false, "feedback": "<one sentence>"}'
+        )
+        grade_result = llm_client.complete_json(
+            grade_prompt, fallback={"correct": False, "feedback": feedback}
+        )
+        if grade_result.get("correct"):
+            score = 1.0
+            feedback = grade_result.get("feedback") or "Correct."
+            correct = True
+
     # ── Misconception detection (only meaningful on a wrong answer) ──────────────
     detected_id = None
     # Start from the teach turn's LLM cost (grounded explanation), then add grading's own cost.
