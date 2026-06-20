@@ -39,6 +39,8 @@ def test_record_edge_writes_similarity_and_digested():
     e = edges[0]
     assert e["edge_type"] == "similarity" and e["confidence"] == 0.9
     assert e["evidence"] == ["ch1", "ch2"]
+    # unfiltered path also returns the edge
+    assert len(repo.get_concept_edges(c)) == 1
 
 
 def test_create_keypoint_persists_and_reads_back():

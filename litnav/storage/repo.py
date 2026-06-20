@@ -244,9 +244,10 @@ def get_last_tutor_post_score(
 
 def get_concept_by_slug(conn: sqlite3.Connection, slug: str) -> dict | None:
     row = conn.execute(
-        "SELECT id, slug, name, frontier_flag FROM concepts WHERE slug=?", (slug,)
+        "SELECT id, slug, name, frontier_flag, source, domain FROM concepts WHERE slug=?", (slug,)
     ).fetchone()
-    return {"id": row[0], "slug": row[1], "name": row[2], "frontier_flag": row[3]} if row else None
+    return {"id": row[0], "slug": row[1], "name": row[2], "frontier_flag": row[3],
+            "source": row[4], "domain": row[5]} if row else None
 
 
 def next_concept_id(conn: sqlite3.Connection) -> int:
@@ -261,18 +262,6 @@ def create_concept(conn: sqlite3.Connection, concept_id: int, slug: str, name: s
         "INSERT OR IGNORE INTO concepts (id, slug, name, frontier_flag, source, domain) "
         "VALUES (?,?,?,?,?,?)",
         (concept_id, slug, name, frontier_flag, source, domain),
-    )
-    conn.commit()
-
-
-def record_induced_edge(conn: sqlite3.Connection, prereq_concept: int, target_concept: int,
-                        confidence: float, evidence_chunks: list[str]) -> None:
-    conn.execute(
-        "INSERT OR IGNORE INTO concept_edges "
-        "(prereq_concept, target_concept, edge_type, source, confidence, evidence) "
-        "VALUES (?,?,?,?,?,?)",
-        (prereq_concept, target_concept, "prerequisite", "induced", confidence,
-         json.dumps(evidence_chunks)),
     )
     conn.commit()
 
@@ -292,11 +281,17 @@ def record_edge(conn: sqlite3.Connection, prereq_concept: int, target_concept: i
     conn.commit()
 
 
+def record_induced_edge(conn: sqlite3.Connection, prereq_concept: int, target_concept: int,
+                        confidence: float, evidence_chunks: list[str]) -> None:
+    record_edge(conn, prereq_concept, target_concept, edge_type="prerequisite",
+                source="induced", confidence=confidence, evidence_chunks=evidence_chunks)
+
+
 def get_concept_edges(conn: sqlite3.Connection, source: str | None = None) -> list[dict]:
     """All edges, optionally filtered by source. evidence is decoded from JSON."""
     sql = ("SELECT prereq_concept, target_concept, edge_type, source, confidence, evidence "
            "FROM concept_edges")
-    params: tuple = ()
+    params: tuple[str, ...] = ()
     if source is not None:
         sql += " WHERE source=?"
         params = (source,)
