@@ -87,3 +87,31 @@ the prereq/similarity graph live** (the graph is the core output).
 - [ ] **edge_accuracy hard floor → OW-3** (thin seed evidence cannot support hard prerequisites; the gate reports the number and asserts graceful degradation instead).
 - [ ] **⑫ learner_goal slug↔ID reconciliation → OW-4** (goal elicitation).
 - **No new model enabled this round** — but A1 is the first concrete model-need signal; recorded, awaiting OW-3 confirmation + your approval.
+
+---
+
+## 2026-06-20 — OW-3 find-sources live + A1 CLOSED (the 0-edges cause found)
+
+**Runs (LIVE, provider=openai, strict):** `verify_discover_live` + focused-paper digest probes.
+
+**Discovery works.** Real OpenAlex + Wikipedia + arXiv full-text: 6 sources, ranked/deduped, top-k full text, intent classified, for **$0.000098** (intent $0.00003 + rerank-embedding $0.000068). Validated live.
+
+**A1 root cause found — it was a CODE BUG, not the model and not thin evidence.** Feeding real full text, digest produced 0 edges. A diagnostic of the raw LLM proposal showed `gpt-4o-mini` proposes *perfectly sensible* edges (e.g. `reasoning-traces → task-specific-actions`), but it returns `evidence_chunks` as **integers `[0,1]`** while `build_edges` cleaned against **string keys `"c0"`** → `0 in {"c0":...}` is False → **100% of edges dropped as "no evidence."** Fixed (`fix(ow2-live): normalize ... int 0 -> "c0"`, commit c9306a6) — the earlier "gpt-4o-mini inadequate at proposal" worry was wrong; the model was fine.
+
+**After the fix — end-to-end live digest of the ReAct paper (3 runs):**
+| run | concepts | edges built | judged by gpt-4o | result |
+|---|---|---|---|---|
+| 1 | 5 | 3 | **3 (frontier fired)** | all downgraded to similarity (acc 0.0); cost $0.0027 |
+| 2 | 1 | 0 | 0 | no edges possible (1 concept) |
+| 3 | 1 | 0 | 0 | no edges possible (1 concept) |
+
+**Findings (now clean):**
+- ✅ **The pipeline works end-to-end live**: edges build, the real `gpt-4o` judge fires (run 1: 3 frontier calls), graceful downgrade to similarity. A1 loop CLOSED.
+- ⚠️ **Extraction is highly non-deterministic** (1 vs 5 concepts on the SAME paper across runs) — the LLM calls run at default temperature. Sometimes the whole paper collapses to a single concept → no edges. **A2 (new, top priority): set `temperature=0` on digest's structured calls** (extract/propose/judge) for stability + reproducibility — cheap, high-value, also aids cost-determinism.
+- ◻️ **Prereq edges still don't survive the `gpt-4o` judge even on real full text** (run 1: all 3 downgraded). This is now a *clean* signal (no chunk-id confound), but still partly defensible (asserting hard prerequisites from one paper is genuinely conservative). The digest yields a **similarity graph** (KnowLP fallback), not hard prereqs. Re-judge after A2 (stable extraction) before drawing a model conclusion. Still no model need recorded.
+
+**ACTIONS (updated):**
+- [ ] **A2 (top) — `temperature=0` on digest LLM calls** (extraction non-determinism collapses concepts). Cheap; do next.
+- [ ] **A1 (revised) — prereq-survival on real evidence is now measurable but low**; re-evaluate after A2 stabilizes extraction + over several papers before concluding "cheap model too weak." Still nothing recorded in `RECORDED_NEEDS`.
+- [ ] `verify_discover_live`'s "top source by char count" picked a broad survey (poor for prereqs); prefer a focused paper or test multiple — minor gate refinement.
+- **No new model enabled.** The earlier A1 over-attribution is fully retracted: the 0-edges was a chunk-id bug.
