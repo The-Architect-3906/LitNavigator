@@ -593,5 +593,7 @@ usd_per_1k}` consistent across Tasks 2, 3. `router.complete_text/json(tier, stag
 session_id, conn, budget)` consistent across Tasks 3, 4, 5. ✓
 
 **Out of scope for OW-0 (by design):** input/output token split (blended rate is enough now);
-semantic/prompt caching; escalation policy; wiring existing teach/assess calls through the router
-(that migration happens in OW-4 so this milestone stays additive and green).
+semantic/prompt caching; escalation policy — including the literature review's **pedagogical-error-cost
+pricing** (escalate when a wrong correctness judgment is costly, not when tokens are) — which lands in
+OW-4; wiring existing teach/assess calls through the router (that migration happens in OW-4 so this
+milestone stays additive and green).
