@@ -30,3 +30,17 @@ def test_verify_pass_accuracy_over_all_prereq_edges(monkeypatch):
     acc, (out, unverified) = verify.verify_pass(edges, judge_labels=labels, session_id="s", conn=c)
     assert acc == 0.5                  # 1 of 2 proposed prereq edges judged genuine
     assert len(unverified) == 1 and unverified[0]["target_slug"] == "c"
+
+
+def test_refd_rescues_judge_rejected_high_impact_edge(monkeypatch):
+    monkeypatch.setenv("LITNAV_LLM_PROVIDER", "none")
+    import sqlite3
+    from litnav.storage.schema import init_db
+    c = sqlite3.connect(":memory:"); init_db(c)
+    edges = [{"prereq_slug": "b", "target_slug": "a", "edge_type": "prerequisite",
+              "evidence": ["c0"], "confidence": 0.75, "high_impact": True}]
+    labels = {"b->a": False}                      # judge REJECTS
+    refd = {("b", "a"): 0.5}                       # but RefD strongly corroborates
+    acc, (out, unverified) = verify.verify_pass(edges, judge_labels=labels, session_id="s", conn=c, refd=refd)
+    assert out[0]["edge_type"] == "prerequisite"  # RefD rescued it (kept, not downgraded)
+    assert out[0]["verified"] is True

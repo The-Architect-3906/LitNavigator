@@ -131,8 +131,15 @@ def digest(di: DigestInput, *, conn: sqlite3.Connection, candidate: dict,
     scored = edges_mod.build_edges(di, concepts, candidate=candidate,
                                    session_id=session_id, conn=conn, budget=budget)
     labels = candidate.get("judge_labels", {})
+    from litnav.digest import refd as refd_mod
+    _by_chunk = {}
+    _i = 0
+    for s in di.sources:
+        for ch in s.chunks:
+            _by_chunk[f"c{_i}"] = ch; _i += 1
+    refd_scores = refd_mod.refd_scores(concepts, _by_chunk)
     accuracy, (verified, unverified) = verify_mod.verify_pass(
-        scored, judge_labels=labels, session_id=session_id, conn=conn, budget=budget)
+        scored, judge_labels=labels, session_id=session_id, conn=conn, budget=budget, refd=refd_scores)
     quiz_seeds = _propose_quiz_seeds(concepts, {}, candidate, session_id=session_id,
                                      conn=conn, budget=budget)
 
