@@ -60,7 +60,7 @@ def test_second_identical_request_is_cache_hit(monkeypatch):
     assert openworld_repo.cache_get(c, key)["status"] == "cached"
     res2 = pipeline.digest(_input(), conn=c, candidate=CANDIDATE, session_id="s")
     assert res2.cache_hit is True
-    assert res2.concepts == [] and res2.edges == []   # graph in DB, not in result on cache-hit
+    assert {x["slug"] for x in res2.concepts}  # cache hit now RE-READS the slice (not empty)
     assert c.execute("SELECT COUNT(*) FROM concepts WHERE source='digested'").fetchone()[0] >= 1
 
 

@@ -257,28 +257,46 @@ def next_concept_id(conn: sqlite3.Connection) -> int:
 
 def create_concept(conn: sqlite3.Connection, concept_id: int, slug: str, name: str,
                    frontier_flag: str | None = None, *, source: str = "curated",
-                   domain: str | None = None) -> None:
+                   domain: str | None = None, slice_key: str | None = None) -> None:
     conn.execute(
-        "INSERT OR IGNORE INTO concepts (id, slug, name, frontier_flag, source, domain) "
-        "VALUES (?,?,?,?,?,?)",
-        (concept_id, slug, name, frontier_flag, source, domain),
+        "INSERT OR IGNORE INTO concepts (id, slug, name, frontier_flag, source, domain, slice_key) "
+        "VALUES (?,?,?,?,?,?,?)",
+        (concept_id, slug, name, frontier_flag, source, domain, slice_key),
     )
     conn.commit()
 
 
 def record_edge(conn: sqlite3.Connection, prereq_concept: int, target_concept: int, *,
                 edge_type: str, source: str, confidence: float,
-                evidence_chunks: list[str]) -> None:
+                evidence_chunks: list[str], slice_key: str | None = None) -> None:
     """Generic typed edge writer. edge_type in {prerequisite, similarity, ...}; source in
     {curated, induced, digested}. Idempotent on (prereq, target, edge_type)."""
     conn.execute(
         "INSERT OR IGNORE INTO concept_edges "
-        "(prereq_concept, target_concept, edge_type, source, confidence, evidence) "
-        "VALUES (?,?,?,?,?,?)",
+        "(prereq_concept, target_concept, edge_type, source, confidence, evidence, slice_key) "
+        "VALUES (?,?,?,?,?,?,?)",
         (prereq_concept, target_concept, edge_type, source, confidence,
-         json.dumps(evidence_chunks)),
+         json.dumps(evidence_chunks), slice_key),
     )
     conn.commit()
+
+
+def get_slice_graph(conn: sqlite3.Connection, slice_key: str) -> dict:
+    """Reconstruct the digested graph for a slice: concepts + edges tagged with slice_key."""
+    crows = conn.execute(
+        "SELECT slug, name, domain, frontier_flag FROM concepts WHERE slice_key=?", (slice_key,)
+    ).fetchall()
+    concepts = [{"slug": r[0], "name": r[1], "domain": r[2], "frontier_flag": r[3]} for r in crows]
+    id_to_slug = {r[0]: r[1] for r in
+                  conn.execute("SELECT id, slug FROM concepts WHERE slice_key=?", (slice_key,))}
+    erows = conn.execute(
+        "SELECT prereq_concept, target_concept, edge_type, confidence, evidence "
+        "FROM concept_edges WHERE slice_key=?", (slice_key,)
+    ).fetchall()
+    edges = [{"prereq_slug": id_to_slug.get(r[0]), "target_slug": id_to_slug.get(r[1]),
+              "edge_type": r[2], "confidence": r[3],
+              "evidence": json.loads(r[4]) if r[4] else []} for r in erows]
+    return {"concepts": concepts, "edges": edges}
 
 
 def record_induced_edge(conn: sqlite3.Connection, prereq_concept: int, target_concept: int,

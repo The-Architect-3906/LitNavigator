@@ -60,25 +60,26 @@ def due_reviews(conn: sqlite3.Connection, session_id: str, now: str) -> list[dic
 # ── digest_cache (demand-driven memoization; no prediction) ───────────────────
 def cache_get(conn: sqlite3.Connection, slice_key: str) -> dict | None:
     row = conn.execute(
-        "SELECT status, graph_version, built_at, human_checked FROM digest_cache WHERE slice_key=?",
+        "SELECT status, graph_version, built_at, human_checked, model_key "
+        "FROM digest_cache WHERE slice_key=?",
         (slice_key,),
     ).fetchone()
     if row is None:
         return None
     return {"status": row[0], "graph_version": row[1], "built_at": row[2],
-            "human_checked": bool(row[3])}
+            "human_checked": bool(row[3]), "model_key": row[4]}
 
 
 def cache_put(conn: sqlite3.Connection, slice_key: str, *, graph_version: int = 1,
-              human_checked: bool = False) -> None:
+              human_checked: bool = False, model_key: str | None = None) -> None:
     """Mark a digested slice as cached. Upsert keyed by slice_key."""
     conn.execute(
-        "INSERT INTO digest_cache (slice_key, status, graph_version, built_at, human_checked) "
-        "VALUES (?, 'cached', ?, ?, ?) "
+        "INSERT INTO digest_cache (slice_key, status, graph_version, built_at, human_checked, model_key) "
+        "VALUES (?, 'cached', ?, ?, ?, ?) "
         "ON CONFLICT(slice_key) DO UPDATE SET "
         "status='cached', graph_version=excluded.graph_version, built_at=excluded.built_at, "
-        "human_checked=excluded.human_checked",
+        "human_checked=excluded.human_checked, model_key=excluded.model_key",
         (slice_key, graph_version, _dt.datetime.now(_dt.UTC).isoformat(timespec="seconds"),
-         1 if human_checked else 0),
+         1 if human_checked else 0, model_key),
     )
     conn.commit()
