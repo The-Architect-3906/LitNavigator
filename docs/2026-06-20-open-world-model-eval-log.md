@@ -41,3 +41,20 @@ the prereq/similarity graph live** (the graph is the core output).
   on live edges; only then can we judge whether `frontier` is adequate or a better/cheaper judge is
   worth recording.
 - **No new model recorded this round** — `gpt-4o-mini` is adequate for what runs today.
+
+---
+
+## 2026-06-20 — Phase 0 liveness precondition live test
+
+**Run (LIVE, provider=openai, strict):** `python -m litnav.evaluation.verify_liveness`.
+
+**Live usage result:** real `complete_text` returned `'Pong.'`; `was_live()`=True; tokens=18 (>0) → provably hit the API, not a fallback. A forced bad model (`this-model-does-not-exist-zzz`) in strict mode **raised `LivenessError`** instead of silently falling back. **A bug was caught by running live** (the gate's first call omitted the required `fallback` kwarg) — fixed in `fix(live)`; exactly the failure the offline path can't surface.
+
+**Cost table:**
+| stage | tier | model | tokens | usd |
+|---|---|---|---|---|
+| liveness | cheap | gpt-4o-mini | 18 | $0.000007 |
+| **total** | | | **18** | **$0.000007** |
+(The forced-error call raised before metering → no row, no cost.)
+
+**Evaluation:** liveness mechanism correct + cheap; no optimization needed. **Action A0 added:** the budget cap is now strict-raise-proven but has STILL never fired on real accumulating spend → `verify_cost_live` (doctrine §3) must force a real over-budget sequence and assert `BudgetExceeded`. A1/A2 (live edge-gen + judge evaluation) remain — that's Phase 1, where real model-adequacy testing happens. No new model needed.
