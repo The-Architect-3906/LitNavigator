@@ -2,6 +2,7 @@ import sqlite3
 from litnav.storage.schema import init_db
 from litnav.digest.contract import DigestInput, SourceDoc
 from litnav.digest import extract
+from litnav.llm import router
 
 
 CANDIDATE = {
@@ -43,3 +44,33 @@ def test_offline_is_zero_cost(monkeypatch):
     c = sqlite3.connect(":memory:"); init_db(c)
     extract.extract_concepts(_input(), candidate=CANDIDATE, session_id="s", conn=c)
     assert cost_repo.session_spend(c, "s")["tokens"] == 0
+
+
+def test_partial_slug_filter_drops_invalid(monkeypatch):
+    """Live: LLM returns 3 concepts, 1 with a blank slug -> only the 2 valid survive (no wholesale fallback)."""
+    live = {"concepts": [{"slug": "tool_use", "name": "Tool Use"},
+                         {"slug": "  ", "name": "Bad"},
+                         {"slug": "reason_act", "name": "ReAct"}],
+            "keypoints": [{"kp_id": "kp1", "concept_slug": "tool_use", "bloom_level": "apply"}]}
+    monkeypatch.setattr(router, "complete_json", lambda *a, **k: live)
+    concepts, _ = extract.extract_concepts(_input(), candidate=CANDIDATE, session_id=None, conn=None)
+    assert {c["slug"] for c in concepts} == {"tool_use", "reason_act"}
+
+
+def test_orphan_keypoints_dropped(monkeypatch):
+    """Live: a keypoint referencing a slug not in the accepted concept set is dropped."""
+    live = {"concepts": [{"slug": "tool_use", "name": "Tool Use"}],
+            "keypoints": [{"kp_id": "kp1", "concept_slug": "tool_use", "bloom_level": "recall"},
+                          {"kp_id": "kp2", "concept_slug": "GHOST_SLUG", "bloom_level": "recall"}]}
+    monkeypatch.setattr(router, "complete_json", lambda *a, **k: live)
+    _, keypoints = extract.extract_concepts(_input(), candidate=CANDIDATE, session_id=None, conn=None)
+    assert all(k["kp_id"] != "kp2" for k in keypoints)
+
+
+def test_invalid_bloom_coerced_to_recall(monkeypatch):
+    """Live: bloom_level outside the valid set is coerced to 'recall'."""
+    live = {"concepts": [{"slug": "tool_use", "name": "Tool Use"}],
+            "keypoints": [{"kp_id": "kp1", "concept_slug": "tool_use", "bloom_level": "MEMORIZE"}]}
+    monkeypatch.setattr(router, "complete_json", lambda *a, **k: live)
+    _, keypoints = extract.extract_concepts(_input(), candidate=CANDIDATE, session_id=None, conn=None)
+    assert keypoints[0]["bloom_level"] == "recall"

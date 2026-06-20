@@ -4,6 +4,9 @@ Offline (provider=none): replay the prepared `candidate` (the fixture's baked ex
 pipeline is deterministic at $0. Live: ask a CHEAP-tier model to name the concepts/keypoints grounded
 in the chunk text, falling back to the candidate on any malformed field. The LLM never returns
 confidence — that is computed downstream by induced_confidence.
+
+All returned dicts are COPIES — offline the router returns the candidate by reference, so mutating in
+place would contaminate the shared candidate across calls.
 """
 from __future__ import annotations
 
@@ -13,6 +16,7 @@ from litnav.digest.contract import DigestInput
 from litnav.llm import router
 
 _BLOOM = {"recall", "understand", "apply", "analyze", "evaluate", "create"}
+_BLOOM_DEFAULT = "recall"
 
 
 def _valid_concept(c: dict) -> bool:
@@ -22,7 +26,8 @@ def _valid_concept(c: dict) -> bool:
 def extract_concepts(di: DigestInput, *, candidate: dict, session_id: str | None,
                      conn: sqlite3.Connection | None, budget: int | None = None
                      ) -> tuple[list[dict], list[dict]]:
-    """Return (concepts, keypoints). `candidate` is the offline replay AND the live fallback."""
+    """Return (concepts, keypoints). `candidate` is the offline replay AND the live fallback.
+    Returned dicts are fresh copies (never the candidate's objects)."""
     chunk_blob = "\n---\n".join(ch for s in di.sources for ch in s.chunks)
     prompt = (
         f"From the evidence below about the domain '{di.domain_key}', list the teachable concepts "
@@ -35,23 +40,28 @@ def extract_concepts(di: DigestInput, *, candidate: dict, session_id: str | None
                                   session_id=session_id, conn=conn, budget=budget)
 
     raw_concepts = result.get("concepts") if isinstance(result, dict) else None
-    concepts = [c for c in raw_concepts if _valid_concept(c)] if isinstance(raw_concepts, list) else []
-    if not concepts:                                   # malformed -> fall back wholesale
-        concepts = candidate["concepts"]
+    if isinstance(raw_concepts, list):
+        concepts = [dict(c) for c in raw_concepts if _valid_concept(c)]
+    else:
+        concepts = []
+    if not concepts:                                   # malformed -> fall back wholesale (copied)
+        concepts = [dict(c) for c in candidate["concepts"]]
     for c in concepts:
         c.setdefault("domain", di.domain_key)
         c.setdefault("frontier_flag", None)
 
     slugs = {c["slug"] for c in concepts}
     raw_kps = result.get("keypoints") if isinstance(result, dict) else None
-    keypoints = candidate["keypoints"]
+    keypoints: list[dict] | None = None
     if isinstance(raw_kps, list):
-        cand = [k for k in raw_kps if isinstance(k, dict) and k.get("concept_slug") in slugs
+        cand = [dict(k) for k in raw_kps if isinstance(k, dict) and k.get("concept_slug") in slugs
                 and isinstance(k.get("kp_id"), str)]
         if cand:
             keypoints = cand
-    keypoints = [k for k in keypoints if k.get("concept_slug") in slugs]
+    if keypoints is None:
+        keypoints = [dict(k) for k in candidate["keypoints"]]
+    keypoints = [k for k in keypoints if k.get("concept_slug") in slugs]  # drop orphans
     for k in keypoints:
         if k.get("bloom_level") not in _BLOOM:
-            k["bloom_level"] = "recall"
+            k["bloom_level"] = _BLOOM_DEFAULT
     return concepts, keypoints
