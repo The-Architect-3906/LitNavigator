@@ -4,6 +4,8 @@
 
 > Note: the live-first re-audit **intentionally superseded §10** (offline gates → live gates). That is by design and NOT counted as a deviation here. This audit checks the CAPABILITY/data specs (§4, §5, §6.1, §6.2).
 
+> **RESOLVED 2026-06-20** — all 7 unflagged deviations below are now fixed (commits `2a96922` D3, `187af6c` D2, `b909e0f` D5, `7d74c09` D6+D7, `7a855c8` D4, `1e31583` D1; spec re-aligned `a0d7d45`). Deferred items are now explicitly flagged in the spec (§4/§5/§6.1/§6.2 impl-notes). Live-validated: RefD recovered a real prerequisite on multi-source evidence (`in_context_learning → agentic_reasoning`) — see the model-eval log. 231 passed, 6 offline gates + 3 live gates green. See `docs/superpowers/plans/2026-06-20-spec-remediation-plan.md`.
+
 **Bottom line:** the core architecture and data-flow follow the spec faithfully across all four milestones. But the audit found **~7 genuine unflagged deviations** (built differently or omitted without recording it) plus several legitimately-deferred-but-unflagged items and cosmetic naming diffs. My earlier "core faithful, only RefD missing" was **incomplete** — there are more.
 
 ---

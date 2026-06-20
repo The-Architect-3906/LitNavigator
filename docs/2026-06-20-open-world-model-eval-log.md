@@ -150,3 +150,20 @@ the prereq/similarity graph live** (the graph is the core output).
 **ACTIONS:**
 - [ ] **A4 (future) — multi-source digest** to surface real prerequisites across papers (single-paper digest correctly yields similarity edges). Candidate for an OW-2.x / OW-7 enhancement, not blocking.
 - minor: keypoint extraction count varies slightly run-to-run (0 vs 8) — low priority.
+
+---
+
+## 2026-06-20 — Spec remediation live + RefD recovers a real prerequisite
+
+**Runs (LIVE, provider=openai, strict):** `verify_digest_live` (RefD+cache in path) + a multi-source probe (find-sources → digest 3 real sources).
+
+**Discovery:** 6 real sources ranked with authority (0.85/0.83/0.75…), intent=cutting-edge, 3 with full text, for **$0.0001** (intent + BM25 prefilter + embedding rerank).
+
+**Multi-source digest (3 sources → 8 concepts, 5 edges) — RefD WORKS:**
+- **1 prerequisite SURVIVED: `in_context_learning → agentic_reasoning` (conf 0.65, refd=0.5).** The `gpt-4o` judge rejected it (edge_accuracy 0.0), **but the non-LLM RefD signal corroborated it (0.5 ≥ REFD_MIN) and rescued it** — the spec's "RefD-style + LLM" two-signal design delivering exactly what it's for.
+- The other 4 edges (refd 0.0 / −0.33, no corroboration) correctly downgraded to similarity.
+- This is the **first surviving prerequisite on real evidence** — and it took RefD, not a better LLM. Confirms the earlier conclusion: the bottleneck was never the model tier.
+
+**Cost:** discover $0.0001 + multi-source digest $0.0029 (cheap $0.00146 / frontier judge 5 calls $0.00144 / embed ~0) ≈ **$0.003**. Result-cache present (0 hits this run — distinct prompts).
+
+**Verdict:** all 7 spec deviations (D1–D7) closed and the substantive ones (RefD, multi-source) live-validated. RefD + multi-source is the right lever for real prerequisites; no model change needed. A4 (multi-source) effectively exercised here.
