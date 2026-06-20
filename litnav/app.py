@@ -243,6 +243,25 @@ def _run_intent(which: str | None) -> None:
         print("  route: " + " -> ".join(route) + "\n")
 
 
+def _digest_demo() -> int:
+    import json, os, sqlite3
+    from pathlib import Path
+    from litnav.storage.schema import init_db
+    from litnav.digest.contract import DigestInput, SourceDoc
+    from litnav.digest import pipeline
+    os.environ.setdefault("LITNAV_LLM_PROVIDER", "none")
+    raw = json.loads(Path("data/seed/digest_sources_fixture.json").read_text(encoding="utf-8"))
+    di = DigestInput(raw["domain_key"],
+                     [SourceDoc(s["source_type"], s["source_id"], s["title"], s.get("url"), s["chunks"])
+                      for s in raw["sources"]],
+                     raw.get("target_slugs", []))
+    conn = sqlite3.connect(":memory:"); init_db(conn)
+    res = pipeline.digest(di, conn=conn, candidate=raw["candidate"], session_id="digest-demo")
+    print(f"digest-demo: {len(res.concepts)} concepts, {len(res.edges)} edges, "
+          f"{len(res.unverified_edges)} flagged, edge_accuracy={res.edge_accuracy}")
+    return 0
+
+
 def main() -> int:
     from litnav.config import load_dotenv
     load_dotenv()  # pick up LITNAV_LLM_* / OPENAI_API_KEY from .env for live runs
@@ -257,7 +276,12 @@ def main() -> int:
     p4 = sub.add_parser("demo-intent")
     p4.add_argument("--intent", choices=["researcher", "journalist"], default=None,
                     help="show one intent; omit to compare both")
+    sub.add_parser("digest-demo")    # offline digest pipeline demo on fixture slice
     args = parser.parse_args()
+
+    # digest-demo runs on an in-memory DB and does not need the shared demo DB lock
+    if args.command == "digest-demo":
+        return _digest_demo()
 
     # All demos write to the one shared demo DB (so the panel can render the latest run);
     # serialize concurrent invocations so one run's reset_db() can't drop tables mid-run.
