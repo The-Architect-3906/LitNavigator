@@ -26,7 +26,9 @@ def _judge(edge: dict, judge_labels: dict, *, session_id, conn, budget) -> bool:
                                   fallback={"is_prerequisite": judge_labels.get(key, True)},
                                   session_id=session_id, conn=conn, budget=budget)
     val = result.get("is_prerequisite") if isinstance(result, dict) else None
-    return bool(val) if isinstance(val, bool) else bool(judge_labels.get(key, True))
+    if isinstance(val, bool):
+        return val
+    return bool(judge_labels.get(key, False))   # was True; unknown -> not verified
 
 
 def verify_edges(edges: list[dict], *, judge_labels: dict, session_id: str | None,

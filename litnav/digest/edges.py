@@ -1,9 +1,10 @@
 """DIGEST stage 2 — typed edges (prerequisite + similarity) with transparent confidence.
 
 Confidence is ALWAYS computed by induced_confidence (reused verbatim from the M3 induction path);
-the LLM may only label evidence strength. Prereq strength is LLM-labelled over the real chunks live
-(metered, cheap tier) and replayed from the candidate offline. Similarity edges are cosine-derived
-over concept-name embeddings live, candidate-supplied offline.
+the LLM may only label evidence strength. Prereq + similarity edges are now LLM-PROPOSED over the
+EXTRACTED concept slugs live (open-world capability); the candidate is the offline fallback (mirrors
+induce._extract_misconception: LLM proposes, candidate is fallback, confidence is rule-computed).
+Similarity edges are additionally cosine-filtered over concept-name embeddings live.
 """
 from __future__ import annotations
 
@@ -39,6 +40,32 @@ def _cosine(a: list[float], b: list[float]) -> float:
     return 0.0 if na == 0 or nb == 0 else dot / (na * nb)
 
 
+def _propose_edges(concepts: list[dict], by_chunk: dict, candidate: dict, *,
+                   session_id, conn, budget) -> dict:
+    """LLM proposes prereq + similarity edges over the EXTRACTED concept slugs (live);
+    offline (provider=none) the router returns the candidate as fallback."""
+    slug_lines = "\n".join(f"- {c['slug']}: {c.get('name', c['slug'])}" for c in concepts)
+    chunks_txt = "\n".join(f"[{cid}] {txt}" for cid, txt in by_chunk.items())
+    prompt = (
+        "Given these concepts extracted from the evidence, propose edges BETWEEN THEM ONLY.\n"
+        "A prerequisite edge means the prereq concept must be understood before the target.\n"
+        "A similarity edge links two closely related concepts.\n"
+        f"Concepts (use these slugs as endpoints, nothing else):\n{slug_lines}\n\n"
+        f"Evidence chunks (cite their ids):\n{chunks_txt}\n\n"
+        'Respond JSON: {"prereq_edges": [{"prereq_slug","target_slug","evidence_chunks":[ids],'
+        '"max_strength":"weak_hint|general_statement|explicit_assertion","multi_paper":bool}], '
+        '"similarity_edges": [{"a_slug","b_slug","evidence_chunks":[ids],"max_strength","multi_paper":bool}]}'
+    )
+    fallback = {"prereq_edges": candidate.get("prereq_edges", []),
+                "similarity_edges": candidate.get("similarity_edges", [])}
+    result = router.complete_json(prompt, tier="cheap", stage="digest", fallback=fallback,
+                                  session_id=session_id, conn=conn, budget=budget)
+    if not isinstance(result, dict):
+        return fallback
+    return {"prereq_edges": result.get("prereq_edges") or [],
+            "similarity_edges": result.get("similarity_edges") or []}
+
+
 def build_edges(di: DigestInput, concepts: list[dict], *, candidate: dict,
                 session_id: str | None, conn: sqlite3.Connection | None,
                 budget: int | None = None) -> list[dict]:
@@ -56,18 +83,25 @@ def build_edges(di: DigestInput, concepts: list[dict], *, candidate: dict,
     targets = set(di.target_slugs) if di.target_slugs else slugs   # [] => whole slice is the target
     out: list[dict] = []
 
+    # LLM proposes edges over the extracted concept slugs (live); offline: candidate is the fallback.
+    proposed = _propose_edges(concepts, by_chunk, candidate, session_id=session_id,
+                              conn=conn, budget=budget)
+
     # --- prerequisite edges ---
-    for e in candidate.get("prereq_edges", []):
+    for e in proposed["prereq_edges"]:
         if e["prereq_slug"] not in slugs or e["target_slug"] not in slugs:
             continue
-        chunks = e["evidence_chunks"]
-        texts = [by_chunk.get(ci, "") for ci in chunks]
-        strength = _label_strength(texts, e["max_strength"], session_id=session_id, conn=conn,
-                                   budget=budget)
-        conf = induced_confidence(len(chunks), strength, e.get("multi_paper", False))
+        # Clean evidence: keep only chunk ids that actually exist in this digest run.
+        cleaned = [ci for ci in e["evidence_chunks"] if ci in by_chunk]
+        if not cleaned:
+            continue                                   # no real evidence -> drop edge
+        strength = e.get("max_strength", "general_statement")
+        if strength not in _VALID_STRENGTH:
+            strength = "general_statement"
+        conf = induced_confidence(len(cleaned), strength, e.get("multi_paper", False))
         out.append({
             "prereq_slug": e["prereq_slug"], "target_slug": e["target_slug"],
-            "edge_type": "prerequisite", "evidence": chunks, "max_strength": strength,
+            "edge_type": "prerequisite", "evidence": cleaned, "max_strength": strength,
             "confidence": conf,
             "high_impact": conf >= HIGH_IMPACT_MIN_CONF and e["target_slug"] in targets,
         })
@@ -78,18 +112,24 @@ def build_edges(di: DigestInput, concepts: list[dict], *, candidate: dict,
         name_vecs = router.embed_texts([c["name"] for c in concepts], stage="digest",
                                        session_id=session_id, conn=conn, budget=budget)
     centroid = {c["slug"]: v for c, v in zip(concepts, name_vecs)} if name_vecs else {}
-    for e in candidate.get("similarity_edges", []):
+    for e in proposed["similarity_edges"]:
         a, b = e["a_slug"], e["b_slug"]
         if a not in slugs or b not in slugs:
             continue
+        # Clean evidence: keep only chunk ids that actually exist in this digest run.
+        cleaned = [ci for ci in e["evidence_chunks"] if ci in by_chunk]
+        if not cleaned:
+            continue                                   # no real evidence -> drop edge
         if (centroid and a in centroid and b in centroid
                 and _cosine(centroid[a], centroid[b]) < _SIM_COS_MIN):
             continue                                   # live: drop pairs that are not actually close
-        conf = induced_confidence(len(e["evidence_chunks"]), e["max_strength"],
-                                  e.get("multi_paper", False))
+        strength = e.get("max_strength", "general_statement")
+        if strength not in _VALID_STRENGTH:
+            strength = "general_statement"
+        conf = induced_confidence(len(cleaned), strength, e.get("multi_paper", False))
         out.append({
             "prereq_slug": a, "target_slug": b, "edge_type": "similarity",
-            "evidence": e["evidence_chunks"], "max_strength": e["max_strength"],
+            "evidence": cleaned, "max_strength": strength,
             "confidence": conf, "high_impact": False,
         })
     return out
