@@ -79,6 +79,20 @@ def _looks_lost(message: str) -> bool:
     return any(cue in m for cue in _LOST_CUES)
 
 
+_LEARN_CUES = ("teach", "learn", "understand", "study", "explain", "basics",
+               "prereq", "prerequisite", "review", "brush up", "go over", "cover")
+
+
+def _looks_learn_request(message: str) -> bool:
+    """Distinguish 'I want to learn X' from a bare greeting. Used to decide whether an
+    out-of-corpus message deserves an honest boundary bridge (naming X) vs the friendly
+    'here's what I can teach' default — we don't want to slap a decline on a 'hello'."""
+    m = " ".join(message.strip().lower().split())
+    if not m:
+        return False
+    return any(cue in m for cue in _LEARN_CUES)
+
+
 def _fallback(message: str, concepts: list[dict], off: dict | None, quiz_pending: bool) -> dict:
     # "lost / too hard / back up" is a first-class intent regardless of quiz state
     if _looks_lost(message):
@@ -148,6 +162,11 @@ def dispatch(message: str, *, concepts: list[dict], off: dict | None,
     # Lost is a higher-priority override — never let the LLM downgrade it to "answer"
     if _looks_lost(message):
         action, slug = "lost", None
+    elif quiz_pending and _looks_reteach_request(message):
+        # A "teach me / I want to learn X" mid-quiz is a meta-request, never an answer to grade —
+        # force it to aside even if the live LLM labeled it "answer". The aside handler re-resolves
+        # the slug; an out-of-corpus topic (linear algebra) resolves to None → honest boundary reply.
+        action = "aside"
     elif action == "aside" and quiz_pending and not (
         _looks_interrogative(message) or _looks_reteach_request(message)
     ):

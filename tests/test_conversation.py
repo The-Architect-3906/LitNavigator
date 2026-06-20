@@ -84,6 +84,17 @@ def test_llm_aside_on_reteach_request_stays_aside(monkeypatch):
     assert d["slug"] == "react"
 
 
+def test_llm_answer_on_learn_request_during_quiz_is_forced_aside(monkeypatch):
+    """Even if the live LLM mislabels a meta learn-request as an 'answer', a 'I want to learn X'
+    mid-quiz must never be graded — it is forced to an aside (so an out-of-corpus topic reaches
+    the honest boundary reply instead of being scored)."""
+    from litnav import conversation as conv
+    monkeypatch.setattr(conv.llm_client, "complete_json",
+                        lambda *a, **k: {"action": "answer", "slug": None, "reply": ""})
+    d = dispatch("I want to learn linear algebra first", **_ctx(quiz_pending=True, question="Q?"))
+    assert d["action"] == "aside"
+
+
 def test_hallucinated_slug_rejected(monkeypatch):
     from litnav import conversation as conv
     monkeypatch.setattr(conv.llm_client, "complete_json",

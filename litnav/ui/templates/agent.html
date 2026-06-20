@@ -19,6 +19,8 @@
  .bubble{max-width:85%;padding:.6rem .85rem;border-radius:14px;margin:.5rem 0;line-height:1.5;word-wrap:break-word}
  .me{margin-left:auto;background:#e6e2fb;color:#2a2270;white-space:pre-wrap}
  .ai{background:#fff;border:1px solid #e2e6ee}
+ .ai.boundary{background:#fff8ec;border-color:#e8c98a}
+ .ai.boundary::before{content:"outside my literature pack";display:block;font-size:.7rem;font-weight:600;letter-spacing:.02em;text-transform:uppercase;color:#a9750c;margin-bottom:.25rem}
  .ai p{margin:.3rem 0}.ai p:first-child{margin-top:0}.ai p:last-child{margin-bottom:0}
  .ai ul,.ai ol{margin:.3rem 0;padding-left:1.3rem}.ai li{margin:.15rem 0}
  .qa{font-weight:500}
@@ -388,7 +390,7 @@ function handleEvent(e, steps, inp){
     setFlow(steps);
   } else if(e.type==='reply'){
     steps.forEach(s=>s.state='done');setFlow(steps);
-    if(e.text)addBubble('ai',e.text,true);
+    if(e.text)addBubble(e.kind==='boundary'?'ai boundary':'ai',e.text,true);
   } else if(e.type==='step'){
     steps.forEach(s=>s.state='done');
     steps.push({label:e.label,detail:e.detail,state:'active'});

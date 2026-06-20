@@ -10,7 +10,7 @@ from __future__ import annotations
 import sqlite3
 from typing import List, Optional
 
-from litnav.conversation import dispatch
+from litnav.conversation import dispatch, _looks_learn_request
 from litnav.graph.builder import build_graph, make_initial_state
 from litnav.nodes.retrieve import retrieve_node
 from litnav.storage import repo
@@ -303,6 +303,25 @@ class AgentSession:
                   f"below; do not add facts beyond it.\nEvidence:\n{chunk['text']}")
         return llm_client.complete_text(prompt, fallback=det, max_tokens=80)
 
+    def _boundary_reply(self, message: str) -> str:
+        """Honest bridge when the learner wants something OUTSIDE the paper pack (e.g. linear
+        algebra under an agent paper). Names the topic, declines to fake-teach it, and points
+        back to what is teachable — never grounded teaching. Deterministic fallback offline."""
+        names = ", ".join(c["name"] for c in self.concepts)
+        fallback = ("That's outside my literature pack — I'm built only from these agent papers, "
+                    f"so I won't pretend to teach it. I can teach: {names}.")
+        from litnav.llm import client as llm_client
+        prompt = (
+            "You are a tutor built ONLY from a fixed pack of LLM-agent papers. The learner asked "
+            "for something OUTSIDE that pack. Do NOT teach it. In 2-3 warm sentences: name the "
+            "topic they asked about, say plainly it is outside your literature pack so you will "
+            "not fake-teach it, and point them back to what you CAN teach. Do not add domain "
+            "facts beyond naming the topic.\n"
+            f"Teachable concepts: {[c['name'] for c in self.concepts]}\n"
+            f"Learner message: {message!r}"
+        )
+        return llm_client.complete_text(prompt, fallback=fallback, max_tokens=120)
+
     def handle(self, message: str):
         cur = self._cur()
         pending = self._quiz_pending()
@@ -325,11 +344,23 @@ class AgentSession:
             from litnav.goal import resolve_goal
             r = resolve_goal(message, self.concepts, self.off)
             aside_slug = r["slug"] if r["kind"] == "concept" else None
-            yield {"type": "reply", "text": self._grounded_aside(message, aside_slug)}
+            if aside_slug is None:
+                # Off-corpus side topic (e.g. "first teach me linear algebra"): honest boundary
+                # bridge instead of a curt "stay with the question".
+                yield {"type": "reply", "text": self._boundary_reply(message), "kind": "boundary"}
+            else:
+                yield {"type": "reply", "text": self._grounded_aside(message, aside_slug)}
             if question:
                 yield {"type": "question", "text": question}
             yield {"type": "done", "done": False}
-        else:  # chat or out_of_scope
+        elif d["action"] == "out_of_scope" and _looks_learn_request(message):
+            # The learner wants to learn something we don't have — decline honestly and name it,
+            # rather than a flat "I can teach: …" list. (Greetings/chit-chat fall through to chat.)
+            yield {"type": "reply", "text": self._boundary_reply(message), "kind": "boundary"}
+            if question:
+                yield {"type": "question", "text": question}
+            yield {"type": "done", "done": bool(cur.get("done"))}
+        else:  # chat, or out_of_scope that isn't a learn request (e.g. a greeting)
             yield {"type": "reply", "text": d["reply"] or "What would you like to learn?"}
             if question:
                 yield {"type": "question", "text": question}

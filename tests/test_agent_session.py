@@ -27,6 +27,40 @@ def test_greeting_replies_without_teaching(monkeypatch):
     assert a.tutor is None                     # no teaching session created
 
 
+def test_out_of_corpus_learn_request_gets_honest_boundary(monkeypatch):
+    """The linear-algebra case: a learn request for something OUTSIDE the paper pack must get
+    a graceful honest decline (kind='boundary'), not a flat list and not fake teaching."""
+    monkeypatch.setenv("LITNAV_LLM_PROVIDER", "none")
+    a = _agent()
+    evs = list(a.handle("teach me linear algebra first"))
+    assert "teach" not in _types(evs) and a.tutor is None      # never fake-teaches it
+    reply = next(e for e in evs if e["type"] == "reply")
+    assert reply.get("kind") == "boundary"
+    assert "outside" in reply["text"].lower() or "literature" in reply["text"].lower()
+
+
+def test_greeting_is_not_treated_as_boundary(monkeypatch):
+    """A greeting is out_of_scope too, but it is NOT a learn request — keep the friendly reply,
+    don't slap an 'outside my pack' decline on a hello."""
+    monkeypatch.setenv("LITNAV_LLM_PROVIDER", "none")
+    a = _agent()
+    reply = next(e for e in a.handle("hello there") if e["type"] == "reply")
+    assert reply.get("kind") != "boundary"
+
+
+def test_off_corpus_aside_during_quiz_is_boundary(monkeypatch):
+    """Mid-lesson, asking to learn an out-of-corpus prereq must give the honest boundary reply
+    and re-pose the pending question, not grade it and not dismiss it."""
+    monkeypatch.setenv("LITNAV_LLM_PROVIDER", "none")
+    a = _agent()
+    list(a.handle("I want to understand ReAct"))               # now a quiz is pending
+    evs = list(a.handle("I want to learn linear algebra first"))
+    reply = next(e for e in evs if e["type"] == "reply")
+    assert reply.get("kind") == "boundary"
+    assert "question" in _types(evs)                           # the quiz is re-posed
+    assert "state" not in _types(evs)                          # it was NOT graded
+
+
 def test_goal_starts_grounded_teaching(monkeypatch):
     monkeypatch.setenv("LITNAV_LLM_PROVIDER", "none")
     a = _agent()
