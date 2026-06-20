@@ -36,21 +36,23 @@ def main() -> int:
             "SELECT stage,tier,model,total_tokens,usd FROM cost_ledger ORDER BY id"):
         print(f"  ROW stage={stage} tier={tier} model={model} tokens={tok} usd={usd}")
 
-    # 2) a forced provider error RAISES (not silent fallback)
-    saved = os.environ.get("LITNAV_LLM_MODEL")
-    os.environ["LITNAV_LLM_MODEL"] = "this-model-does-not-exist-zzz"
+    # 2) a forced provider error RAISES (not silent fallback). Force a real connection failure via a
+    #    bad base_url — a bad LITNAV_LLM_MODEL no longer reaches the API (the router tier-routes the
+    #    model), so we trip a genuine transport error instead.
+    saved = os.environ.get("LITNAV_LLM_BASE_URL")
+    os.environ["LITNAV_LLM_BASE_URL"] = "http://127.0.0.1:9"   # connection refused -> provider error
     try:
         router.complete_text("x", tier="cheap", stage="liveness", session_id="live2",
                              conn=conn, fallback="fb")
-        print("G-liveness FAIL: bad model did NOT raise in strict mode (silent fallback)")
+        print("G-liveness FAIL: forced provider error did NOT raise in strict mode (silent fallback)")
         return 1
     except LivenessError:
         print("G-liveness PASS: strict mode raised on provider error (no silent fallback)")
     finally:
         if saved is None:
-            os.environ.pop("LITNAV_LLM_MODEL", None)
+            os.environ.pop("LITNAV_LLM_BASE_URL", None)
         else:
-            os.environ["LITNAV_LLM_MODEL"] = saved
+            os.environ["LITNAV_LLM_BASE_URL"] = saved
 
     print("G-liveness: ALL PASS")
     return 0
