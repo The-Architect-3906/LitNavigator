@@ -19,6 +19,20 @@ import threading
 _tls = threading.local()
 
 
+class LivenessError(RuntimeError):
+    """Raised in strict mode when a live LLM/embed call fails instead of silently falling back."""
+
+
+def _strict() -> bool:
+    return os.getenv("LITNAV_LLM_STRICT", "") not in ("", "0", "false", "False")
+
+
+def was_live() -> bool:
+    """True iff the most recent call on this thread parsed a real response with tokens>0
+    (provider=none and the silent-fallback path both leave this False)."""
+    return bool(getattr(_tls, "was_live", False))
+
+
 def last_token_cost() -> int:
     """Token cost of the most recent call on this thread (0 when offline / no usage)."""
     return getattr(_tls, "cost", 0)
@@ -52,6 +66,7 @@ def _client():
 def complete_json(prompt: str, *, schema_hint: str = "", fallback: dict) -> dict:
     """Return a JSON dict from the configured LLM, or `fallback` when provider=none / on error."""
     _tls.cost = 0
+    _tls.was_live = False
     if _provider() == "none":
         return fallback
     try:
@@ -67,14 +82,19 @@ def complete_json(prompt: str, *, schema_hint: str = "", fallback: dict) -> dict
             _tls.cost = int(response.usage.total_tokens or 0)
         except Exception:
             pass
-        return json.loads(response.choices[0].message.content)
-    except Exception:
+        result = json.loads(response.choices[0].message.content)
+        _tls.was_live = _tls.cost > 0
+        return result
+    except Exception as e:
+        if _strict():
+            raise LivenessError(f"complete_json failed in strict mode: {e}") from e
         return fallback
 
 
 def complete_text(prompt: str, *, fallback: str, max_tokens: int = 400) -> str:
     """Return a free-text completion (e.g. a grounded teaching turn), or `fallback` offline/on error."""
     _tls.cost = 0
+    _tls.was_live = False
     if _provider() == "none":
         return fallback
     try:
@@ -89,14 +109,18 @@ def complete_text(prompt: str, *, fallback: str, max_tokens: int = 400) -> str:
             _tls.cost = int(response.usage.total_tokens or 0)
         except Exception:
             pass
+        _tls.was_live = _tls.cost > 0
         return response.choices[0].message.content or fallback
-    except Exception:
+    except Exception as e:
+        if _strict():
+            raise LivenessError(f"complete_text failed in strict mode: {e}") from e
         return fallback
 
 
 def embed_texts(texts: list[str]) -> list[list[float]] | None:
     """Return one embedding vector per text, or None when offline (provider=none) / on error."""
     _tls.cost = 0
+    _tls.was_live = False
     if _provider() == "none" or not texts:
         return None
     try:
@@ -105,6 +129,9 @@ def embed_texts(texts: list[str]) -> list[list[float]] | None:
             _tls.cost = int(response.usage.total_tokens or 0)
         except Exception:
             pass
+        _tls.was_live = _tls.cost > 0
         return [d.embedding for d in response.data]
-    except Exception:
+    except Exception as e:
+        if _strict():
+            raise LivenessError(f"embed_texts failed in strict mode: {e}") from e
         return None
