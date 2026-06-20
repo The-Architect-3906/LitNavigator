@@ -30,8 +30,13 @@ def extract_concepts(di: DigestInput, *, candidate: dict, session_id: str | None
     Returned dicts are fresh copies (never the candidate's objects)."""
     chunk_blob = "\n---\n".join(ch for s in di.sources for ch in s.chunks)
     prompt = (
-        f"From the evidence below about the domain '{di.domain_key}', list the teachable concepts "
-        "and, for each, its key points. Ground every item ONLY in the evidence. Do not invent.\n\n"
+        f"Decompose the evidence below (domain: '{di.domain_key}') into a TEACHABLE concept map.\n"
+        "Extract 4-8 DISTINCT, specific sub-concepts. Each must be a single precise technical idea that "
+        "could be taught and quizzed on its own (e.g. 'chain-of-thought prompting', 'tool invocation', "
+        "'observation feedback loop'), NOT one umbrella term for the whole work. "
+        "Do NOT return a single concept for the whole paper — break it into its component ideas. "
+        "Favor concepts that have prerequisite or relatedness links among each other. "
+        "Give each a short snake_case slug. Ground every item ONLY in the evidence; do not invent.\n\n"
         f"Evidence:\n{chunk_blob}\n\n"
         'Respond as JSON: {"concepts": [{"slug","name","domain","frontier_flag"}], '
         '"keypoints": [{"kp_id","concept_slug","name","objective","evidence_chunk_id","bloom_level"}]}'

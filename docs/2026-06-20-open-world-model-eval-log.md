@@ -132,3 +132,21 @@ the prereq/similarity graph live** (the graph is the core output).
 - [ ] **A3 (new, top) — improve the extraction PROMPT for granularity.** Ask for N (e.g. 4–8) DISTINCT teachable sub-concepts (not one umbrella term), with a few-shot example and an explicit "do not return a single concept for a whole paper" instruction. This is the next lever to get a multi-concept graph + edges; it is prompt engineering, NOT a model swap.
 - [ ] A1 — re-evaluate edge/judge quality once A3 yields ≥3 concepts per paper.
 - **No new model needed/recorded.** The bottleneck is the extraction prompt, not the model tier.
+
+---
+
+## 2026-06-20 — A3 done (granular extraction prompt) + A1 CLOSED cleanly
+
+**Change:** rewrote the extract prompt to demand 4–8 DISTINCT teachable sub-concepts (with examples + "don't return one umbrella concept"), `litnav/digest/extract.py`.
+
+**Result (ReAct paper, 2 live runs, temp=0):** **8 specific concepts, fully deterministic** (run 1 ≡ run 2): `chain_of_thought_prompting, action_plan_generation, reasoning_traces, exception_handling, external_information_interaction, human_interpretability, error_propagation, interactive_decision_making`. **5 edges built → all 5 judged by `gpt-4o` (5 frontier calls) → all downgraded to similarity** (edge_accuracy 0.0, 5 unverified). quiz_seeds: 8. Cost ~$0.0036/digest (cheap $0.0021 + frontier judge $0.0015).
+
+**A1 — closed, clean conclusion (no model inadequacy):**
+- The pipeline is **sound, granular, deterministic, end-to-end live** (extract → propose → gpt-4o judge → downgrade → similarity graph). ✅
+- `gpt-4o-mini` proposes plausible RELATED concept pairs but over-labels them "prerequisite"; `gpt-4o` **correctly downgrades them to similarity** — within a SINGLE paper the sub-concepts are parallel aspects, not a strict prerequisite chain. So a similarity graph is the *right* output here, not a failure.
+- **Hard prerequisites likely require MULTI-SOURCE digest** (a concept's prereqs usually live in OTHER papers/background, not the same paper). Getting real prereq edges → digest across the discovered source SET (find-sources already returns multiple), a future enhancement. NOT a model problem.
+- **Verdict: gpt-4o-mini (extract+propose) + gpt-4o (judge) are adequate.** No new model recorded. The earlier "model inadequate" worry is fully resolved: it was (1) a chunk-id bug, then (2) extraction non-determinism (temp), then (3) extraction granularity (prompt) — all code/prompt, now fixed.
+
+**ACTIONS:**
+- [ ] **A4 (future) — multi-source digest** to surface real prerequisites across papers (single-paper digest correctly yields similarity edges). Candidate for an OW-2.x / OW-7 enhancement, not blocking.
+- minor: keypoint extraction count varies slightly run-to-run (0 vs 8) — low priority.
