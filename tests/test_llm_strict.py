@@ -57,3 +57,17 @@ def test_strict_success_does_not_raise(monkeypatch):
     _set(monkeypatch, strict=True, resp=_Resp("hello", 7))
     assert c.complete_text("p", fallback="fb") == "hello"
     assert c.was_live() is True
+
+
+def test_router_propagates_liveness_error_and_records_no_cost(monkeypatch):
+    import sqlite3
+    from litnav.llm import router
+    from litnav.storage.schema import init_db
+    from litnav.storage import cost_repo
+    monkeypatch.setenv("LITNAV_LLM_PROVIDER", "openai")
+    monkeypatch.setenv("LITNAV_LLM_STRICT", "1")
+    monkeypatch.setattr(c, "_client", lambda: _FakeClient(exc=RuntimeError("boom")))
+    conn = sqlite3.connect(":memory:"); init_db(conn)
+    with pytest.raises(c.LivenessError):
+        router.complete_text("p", tier="cheap", stage="x", session_id="s", conn=conn, fallback="fb")
+    assert cost_repo.session_spend(conn, "s")["tokens"] == 0  # no cost row for a raised call
