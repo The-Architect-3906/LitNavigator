@@ -1,4 +1,13 @@
-"""M1 gate: python -m litnav.evaluation.verify_m1"""
+"""M1 gate: python -m litnav.evaluation.verify_m1
+
+Asserts the M1 adaptive-routing guarantee as it stands after the ORIENT→TEACH→ASSESS
+refactor: the planner expands the FULL transitive prerequisite closure up front, so a
+prerequisite of a target is taught PROACTIVELY (front-loaded into the route, before its
+dependent) rather than inserted REACTIVELY after a wrong answer. The reactive
+diagnose→replan path still exists in code and is exercised by the induce/off-skeleton
+flow (see verify_m3); it no longer fires for in-corpus prerequisites, which are
+front-loaded, so M1 no longer asserts it.
+"""
 from __future__ import annotations
 
 import json
@@ -11,10 +20,8 @@ from litnav.graph.builder import build_graph, make_initial_state
 from litnav.graph.router import tutor_router
 from litnav.nodes.advance import advance_node
 from litnav.nodes.check import check_node
-from litnav.nodes.diagnose import diagnose_node
 from litnav.nodes.grade import grade_node
 from litnav.nodes.planner import planner_node
-from litnav.nodes.replan import replan_node
 from litnav.nodes.retrieve import retrieve_node
 from litnav.nodes.select_next import select_next_node
 from litnav.nodes.teach import teach_node
@@ -70,6 +77,7 @@ def main() -> int:
     slug_to_id = {c["slug"]: c["id"] for c in data["concepts"]}
     dense_id = slug_to_id["dense_retrieval"]
     contrastive_id = slug_to_id["contrastive_learning"]
+    neg_id = slug_to_id["negative_sampling"]   # prerequisite of contrastive_learning, NOT a target
 
     results = []
 
@@ -94,52 +102,29 @@ def main() -> int:
     results.append(check("advance recorded in decisions table",
                           db_dec and db_dec[0] == "advance"))
 
-    # ── Check 2: wrong answer + unmastered prereq -> diagnose -> replan ────────
+    # ── Check 2: planner front-loads the full prerequisite closure (proactive M1) ──
+    # negative_sampling is a prerequisite of contrastive_learning but is NOT a target. The
+    # planner expands the full transitive prerequisite closure, so negative_sampling appears
+    # in the route ahead of contrastive_learning — the learner meets the prerequisite
+    # proactively, not after stumbling on the dependent.
     conn_b = _setup("b")
     s2 = make_initial_state(str(uuid.uuid4()), data["topic"], [dense_id, contrastive_id])
     s2 = _apply(s2, planner_node(s2, conn_b))
-
-    s2 = _apply(s2, select_next_node(s2))
-    s2 = _run_concept(s2, conn_b, "embedding vectors")
-    s2 = _apply(s2, advance_node(s2, conn_b))
-
-    s2 = _apply(s2, select_next_node(s2))
-    results.append(check("select_next picks contrastive_learning after advance",
-                          s2["current_concept_id"] == contrastive_id))
-
-    s2 = _run_concept(s2, conn_b, "keyword matching")
-    results.append(check("wrong answer -> tutor_router returns diagnose",
-                          tutor_router(s2) == "diagnose"))
-
-    s2 = _apply(s2, diagnose_node(s2, conn_b))
-    missing_id = s2["diagnosis"]["missing_concept_id"]
-    results.append(check("missing prereq identified in diagnosis", missing_id is not None))
-
-    old_version = s2["route_version"]
-    s2 = _apply(s2, replan_node(s2, conn_b))
-    results.append(check("route_version incremented by replan",
-                          s2["route_version"] == old_version + 1))
-
     route_ids = [step["concept_id"] for step in s2["route"]]
-    results.append(check("missing prereq inserted in route", missing_id in route_ids))
+    results.append(check("planner front-loads the prerequisite (negative_sampling) into the route",
+                          neg_id in route_ids))
+    results.append(check("prerequisite ordered before its dependent (contrastive_learning)",
+                          neg_id in route_ids and contrastive_id in route_ids
+                          and route_ids.index(neg_id) < route_ids.index(contrastive_id)))
 
-    prereq_pos = route_ids.index(missing_id)
-    blocked_pos = route_ids.index(contrastive_id)
-    results.append(check("prereq inserted before blocked concept", prereq_pos < blocked_pos))
-
-    db_rat = conn_b.execute(
-        "SELECT rationale FROM decisions WHERE session_id=? AND decision='replan'",
-        (s2["session_id"],)
-    ).fetchone()
-    results.append(check("replan rationale is traceable in decisions table",
-                          db_rat and len(db_rat[0]) > 10))
-
-    db_ver = conn_b.execute(
-        "SELECT MAX(route_version) FROM route_steps WHERE session_id=?",
-        (s2["session_id"],)
-    ).fetchone()[0]
-    results.append(check("route_version in SQLite matches state",
-                          db_ver == s2["route_version"]))
+    # select_next walks prereqs-first: after advancing the first concept, the next concept
+    # picked is the front-loaded prerequisite, not the final target.
+    s2 = _apply(s2, select_next_node(s2))
+    s2 = _run_concept(s2, conn_b, "embedding vectors")          # dense_retrieval (correct)
+    s2 = _apply(s2, advance_node(s2, conn_b))
+    s2 = _apply(s2, select_next_node(s2))
+    results.append(check("select_next walks the front-loaded prereq before the target",
+                          s2["current_concept_id"] == neg_id))
 
     # ══════════════════════════════════════════════════════════════════════════
     # Graph-level checks (real LangGraph app.invoke() paths)
@@ -168,28 +153,28 @@ def main() -> int:
     results.append(check("graph invoke: route step marked done in SQLite",
                           step_done is not None))
 
-    # ── Check 4: graph diagnose -> replan path ────────────────────────────────
+    # ── Check 4: graph teaches the full prereq closure, prerequisite before dependent ──
     conn_d = _setup("d")
     ckpt_d = _fresh_ckpt("d")
     app2 = build_graph(conn_d, checkpoint_conn=ckpt_d)
     sid_d = str(uuid.uuid4())
     s4 = make_initial_state(sid_d, data["topic"], [dense_id, contrastive_id],
-                             pending_answers=["embedding vectors", "keyword matching"])
-    app2.invoke(s4, config={"configurable": {"thread_id": sid_d}, "recursion_limit": 50})
+                             pending_answers=["embedding vectors", "non-relevant alternatives",
+                                              "they are pulled together"])
+    app2.invoke(s4, config={"configurable": {"thread_id": sid_d}, "recursion_limit": 100})
 
-    db_ver2 = conn_d.execute(
-        "SELECT MAX(route_version) FROM route_steps WHERE session_id=?",
-        (sid_d,)
+    teach_order = [r[0] for r in conn_d.execute(
+        "SELECT concept_id FROM tutor_turns WHERE session_id=? ORDER BY id", (sid_d,)
+    ).fetchall()]
+    results.append(check("graph invoke: prerequisite taught before its dependent",
+                          neg_id in teach_order and contrastive_id in teach_order
+                          and teach_order.index(neg_id) < teach_order.index(contrastive_id)))
+
+    n_done = conn_d.execute(
+        "SELECT count(*) FROM route_steps WHERE session_id=? AND status='done'", (sid_d,)
     ).fetchone()[0]
-    results.append(check("graph invoke: replan increments route_version via LangGraph",
-                          db_ver2 is not None and db_ver2 >= 2))
-
-    replan_dec = conn_d.execute(
-        "SELECT id FROM decisions WHERE session_id=? AND decision='replan'",
-        (sid_d,)
-    ).fetchone()
-    results.append(check("graph invoke: replan decision written via LangGraph",
-                          replan_dec is not None))
+    results.append(check("graph invoke: all route steps reach done on correct answers (3/3)",
+                          n_done == 3))
 
     # ══════════════════════════════════════════════════════════════════════════
     # Checkpoint durability check (P2): interrupt -> rebuild -> resume
