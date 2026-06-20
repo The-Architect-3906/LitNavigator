@@ -1,4 +1,5 @@
 {
+  "_note": "determinism fixture — NOT live capability evidence; see verify_digest_live",
   "concepts": [
     {"slug": "tool_use", "source": "digested", "domain": "llm-agents"},
     {"slug": "reason_act", "source": "digested", "domain": "llm-agents"},

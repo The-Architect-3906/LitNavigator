@@ -1,7 +1,9 @@
-"""G-digest: prove the digest pipeline offline. Digest a fixed source slice and assert the written
-graph matches the golden graph (concepts as 'digested', the expected typed edge tuples + the prereq
-confidence, keypoints), that the edge-accuracy spot-check + unverified flagging are computed, and that
-a second identical request hits the cache.
+"""DETERMINISM/SCHEMA UNIT GATE — NOT capability evidence.
+
+Validates offline-deterministic plumbing only: the confidence formula, the downgrade rule, the
+PK-collision write ordering, slice_key, and cache memoization. It does NOT prove the digest works —
+the CAPABILITY is proven by litnav/evaluation/verify_digest_live.py (real LLM). See
+docs/2026-06-20-open-world-live-first-reaudit.md.
 """
 from __future__ import annotations
 

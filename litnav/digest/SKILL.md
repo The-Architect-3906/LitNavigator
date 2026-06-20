@@ -9,10 +9,13 @@ graph as `source='digested'`, metered through `litnav/llm/router.py`, and cached
   replay / live fallback).
 - **Out:** `DigestResult{concepts, edges, keypoints, quiz_seeds, unverified_edges, edge_accuracy, cache_hit}`.
 
-## Offline determinism
-With `LITNAV_LLM_PROVIDER=none` the pipeline replays the candidate and computes confidence via
-`induced_confidence` — deterministic at $0. `python -m litnav.evaluation.verify_digest` is the gate;
-`python -m litnav.app digest-demo` runs it on the fixture slice.
+## Validation
+- **Capability gate (LIVE):** `LITNAV_LLM_PROVIDER=openai python -m litnav.evaluation.verify_digest_live`
+  — real LLM extracts concepts + proposes edges; asserts edges over extracted slugs, evidence
+  resolves, quality floor, real metered cost. THIS proves the skill works.
+- **Determinism/schema unit gate (offline):** `python -m litnav.evaluation.verify_digest` — validates
+  the confidence formula, downgrade rule, PK ordering, slice_key, cache. NOT capability evidence.
+- **Offline smoke:** `python -m litnav.app digest-demo` (provider forced none, deterministic).
 
 ## Cost
 Extraction + strength labelling use the `cheap` tier; the verify pass uses `frontier` on high-impact
