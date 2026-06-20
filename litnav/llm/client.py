@@ -68,7 +68,7 @@ def _client():
     return OpenAI(api_key=_api_key(), base_url=base) if base else OpenAI(api_key=_api_key())
 
 
-def complete_json(prompt: str, *, schema_hint: str = "", fallback: dict) -> dict:
+def complete_json(prompt: str, *, schema_hint: str = "", fallback: dict, model: str | None = None) -> dict:
     """Return a JSON dict from the configured LLM, or `fallback` when provider=none / on error."""
     _tls.cost = 0
     _tls.was_live = False
@@ -77,10 +77,10 @@ def complete_json(prompt: str, *, schema_hint: str = "", fallback: dict) -> dict
         return fallback
     try:
         import json
-        model = "qwen-plus" if _provider() == "qwen" else _chat_model()
-        _tls.model = model
+        actual = "qwen-plus" if _provider() == "qwen" else (model or _chat_model())
+        _tls.model = actual
         response = _client().chat.completions.create(
-            model=model,
+            model=actual,
             messages=[{"role": "user", "content": prompt}],
             response_format={"type": "json_object"},
             timeout=30,
@@ -98,7 +98,7 @@ def complete_json(prompt: str, *, schema_hint: str = "", fallback: dict) -> dict
         return fallback
 
 
-def complete_text(prompt: str, *, fallback: str, max_tokens: int = 400) -> str:
+def complete_text(prompt: str, *, fallback: str, max_tokens: int = 400, model: str | None = None) -> str:
     """Return a free-text completion (e.g. a grounded teaching turn), or `fallback` offline/on error."""
     _tls.cost = 0
     _tls.was_live = False
@@ -106,10 +106,10 @@ def complete_text(prompt: str, *, fallback: str, max_tokens: int = 400) -> str:
     if _provider() == "none":
         return fallback
     try:
-        model = "qwen-plus" if _provider() == "qwen" else _chat_model()
-        _tls.model = model
+        actual = "qwen-plus" if _provider() == "qwen" else (model or _chat_model())
+        _tls.model = actual
         response = _client().chat.completions.create(
-            model=model,
+            model=actual,
             messages=[{"role": "user", "content": prompt}],
             max_tokens=max_tokens,
             timeout=30,

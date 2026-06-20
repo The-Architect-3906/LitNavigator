@@ -73,15 +73,19 @@ def test_router_propagates_liveness_error_and_records_no_cost(monkeypatch):
     assert cost_repo.session_spend(conn, "s")["tokens"] == 0  # no cost row for a raised call
 
 
-def test_ledger_records_actual_model_not_registry_name(monkeypatch):
+def test_router_routes_tier_model_to_client_and_ledger(monkeypatch):
     import sqlite3
     from litnav.llm import router
     from litnav.storage.schema import init_db
     monkeypatch.setenv("LITNAV_LLM_PROVIDER", "openai")
-    monkeypatch.setenv("LITNAV_LLM_MODEL", "gpt-4o-mini-2024-07-18")
+    monkeypatch.setenv("LITNAV_LLM_MODEL", "should-be-ignored-by-tier-routing")
     monkeypatch.setenv("LITNAV_LLM_STRICT", "")
     monkeypatch.setattr(c, "_client", lambda: _FakeClient(resp=_Resp("hi", 10)))
     conn = sqlite3.connect(":memory:"); init_db(conn)
-    router.complete_text("p", tier="cheap", stage="x", session_id="s", conn=conn, fallback="fb")
-    m = conn.execute("SELECT model FROM cost_ledger WHERE session_id='s'").fetchone()[0]
-    assert m == "gpt-4o-mini-2024-07-18"   # the ACTUAL env model, not registry "gpt-4o-mini"
+    router.complete_text("p", tier="frontier", stage="x", session_id="s", conn=conn, fallback="fb")
+    router.complete_text("p", tier="cheap", stage="x", session_id="s2", conn=conn, fallback="fb")
+    mf = conn.execute("SELECT model FROM cost_ledger WHERE session_id='s'").fetchone()[0]
+    mc = conn.execute("SELECT model FROM cost_ledger WHERE session_id='s2'").fetchone()[0]
+    assert mf == "gpt-4o"        # frontier tier actually routes gpt-4o
+    assert mc == "gpt-4o-mini"   # cheap tier routes gpt-4o-mini; env override is ignored for routed calls
+    assert c.last_model() == "gpt-4o-mini"

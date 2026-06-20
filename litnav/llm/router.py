@@ -36,7 +36,7 @@ def complete_text(prompt: str, *, tier: str, stage: str, fallback: str,
                   session_id: str | None = None, conn: sqlite3.Connection | None = None,
                   max_tokens: int = 400, budget: int | None = None) -> str:
     spec = registry.resolve_tier(tier)               # raises if disabled/unknown -- before any call
-    out = llm_client.complete_text(prompt, fallback=fallback, max_tokens=max_tokens)
+    out = llm_client.complete_text(prompt, fallback=fallback, max_tokens=max_tokens, model=spec["model"])
     _meter(conn=conn, session_id=session_id, stage=stage, tier=tier, model=spec["model"],
            usd_per_1k=spec["usd_per_1k"], budget=budget)
     return out
@@ -46,7 +46,7 @@ def complete_json(prompt: str, *, tier: str, stage: str, fallback: dict,
                   session_id: str | None = None, conn: sqlite3.Connection | None = None,
                   schema_hint: str = "", budget: int | None = None) -> dict:
     spec = registry.resolve_tier(tier)
-    out = llm_client.complete_json(prompt, schema_hint=schema_hint, fallback=fallback)
+    out = llm_client.complete_json(prompt, schema_hint=schema_hint, fallback=fallback, model=spec["model"])
     _meter(conn=conn, session_id=session_id, stage=stage, tier=tier, model=spec["model"],
            usd_per_1k=spec["usd_per_1k"], budget=budget)
     return out
