@@ -11,9 +11,10 @@
  .toggle button{background:transparent;color:#cdd5e0;border:0;padding:.35rem .8rem;font-size:.85rem;cursor:pointer}
  .toggle button.on{background:var(--accent);color:#fff}
  .mut{color:#7a8699;font-size:.8rem}
- .cols{display:flex;gap:1rem;max-width:60rem;margin:1.2rem auto;padding:0 1rem;align-items:flex-start}
+ .cols{display:flex;gap:1rem;max-width:64rem;margin:1.2rem auto;padding:0 1rem;align-items:flex-start}
  .card{background:#fff;border:1px solid #e2e6ee;border-radius:10px;padding:1rem;margin-bottom:1rem}
- /* chat */
+
+ /* ── Chat ── */
  #chat{flex:1;min-width:0}
  .bubble{max-width:85%;padding:.6rem .85rem;border-radius:14px;margin:.5rem 0;line-height:1.5;white-space:pre-wrap;word-wrap:break-word}
  .me{margin-left:auto;background:#e6e2fb;color:#2a2270}
@@ -23,29 +24,64 @@
  .answer{display:flex;gap:.5rem;margin-top:.6rem}
  .answer input{flex:1;padding:.55rem .7rem;border:1px solid #c5ccd8;border-radius:8px;font-size:1rem}
  .answer button{padding:.55rem 1rem;border:0;border-radius:8px;background:var(--accent);color:#fff;cursor:pointer}
- /* glass box */
+
+ /* ── Glass box ── */
  #glass{flex:1;min-width:0;font-size:.9rem}
  .step{display:flex;gap:.5rem;padding:.25rem 0;align-items:baseline}
  .step .ic{width:1.1rem;text-align:center}
- .step.done .ic{color:var(--ok)} .step.active{background:#eef0ff;border-radius:6px;padding:.25rem .4rem}
+ .step.done .ic{color:var(--ok)}
+ .step.active{background:#eef0ff;border-radius:6px;padding:.25rem .4rem}
  .step.pending{color:#9aa3b2}
- .bars span{display:inline-block;height:.55rem;border-radius:3px;vertical-align:middle}
- .barm{background:var(--accent)} .barc{background:#7fd1a6}
  .ev{font-size:.82rem;color:#3a4456;border-left:2px solid var(--accent);padding-left:.5rem;margin:.3rem 0}
  .cmap{overflow-x:auto} .cmap svg{display:block}
  .maplegend{margin-top:.4rem}
  .costp{background:#eef3ff;border-color:#cfe0ff}
+
+ /* Route panel */
+ .route-concept{display:flex;align-items:center;gap:.5rem;padding:.22rem 0}
+ .rbadge{width:.6rem;height:.6rem;border-radius:50%;flex-shrink:0}
+ .rbadge-pending{background:#c5ccd8}
+ .rbadge-active{background:var(--accent)}
+ .rbadge-done{background:var(--ok)}
+ .rbadge-conceded{background:var(--warn)}
+ .route-new{animation:flash-in .8s ease}
+ @keyframes flash-in{0%,40%{background:#fffbe6}100%{background:transparent}}
+
+ /* route_version bump */
+ .vbump{animation:vbump .7s ease}
+ @keyframes vbump{0%,30%{color:var(--warn);font-weight:700}100%{color:inherit;font-weight:normal}}
+
+ /* Mastery bars */
+ .bar-row{display:flex;align-items:center;gap:.4rem;margin:.12rem 0;font-size:.8rem}
+ .bar-label{width:3.2rem;color:#7a8699;flex-shrink:0}
+ .bar-bg{flex:1;height:.45rem;background:#e2e6ee;border-radius:3px;overflow:hidden}
+ .bar-fill{height:100%;border-radius:3px;transition:width .5s ease}
+ .bar-m{background:var(--accent)}
+ .bar-c{background:#7fd1a6}
+ .learner-name{font-size:.85rem;font-weight:500;margin-top:.35rem}
+ .misconception{font-size:.76rem;color:var(--warn);margin-top:.1rem}
+
+ /* Mode switching */
  body.mode-chat #glass{display:none}
  body.mode-glass #chat{display:none}
- @media(max-width:760px){.cols{flex-direction:column} body.mode-glass #chat,body.mode-chat #glass{display:block}}
+ @media(max-width:760px){
+   .cols{flex-direction:column}
+   body.mode-glass #chat,body.mode-chat #glass{display:block}
+ }
 </style></head>
 <body class="mode-chat" data-sid="{{ sid }}">
-<header><b>LitNavigator</b>
+<header>
+  <b>LitNavigator</b>
   <span>{{ concept_name or "tutor" }}</span>
   <span class="mut">{{ n_papers }} papers{% if intent %} · {{ intent }}{% endif %}</span>
-  <span class="toggle"><button id="t-chat" class="on" onclick="setMode('chat')">Chat</button><button id="t-glass" onclick="setMode('glass')">Glass box</button></span>
+  <span class="toggle">
+    <button id="t-chat" class="on" onclick="setMode('chat')">Chat</button>
+    <button id="t-glass" onclick="setMode('glass')">Glass box</button>
+  </span>
 </header>
+
 <div class="cols">
+  <!-- ── Chat ── -->
   <div id="chat">
     <div id="thread">
       <div class="bubble me">{{ concept_name or "Teach me" }}</div>
@@ -54,7 +90,7 @@
     </div>
     <div class="working" id="working" style="display:none">● agent working…</div>
     {% if done %}
-    <div class="card"><b>This thread is complete.</b> <a href="/sessions/{{ sid }}">full trace &rarr;</a> · <a href="/tutor">new chat</a></div>
+    <div class="card"><b>Session complete.</b> <a href="/sessions/{{ sid }}">full trace →</a> · <a href="/tutor">new chat</a></div>
     {% endif %}
     <form class="answer" id="answer-form" onsubmit="return submitAnswer(event)">
       <input id="answer-input" autocomplete="off" autofocus placeholder="ask anything, or answer the question…">
@@ -62,73 +98,285 @@
     </form>
   </div>
 
+  <!-- ── Glass box ── -->
   <div id="glass">
+
+    <!-- Concept map -->
     <div class="card"><b>Concept map</b>
       <div id="cmap" class="cmap">{{ graph|safe }}</div>
       <div class="mut maplegend">current · <span style="color:var(--ok)">mastered</span> · lectured · <span style="color:#cf4f24">conceded</span> · dashed = induced</div>
     </div>
-    <div class="card"><b>Agent flow</b> <span class="mut" id="route-v">route v{{ route_version }}</span>
+
+    <!-- Agent flow -->
+    <div class="card">
+      <b>Agent flow</b> <span class="mut" id="route-v">route v{{ route_version }}</span>
       <div id="flow"></div>
     </div>
-    <div class="card"><b>Cited evidence</b><div id="evidence">
-      {% for e in cited %}<div class="ev">{{ e.chunk_id }}: {{ e.text[:140] }}…</div>{% endfor %}
-    </div></div>
-    <div class="card"><b>Learner model</b><div id="learner">
-      {% for c in learner %}<div>{{ c.name }} — m {{ c.mastery }} · c {{ c.confidence }}</div>{% endfor %}
-    </div></div>
-    <div class="card" id="why" style="{% if not rationale %}display:none{% endif %}"><b>Why this step</b>
-      <div class="mut" id="why-text">{{ decision }} — {{ rationale }}</div></div>
-    {% if induced %}<div class="card"><b>Induced (machine-derived)</b>
-      {% for e in induced %}<div>{{ e.prereq }} &rarr; {{ e.target }} <span class="mut">conf {{ e.confidence }}</span></div>{% endfor %}</div>{% endif %}
-    <div class="card costp"><b>Cost so far</b> <span id="cost">{{ cost.tokens }} tok ≈ ${{ cost.usd }}</span> <span class="mut">(offline = $0)</span></div>
-  </div>
-</div>
+
+    <!-- Route -->
+    <div class="card">
+      <b>Learning route</b>
+      <div id="route-list">
+        {% for step in route %}
+        <div class="route-concept" data-cid="{{ step.concept_id }}">
+          <span class="rbadge rbadge-{{ step.status or 'pending' }}"></span>
+          <span>{{ step.name }}</span>
+          <span class="mut">{{ step.status or 'pending' }}</span>
+        </div>
+        {% else %}
+        <span class="mut">–</span>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Evidence -->
+    <div class="card"><b>Cited evidence</b>
+      <div id="evidence">
+        {% for e in cited %}
+        <div class="ev">{{ e.chunk_id }}: {{ e.text[:140] }}…</div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Learner model -->
+    <div class="card"><b>Learner model</b>
+      <div id="learner">
+        {% for c in learner %}
+        <div>
+          <div class="learner-name">{{ c.name }}</div>
+          <div class="bar-row">
+            <span class="bar-label">mastery</span>
+            <div class="bar-bg"><div class="bar-fill bar-m" style="width:{{ (c.mastery * 100)|round|int }}%"></div></div>
+            <span>{{ (c.mastery * 100)|round|int }}%</span>
+          </div>
+          <div class="bar-row">
+            <span class="bar-label">confid.</span>
+            <div class="bar-bg"><div class="bar-fill bar-c" style="width:{{ (c.confidence * 100)|round|int }}%"></div></div>
+            <span>{{ (c.confidence * 100)|round|int }}%</span>
+          </div>
+          {% if c.held %}
+          <div class="misconception">misconception: {{ c.held|join(', ') }}</div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Decision rationale -->
+    <div class="card" id="why" {% if not rationale %}style="display:none"{% endif %}>
+      <b>Why this step</b>
+      <div class="mut" id="why-text">{{ decision }} — {{ rationale }}</div>
+    </div>
+
+    <!-- Induced -->
+    <div class="card" id="induced-panel" {% if not induced %}style="display:none"{% endif %}>
+      <b>Induced (machine-derived)</b>
+      <div id="induced-list">
+        {% for e in induced %}
+        <div><b>{{ e.prereq }}</b> → {{ e.target }} <span class="mut">conf {{ e.confidence }}</span></div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Cost -->
+    <div class="card costp">
+      <b>Cost so far</b>
+      <span id="cost">{{ cost.tokens }} tok ≈ ${{ cost.usd }}</span>
+      <span class="mut">(offline = $0)</span>
+    </div>
+
+  </div><!-- /glass -->
+</div><!-- /cols -->
 
 <script>
 const SID = document.body.dataset.sid;
-function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-function setMode(m){document.body.className='mode-'+m;
+
+function esc(s){
+  return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function setMode(m){
+  document.body.className='mode-'+m;
   document.getElementById('t-chat').classList.toggle('on',m==='chat');
   document.getElementById('t-glass').classList.toggle('on',m==='glass');
-  try{localStorage.setItem('litnav-mode',m)}catch(e){}}
+  try{localStorage.setItem('litnav-mode',m)}catch(e){}
+}
 const saved=(()=>{try{return localStorage.getItem('litnav-mode')}catch(e){return null}})();
 if(saved)setMode(saved);
 
 function typewriter(el,text){el.textContent='';let i=0;(function tick(){if(i<=text.length){el.textContent=text.slice(0,i++);setTimeout(tick,12)}})();}
-const ft=document.getElementById('first-teach'); if(ft)typewriter(ft,ft.dataset.text);
+const ft=document.getElementById('first-teach');if(ft)typewriter(ft,ft.dataset.text);
 
-function addBubble(cls,text,tw){const t=document.getElementById('thread');const d=document.createElement('div');d.className='bubble '+cls;t.appendChild(d);if(tw){typewriter(d,text)}else{d.textContent=text}return d;}
-function setFlow(steps){const f=document.getElementById('flow');f.innerHTML='';steps.forEach(s=>{const d=document.createElement('div');d.className='step '+s.state;const ic=s.state==='done'?'✓':(s.state==='active'?'▶':'○');d.innerHTML='<span class="ic">'+ic+'</span><span>'+esc(s.label)+(s.detail?' <span class="mut">· '+esc(s.detail)+'</span>':'')+'</span>';f.appendChild(d)});}
-
-function handleEvent(e,steps,inp){
-  if(e.type==='dispatch'){steps.length=0;steps.push({label:e.label,detail:'',state:'active'});setFlow(steps);}
-  else if(e.type==='reply'){steps.forEach(s=>s.state='done');setFlow(steps);if(e.text)addBubble('ai',e.text,true);}
-  else if(e.type==='step'){steps.forEach(s=>s.state='done');steps.push({label:e.label,detail:e.detail,state:'active'});setFlow(steps);}
-  else if(e.type==='teach'){steps.forEach(s=>s.state='done');setFlow(steps);if(e.text)addBubble('ai',e.text,true);}
-  else if(e.type==='question'){if(e.text)addBubble('ai qa',e.text,false);}
-  else if(e.type==='state'){updateGlass(e);}
-  else if(e.type==='done'){document.getElementById('working').style.display='none';
-    if(e.done){location.href='/tutor/'+SID;}else{inp.disabled=false;inp.focus();}}
-  else if(e.type==='error'){location.href='/tutor/'+SID;}
+function addBubble(cls,text,tw){
+  const t=document.getElementById('thread');
+  const d=document.createElement('div');
+  d.className='bubble '+cls;
+  t.appendChild(d);
+  if(tw){typewriter(d,text)}else{d.textContent=text}
+  return d;
 }
-async function submitAnswer(ev){ev.preventDefault();const inp=document.getElementById('answer-input');const text=inp.value.trim();if(!text)return false;
-  addBubble('me',text,false);inp.value='';inp.disabled=true;document.getElementById('working').style.display='block';
+
+function setFlow(steps){
+  const f=document.getElementById('flow');f.innerHTML='';
+  steps.forEach(s=>{
+    const d=document.createElement('div');
+    d.className='step '+s.state;
+    const ic=s.state==='done'?'✓':(s.state==='active'?'▶':'○');
+    d.innerHTML='<span class="ic">'+ic+'</span><span>'+esc(s.label)+(s.detail?' <span class="mut">· '+esc(s.detail)+'</span>':'')+'</span>';
+    f.appendChild(d);
+  });
+}
+
+// Track previous route_version to detect changes
+let _prevRouteV = null;
+// Track known concept ids to detect newly inserted concepts
+let _knownCids = new Set();
+
+function updateGlass(e){
+  // ── route_version: flash when it changes ──
+  const rvEl = document.getElementById('route-v');
+  const newV = e.route_version;
+  if(_prevRouteV !== null && _prevRouteV !== newV){
+    rvEl.classList.remove('vbump');
+    void rvEl.offsetWidth; // force reflow so animation restarts
+    rvEl.classList.add('vbump');
+  }
+  rvEl.textContent = 'route v' + newV;
+  _prevRouteV = newV;
+
+  // ── Route panel: show concept sequence with status dots ──
+  const routeEl = document.getElementById('route-list');
+  const route = e.route || [];
+  if(route.length === 0){
+    routeEl.innerHTML = '<span class="mut">–</span>';
+  } else {
+    routeEl.innerHTML = route.map(r => {
+      const cid = String(r.concept_id);
+      const isNew = !_knownCids.has(cid);
+      const status = r.status || 'pending';
+      return '<div class="route-concept'+(isNew?' route-new':'')+'" data-cid="'+esc(cid)+'">'
+        + '<span class="rbadge rbadge-'+esc(status)+'"></span>'
+        + '<span>'+esc(r.name)+'</span>'
+        + '<span class="mut">'+esc(status)+'</span>'
+        + '</div>';
+    }).join('');
+    route.forEach(r => _knownCids.add(String(r.concept_id)));
+  }
+
+  // ── Evidence ──
+  document.getElementById('evidence').innerHTML=(e.cited||[]).map(c=>
+    '<div class="ev">'+esc(c.chunk_id)+': '+esc((c.text||'').slice(0,140))+'…</div>'
+  ).join('') || '<span class="mut">–</span>';
+
+  // ── Learner model with visual bars ──
+  document.getElementById('learner').innerHTML=(e.learner||[]).map(c=>{
+    const mp = Math.round((c.mastery||0)*100);
+    const cp = Math.round((c.confidence||0)*100);
+    const held = (c.held||[]);
+    return '<div>'
+      + '<div class="learner-name">'+esc(c.name)+'</div>'
+      + '<div class="bar-row"><span class="bar-label">mastery</span>'
+      +   '<div class="bar-bg"><div class="bar-fill bar-m" style="width:'+mp+'%"></div></div>'
+      +   '<span>'+mp+'%</span></div>'
+      + '<div class="bar-row"><span class="bar-label">confid.</span>'
+      +   '<div class="bar-bg"><div class="bar-fill bar-c" style="width:'+cp+'%"></div></div>'
+      +   '<span>'+cp+'%</span></div>'
+      + (held.length ? '<div class="misconception">misconception: '+held.map(esc).join(', ')+'</div>' : '')
+      + '</div>';
+  }).join('') || '<span class="mut">–</span>';
+
+  // ── Decision rationale ──
+  if(e.rationale){
+    document.getElementById('why').style.display='';
+    document.getElementById('why-text').textContent=(e.decision||'')+' — '+e.rationale;
+  }
+
+  // ── Induced panel (SSE update) ──
+  const indPanel = document.getElementById('induced-panel');
+  const induced = e.induced || [];
+  if(induced.length){
+    indPanel.style.display='';
+    document.getElementById('induced-list').innerHTML = induced.map(i=>
+      '<div><b>'+esc(i.prereq)+'</b> → '+esc(i.target)+' <span class="mut">conf '+esc(i.confidence)+'</span></div>'
+    ).join('');
+  }
+
+  // ── Concept map (SSE update) ──
+  if(e.graph){document.getElementById('cmap').innerHTML=e.graph;}
+
+  // ── Cost ──
+  if(e.cost){
+    document.getElementById('cost').textContent=e.cost.tokens+' tok ≈ $'+e.cost.usd;
+  }
+}
+
+function handleEvent(e, steps, inp){
+  if(e.type==='dispatch'){
+    steps.length=0;
+    steps.push({label:e.label,detail:'',state:'active'});
+    setFlow(steps);
+  } else if(e.type==='reply'){
+    steps.forEach(s=>s.state='done');setFlow(steps);
+    if(e.text)addBubble('ai',e.text,true);
+  } else if(e.type==='step'){
+    steps.forEach(s=>s.state='done');
+    steps.push({label:e.label,detail:e.detail,state:'active'});
+    setFlow(steps);
+  } else if(e.type==='teach'){
+    steps.forEach(s=>s.state='done');setFlow(steps);
+    if(e.text)addBubble('ai',e.text,true);
+  } else if(e.type==='question'){
+    if(e.text)addBubble('ai qa',e.text,false);
+  } else if(e.type==='state'){
+    updateGlass(e);
+  } else if(e.type==='done'){
+    document.getElementById('working').style.display='none';
+    if(e.done){
+      location.href='/tutor/'+SID;
+    } else {
+      inp.disabled=false;
+      inp.focus();
+    }
+  } else if(e.type==='error'){
+    location.href='/tutor/'+SID;
+  }
+}
+
+async function submitAnswer(ev){
+  ev.preventDefault();
+  const inp=document.getElementById('answer-input');
+  const text=inp.value.trim();
+  if(!text)return false;
+  addBubble('me',text,false);
+  inp.value='';
+  inp.disabled=true;
+  document.getElementById('working').style.display='block';
   const steps=[];
   try{
-    // POST the answer in the body (not the URL) and read the SSE stream via fetch.
-    const resp=await fetch('/tutor/'+SID+'/events',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({answer:text})});
-    const reader=resp.body.getReader();const dec=new TextDecoder();let buf='';
-    while(true){const r=await reader.read();if(r.done)break;buf+=dec.decode(r.value,{stream:true});
-      let i;while((i=buf.indexOf('\n\n'))>=0){const block=buf.slice(0,i);buf=buf.slice(i+2);
-        const dl=block.split('\n').find(l=>l.startsWith('data:'));if(dl)handleEvent(JSON.parse(dl.slice(5).trim()),steps,inp);}}
-  }catch(err){location.href='/tutor/'+SID;}
-  return false;}
-
-function updateGlass(e){document.getElementById('route-v').textContent='route v'+e.route_version;
-  document.getElementById('evidence').innerHTML=(e.cited||[]).map(c=>'<div class="ev">'+esc(c.chunk_id)+': '+esc((c.text||'').slice(0,140))+'…</div>').join('');
-  document.getElementById('learner').innerHTML=(e.learner||[]).map(c=>'<div>'+esc(c.name)+' — m '+esc(c.mastery)+' · c '+esc(c.confidence)+'</div>').join('');
-  if(e.rationale){document.getElementById('why').style.display='';document.getElementById('why-text').textContent=(e.decision||'')+' — '+e.rationale;}
-  if(e.graph){document.getElementById('cmap').innerHTML=e.graph;}
-  if(e.cost){document.getElementById('cost').textContent=e.cost.tokens+' tok ≈ $'+e.cost.usd;}}
+    const resp=await fetch('/tutor/'+SID+'/events',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({answer:text})
+    });
+    const reader=resp.body.getReader();
+    const dec=new TextDecoder();
+    let buf='';
+    while(true){
+      const r=await reader.read();
+      if(r.done)break;
+      buf+=dec.decode(r.value,{stream:true});
+      let i;
+      while((i=buf.indexOf('\n\n'))>=0){
+        const block=buf.slice(0,i);
+        buf=buf.slice(i+2);
+        const dl=block.split('\n').find(l=>l.startsWith('data:'));
+        if(dl)handleEvent(JSON.parse(dl.slice(5).trim()),steps,inp);
+      }
+    }
+  }catch(err){
+    location.href='/tutor/'+SID;
+  }
+  return false;
+}
 </script>
 </body></html>
