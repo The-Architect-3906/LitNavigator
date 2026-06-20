@@ -372,6 +372,27 @@ def get_chunk_paper_id(conn: sqlite3.Connection, chunk_id: str) -> int | None:
     return row[0] if row else None
 
 
+def create_paper(conn: sqlite3.Connection, *, arxiv_id: str | None, title: str,
+                 source_type: str | None = None, url: str | None = None) -> int:
+    cur = conn.execute(
+        "INSERT INTO papers (arxiv_id, title, source_type, url) VALUES (?,?,?,?)",
+        (arxiv_id, title, source_type, url),
+    )
+    conn.commit()
+    return int(cur.lastrowid)
+
+
+def create_paper_chunk(conn: sqlite3.Connection, chunk_id: str, paper_id: int,
+                       concept_id: int | None, text: str, chunk_index: int = 0,
+                       section: str = "digested") -> None:
+    conn.execute(
+        "INSERT OR IGNORE INTO paper_chunks "
+        "(id, paper_id, concept_id, section, chunk_index, text) VALUES (?,?,?,?,?,?)",
+        (chunk_id, paper_id, concept_id, section, chunk_index, text),
+    )
+    conn.commit()
+
+
 def get_induced_edges(conn: sqlite3.Connection) -> list[dict]:
     rows = conn.execute(
         "SELECT prereq_concept, target_concept, confidence, evidence FROM concept_edges "

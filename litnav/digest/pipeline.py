@@ -18,10 +18,23 @@ def _slice_key(di: DigestInput) -> str:
     return slice_key(di.domain_key, [s.source_id for s in di.sources], di.target_slugs)
 
 
+def _write_sources(conn: sqlite3.Connection, di: DigestInput) -> None:
+    """Insert a papers row per source + paper_chunks (global c0,c1,... ids) so digested
+    evidence_chunk_id references resolve to real text."""
+    idx = 0
+    for s in di.sources:
+        pid = repo.create_paper(conn, arxiv_id=s.source_id, title=s.title,
+                                source_type=s.source_type, url=s.url)
+        for ci, text in enumerate(s.chunks):
+            repo.create_paper_chunk(conn, f"c{idx}", pid, None, text, chunk_index=ci)
+            idx += 1
+
+
 def _write_graph(conn: sqlite3.Connection, di: DigestInput, concepts: list[dict],
                  scored_edges: list[dict], keypoints: list[dict],
                  quiz_seeds: list[dict]) -> dict[str, int]:
     """Write concepts/edges/keypoints/quiz seeds as source='digested'; return {slug: concept_id}."""
+    _write_sources(conn, di)
     ids: dict[str, int] = {}
     for c in concepts:
         existing = repo.get_concept_by_slug(conn, c["slug"])
