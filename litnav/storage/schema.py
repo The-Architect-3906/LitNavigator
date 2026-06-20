@@ -176,6 +176,18 @@ CREATE TABLE IF NOT EXISTS induction_log (
     confidence_basis TEXT,        -- JSON: {n_chunks, max_strength, multi_paper}
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS cost_ledger (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_id TEXT,
+    ts TEXT,
+    stage TEXT,
+    tier TEXT,
+    model TEXT,
+    total_tokens INTEGER DEFAULT 0,
+    usd REAL DEFAULT 0,
+    cache_hit INTEGER DEFAULT 0
+);
 """
 
 
