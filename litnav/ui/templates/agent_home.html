@@ -3,21 +3,66 @@
 <style>
  body{font-family:system-ui,sans-serif;margin:0;background:#f6f7fb;color:#1c2430}
  header{background:#1c2430;color:#fff;padding:.8rem 1.2rem}header b{color:#7fd1a6}
- .wrap{max-width:44rem;margin:2rem auto;padding:0 1rem}
+ .wrap{max-width:60rem;margin:2rem auto;padding:0 1rem}
  form{display:flex;gap:.5rem;margin:1rem 0}
  input{flex:1;padding:.7rem;font-size:1rem;border:1px solid #c5ccd8;border-radius:8px}
  button{padding:.7rem 1.2rem;border:0;border-radius:8px;background:#5b49c4;color:#fff;font-size:1rem;cursor:pointer}
  .note{color:#b3700d;background:#fff6e5;padding:.6rem .8rem;border-radius:6px}
  .scope{color:#7a8699;font-size:.85rem}
  ul{color:#444}a{color:#5b49c4}
+ .hero,.card{background:#fff;border:1px solid #e2e6ee;border-radius:14px;padding:1rem 1.1rem;margin:1rem 0}
+ .hero{background:linear-gradient(135deg,#fff 0%,#f3f0ff 100%)}
+ .pipeline{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.8rem;margin-top:1rem}
+ .stage{background:#f8f9fd;border:1px solid #e2e6ee;border-radius:12px;padding:.9rem}
+ .k{font-size:.78rem;letter-spacing:.04em;color:#7a8699;text-transform:uppercase}
+ .stage b{display:block;margin:.25rem 0 .45rem}
+ .paper-grid,.chip-row{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.65rem}
+ .paper,.chip{background:#fff;border:1px solid #dbe0ea;border-radius:999px;padding:.38rem .7rem;font-size:.86rem}
+ .paper span,.chip span{color:#7a8699}
 </style></head>
 <body>
 <header><b>LitNavigator</b> &nbsp; interactive tutor</header>
 <div class="wrap">
- <p>Tell the agent what you want to learn. It reads the papers, plans a route, teaches from
-    cited evidence, quizzes you, and adapts — inducing new scaffolding when you ask about
-    something off the curated map.</p>
+ <div class="hero">
+  <div class="k">Offline Discover + Digest</div>
+  <h2 style="margin:.25rem 0 .5rem">From a research area to a teachable concept map</h2>
+  <p style="margin:.2rem 0 .8rem">This demo starts from the field <b>{{ story_domain }}</b>, uses an offline
+     corpus of <b>{{ story_paper_count }} papers</b>, distills them into <b>{{ story_concept_count }} concepts</b>
+     and <b>{{ story_edge_count }} prerequisite links</b>, then switches to a live tutor that teaches,
+     quizzes, and adapts in real time.</p>
+  <div class="paper-grid">
+    {% for paper in story_representative_papers %}
+    <div class="paper">{{ paper.title }} <span>· {{ paper.year }}</span></div>
+    {% endfor %}
+  </div>
+ </div>
+ <div class="pipeline">
+  <div class="stage">
+    <div class="k">1. Discover</div>
+    <b>Representative papers selected offline</b>
+    <div>{{ story_paper_count }} papers were collected for the domain, with 5 anchor papers used to
+      orient the learner-facing story.</div>
+  </div>
+  <div class="stage">
+    <div class="k">2. Digest</div>
+    <b>Concept graph built before the demo</b>
+    <div>The corpus was compressed into a reusable map of concepts such as
+      {{ story_target_names|join(', ') }}.</div>
+    <div class="chip-row">
+      {% for concept in story_concept_names[:7] %}
+      <div class="chip">{{ concept }}</div>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="stage">
+    <div class="k">3. Teach Live</div>
+    <b>Stateful tutoring starts now</b>
+    <div>Once you pick a goal, the live graph teaches from cited chunks, asks questions, and
+      changes route when your answers reveal gaps.</div>
+  </div>
+ </div>
  {% if message %}<p class="note">{{ message }}</p>{% endif %}
+ <div class="card">
  <form action="/tutor/start" method="get">
    <input name="goal" autofocus required placeholder="e.g. I want to understand multi-agent debate">
    <button type="submit">Teach me</button>
@@ -38,4 +83,5 @@
        &nbsp;<i>(short route, leads with the live controversy, lower bar)</i></li>
  </ul>
  <p class="scope">Built from {{ n_papers }} LLM-agent papers. Ask within this scope; out-of-scope goals get an honest decline.</p>
+ </div>
 </div></body></html>

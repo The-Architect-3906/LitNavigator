@@ -114,6 +114,40 @@ def _n_papers(data: dict) -> int:
     return len(ids) or len(data["concepts"])
 
 
+def _story_context(data: dict) -> dict:
+    papers = data.get("papers") or []
+    concepts = data.get("concepts") or []
+    edges = data.get("edges") or []
+    topic = data.get("topic", "LLM-based autonomous agents")
+
+    preferred_arxiv = [
+        "2210.03629",  # ReAct
+        "2302.04761",  # Toolformer
+        "2303.11366",  # Reflexion
+        "2308.00352",  # MetaGPT
+        "2308.11432",  # Survey
+    ]
+    by_arxiv = {p.get("arxiv_id"): p for p in papers}
+    reps = [by_arxiv[a] for a in preferred_arxiv if a in by_arxiv]
+    if len(reps) < 5:
+        seen = {p.get("id") for p in reps}
+        reps.extend([p for p in papers if p.get("id") not in seen][: 5 - len(reps)])
+
+    slug_to_name = {c["slug"]: c["name"] for c in concepts if c.get("slug")}
+    target_names = [slug_to_name[s] for s in data.get("targets", []) if s in slug_to_name]
+    concept_names = [c["name"] for c in concepts]
+
+    return {
+        "story_domain": topic,
+        "story_paper_count": _n_papers(data),
+        "story_representative_papers": reps,
+        "story_concept_count": len(concepts),
+        "story_edge_count": len(edges),
+        "story_target_names": target_names,
+        "story_concept_names": concept_names,
+    }
+
+
 def _start_agent(goal: str, intent: str | None) -> str:
     sid = str(uuid.uuid4())
     base = Path(DEMO_DB_PATH).parent
@@ -138,8 +172,9 @@ def _start_agent(goal: str, intent: str | None) -> str:
 
 @app.get("/tutor", response_class=HTMLResponse)
 def tutor_home(message: str = ""):
+    data = _fixture_data()
     return _TEMPLATES.get_template("agent_home.html").render(
-        message=message, n_papers=_n_papers(_fixture_data()))
+        message=message, n_papers=_n_papers(data), **_story_context(data))
 
 
 @app.get("/tutor/start")
@@ -154,9 +189,10 @@ def tutor_page(sid: str):
     ag = _AGENTS.get(sid)
     if ag is None:
         return RedirectResponse("/tutor", status_code=303)
+    data = _fixture_data()
     return _TEMPLATES.get_template("agent.html").render(
-        sid=sid, n_papers=_n_papers(_fixture_data()),
-        cost=session_cost(ag.conn, sid), **ag.current())
+        sid=sid, n_papers=_n_papers(data),
+        cost=session_cost(ag.conn, sid), **_story_context(data), **ag.current())
 
 
 @app.post("/tutor/{sid}/events")

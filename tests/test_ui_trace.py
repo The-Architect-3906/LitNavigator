@@ -54,3 +54,13 @@ def test_trace_endpoint_returns_json(tmp_path):
         assert "route_version" in html and "ReAct" in html
     finally:
         del os.environ["LITNAV_DB_PATH"]
+
+
+def test_story_context_exposes_offline_discover_digest_artifacts():
+    data = server._fixture_data()
+    story = server._story_context(data)
+    assert story["story_domain"]
+    assert story["story_paper_count"] >= 5
+    assert len(story["story_representative_papers"]) == 5
+    assert story["story_concept_count"] >= 3
+    assert story["story_concept_names"]
