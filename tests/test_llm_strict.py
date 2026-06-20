@@ -89,3 +89,37 @@ def test_router_routes_tier_model_to_client_and_ledger(monkeypatch):
     assert mf == "gpt-4o"        # frontier tier actually routes gpt-4o
     assert mc == "gpt-4o-mini"   # cheap tier routes gpt-4o-mini; env override is ignored for routed calls
     assert c.last_model() == "gpt-4o-mini"
+
+
+def test_temperature_zero_passed_to_chat_api(monkeypatch):
+    captured = {}
+    class _CapChat:
+        def create(self, **kw):
+            captured.update(kw)
+            return _Resp('{"ok": true}', 5)
+    class _CapClient:
+        def __init__(self):
+            self.chat = type("C", (), {"completions": _CapChat()})()
+    monkeypatch.setenv("LITNAV_LLM_PROVIDER", "openai")
+    monkeypatch.setenv("LITNAV_LLM_STRICT", "")
+    monkeypatch.setattr(c, "_client", lambda: _CapClient())
+    c.complete_json("p", fallback={})
+    assert captured.get("temperature") == 0.0
+    captured.clear()
+    c.complete_text("p", fallback="x")
+    assert captured.get("temperature") == 0.0
+
+
+def test_temperature_override_respected(monkeypatch):
+    captured = {}
+    class _CapChat:
+        def create(self, **kw):
+            captured.update(kw)
+            return _Resp("hi", 5)
+    class _CapClient:
+        def __init__(self):
+            self.chat = type("C", (), {"completions": _CapChat()})()
+    monkeypatch.setenv("LITNAV_LLM_PROVIDER", "openai")
+    monkeypatch.setattr(c, "_client", lambda: _CapClient())
+    c.complete_text("p", fallback="x", temperature=0.7)
+    assert captured.get("temperature") == 0.7
