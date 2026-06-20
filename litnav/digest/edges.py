@@ -20,6 +20,20 @@ _VALID_STRENGTH = {"weak_hint", "general_statement", "explicit_assertion"}
 _SIM_COS_MIN = 0.55   # heuristic: below this cosine, two concepts are not "similar" (tune via edge-accuracy)
 
 
+def _norm_chunk_ids(raw_ids, by_chunk: dict) -> list[str]:
+    """Normalize proposed evidence ids to canonical 'cN' string keys present in by_chunk.
+    LLMs return these as ints (0), digit strings ('0'), or 'c0' — accept all."""
+    out: list[str] = []
+    for ci in raw_ids or []:
+        if isinstance(ci, int):
+            ci = f"c{ci}"
+        elif isinstance(ci, str) and ci.isdigit():
+            ci = f"c{ci}"
+        if ci in by_chunk and ci not in out:
+            out.append(ci)
+    return out
+
+
 def _label_strength(chunk_texts: list[str], fallback: str, *, session_id, conn, budget) -> str:
     """Metered analogue of induce._label_strength — cheap tier, candidate fallback."""
     prompt = (
@@ -92,7 +106,7 @@ def build_edges(di: DigestInput, concepts: list[dict], *, candidate: dict,
         if e["prereq_slug"] not in slugs or e["target_slug"] not in slugs:
             continue
         # Clean evidence: keep only chunk ids that actually exist in this digest run.
-        cleaned = [ci for ci in e["evidence_chunks"] if ci in by_chunk]
+        cleaned = _norm_chunk_ids(e.get("evidence_chunks"), by_chunk)
         if not cleaned:
             continue                                   # no real evidence -> drop edge
         strength = e.get("max_strength", "general_statement")
@@ -117,7 +131,7 @@ def build_edges(di: DigestInput, concepts: list[dict], *, candidate: dict,
         if a not in slugs or b not in slugs:
             continue
         # Clean evidence: keep only chunk ids that actually exist in this digest run.
-        cleaned = [ci for ci in e["evidence_chunks"] if ci in by_chunk]
+        cleaned = _norm_chunk_ids(e.get("evidence_chunks"), by_chunk)
         if not cleaned:
             continue                                   # no real evidence -> drop edge
         if (centroid and a in centroid and b in centroid

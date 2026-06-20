@@ -48,3 +48,16 @@ def test_offline_falls_back_to_candidate(monkeypatch):
     out = edges.build_edges(_di(), CONCEPTS, candidate=CAND, session_id="s", conn=c)
     pe = [e for e in out if e["edge_type"] == "prerequisite"][0]
     assert pe["confidence"] == 0.55   # candidate's weak_hint, 1 chunk
+
+def test_int_evidence_chunk_ids_are_normalized(monkeypatch):
+    # the LLM commonly returns evidence_chunks as INTEGERS ([0,1]) not "c0"/"c1"; they must be kept
+    proposed = {"prereq_edges": [{"prereq_slug": "tool_use", "target_slug": "react",
+                "evidence_chunks": [0], "max_strength": "explicit_assertion", "multi_paper": False}],
+                "similarity_edges": []}
+    monkeypatch.setattr(router, "complete_json", lambda *a, **k: proposed)
+    c = sqlite3.connect(":memory:"); init_db(c)
+    out = edges.build_edges(_di(), CONCEPTS, candidate=CAND, session_id="s", conn=c)
+    pe = [e for e in out if e["edge_type"] == "prerequisite"]
+    assert len(pe) == 1                         # int 0 -> "c0" -> kept, NOT dropped
+    assert pe[0]["evidence"] == ["c0"]          # normalized to the canonical string id
+    assert pe[0]["confidence"] == 0.75          # 1 chunk, explicit
