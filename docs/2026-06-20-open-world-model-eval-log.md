@@ -58,3 +58,32 @@ the prereq/similarity graph live** (the graph is the core output).
 (The forced-error call raised before metering → no row, no cost.)
 
 **Evaluation:** liveness mechanism correct + cheap; no optimization needed. **Action A0 added:** the budget cap is now strict-raise-proven but has STILL never fired on real accumulating spend → `verify_cost_live` (doctrine §3) must force a real over-budget sequence and assert `BudgetExceeded`. A1/A2 (live edge-gen + judge evaluation) remain — that's Phase 1, where real model-adequacy testing happens. No new model needed.
+
+---
+
+## 2026-06-20 — OW-0..2 live-complete (first real edge-gen + gpt-4o judge)
+
+**Runs (LIVE, provider=openai, strict):** `verify_cost_live` + `verify_digest_live` (real digest of the seed fixture's chunks).
+
+**Live result:** `was_live()`=True. `gpt-4o-mini` extracted 3 concepts (react/tools/reflexion) and **proposed** prereq edges (the OW-2 zero-edge bug is fixed). The **real `gpt-4o` judge** then ran (tier-routing bug fixed — frontier was silently calling gpt-4o-mini) and **rejected all proposed prerequisites**, downgrading them to similarity. `verify_cost_live`: budget cap **fired on real accumulating spend** (first time ever). Both gates ALL PASS.
+
+**Cost table (one live digest):**
+| stage | tier | model | tokens | usd | calls |
+|---|---|---|---|---|---|
+| digest | cheap | gpt-4o-mini | 1083 | $0.000433 | 3 |
+| digest | embed | text-embedding-3-small | 8 | ~$0 | 1 |
+| digest_verify | frontier | **gpt-4o** | 114 | $0.00057 | 2 |
+| **total** | | | **1205** | **$0.001003** | |
+
+**Model adequacy (the real evaluation):**
+- `gpt-4o-mini` **extraction: adequate** (sensible concepts).
+- `gpt-4o-mini` **EDGE PROPOSAL: NOT adequate** — proposes plausible-but-unsupported prerequisite edges; the `gpt-4o` judge rejected 100% (edge_accuracy 0.0), and proposals vary run-to-run. On a 3-sentence fixture this is partly correct (thin evidence can't support hard prereqs), but the cheap model is also clearly weak at relational reasoning.
+- `gpt-4o` **judge: working and valuable** — caught the cheap model's bad edges. **The self-referential cheap judge gave FALSE confidence** (it accepted the same edges at acc 1.0); the real frontier judge is justified (re-audit Risk C + pedagogical-error-cost). Cost ~$0.00057/run.
+- live `quiz_seeds`: empty (gpt-4o-mini returned nothing usable) — minor; quiz is OW-4.
+
+**ACTIONS:**
+- [ ] **A1 — record a model need for edge PROPOSAL.** `gpt-4o-mini` is weak at proposing prerequisites. Options to evaluate at OW-3 (when real full-text replaces 3-sentence chunks): (a) use `frontier` for proposal too, (b) few-shot/constraint the cheap proposer, (c) a stronger/cheaper specialised proposer → add to `RECORDED_NEEDS` if a measured need persists. **Do NOT enable a new model without approval.**
+- [ ] **A-quiz — live quiz-seed gen returns empty;** fix or fold into OW-4 ASSESS (quiz is OW-4's domain).
+- [ ] **edge_accuracy hard floor → OW-3** (thin seed evidence cannot support hard prerequisites; the gate reports the number and asserts graceful degradation instead).
+- [ ] **⑫ learner_goal slug↔ID reconciliation → OW-4** (goal elicitation).
+- **No new model enabled this round** — but A1 is the first concrete model-need signal; recorded, awaiting OW-3 confirmation + your approval.
