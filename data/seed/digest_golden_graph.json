@@ -9,6 +9,7 @@
     ["reason_act", "self_reflection", "similarity"]
   ],
   "prereq_confidence": 0.75,
+  "downgraded_similarity_confidence": 0.55,
   "keypoint_ids": ["kp_tool_1", "kp_ra_1", "kp_sr_1"],
   "edge_accuracy": 0.5,
   "unverified_count": 1
