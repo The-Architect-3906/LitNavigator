@@ -219,6 +219,12 @@ CREATE TABLE IF NOT EXISTS digest_cache (
     built_at TEXT,
     human_checked INTEGER DEFAULT 0
 );
+
+CREATE TABLE IF NOT EXISTS discover_results (
+    query_key TEXT PRIMARY KEY,
+    result_json TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 """
 
 

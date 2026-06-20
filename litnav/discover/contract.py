@@ -30,3 +30,4 @@ class Source:
 class DiscoverResult:
     sources: list[Source]
     intent_used: str
+    cache_hit: bool = False
