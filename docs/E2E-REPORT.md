@@ -59,7 +59,7 @@ goal-elicit → teach⇄assess loop → make-artifact → recommend-next**.
 - **Multilingual:** teaching + artifacts in the learner's language for English / 中文 / Español / Français (5.0).
 - **Adaptive teaching:** struggle recovers via reteach, lost recovers via re-explain, give_up concedes honestly (no
   fake mastery), mastery advances — all live, all reaching `done`.
-- **Grounding & honesty:** 4.78 groundedness; mastery is BKT/Rasch from real answers, never LLM self-judgement.
+- **Grounding & honesty:** 4.78 groundedness; mastery is a BKT-lite heuristic from real answers, never LLM self-judgement.
 - **recommend-next:** ready-now vs blocked, prereq-aware, for every completed session.
 
 ## Residual quality gaps (recorded in BACKEND-ROADMAP)

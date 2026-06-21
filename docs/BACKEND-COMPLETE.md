@@ -65,14 +65,14 @@ flowchart TD
     U(["👤 Learner · goal in English<br/>'Explain the basics of quantum error correction for a beginner'"])
 
     U --> S1["① DISCOVER · skill find-sources<br/>normalize → 'quantum error correction basics' · intent = crash-course<br/>picked source: 'Quantum Error Correction Via Noise Guessing Decoding' · 4 chunks<br/><b>BM25 · embedding rerank · LLM relevance gate</b>"]
-    S1 --> S2["② DIGEST · skill digest-corpus<br/>8 concepts: stabilizer_codes · QECCs · finite_blocklength · GRAND …<br/>prereq-ordered, cited graph persisted to SQLite<br/><b>RefD prereq signal · Liang 2015 · + gpt-4o edge judge</b>"]
+    S1 --> S2["② DIGEST · skill digest-corpus<br/>8 concepts: stabilizer_codes · QECCs · finite_blocklength · GRAND …<br/>prereq-ordered, cited graph persisted to SQLite<br/><b>RefD-style prereq signal · cf. Liang 2015 · + gpt-4o edge judge</b>"]
     S2 --> S3["③ ORIENT · nodes goal_elicit + planner + orient_tour<br/>goal = survey → Bloom ceiling = comprehension<br/>route: Stabilizer Codes → QECCs → Finite Blocklength → GRAND<br/><b>Bloom's taxonomy · goal modes</b>"]
 
     S3 --> T["④ TEACH · node teach_kp<br/>'Stabilizer codes are a class of quantum error-correcting codes that use the<br/>stabilizer-group framework to protect quantum information from noise…'<br/><b>Mayer multimedia · worked-example · strategy policy</b>"]
     T --> Q["⑤ ASSESS · node assess_next<br/>recall quiz: 'What is the purpose of stabilizer codes in quantum error correction?'<br/><b>Bloom-leveled QG · SAQUET distractor gate · IRT difficulty</b>"]
     Q -. "👤 'I'm lost'" .-> L["node handle_lost · no grade<br/>analogy: 'Think of stabilizer codes like a group of friends<br/>solving a puzzle together…' then re-pose the question<br/><b>metacognitive re-explain · strategy switch</b>"]
     L -.-> Q
-    Q -- "👤 you answer: 'to correct errors in quantum information'" --> G["⑥ GRADE · node grade_kp<br/>correct · feedback 'correctly identifies the purpose' · mastery 0.30 → 0.48<br/><b>BKT / Rasch-IRT · never LLM self-judgement</b>"]
+    Q -- "👤 you answer: 'to correct errors in quantum information'" --> G["⑥ GRADE · node grade_kp<br/>correct · feedback 'correctly identifies the purpose' · mastery 0.30 → 0.48<br/><b>BKT-lite · never LLM self-judgement</b>"]
     G -- "correct · raise Bloom → comprehension · re-quiz (0.69 → 0.81)" --> Q
     G -- "mastered at the Bloom ceiling" --> ADV["⑦ ADVANCE · node advance<br/>mastery 0.81 ≥ 0.75 · confidence 0.9 → concept marked 'done'<br/><b>dual-threshold · respects Bloom ceiling</b>"]
     ADV --> NX{more concepts<br/>on the route?}
@@ -85,7 +85,7 @@ flowchart TD
     subgraph X ["Cross-cutting — every step"]
       direction LR
       OL["Outer agent loop · ReAct + Plan-and-Solve<br/>picks which skill to run, per state"]
-      CS["Cost spine · one metered router<br/>model cascade · BKT/Rasch routing ≈ free · budget cap"]
+      CS["Cost spine · one metered router<br/>model cascade · rule-computed routing ≈ free · budget cap"]
     end
 
     classDef disc fill:#dde6f2,stroke:#3f4b5e,color:#0f1b2b;
@@ -102,12 +102,12 @@ flowchart TD
 | Step | What the learner experiences | Method | Code |
 |--|--|--|--|
 | ① Find sources | Goal → English query; pulls real papers and **drops off-topic ones** | BM25 + embedding re-rank; cheap-LLM relevance check | `litnav/discover/` |
-| ② Build the map | Source → concepts with prerequisite links and cited evidence | RefD (Liang 2015) + a `gpt-4o` judge | `litnav/digest/` |
+| ② Build the map | Source → concepts with prerequisite links and cited evidence | RefD-style (cf. Liang 2015) + a `gpt-4o` judge | `litnav/digest/` |
 | ③ Set the depth | "Survey" → teach to *comprehension* Bloom level; plan a prereq route | Bloom's taxonomy | `nodes/goal_elicit.py`, `nodes/planner.py` |
 | ④ Teach | Each idea explained concisely, **grounded in the cited paper** | Mayer + worked-example | `nodes/teach_kp.py` |
 | ⑤ Quiz | A question at the current Bloom level; distractors flaw-checked | Bloom-leveled QG + SAQUET + IRT | `nodes/assess_next.py`, `assess/quizgen.py` |
 | ⑤′ "I'm lost" | Re-explain with an analogy, **no penalty** | metacognitive re-explain | `nodes/handle_lost.py` |
-| ⑥ Grade | The answer updates a real mastery estimate — never self-graded | BKT / Rasch-IRT (Corbett & Anderson 1995) | `nodes/grade_kp.py` |
+| ⑥ Grade | The answer updates a real mastery estimate — never self-graded | BKT-lite (cf. BKT, Corbett & Anderson 1995) | `nodes/grade_kp.py` |
 | ⑦ Advance | Mastery ≥ threshold → done; else reteach or honestly concede | dual-threshold | `nodes/route_decider.py`, `nodes/advance.py` |
 | ⑧ Take-away | Notes/slides/map **in the learner's language**, cited | Mayer + retrieval-practice (Roediger 2006) | `litnav/artifact/` |
 | ⑨ What next | Prerequisite-aware ranked next concepts | hard-prereq filter + mastery-gain ranker | `litnav/recommend/` |
@@ -123,7 +123,7 @@ flowchart TD
 | `litnav/nodes/` | the teaching-graph nodes (§5) |
 | `litnav/assess/` | quiz generation (`quizgen`), teach-strategy policy (`strategy`), spaced repetition (`spacing`) |
 | `litnav/discover/` | **find-sources** skill: intent, query, OpenAlex/Wikipedia adapters, rank, relevance, full-text |
-| `litnav/digest/` | **digest-corpus** skill: extract → edges (RefD) → verify → pipeline |
+| `litnav/digest/` | **digest-corpus** skill: extract → edges (RefD-style) → verify → pipeline |
 | `litnav/artifact/` | **make-artifact** skill: selector + renderers (mindmap/notes/slides/worked-example) |
 | `litnav/recommend/` | **recommend-next** skill: prereq filter + mastery-gain ranker |
 | `litnav/llm/` | metered spine: `router` → `registry` → `client` (LiteLLM), `result_cache` |
@@ -156,12 +156,13 @@ the LangGraph spine itself.
 ### digest-corpus — turn sources into a teachable concept graph
 `litnav/digest/` · `SKILL.md`
 - Extracts distinct concepts + keypoints from the source text, grounded in chunks (`extract.py`).
-- Proposes prerequisite + similarity edges; prerequisites use the **RefD** reference-distance signal
-  blended with an LLM judge (`refd.py`, `edges.py`); a frontier judge verifies high-impact prerequisite
+- Proposes prerequisite + similarity edges; prerequisites use a **RefD-style** reference-distance
+  signal (corpus reference-distance, cf. Liang 2015 / ACE, JEDM 2024) blended with an LLM judge
+  (`refd.py`, `edges.py`); a frontier judge verifies high-impact prerequisite
   edges and downgrades unsupported ones (`verify.py`). The similarity judge runs on the cheap tier.
 - Persists concepts, edges, keypoints, quiz seeds, cited chunks (`pipeline.py`); confidence is always
   rule-computed, never returned by the model.
-- *Measured:* prerequisite edges survive on real evidence (RefD recovers links a lone LLM judge
+- *Measured:* prerequisite edges survive on real evidence (the RefD-style signal recovers links a lone LLM judge
   rejects). **Live gate:** `verify_digest_live` (~$0.003/digest).
 
 ### teach / assess — the adaptive inner loop
@@ -172,7 +173,8 @@ the LangGraph spine itself.
   analogy / concise…) chosen from goal × expertise × current mastery (`assess/strategy.py`).
 - **Assessment** (`assess_next.py`, `assess/quizgen.py`): questions at rising Bloom levels (varied so
   they don't repeat), distractors flaw-gated (SAQUET), difficulty estimated by a weaker "student" (IRT).
-- **Grading** (`grade_kp.py`): mastery updated by BKT/Rasch from the real answer; feedback explains
+- **Grading** (`grade_kp.py`): mastery updated by a BKT-lite heuristic (Bloom-weighted; cf. BKT,
+  Corbett & Anderson 1995) from the real answer; feedback explains
   *why*; when the cheap grader is unsure near threshold it escalates once to the frontier model.
 - **Routing** (`route_decider.py`): advance at mastery + confidence; reteach on a wrong answer;
   re-explain on "I'm lost" without grading; if a failed concept has an un-mastered prerequisite, detour
@@ -213,7 +215,7 @@ Two teaching paths fork at `retrieve` by whether the concept has keypoints.
 | `retrieve` | both | Fetch the cited evidence chunks for the current concept |
 | `teach_kp` / `teach` | keypoint / legacy | Teach (grounded in evidence), strategy chosen per learner |
 | `assess_next` / `check` | keypoint / legacy | Pose a quiz at the current Bloom level |
-| `grade_kp` / `grade` | keypoint / legacy | Grade for the key idea; BKT/Rasch mastery update; route decision |
+| `grade_kp` / `grade` | keypoint / legacy | Grade for the key idea; BKT-lite (keypoint) / BKT posterior (legacy) mastery update; route decision |
 | `reteach_kp` / `reteach` | keypoint / legacy | Re-teach with a new strategy after a wrong answer |
 | `handle_lost` | keypoint | Re-explain from a different angle, **no grade** |
 | `route_decider` | legacy | Branch: advance / reteach / diagnose→replan / concede |
