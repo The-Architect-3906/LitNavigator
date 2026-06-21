@@ -181,9 +181,12 @@ gpt-4o judge downgrades nearly all prereqs to soft edges (`edge_accuracy=0.0`); 
 edge-poor. `digest-demo` (offline) shows 3 edges and masks this. Make the live gate assert on
 grounded/normalized edges, not "any edge".
 
-### D4 — [info] DISCOVER stage is not implemented
-"Discover" appears only in UI templates/docs — no `litnav/discover/` module, no source
-acquisition. DIGEST starts from hand-fixtured `SourceDoc`s. Either build it or drop the claim.
+### D4 — [info] DISCOVER stage ~~is not implemented~~ → CORRECTED 2026-06-21
+**This finding was WRONG.** It was made from the `fix/keypoint-and-digest-bugs` branch (and a
+pre-`fetch`, stale view of the remote). DISCOVER **is implemented and live on
+`feat/open-world-digest`** (OW-3): `litnav/discover/` with OpenAlex + Wikipedia adapters, BM25 rerank,
+full-text, intent classification, gated by `verify_discover_live`. It is simply absent from THIS branch
+and `main`. Source of truth: `docs/OPEN-WORLD-STATUS.md` on `feat/open-world-digest`.
 
 **Digest is otherwise healthy:** live extraction reliable, tier routing correct (gpt-4o-mini
 cheap / gpt-4o judge), cost metering + budget cap work, ~$0.001/run.
@@ -243,9 +246,10 @@ New `tests/test_digest_edges.py` cases gate the similarity judge (drop unrelated
 honesty, misconception-from-answer, bloom-level surfaced. Each fails on pre-fix code.
 
 ### Out of scope (not surgical bugs — design/feature decisions, left for the Architect)
-- **D4** DISCOVER stage unimplemented — a feature to build (source search→`SourceDoc`) or a UI claim to drop.
-  (Related: digest is **not wired into the UI** at all — the story band advertises "Discover + Digest" but
-  the tutor runs on pre-baked fixtures. Either build a "Digest a pasted source" flow or relabel.)
+- **D4** ~~DISCOVER stage unimplemented~~ — **CORRECTED: it is done & live on `feat/open-world-digest`
+  (OW-3, `verify_discover_live`).** It is just absent from this branch / `main`. The remaining real item
+  is **wiring the open-world flow into the UI** — tracked honestly on the roadmap as **OW-6** (dual
+  frontend, "next") and **OW-7** (live cold-start digest→teach, "pending"), not a hidden gap.
 - **N2** planner full-closure expansion (every goal starts at ReAct; also keeps Money-Shot-② replan dormant)
   — a planner-design decision (non-expanding mode) the team should make deliberately.
 - **N3** vague-chat affirmations ("yes"/"go on") graded as quiz answers — dispatcher tweak.
