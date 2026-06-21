@@ -31,3 +31,21 @@ def test_empty_input(monkeypatch):
     monkeypatch.setattr(router, "complete_json", lambda *a, **k: {"relevant_indices": []})
     c = sqlite3.connect(":memory:"); init_db(c)
     assert relevance.relevance_gate("topic", [], conn=c, session_id="s") == []
+
+def test_a14_scored_drops_same_family_different(monkeypatch):
+    # A14: PBFT is "same family, different method" (score 1) for a Raft goal → dropped;
+    # Raft (3) and a generic consensus paper (2) kept, best-scored first.
+    monkeypatch.setattr(router, "complete_json",
+                        lambda *a, **k: {"scores": [{"i": 0, "score": 3}, {"i": 1, "score": 1}, {"i": 2, "score": 2}]})
+    c = sqlite3.connect(":memory:"); init_db(c)
+    srcs = [_src("Raft paper"), _src("PBFT paper"), _src("Consensus survey")]
+    out = relevance.relevance_gate("build a Raft consensus implementation", srcs, conn=c, session_id="s", min_keep=1)
+    assert [s.title for s in out] == ["Raft paper", "Consensus survey"]   # PBFT (score 1) dropped
+
+def test_a14_never_starves_when_all_low(monkeypatch):
+    monkeypatch.setattr(router, "complete_json",
+                        lambda *a, **k: {"scores": [{"i": 0, "score": 1}, {"i": 1, "score": 0}]})
+    c = sqlite3.connect(":memory:"); init_db(c)
+    srcs = [_src("best-of-bad"), _src("worse")]
+    out = relevance.relevance_gate("x", srcs, conn=c, session_id="s", min_keep=1)
+    assert [s.title for s in out] == ["best-of-bad"]   # highest score kept, never empty

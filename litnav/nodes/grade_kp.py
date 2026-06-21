@@ -59,7 +59,9 @@ def grade_kp_node(state: NavState, conn: sqlite3.Connection) -> dict:
         f"Expected key idea: {quiz.get('answer_key', '')}\n"
         f"Supporting evidence: {evidence}\n"
         f"Learner's answer: {answer!r}\n"
-        '{"correct": bool, "feedback": "one short sentence for the learner", '
+        '{"correct": bool, '
+        '"feedback": "1-2 sentences for the learner, grounded in the evidence: name WHY it is right or '
+        'wrong (the key idea), and if wrong or partial give a specific hint toward the correct idea", '
         '"confidence": 0.0-1.0, "score_0_5": 0-5, '
         '"misconception_resolved": ["list of misconception ids cleared, or empty"]}'
     )
