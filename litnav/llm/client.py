@@ -15,6 +15,11 @@ Selection (see also llm/registry.py, which resolves the per-tier model strings):
   - LITNAV_LLM_BASE_URL : optional endpoint override (Azure / vLLM / a proxy / a self-hosted or any
     OpenAI-compatible server such as DashScope for Qwen).
 
+Mixed setup: embeddings (used for source re-ranking) can use a SEPARATE provider via
+LITNAV_EMBED_PROVIDER / LITNAV_EMBED_API_KEY / LITNAV_EMBED_BASE_URL (each falls back to its
+LITNAV_LLM_* counterpart). So a chat-only provider (e.g. Anthropic, which has no embeddings API) can
+pair with an embedding-capable one (e.g. OpenAI) instead of degrading to keyword-only ranking.
+
 Every caller passes a deterministic fallback, so the system always runs offline ($0, no key).
 """
 from __future__ import annotations
@@ -87,6 +92,40 @@ def _call_kwargs() -> dict:
     if key:
         kw["api_key"] = key
     base = os.getenv("LITNAV_LLM_BASE_URL")
+    if base:
+        kw["api_base"] = base
+    return kw
+
+
+# ── Embeddings can use a SEPARATE provider/key/endpoint ("mixed setup") ───────────────────────────
+# So a chat-only provider (Anthropic, Groq, …) can still do source re-ranking by routing embeddings
+# to an embedding-capable provider. Each LITNAV_EMBED_* falls back to its LITNAV_LLM_* counterpart, so
+# a single-provider setup needs no extra config.
+def _embed_provider() -> str:
+    return os.getenv("LITNAV_EMBED_PROVIDER") or _provider()
+
+
+def _embed_api_key() -> str:
+    return os.getenv("LITNAV_EMBED_API_KEY") or _api_key()
+
+
+def _litellm_embed_model(name: str) -> str:
+    if "/" in name:
+        return name
+    prov = _embed_provider()
+    if prov in ("", "none", "openai"):
+        return name
+    return f"{prov}/{name}"
+
+
+def _embed_call_kwargs() -> dict:
+    kw: dict = {}
+    key = _embed_api_key()
+    if key:
+        kw["api_key"] = key
+    base = os.getenv("LITNAV_EMBED_BASE_URL")
+    if not base and _embed_provider() == _provider():
+        base = os.getenv("LITNAV_LLM_BASE_URL")  # inherit only when same provider
     if base:
         kw["api_base"] = base
     return kw
@@ -205,11 +244,12 @@ def embed_texts(texts: list[str]) -> list[list[float]] | None:
     _tls.cost = 0
     _tls.was_live = False
     _tls.model = None
-    if _provider() == "none" or not texts:
+    if _embed_provider() == "none" or not texts:
         return None
     try:
         _tls.model = _embed_model()
-        response = _embedding(model=_litellm_model(_embed_model()), input=list(texts), **_call_kwargs())
+        response = _embedding(model=_litellm_embed_model(_embed_model()), input=list(texts),
+                              **_embed_call_kwargs())
         _tls.cost = _usage_tokens(response)
         _tls.was_live = _tls.cost > 0
         data = response.data
