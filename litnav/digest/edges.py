@@ -42,7 +42,9 @@ def _judge_similar(a_desc: str, b_desc: str, evidence: list[str], *,
         f"Cited evidence: {ev}\n"
         'JSON only: {"score": 0.0-1.0}'
     )
-    result = router.complete_json(prompt, tier="frontier", stage="digest_sim_judge",
+    # A11: similarity is a SOFT judgment (related-enough-to-link), unlike the prerequisite judge
+    # (verify.py, stays frontier). Cheap tier is adequate here and removes the ~5x digest cost spike.
+    result = router.complete_json(prompt, tier="cheap", stage="digest_sim_judge",
                                   fallback={"score": 1.0}, session_id=session_id, conn=conn, budget=budget)
     try:
         return float(result.get("score", 1.0)) if isinstance(result, dict) else 1.0
