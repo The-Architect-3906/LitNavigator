@@ -1,0 +1,1 @@
+{"commit": "2947a1f", "ts": 1782036704.189342, "e2e": {"mastered_rate": 1.0, "avg_turns": 4.0, "usd": 0.0}, "golden": {"grading_acc": 0.5, "prereq_survival": 0.5, "objective_quality": 1.0, "quiz_validity": 1.0}, "learning_gain": {"avg_mastery_delta": 0.518}, "offline_suite": {"passed": 333, "total": 333}, "notes": "reteach_recovery=1.0 baseline-offline"}
