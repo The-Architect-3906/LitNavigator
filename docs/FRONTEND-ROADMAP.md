@@ -9,19 +9,17 @@ or **deferred** (post-MVP).
 
 ---
 
-## 1. Stream the cold-start digest to the screen — *P0*
+## 1. Live open-world cold start in the UI — ✅ shipped
 
-When a brand-new topic is digested live, the page currently shows nothing until the whole map is
-built. For the demo it needs to narrate the build:
+When a live provider is configured, a typed goal now builds the learner's own graph from real
+sources, streaming coarse stage banners (*Finding sources… → reading the source → building your
+concept map…*) over the existing SSE channel before teaching. See
+[FRONTEND-COMPLETE](FRONTEND-COMPLETE.md) → *Two modes*.
 
-- **Stage banners** — "Finding sources… → Extracting concepts… → Building the map… → Verifying
-  links…" — shown as they happen.
-- **Map grows live** — render the concept-map SVG incrementally as concepts appear, before the
-  prerequisite links are verified.
-
-The page already consumes a Server-Sent-Events stream over `POST /tutor/{sid}/events` for the
-teaching loop; this item extends that same stream to carry the digest-pipeline progress events
-(which the backend's live cold-start work must emit — see [BACKEND-ROADMAP](BACKEND-ROADMAP.md)).
+**Still polish-worthy (P2):** the map appears in one step once digest finishes — rendering it
+*incrementally* (concepts as they're extracted, before edges are verified) would make the wait feel
+shorter. Finer-grained stages depend on the digest pipeline emitting sub-step progress
+(see [BACKEND-ROADMAP](BACKEND-ROADMAP.md)).
 
 ## 2. Save and resume sessions — *P1*
 
@@ -37,15 +35,15 @@ by a per-session SQLite file under `data/runtime/`. Restarting the server loses 
 - **Minimal auth** — at least a single passphrase gate before hosting the demo publicly. Real
   multi-user accounts are post-MVP.
 
-## 3. Download the take-away artifact — *P1*
+## 3. Download the take-away artifact — ✅ shipped (Markdown)
 
-Artifacts are written to `artifacts/<session_id>/<format>.md` but the UI doesn't yet offer them for
-download.
+The session now generates a take-away artifact at the end and offers it for download: a Download card
+in the chat pane + a persistent link on the completed page, backed by `GET /tutor/{sid}/artifact`
+(`make_artifact` runs once at session end).
 
-- A **Download** button on the artifact card in the chat pane.
-- An endpoint that streams the artifact file.
-- **Slides → PowerPoint:** convert the slide artifact to an editable `.pptx` on demand via `marp-cli`
-  (a Node.js tool) — the backend emits Markdown, the endpoint renders it when requested.
+**Still remaining (P1):** **Slides → PowerPoint** — convert the slide artifact to an editable `.pptx`
+on demand via `marp-cli` (a Node.js tool); the backend emits Markdown, the endpoint would render it on
+request. Deferred because it adds a Node dependency.
 
 ## 4. Teacher-override controls — *P1*
 
@@ -91,11 +89,13 @@ compose file. Default the hosted demo to the offline fixture ($0, no key needed)
 
 | Item | Priority |
 |--|--|
-| Stream cold-start digest progress | P0 |
+| Live open-world cold start in the UI | ✅ shipped |
+| Artifact download (Markdown) | ✅ shipped |
 | Save & resume sessions (+ minimal auth) | P1 |
-| Artifact download (Markdown + slides→PPTX) | P1 |
+| Artifact slides → PPTX (marp) | P1 |
 | Teacher-override controls | P1 |
 | Live quality scores (per-turn + end-of-session) | P1 |
 | Richer streaming (token-by-token, Bloom indicator) | P1 |
+| Incremental concept-map render during build | P2 |
 | Mobile polish | P2 |
 | Deployment (Docker + env config) | P2 |

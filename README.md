@@ -4,7 +4,7 @@
 
 ### Give it any learning goal. It finds the most suitable real sources, digests them into a teachable concept map, and tutors *you* through it — adaptively, grounded in the literature, under strict cost control.
 
-![Status](https://img.shields.io/badge/open--world-OW--0..6%20complete%20·%20unified%20frontend%20·%20e2e%20mean%204.33%2F5-brightgreen)
+![Status](https://img.shields.io/badge/open--world-OW--0..7%20complete%20·%20live%20cold--start%20UI%20·%20e2e%20mean%204.33%2F5-brightgreen)
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
 ![Agent](https://img.shields.io/badge/agent-LangGraph%20%2B%20ReAct-black)
 ![Live](https://img.shields.io/badge/validation-live--first-orange)
@@ -211,7 +211,7 @@ live mastery scores, concept-map SVG, cost meter, and a recommend-next card at s
 | **OW-4** · TEACH/ASSESS (goal elicitation, Bloom quiz, distractors, IRT, FSRS, retention probe, escalation, prereq-detour, mid-session goal-pivot) | ✅ done · live | `verify_teach_assess_live` |
 | **OW-5** · make-artifact (selector → map/notes/slides/worked-example/combination; retrieval prompt + citations) + OW-5.1 persistence | ✅ done · live | `verify_artifact_live` |
 | **OW-6** · recommend-next + unified glass-box+user frontend + quality hardening (multilingual output, source sub-chunking, discovery precision, quiz variety, feedback depth) | ✅ done · live | `verify_openworld_e2e_live` |
-| **OW-7** · live cold-start (streamed real-topic digest→teach) | ⏳ pending (digest path already live) | — |
+| **OW-7** · live cold-start in the UI (streamed real-topic discover→digest→teach) + downloadable artifact | ✅ done · live | `tests/test_ui_openworld.py` + live smoke |
 
 Full backend detail, live gate results, and test counts: [`docs/BACKEND-COMPLETE.md`](docs/BACKEND-COMPLETE.md).
 Frontend detail: [`docs/FRONTEND-COMPLETE.md`](docs/FRONTEND-COMPLETE.md).
@@ -237,8 +237,8 @@ End-to-end quality results: [`docs/E2E-REPORT.md`](docs/E2E-REPORT.md).
 | [`docs/RESEARCH-AND-SPEC.md`](docs/RESEARCH-AND-SPEC.md) | Research questions, verified literature/methods table, and full architecture spec (problem, principles, data model, cost spine, all 5 skills, milestones) |
 | [`docs/BACKEND-COMPLETE.md`](docs/BACKEND-COMPLETE.md) | Every shipped backend feature with its skill/code + research method; concrete run walkthrough; SKILL.md files; test counts + live gate results |
 | [`docs/BACKEND-ROADMAP.md`](docs/BACKEND-ROADMAP.md) | Remaining backend work: live cold-start (streamed), multi-source digest, sharper discovery, deeper quiz/feedback, robust non-English, new source adapters |
-| [`docs/FRONTEND-COMPLETE.md`](docs/FRONTEND-COMPLETE.md) | Unified glass-box+user web UI: per-step chips, mastery scores, concept-map SVG, cost meter, recommend-next card, SSE streaming, offline-demo mode |
-| [`docs/FRONTEND-ROADMAP.md`](docs/FRONTEND-ROADMAP.md) | Remaining frontend: session persistence/auth, streamed digest progress, teacher overrides, artifact download, quality scores live, mobile polish, deployment |
+| [`docs/FRONTEND-COMPLETE.md`](docs/FRONTEND-COMPLETE.md) | Unified glass-box+user web UI: two modes (offline curated demo / live open-world cold start), per-step chips, mastery scores, concept-map SVG, ledger cost meter, recommend-next card, downloadable artifact, SSE streaming |
+| [`docs/FRONTEND-ROADMAP.md`](docs/FRONTEND-ROADMAP.md) | Remaining frontend: session persistence/auth, slides→PPTX export, teacher overrides, live quality scores, token-by-token streaming, incremental map render, mobile polish, deployment |
 | [`docs/E2E-REPORT.md`](docs/E2E-REPORT.md) | Full 10-scenario live E2E report — actual-quality scores (mean 4.33/5), per-scenario breakdown, before/after quality deltas |
 | `docs/archive/` | Superseded: per-milestone plans, audits, research brief, literature review, architecture spec, storyboard, status; `closed-world/` = legacy M0–M4 docs |
 
