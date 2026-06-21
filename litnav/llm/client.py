@@ -1,14 +1,21 @@
-"""LLM + embedding client.
+"""LLM + embedding client — provider-agnostic via LiteLLM.
 
-Provider is selected by LITNAV_LLM_PROVIDER:
-  - none   (default): no calls; complete_json returns the caller's fallback, embed_texts -> None.
-  - any OpenAI-compatible provider: openai (default endpoint), or one with a built-in base_url preset
-    (qwen, deepseek, groq, openrouter, together, ollama), or ANY other endpoint via LITNAV_LLM_BASE_URL
-    (Azure / vLLM / a local server / a proxy). Not limited to OpenAI and Qwen.
+LitNavigator works with ANY provider LiteLLM supports — OpenAI, Anthropic, Google Gemini, DeepSeek,
+Groq, Mistral, Cohere, Together, OpenRouter, AWS Bedrock, Azure, Ollama / vLLM / any self-hosted
+OpenAI-compatible server, etc. — not just OpenAI/Qwen. One code path; LiteLLM handles each provider's
+auth, request/response shape, and JSON mode.
 
-Models come from the registry tiers, which read LITNAV_LLM_MODEL / LITNAV_LLM_MODEL_FRONTIER /
-LITNAV_EMBED_MODEL (see llm/registry.py). Key comes from LITNAV_LLM_API_KEY (or OPENAI_API_KEY) —
-never hard-coded. Every caller passes a deterministic fallback, so the system always runs offline.
+Selection (see also llm/registry.py, which resolves the per-tier model strings):
+  - LITNAV_LLM_PROVIDER : "none" (default) = fully offline, no calls; otherwise the live provider
+                          (also used as the model prefix when the model name has no "provider/" part).
+  - LITNAV_LLM_MODEL / LITNAV_LLM_MODEL_FRONTIER / LITNAV_EMBED_MODEL : model ids. Either a bare name
+    (combined with the provider, e.g. provider=anthropic + model=claude-3-5-sonnet-latest →
+    "anthropic/claude-3-5-sonnet-latest") or a full LiteLLM id with a "provider/" prefix.
+  - LITNAV_LLM_API_KEY (or OPENAI_API_KEY) : the key, passed to LiteLLM. Never hard-coded.
+  - LITNAV_LLM_BASE_URL : optional endpoint override (Azure / vLLM / a proxy / a self-hosted or any
+    OpenAI-compatible server such as DashScope for Qwen).
+
+Every caller passes a deterministic fallback, so the system always runs offline ($0, no key).
 """
 from __future__ import annotations
 
@@ -63,27 +70,73 @@ def _embed_model() -> str:
     return registry.resolve_tier("embed")["model"]
 
 
-# Built-in base_url presets for common OpenAI-compatible providers. ANY other provider works by
-# setting LITNAV_LLM_BASE_URL explicitly. "openai" uses the SDK default endpoint (no base_url).
-_PROVIDER_BASE_URLS: dict[str, str] = {
-    "qwen":       "https://dashscope.aliyuncs.com/compatible-mode/v1",
-    "deepseek":   "https://api.deepseek.com/v1",
-    "groq":       "https://api.groq.com/openai/v1",
-    "openrouter": "https://openrouter.ai/api/v1",
-    "together":   "https://api.together.xyz/v1",
-    "ollama":     "http://localhost:11434/v1",
-}
+def _litellm_model(name: str) -> str:
+    """Map a tier model name to a LiteLLM model id. A name that already carries a 'provider/' prefix
+    is used as-is; a bare name is prefixed with the configured provider (OpenAI needs no prefix)."""
+    if "/" in name:
+        return name
+    prov = _provider()
+    if prov in ("", "none", "openai"):
+        return name
+    return f"{prov}/{name}"
 
 
-def _base_url() -> str | None:
-    # Explicit override always wins; else a built-in preset for the named provider; else default.
-    return os.getenv("LITNAV_LLM_BASE_URL") or _PROVIDER_BASE_URLS.get(_provider())
+def _call_kwargs() -> dict:
+    kw: dict = {}
+    key = _api_key()
+    if key:
+        kw["api_key"] = key
+    base = os.getenv("LITNAV_LLM_BASE_URL")
+    if base:
+        kw["api_base"] = base
+    return kw
 
 
-def _client():
-    from openai import OpenAI
-    base = _base_url()
-    return OpenAI(api_key=_api_key(), base_url=base) if base else OpenAI(api_key=_api_key())
+_lib_cache = None
+
+
+def _lib():
+    """Import LiteLLM lazily and set safe global flags once (kept out of import time)."""
+    global _lib_cache
+    if _lib_cache is None:
+        import litellm
+        litellm.drop_params = True       # ignore params a provider doesn't support (don't error)
+        litellm.telemetry = False
+        try:
+            litellm.suppress_debug_info = True
+        except Exception:
+            pass
+        _lib_cache = litellm
+    return _lib_cache
+
+
+def _completion(**kwargs):
+    """Seam over litellm.completion (monkeypatched in tests)."""
+    return _lib().completion(**kwargs)
+
+
+def _embedding(**kwargs):
+    """Seam over litellm.embedding (monkeypatched in tests)."""
+    return _lib().embedding(**kwargs)
+
+
+def _usage_tokens(resp) -> int:
+    try:
+        u = getattr(resp, "usage", None)
+        return int((u.total_tokens if u and u.total_tokens else 0) or 0)
+    except Exception:
+        return 0
+
+
+def _guard(actual: str) -> None:
+    """Refuse a model that is neither a configured tier model nor the default — catches typo'd
+    in-code model names. Operators select their own model via env (their provider + key + cost)."""
+    if actual not in registry.enabled_model_names():
+        raise ValueError(
+            f"model {actual!r} is not a configured tier model (set LITNAV_LLM_MODEL / "
+            f"LITNAV_LLM_MODEL_FRONTIER; provider={_provider()!r}). "
+            f"Configured: {sorted(registry.enabled_model_names())}."
+        )
 
 
 def complete_json(prompt: str, *, schema_hint: str = "", fallback: dict, model: str | None = None, temperature: float = 0.0) -> dict:
@@ -94,26 +147,19 @@ def complete_json(prompt: str, *, schema_hint: str = "", fallback: dict, model: 
     if _provider() == "none":
         return fallback
     actual = model or _chat_model()
-    if actual not in registry.enabled_model_names():
-        raise ValueError(
-            f"model {actual!r} is not a configured tier model (set LITNAV_LLM_MODEL / "
-            f"LITNAV_LLM_MODEL_FRONTIER; provider={_provider()!r}). "
-            f"Configured: {sorted(registry.enabled_model_names())}."
-        )
+    _guard(actual)
     _tls.model = actual
     try:
         import json
-        response = _client().chat.completions.create(
-            model=actual,
+        response = _completion(
+            model=_litellm_model(actual),
             messages=[{"role": "user", "content": prompt}],
             response_format={"type": "json_object"},
             temperature=temperature,
             timeout=30,
+            **_call_kwargs(),
         )
-        try:
-            _tls.cost = int(response.usage.total_tokens or 0)
-        except Exception:
-            pass
+        _tls.cost = _usage_tokens(response)
         result = json.loads(response.choices[0].message.content)
         _tls.was_live = _tls.cost > 0
         return result
@@ -131,25 +177,18 @@ def complete_text(prompt: str, *, fallback: str, max_tokens: int = 400, model: s
     if _provider() == "none":
         return fallback
     actual = model or _chat_model()
-    if actual not in registry.enabled_model_names():
-        raise ValueError(
-            f"model {actual!r} is not a configured tier model (set LITNAV_LLM_MODEL / "
-            f"LITNAV_LLM_MODEL_FRONTIER; provider={_provider()!r}). "
-            f"Configured: {sorted(registry.enabled_model_names())}."
-        )
+    _guard(actual)
     _tls.model = actual
     try:
-        response = _client().chat.completions.create(
-            model=actual,
+        response = _completion(
+            model=_litellm_model(actual),
             messages=[{"role": "user", "content": prompt}],
             max_tokens=max_tokens,
             temperature=temperature,
             timeout=30,
+            **_call_kwargs(),
         )
-        try:
-            _tls.cost = int(response.usage.total_tokens or 0)
-        except Exception:
-            pass
+        _tls.cost = _usage_tokens(response)
         _tls.was_live = _tls.cost > 0
         return response.choices[0].message.content or fallback
     except Exception as e:
@@ -159,7 +198,10 @@ def complete_text(prompt: str, *, fallback: str, max_tokens: int = 400, model: s
 
 
 def embed_texts(texts: list[str]) -> list[list[float]] | None:
-    """Return one embedding vector per text, or None when offline (provider=none) / on error."""
+    """Return one embedding vector per text, or None when offline (provider=none) / on error.
+    Embeddings require an embedding-capable provider (OpenAI, Gemini, Cohere, Voyage, …). Providers
+    without an embeddings API (e.g. Anthropic) return None here, and callers degrade gracefully
+    (BM25-only ranking, no semantic cache)."""
     _tls.cost = 0
     _tls.was_live = False
     _tls.model = None
@@ -167,13 +209,11 @@ def embed_texts(texts: list[str]) -> list[list[float]] | None:
         return None
     try:
         _tls.model = _embed_model()
-        response = _client().embeddings.create(model=_embed_model(), input=list(texts))
-        try:
-            _tls.cost = int(response.usage.total_tokens or 0)
-        except Exception:
-            pass
+        response = _embedding(model=_litellm_model(_embed_model()), input=list(texts), **_call_kwargs())
+        _tls.cost = _usage_tokens(response)
         _tls.was_live = _tls.cost > 0
-        return [d.embedding for d in response.data]
+        data = response.data
+        return [d["embedding"] if isinstance(d, dict) else d.embedding for d in data]
     except Exception as e:
         if _strict():
             raise LivenessError(f"embed_texts failed in strict mode: {e}") from e

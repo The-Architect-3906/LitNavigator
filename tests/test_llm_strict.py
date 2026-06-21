@@ -8,24 +8,21 @@ class _Resp:
         self.usage = type("U", (), {"total_tokens": tokens})()
 
 
-class _FakeChat:
-    def __init__(self, resp=None, exc=None):
-        self._resp, self._exc = resp, exc
-    def create(self, **kw):
-        if self._exc:
-            raise self._exc
-        return self._resp
-
-
-class _FakeClient:
-    def __init__(self, resp=None, exc=None):
-        self.chat = type("C", (), {"completions": _FakeChat(resp, exc)})()
+def _fake_completion(resp=None, exc=None, capture=None):
+    """Build a stand-in for c._completion (the LiteLLM seam)."""
+    def _f(**kw):
+        if capture is not None:
+            capture.update(kw)
+        if exc:
+            raise exc
+        return resp
+    return _f
 
 
 def _set(monkeypatch, *, provider="openai", strict=False, resp=None, exc=None):
     monkeypatch.setenv("LITNAV_LLM_PROVIDER", provider)
     monkeypatch.setenv("LITNAV_LLM_STRICT", "1" if strict else "")
-    monkeypatch.setattr(c, "_client", lambda: _FakeClient(resp=resp, exc=exc))
+    monkeypatch.setattr(c, "_completion", _fake_completion(resp=resp, exc=exc))
 
 
 def test_success_sets_was_live_and_tokens(monkeypatch):
@@ -66,7 +63,7 @@ def test_router_propagates_liveness_error_and_records_no_cost(monkeypatch):
     from litnav.storage import cost_repo
     monkeypatch.setenv("LITNAV_LLM_PROVIDER", "openai")
     monkeypatch.setenv("LITNAV_LLM_STRICT", "1")
-    monkeypatch.setattr(c, "_client", lambda: _FakeClient(exc=RuntimeError("boom")))
+    monkeypatch.setattr(c, "_completion", _fake_completion(exc=RuntimeError("boom")))
     conn = sqlite3.connect(":memory:"); init_db(conn)
     with pytest.raises(c.LivenessError):
         router.complete_text("p", tier="cheap", stage="x", session_id="s", conn=conn, fallback="fb")
@@ -82,7 +79,7 @@ def test_router_routes_tier_model_to_client_and_ledger(monkeypatch):
     monkeypatch.setenv("LITNAV_LLM_MODEL", "my-cheap-model")
     monkeypatch.setenv("LITNAV_LLM_MODEL_FRONTIER", "my-frontier-model")
     monkeypatch.setenv("LITNAV_LLM_STRICT", "")
-    monkeypatch.setattr(c, "_client", lambda: _FakeClient(resp=_Resp("hi", 10)))
+    monkeypatch.setattr(c, "_completion", _fake_completion(resp=_Resp("hi", 10)))
     conn = sqlite3.connect(":memory:"); init_db(conn)
     router.complete_text("p", tier="frontier", stage="x", session_id="s", conn=conn, fallback="fb")
     router.complete_text("p", tier="cheap", stage="x", session_id="s2", conn=conn, fallback="fb")
@@ -95,34 +92,21 @@ def test_router_routes_tier_model_to_client_and_ledger(monkeypatch):
 
 def test_temperature_zero_passed_to_chat_api(monkeypatch):
     captured = {}
-    class _CapChat:
-        def create(self, **kw):
-            captured.update(kw)
-            return _Resp('{"ok": true}', 5)
-    class _CapClient:
-        def __init__(self):
-            self.chat = type("C", (), {"completions": _CapChat()})()
     monkeypatch.setenv("LITNAV_LLM_PROVIDER", "openai")
     monkeypatch.setenv("LITNAV_LLM_STRICT", "")
-    monkeypatch.setattr(c, "_client", lambda: _CapClient())
+    monkeypatch.setattr(c, "_completion", _fake_completion(resp=_Resp('{"ok": true}', 5), capture=captured))
     c.complete_json("p", fallback={})
     assert captured.get("temperature") == 0.0
     captured.clear()
+    monkeypatch.setattr(c, "_completion", _fake_completion(resp=_Resp("hi", 5), capture=captured))
     c.complete_text("p", fallback="x")
     assert captured.get("temperature") == 0.0
 
 
 def test_temperature_override_respected(monkeypatch):
     captured = {}
-    class _CapChat:
-        def create(self, **kw):
-            captured.update(kw)
-            return _Resp("hi", 5)
-    class _CapClient:
-        def __init__(self):
-            self.chat = type("C", (), {"completions": _CapChat()})()
     monkeypatch.setenv("LITNAV_LLM_PROVIDER", "openai")
-    monkeypatch.setattr(c, "_client", lambda: _CapClient())
+    monkeypatch.setattr(c, "_completion", _fake_completion(resp=_Resp("hi", 5), capture=captured))
     c.complete_text("p", fallback="x", temperature=0.7)
     assert captured.get("temperature") == 0.7
 
@@ -142,7 +126,7 @@ def test_unregistered_model_refused_before_call(monkeypatch):
 def test_registered_model_allowed(monkeypatch):
     # provider=openai default model gpt-4o-mini IS registered -> no refusal
     monkeypatch.setenv("LITNAV_LLM_PROVIDER", "openai")
-    monkeypatch.setattr(c, "_client", lambda: _FakeClient(resp=_Resp("hi", 5)))
+    monkeypatch.setattr(c, "_completion", _fake_completion(resp=_Resp("hi", 5)))
     assert c.complete_text("p", fallback="fb") == "hi"
 
 
