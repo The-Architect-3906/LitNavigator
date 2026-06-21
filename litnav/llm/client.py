@@ -2,12 +2,13 @@
 
 Provider is selected by LITNAV_LLM_PROVIDER:
   - none   (default): no calls; complete_json returns the caller's fallback, embed_texts -> None.
-  - openai           : OpenAI API (chat = LITNAV_LLM_MODEL, default gpt-4o-mini;
-                       embeddings = LITNAV_EMBED_MODEL, default text-embedding-3-small).
-  - qwen             : DashScope OpenAI-compatible endpoint (model qwen-plus).
+  - any OpenAI-compatible provider: openai (default endpoint), or one with a built-in base_url preset
+    (qwen, deepseek, groq, openrouter, together, ollama), or ANY other endpoint via LITNAV_LLM_BASE_URL
+    (Azure / vLLM / a local server / a proxy). Not limited to OpenAI and Qwen.
 
-Key comes from LITNAV_LLM_API_KEY (or OPENAI_API_KEY). Never hard-coded.
-Every caller passes a deterministic fallback, so the system always runs offline.
+Models come from the registry tiers, which read LITNAV_LLM_MODEL / LITNAV_LLM_MODEL_FRONTIER /
+LITNAV_EMBED_MODEL (see llm/registry.py). Key comes from LITNAV_LLM_API_KEY (or OPENAI_API_KEY) —
+never hard-coded. Every caller passes a deterministic fallback, so the system always runs offline.
 """
 from __future__ import annotations
 
@@ -54,19 +55,34 @@ def _api_key() -> str:
 
 
 def _chat_model() -> str:
-    return os.getenv("LITNAV_LLM_MODEL", "gpt-4o-mini")
+    # The default chat model = the cheap tier (registry resolves env overrides + provider defaults).
+    return registry.resolve_tier("cheap")["model"]
 
 
 def _embed_model() -> str:
-    return os.getenv("LITNAV_EMBED_MODEL", "text-embedding-3-small")
+    return registry.resolve_tier("embed")["model"]
+
+
+# Built-in base_url presets for common OpenAI-compatible providers. ANY other provider works by
+# setting LITNAV_LLM_BASE_URL explicitly. "openai" uses the SDK default endpoint (no base_url).
+_PROVIDER_BASE_URLS: dict[str, str] = {
+    "qwen":       "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "deepseek":   "https://api.deepseek.com/v1",
+    "groq":       "https://api.groq.com/openai/v1",
+    "openrouter": "https://openrouter.ai/api/v1",
+    "together":   "https://api.together.xyz/v1",
+    "ollama":     "http://localhost:11434/v1",
+}
+
+
+def _base_url() -> str | None:
+    # Explicit override always wins; else a built-in preset for the named provider; else default.
+    return os.getenv("LITNAV_LLM_BASE_URL") or _PROVIDER_BASE_URLS.get(_provider())
 
 
 def _client():
     from openai import OpenAI
-    if _provider() == "qwen":
-        return OpenAI(api_key=_api_key(),
-                      base_url="https://dashscope.aliyuncs.com/compatible-mode/v1")
-    base = os.getenv("LITNAV_LLM_BASE_URL")  # optional (Azure/proxy/self-hosted)
+    base = _base_url()
     return OpenAI(api_key=_api_key(), base_url=base) if base else OpenAI(api_key=_api_key())
 
 
@@ -77,11 +93,12 @@ def complete_json(prompt: str, *, schema_hint: str = "", fallback: dict, model: 
     _tls.model = None
     if _provider() == "none":
         return fallback
-    actual = "qwen-plus" if _provider() == "qwen" else (model or _chat_model())
+    actual = model or _chat_model()
     if actual not in registry.enabled_model_names():
         raise ValueError(
-            f"model {actual!r} is not in MODEL_REGISTRY (enable it there first; "
-            f"provider={_provider()!r}). Enabled: {sorted(registry.enabled_model_names())}."
+            f"model {actual!r} is not a configured tier model (set LITNAV_LLM_MODEL / "
+            f"LITNAV_LLM_MODEL_FRONTIER; provider={_provider()!r}). "
+            f"Configured: {sorted(registry.enabled_model_names())}."
         )
     _tls.model = actual
     try:
@@ -113,11 +130,12 @@ def complete_text(prompt: str, *, fallback: str, max_tokens: int = 400, model: s
     _tls.model = None
     if _provider() == "none":
         return fallback
-    actual = "qwen-plus" if _provider() == "qwen" else (model or _chat_model())
+    actual = model or _chat_model()
     if actual not in registry.enabled_model_names():
         raise ValueError(
-            f"model {actual!r} is not in MODEL_REGISTRY (enable it there first; "
-            f"provider={_provider()!r}). Enabled: {sorted(registry.enabled_model_names())}."
+            f"model {actual!r} is not a configured tier model (set LITNAV_LLM_MODEL / "
+            f"LITNAV_LLM_MODEL_FRONTIER; provider={_provider()!r}). "
+            f"Configured: {sorted(registry.enabled_model_names())}."
         )
     _tls.model = actual
     try:

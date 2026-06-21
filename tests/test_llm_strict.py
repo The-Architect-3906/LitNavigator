@@ -78,7 +78,9 @@ def test_router_routes_tier_model_to_client_and_ledger(monkeypatch):
     from litnav.llm import router
     from litnav.storage.schema import init_db
     monkeypatch.setenv("LITNAV_LLM_PROVIDER", "openai")
-    monkeypatch.setenv("LITNAV_LLM_MODEL", "should-be-ignored-by-tier-routing")
+    # Env-configured tier models flow through router -> client -> ledger (provider-agnostic).
+    monkeypatch.setenv("LITNAV_LLM_MODEL", "my-cheap-model")
+    monkeypatch.setenv("LITNAV_LLM_MODEL_FRONTIER", "my-frontier-model")
     monkeypatch.setenv("LITNAV_LLM_STRICT", "")
     monkeypatch.setattr(c, "_client", lambda: _FakeClient(resp=_Resp("hi", 10)))
     conn = sqlite3.connect(":memory:"); init_db(conn)
@@ -86,9 +88,9 @@ def test_router_routes_tier_model_to_client_and_ledger(monkeypatch):
     router.complete_text("p", tier="cheap", stage="x", session_id="s2", conn=conn, fallback="fb")
     mf = conn.execute("SELECT model FROM cost_ledger WHERE session_id='s'").fetchone()[0]
     mc = conn.execute("SELECT model FROM cost_ledger WHERE session_id='s2'").fetchone()[0]
-    assert mf == "gpt-4o"        # frontier tier actually routes gpt-4o
-    assert mc == "gpt-4o-mini"   # cheap tier routes gpt-4o-mini; env override is ignored for routed calls
-    assert c.last_model() == "gpt-4o-mini"
+    assert mf == "my-frontier-model"   # frontier tier routes the env-configured frontier model
+    assert mc == "my-cheap-model"      # cheap tier routes the env-configured model
+    assert c.last_model() == "my-cheap-model"
 
 
 def test_temperature_zero_passed_to_chat_api(monkeypatch):
@@ -126,15 +128,15 @@ def test_temperature_override_respected(monkeypatch):
 
 
 def test_unregistered_model_refused_before_call(monkeypatch):
-    # provider=qwen -> actual model "qwen-plus" is NOT in MODEL_REGISTRY -> must be REFUSED (ValueError),
-    # not silently fall back. The refusal must happen before any network/_client build.
-    monkeypatch.setenv("LITNAV_LLM_PROVIDER", "qwen")
-    monkeypatch.setenv("LITNAV_LLM_STRICT", "")        # even non-strict must refuse (it's a model-enablement guard)
+    # A per-call model that is neither a configured tier model nor the default must be REFUSED
+    # (ValueError) — catches typo'd in-code model names. Refusal happens before any _client build.
+    monkeypatch.setenv("LITNAV_LLM_PROVIDER", "openai")
+    monkeypatch.setenv("LITNAV_LLM_STRICT", "")        # even non-strict must refuse (model-config guard)
     import pytest as _pytest
     with _pytest.raises(ValueError):
-        c.complete_text("p", fallback="fb")
+        c.complete_text("p", fallback="fb", model="totally-made-up-model")
     with _pytest.raises(ValueError):
-        c.complete_json("p", fallback={})
+        c.complete_json("p", fallback={}, model="totally-made-up-model")
 
 
 def test_registered_model_allowed(monkeypatch):
