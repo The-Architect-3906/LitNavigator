@@ -1,0 +1,14 @@
+# Improvement Backlog (ranked)
+
+Source: `research-report.md`. Each item maps to a scorecard `metric`. high-risk → user checkpoint.
+
+| ID | Stage | Score | Effort | Risk | Metric | Demo | Hypothesis |
+|---|---|:--:|:--:|:--:|---|:--:|---|
+| R1 | learner-model | 9 | S | low | objective_quality | ✓ | Rename the keypoint mastery mechanism to 'BKT-lite heuristic' CONSISTENTLY across methods.md/storyboard.md/UI so no per-step table asserts plain 'BKT (Corbett & Anderson 1995)', matching the already-honest spec §11/§12. (Stronger optional follow-on: pyBKT fit on the retention_log the design already collects to make the claim literally true.) |
+| R2 | assess | 8.5 | S | low | quiz_validity | ✓ | Add a true rank step to make_distractors: after overgenerating, prompt the cheap model to score each candidate by plausibility to a student holding a common misconception, keep top-n (not first-n). Closes a literal docstring-vs-code gap. |
+| R3 | assess | 8.5 | S | low | reteach_recovery | ✓ | Deliver the spaced retrieval probes already enqueued: at session start / concept transitions, pop due review_queue items as low-stakes retrieval quizzes BEFORE new teaching, logging predicted-vs-actual to retention_log. Highest-ROI learning-science win since the data layer already exists. |
+| R4 | digest | 8 | S | low | objective_quality |  | Reframe the edge-signal citation from 'RefD (Liang 2015)' to 'RefD-inspired corpus reference-distance + LLM judge-and-explain (cf. ACE, JEDM 2024)', add the ACM 2025 prereq survey as the framing anchor, and drop/qualify the 'GraphRAG-style' tag. Documentation-only; closes the main attribution gap and strengthens novelty. |
+| R5 | assess | 7.5 | M | low | quiz_validity | ✓ | Upgrade flaw_gate from structural-only to an LLM-judge pass against an explicit item-writing-flaw checklist (cueing, implausible/heterogeneous distractors, all-of-the-above, negative stems, grammatical clues), making 'SAQUET-style' honest. |
+| R6 | grade | 7.5 | M | med | grading_acc | ✓ | Drive mastery (kp_bump) from the existing 0-5 partial-credit score instead of the binary correct flag, and add a component-extraction step (list key-idea components present/missing) before scoring. LitNav already emits score_0_5 and has answer_key + evidence in-prompt — the signal is being thrown away. |
+| R7 | learner-model | 7.5 | S | low | avg_mastery_delta | ✓ | Add a live mastery-coherence gate asserting mastery is monotone-on-correct and never makes wrong-direction updates across a session — turning the project's own observed flat/incoherent learner bars into a cheap deterministic invariant. |
+| R8 | discover | 7 | S | low | objective_quality |  | Fix venue/framing for submission: RouteLLM = ICLR 2025 (not 'ACL 2025'); ReAct = ICLR 2023 (2022 preprint); soften 'specialised KT always beats LLMs' to 'comparable-or-better accuracy at 600-12000x lower cost/latency'; add the SPECTER->text-embedding-3-small note to the storyboard table. |

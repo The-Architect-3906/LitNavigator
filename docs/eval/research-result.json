@@ -1,0 +1,274 @@
+{
+  "report": "(report compiler unavailable \u2014 see backlog + foundations below)",
+  "backlog": [
+    {
+      "id": "R1",
+      "stage": "learner-model",
+      "hypothesis": "Rename the keypoint mastery mechanism to 'BKT-lite heuristic' CONSISTENTLY across methods.md/storyboard.md/UI so no per-step table asserts plain 'BKT (Corbett & Anderson 1995)', matching the already-honest spec \u00a711/\u00a712. (Stronger optional follow-on: pyBKT fit on the retention_log the design already collects to make the claim literally true.)",
+      "metric": "objective_quality",
+      "effort": "S",
+      "risk": "low",
+      "demo_visible": true,
+      "citations": [
+        "Corbett & Anderson 1995, User Model. User-Adapt. Interact. 4:253-278",
+        "Specialised KT > LLMs, arXiv:2603.02830"
+      ],
+      "score": 9,
+      "adversarial": null
+    },
+    {
+      "id": "R2",
+      "stage": "assess",
+      "hypothesis": "Add a true rank step to make_distractors: after overgenerating, prompt the cheap model to score each candidate by plausibility to a student holding a common misconception, keep top-n (not first-n). Closes a literal docstring-vs-code gap.",
+      "metric": "quiz_validity",
+      "effort": "S",
+      "risk": "low",
+      "demo_visible": true,
+      "citations": [
+        "Scarlatos et al., NAACL 2024 BEA, Overgenerate-and-rank"
+      ],
+      "score": 8.5,
+      "adversarial": null
+    },
+    {
+      "id": "R3",
+      "stage": "assess",
+      "hypothesis": "Deliver the spaced retrieval probes already enqueued: at session start / concept transitions, pop due review_queue items as low-stakes retrieval quizzes BEFORE new teaching, logging predicted-vs-actual to retention_log. Highest-ROI learning-science win since the data layer already exists.",
+      "metric": "reteach_recovery",
+      "effort": "S",
+      "risk": "low",
+      "demo_visible": true,
+      "citations": [
+        "Roediger & Karpicke 2006, Psychological Science 17(3)",
+        "Yang et al. 2021, Psychological Bulletin 147(4)"
+      ],
+      "score": 8.5,
+      "adversarial": null
+    },
+    {
+      "id": "R4",
+      "stage": "digest",
+      "hypothesis": "Reframe the edge-signal citation from 'RefD (Liang 2015)' to 'RefD-inspired corpus reference-distance + LLM judge-and-explain (cf. ACE, JEDM 2024)', add the ACM 2025 prereq survey as the framing anchor, and drop/qualify the 'GraphRAG-style' tag. Documentation-only; closes the main attribution gap and strengthens novelty.",
+      "metric": "objective_quality",
+      "effort": "S",
+      "risk": "low",
+      "demo_visible": false,
+      "citations": [
+        "Liang et al. EMNLP 2015",
+        "Aytekin & Sayg\u0131n, ACE, JEDM 16(2) 2024",
+        "Zhang et al., ACM Comput. Surv. 57(11) 2025",
+        "Edge et al. 2024, arXiv:2404.16130"
+      ],
+      "score": 8,
+      "adversarial": null
+    },
+    {
+      "id": "R5",
+      "stage": "assess",
+      "hypothesis": "Upgrade flaw_gate from structural-only to an LLM-judge pass against an explicit item-writing-flaw checklist (cueing, implausible/heterogeneous distractors, all-of-the-above, negative stems, grammatical clues), making 'SAQUET-style' honest.",
+      "metric": "quiz_validity",
+      "effort": "M",
+      "risk": "low",
+      "demo_visible": true,
+      "citations": [
+        "SAQUET, AIED 2024, arXiv:2405.20529",
+        "Distractor Generation survey, arXiv:2402.01512"
+      ],
+      "score": 7.5,
+      "adversarial": null
+    },
+    {
+      "id": "R6",
+      "stage": "grade",
+      "hypothesis": "Drive mastery (kp_bump) from the existing 0-5 partial-credit score instead of the binary correct flag, and add a component-extraction step (list key-idea components present/missing) before scoring. LitNav already emits score_0_5 and has answer_key + evidence in-prompt \u2014 the signal is being thrown away.",
+      "metric": "grading_acc",
+      "effort": "M",
+      "risk": "med",
+      "demo_visible": true,
+      "citations": [
+        "AutoSCORE, arXiv:2509.21910 (2025)",
+        "Grading Scale Impact on LLM-as-a-Judge, arXiv:2601.03444 (2026)",
+        "Rubric-Conditioned LLM Grading, arXiv:2601.08843 (2026)"
+      ],
+      "score": 7.5,
+      "adversarial": null
+    },
+    {
+      "id": "R7",
+      "stage": "learner-model",
+      "hypothesis": "Add a live mastery-coherence gate asserting mastery is monotone-on-correct and never makes wrong-direction updates across a session \u2014 turning the project's own observed flat/incoherent learner bars into a cheap deterministic invariant.",
+      "metric": "avg_mastery_delta",
+      "effort": "S",
+      "risk": "low",
+      "demo_visible": true,
+      "citations": [
+        "Hooshyar et al. 2025, Problems With LLMs for Learner Modelling, arXiv:2512.23036"
+      ],
+      "score": 7.5,
+      "adversarial": null
+    },
+    {
+      "id": "R8",
+      "stage": "discover",
+      "hypothesis": "Fix venue/framing for submission: RouteLLM = ICLR 2025 (not 'ACL 2025'); ReAct = ICLR 2023 (2022 preprint); soften 'specialised KT always beats LLMs' to 'comparable-or-better accuracy at 600-12000x lower cost/latency'; add the SPECTER->text-embedding-3-small note to the storyboard table.",
+      "metric": "objective_quality",
+      "effort": "S",
+      "risk": "low",
+      "demo_visible": false,
+      "citations": [
+        "Ong et al., RouteLLM, arXiv:2406.18665 (ICLR 2025)",
+        "Yao et al., ReAct, arXiv:2210.03629 (ICLR 2023)",
+        "Specialised KT > LLMs, arXiv:2603.02830"
+      ],
+      "score": 7,
+      "adversarial": null
+    }
+  ],
+  "foundations": [
+    {
+      "method": "BKT \u2014 Bayesian Knowledge Tracing (Corbett & Anderson 1995)",
+      "sound": true,
+      "correctly_applied": false,
+      "note": "Verified in code (feat/open-world-digest:litnav/state.py): the PRIMARY keypoint path uses kp_bump (hardcoded gains recall .25/comprehension .40/application .55, wrong-answer -.20) and kp_confidence = round(min(1, 0.30*correct_obs)) \u2014 a hand-tuned bump plus a linear correct-observation counter, NOT a Bayesian posterior. A real bkt_update() exists (slip .10/guess .20/transit .30) but the constants are textbook-fixed, never EM-fitted, and it is OFF the keypoint path. No per-skill params, no fit. The spec \u00a711/\u00a712 honestly says 'BKT-lite' and 'mastery is an estimate', but the per-step tables (methods \u2463d, storyboard \u2465) assert plain 'BKT \u2014 Corbett & Anderson 1995' with no -lite caveat. Overstatement of a heuristic in the reviewer-facing tables.",
+      "citation": "Corbett, A. T., & Anderson, J. R. (1995). Knowledge Tracing. User Modeling and User-Adapted Interaction 4(4):253-278"
+    },
+    {
+      "method": "Rasch / 1PL IRT mastery & difficulty",
+      "sound": true,
+      "correctly_applied": false,
+      "note": "irt_b is set by a one-shot weaker-LLM student simulator (+1/-1/0); irt_theta is a schema column that is never written or read (no online ability estimation). Methods \u2463c/\u2463d cite 'Rasch/1PL (catsim/girth)' but no Rasch theta is fitted. The deliberately-WEAKER-simulator design choice for difficulty IS current best practice and correctly applied \u2014 'Take Out Your Calculators' (arXiv:2601.09953) reports r up to .82 with weaker models beating stronger \u2014 so credit the simulator, flag the unfitted theta.",
+      "citation": "Take Out Your Calculators (arXiv:2601.09953, 2026); Rasch/1PL"
+    },
+    {
+      "method": "RefD \u2014 prerequisite relation measurement (Liang et al., EMNLP 2015)",
+      "sound": true,
+      "correctly_applied": false,
+      "note": "Verified (litnav/digest/refd.py + OPEN-WORLD-STATUS): the signal is chunk-term co-occurrence / reference-distance asymmetry over the corpus's OWN chunks, NOT Liang 2015's Wikipedia link-reference-graph RefD with relatedness weights. The spec hedges 'RefD-style'; the storyboard/methods tables cite 'RefD \u2014 Liang et al. EMNLP 2015' with no -style qualifier. ACE (JEDM 2024) is the precise published precedent for the actual structural-score + LLM-judge-and-explain pattern and should be the direct citation. The two-signal design itself is legitimate and worked live (RefD recovered in_context_learning\u2192agentic_reasoning that the judge rejected).",
+      "citation": "Liang, Wu, Huang & Giles (2015), EMNLP, ACL D15-1193; Aytekin & Sayg\u0131n, ACE, JEDM 16(2) 2024"
+    },
+    {
+      "method": "GraphRAG (Edge et al. 2024)",
+      "sound": true,
+      "correctly_applied": false,
+      "note": "Methods table tags concept/keypoint extraction as 'GraphRAG-style'. GraphRAG (arXiv:2404.16130) is query-focused SUMMARIZATION over an entity graph \u2014 not concept-graph-for-teaching or prerequisite induction. The actual operation is concept/keyphrase extraction + prereq edges; the label is a buzzword mismatch a reviewer will catch. Cite concept-map / prereq-relation-mining literature (e.g. the ACM Comput. Surv. 2025 prereq survey) instead.",
+      "citation": "Edge et al. (2024), arXiv:2404.16130; Zhang et al., ACM Comput. Surv. 57(11) 2025"
+    },
+    {
+      "method": "SPECTER (Cohan et al. 2020) document embeddings",
+      "sound": true,
+      "correctly_applied": true,
+      "note": "Cited in the find-sources rerank but substituted by text-embedding-3-small cosine. This substitution is DISCLOSED in both the spec and methods table ('SPECTER \u2192 substituted by text-embedding-3-small cosine'). Correctly handled \u2014 keep the disclosure; add it to the storyboard table for consistency.",
+      "citation": "Cohan et al. (2020) SPECTER, ACL 2020"
+    },
+    {
+      "method": "BM25 (Robertson & Zaragoza)",
+      "sound": true,
+      "correctly_applied": true,
+      "note": "Used as the keyword prefilter before embedding rerank in rank.py \u2014 a standard, correctly-applied retrieval cascade. No issue.",
+      "citation": "Robertson & Zaragoza, The Probabilistic Relevance Framework: BM25 and Beyond"
+    },
+    {
+      "method": "FrugalGPT (Chen et al.) model cascade",
+      "sound": true,
+      "correctly_applied": true,
+      "note": "Cost spine uses a cheap\u2192frontier cascade with confidence-gated escalation. LitNavigator's deviation (route on pedagogical-error cost near the mastery band, not token cost) is a defensible, well-argued improvement over the FrugalGPT default, not a misuse.",
+      "citation": "FrugalGPT, arXiv:2305.05176 (now TMLR)"
+    },
+    {
+      "method": "RouteLLM (Ong et al.)",
+      "sound": true,
+      "correctly_applied": true,
+      "note": "Correctly applied as routing inspiration. VENUE ERROR for submission: methods table says 'RouteLLM (ACL 2025)'; it is ICLR 2025 (arXiv:2406.18665). Fix the tag. Note the escalation trigger is currently a hand-set threshold (CONF_MIN=0.6 + band), not the learned router RouteLLM advocates \u2014 an honest 'inspired-by'.",
+      "citation": "Ong et al., RouteLLM, arXiv:2406.18665 (ICLR 2025)"
+    },
+    {
+      "method": "SAQUET item-writing-flaw gate (AIED 2024)",
+      "sound": true,
+      "correctly_applied": false,
+      "note": "Verified (litnav/assess/quizgen.py:flaw_gate): the gate is STRUCTURAL-ONLY \u2014 empty stem, <2 distinct distractors, distractor==answer (\u22483 checks). SAQUET screens ~19 item-writing flaws (cueing, implausible/heterogeneous distractors, all-of-the-above, negative stems, grammatical clues). Docstring itself says 'SAQUET-style structural flaw check', but the methods table cites it as the SAQUET flaw gate without that scoping. Aspirational label for a thinner implementation.",
+      "citation": "SAQUET, AIED 2024, arXiv:2405.20529"
+    },
+    {
+      "method": "Overgenerate-and-rank distractors (Scarlatos et al., NAACL 2024 BEA)",
+      "sound": true,
+      "correctly_applied": false,
+      "note": "LITERAL claim-vs-implementation gap, verified in quizgen.make_distractors: the docstring says 'overgenerate ~6 candidates, then... Returns the first n' \u2014 there is NO rank step; it overgenerates 6, drops the answer, dedups, and takes the FIRST n. Scarlatos 2024 is explicit that ranking-by-student-plausibility is the step that makes the method work. The 'and-rank' is currently false.",
+      "citation": "Scarlatos et al. (2024), NAACL 2024 BEA Workshop"
+    },
+    {
+      "method": "FSRS spaced-repetition scheduler",
+      "sound": true,
+      "correctly_applied": false,
+      "note": "spacing.py is FSRS-lite (interval = 1/(1-mastery), x2 fast-forward at \u22650.95) with no fitted DSR stability/lapse state. Worse, review_queue items are enqueued but never DELIVERED in the storyboard \u2014 the retrieval-practice benefit is dormant. Methods \u2463e cites 'FSRS'; the implementation is a heuristic spacer with the probe loop unwired.",
+      "citation": "Open Spaced Repetition / FSRS DSR model (Ye et al. 2022-2023)"
+    },
+    {
+      "method": "Specialised-KT-beats-LLM, 'never LLM self-judge' (arXiv:2603.02830)",
+      "sound": true,
+      "correctly_applied": false,
+      "note": "The 'never LLM self-judge' design principle is correctly adopted and well-grounded. But the framing overstates the source: arXiv:2603.02830 actually shows LLM-KT narrowly TOP (72.8% vs SAKT 72.7%); the durable, defensible claim is comparable-or-better accuracy at 600-12000x lower cost/latency, not universal accuracy dominance. Soften to avoid a reviewer rebuttal that undercuts an otherwise-correct principle.",
+      "citation": "Faster, Cheaper, More Accurate: Specialised KT Models Outperform LLMs, arXiv:2603.02830"
+    },
+    {
+      "method": "ReAct (Yao et al.) + Plan-and-Solve (Wang et al. 2023) orchestration",
+      "sound": true,
+      "correctly_applied": false,
+      "note": "The outer-loop TOPOLOGY is described as ReAct+Plan-and-Solve, but the plan is implicit branching \u2014 no emitted/logged plan artifact, and reteach has no Reflexion-style error memory (reteach_kp flips strategy by a MAX_RETEACH counter). VENUE: methods cites 'ReAct \u2014 Yao et al. 2022'; it is arXiv:2210.03629 (2022 preprint) but ICLR 2023 \u2014 use 'Yao et al., ICLR 2023 (arXiv 2022)'. The design philosophy aligns with the evidence; implementation depth is the gap.",
+      "citation": "Yao et al., ReAct, arXiv:2210.03629 (ICLR 2023); Wang et al., Plan-and-Solve, ACL 2023"
+    },
+    {
+      "method": "Worked-example effect & expertise reversal (Sweller/Kalyuga; Barbieri et al. 2023 meta-analysis)",
+      "sound": true,
+      "correctly_applied": false,
+      "note": "'worked_example' is a STATIC label applied at mastery<0.35 with a 'concise' label for experts \u2014 no fading ladder (full example \u2192 completion problem \u2192 full problem). The durable worked-example benefit comes from FADING, and expertise reversal means an unfaded example HURTS advanced learners. The meta-analysis citation is real and the principle correctly named, but the fading mechanism the literature requires is absent.",
+      "citation": "Barbieri et al. (2023), Educational Psychology Review 35:11; Sweller/Kalyuga cognitive load"
+    },
+    {
+      "method": "Interleaved practice (Brunmair & Richter 2019 meta-analysis)",
+      "sound": true,
+      "correctly_applied": false,
+      "note": "Interleaving is effectively ABSENT: the route is strictly prereq-ordered/blocked. concept_edges.similarity already exists and gives a principled trigger (interleaving helps g\u22480.42 ONLY for confusable material \u2014 'similarity matters'), so the lever is named in the data model but unused.",
+      "citation": "Brunmair & Richter (2019), Psychological Bulletin 145(11):1029-1052"
+    },
+    {
+      "method": "Testing/retrieval-practice effect (Roediger & Karpicke 2006; Yang et al. 2021)",
+      "sound": true,
+      "correctly_applied": false,
+      "note": "The testing effect is used for GRADING (assessment) but not for memory STRENGTHENING: review_queue + retention_log tables are built but no spaced retrieval PROBE is ever delivered before new teaching. Retrieval practice is durable (g\u22480.50; transfer d\u22480.40) \u2014 the data layer exists but the lever is dormant. Correctly cited, not yet operationalized as a strengthening mechanism.",
+      "citation": "Roediger & Karpicke (2006), Psychological Science 17(3):249-255; Yang et al. (2021), Psychological Bulletin 147(4):399-435"
+    },
+    {
+      "method": "Mayer multimedia/coherence principles",
+      "sound": true,
+      "correctly_applied": true,
+      "note": "Applied in teach_kp and the artifact renderers (anti-verbatim Cornell notes, coherent slides). Reasonable application of multimedia/coherence principles; no overstatement found.",
+      "citation": "Mayer, multimedia learning principles"
+    },
+    {
+      "method": "Bloom-leveled question generation (Scaria et al., AIED 2024)",
+      "sound": true,
+      "correctly_applied": false,
+      "note": "assess_next passes a one-line per-level spec but no Bloom DEFINITION and no exemplars. Scaria 2024 finds adequate info + exemplars are what enable the higher rungs; comprehension/application items are therefore the weakest link. Correctly cited, under-applied at the prompt level.",
+      "citation": "Scaria et al. (2024), AIED 2024, arXiv:2408.04394"
+    },
+    {
+      "method": "Mastery threshold / mastery learning (EDM 2025; Winget & Persky 2022)",
+      "sound": true,
+      "correctly_applied": false,
+      "note": "KP_MASTERY_THRESHOLD=0.75 (advance) is lenient vs the mastery-learning literature (EDM 2025: 0.95 standard, 0.98 for transfer). Advancing at 0.75 risks under-mastery; the threshold is neither surfaced nor justified against a retention probe. The honest g\u22480.27 ITS-gain framing the spec uses elsewhere IS correctly applied.",
+      "citation": "Zhang et al., How Much Mastery is Enough Mastery, EDM 2025; Winget & Persky (2022), AJPE 86(10):8906"
+    }
+  ],
+  "gaps": [
+    "BKT/Rasch overstatement (load-bearing): the primary keypoint mastery path is a hand-tuned kp_bump + linear kp_confidence=0.3*correct_obs, with no fitted slip/guess/transit and no Rasch theta (irt_theta is a schema column never read/written); the spec \u00a711/\u00a712 honestly says 'BKT-lite/estimate' but the reviewer-facing per-step tables (methods \u2463d, storyboard \u2465) assert plain 'BKT \u2014 Corbett & Anderson 1995'. This is the single biggest claim-vs-implementation gap.",
+    "Two literal docstring-vs-code gaps a reviewer will catch by reading one function: make_distractors claims 'overgenerate-and-rank' but takes the first-n (no rank step), and flaw_gate is called 'SAQUET-style' but screens ~3 structural flaws vs SAQUET's ~19 item-writing flaws.",
+    "RefD mis-attribution and GraphRAG mislabel: refd.py is corpus co-occurrence/reference-distance asymmetry, not Liang 2015's Wikipedia link-graph RefD; concept extraction is tagged 'GraphRAG-style' though GraphRAG is query-focused summarization. ACE (JEDM 2024) is the correct precedent for the actual two-signal pattern.",
+    "No global-consistency / cycle-breaking pass over prereq edges (GKROM/DGCPL show this is the accuracy frontier); LitNavigator scores edges only locally/pairwise, and single-source digest produces 0 surviving prereq edges.",
+    "Learning-science levers are named but dormant: spaced retrieval probes are enqueued (review_queue/retention_log) but never delivered before teaching; worked examples are a static label with no fading ladder; interleaving is unused despite concept_edges.similarity providing a principled trigger. Testing effect is used for grading, not for strengthening.",
+    "Orchestration depth: ReAct+Plan-and-Solve is topology-only (implicit branching, no logged plan artifact) and reteach has no Reflexion-style error memory (counter-driven strategy flip). Escalation objective (pedagogical-error cost near the mastery band) is correct but the trigger is hand-set, not calibrated from logged data.",
+    "Grading throws away signal: grade_kp emits score_0_5 + confidence but drives mastery off the BINARY correct flag; no component-extraction step and no self-consistency (k-sample) near the threshold, despite the 0-5 scale being where human-LLM alignment peaks.",
+    "Open-web live edge accuracy is unvalidated (spec risk A); LitNavigator cannot claim benchmark-grade accuracy and should report a live self-measured edge-accuracy number instead of closed-corpus numbers.",
+    "Citation/venue errors for ICCSE submission: RouteLLM is ICLR 2025 (methods says 'ACL 2025'); ReAct is ICLR 2023 / 2022 preprint; the 'specialised KT always beats LLM' framing overstates arXiv:2603.02830 (which shows LLM-KT narrowly top)."
+  ],
+  "n_sources": 30
+}
