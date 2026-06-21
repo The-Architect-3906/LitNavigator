@@ -51,6 +51,36 @@ def main() -> int:
           f"-> {len(dres.concepts)} concepts, {len(dres.edges)} edges "
           f"({sum(1 for e in dres.edges if e['edge_type']=='prerequisite')} prereq survived), "
           f"edge_accuracy={dres.edge_accuracy}, digest spend={dspend['usd']}")
+    # ---- OW-3.1 (A6): multilingual goal -> English search query, live ----
+    from litnav.discover import query as dquery, relevance as drel
+    from litnav.discover.contract import Source
+    zh = "给我一个关于 CRISPR 基因编辑的快速概览"
+    eq = dquery.to_search_query(zh, conn=conn, session_id="disc", budget=_BUDGET)
+    assert eq and eq != zh, f"FAIL: query not normalized: {eq!r}"
+    assert sum(1 for ch in eq if ord(ch) < 128) >= len(eq) * 0.8, f"FAIL: not English-ish: {eq!r}"
+    print(f"G-discover-live PASS (A6): {zh!r} -> {eq!r}")
+
+    # ---- OW-3.1 (A5): relevance gate drops an off-topic source, live ----
+    cand = [Source("web", "raft", "u", "Raft consensus algorithm",
+                   abstract="A understandable consensus algorithm for managing a replicated log."),
+            Source("wikipedia", "mega", "u", "Megalopolis (film)",
+                   abstract="A 2024 American epic science-fiction drama film by Francis Ford Coppola."),
+            Source("web", "paxos", "u", "Paxos made simple",
+                   abstract="An explanation of the Paxos consensus protocol.")]
+    gated = drel.relevance_gate("raft consensus algorithm for distributed systems", cand,
+                                conn=conn, session_id="disc", budget=_BUDGET, min_keep=1)
+    gtitles = [s.title for s in gated]
+    assert "Megalopolis (film)" not in gtitles, f"FAIL: relevance gate kept the film: {gtitles}"
+    assert any("Raft" in t or "Paxos" in t for t in gtitles), f"FAIL: dropped on-topic: {gtitles}"
+    print(f"G-discover-live PASS (A5): relevance gate kept {gtitles} (dropped the film)")
+
+    # ---- REPORT: real non-English discovery now returns sources (was 1 generic) ----
+    zres = find_sources.find(DiscoverInput(zh, k=6), conn=conn, session_id="disc", budget=_BUDGET)
+    zft = [s for s in zres.sources if s.chunks and sum(len(ch) for ch in s.chunks) > 200]
+    top_t = zres.sources[0].title[:60] if zres.sources else "(none)"
+    print(f"G-discover-live REPORT: non-English goal -> {len(zres.sources)} sources, "
+          f"{len(zft)} with full text, top={top_t!r}")
+
     print("--- COST ledger (discover + digest) ---")
     for row in conn.execute("SELECT stage,tier,model,SUM(total_tokens),ROUND(SUM(usd),6),COUNT(*) "
                             "FROM cost_ledger GROUP BY stage,tier,model ORDER BY stage,tier"):

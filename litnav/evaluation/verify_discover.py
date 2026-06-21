@@ -36,6 +36,14 @@ def main() -> int:
 
     assert intent.classify("quick intro to agents", conn=c, session_id="s") == "crash-course"
     print("G-discover PASS: intent heuristic")
+
+    # OW-3.1: query normalization + relevance gate are deterministic pass-throughs offline.
+    from litnav.discover import query as dquery, relevance as drel
+    assert dquery.to_search_query("给我一个关于 CRISPR 的概览", conn=c, session_id="s") == "给我一个关于 CRISPR 的概览"
+    srcs = [Source("web", "a", "u", "A", 0.5), Source("web", "b", "u", "B", 0.5)]
+    assert drel.relevance_gate("topic", srcs, conn=c, session_id="s") == srcs   # offline pass-through
+    assert drel.relevance_gate("topic", [], conn=c, session_id="s") == []        # empty input safe
+    print("G-discover PASS: query normalization + relevance gate (offline pass-through)")
     print("G-discover: ALL PASS"); return 0
 
 
