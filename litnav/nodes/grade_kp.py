@@ -228,6 +228,18 @@ def assess_decider(state: NavState) -> str:
     if s.get("reteach_count", 0) < 2:
         return "reteach_kp"
 
-    # Exhausted reteaches → check thresholds; 'hold' means concede and move on
+    # Exhausted reteaches — check for an unmastered prereq to detour through first.
+    # The `p not in in_route` guard prevents infinite loops: replan inserts the prereq
+    # once; on the next exhaustion it's already in-route and we fall through to concede.
+    dag = state.get("concept_dag") or {}
+    ls = state.get("learner_state") or {}
+    thr = state.get("mastery_threshold", 0.75)
+    in_route = {s["concept_id"] for s in state.get("route", [])}
+    prereqs = dag.get(cp["concept_id"], [])
+    unmastered = [p for p in prereqs if ls.get(p, {}).get("mastery", 0.0) < thr and p not in in_route]
+    if unmastered:
+        return "diagnose"   # detour: insert the missing prerequisite first
+
+    # No prereq detour available → check thresholds; 'hold' means concede and move on
     dec = route_decider_node(state)
     return {"advance": "advance_kp", "hold": "advance_kp"}[dec]

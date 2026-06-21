@@ -87,6 +87,33 @@ def classify_goal(
     return goal_type
 
 
+# ── mid-session goal pivot helper (A13) ──────────────────────────────────────
+
+def repivot_goal(state: dict, new_goal_text: str, *, conn: sqlite3.Connection) -> dict:
+    """Re-classify the learner's goal mid-session, returning a state-patch dict.
+
+    This is a PURE HELPER — it does NOT run as a graph node and is NOT wired into
+    the auto-loop.  The frontend/session layer calls it to restart planning on a new
+    goal (e.g. the learner switches from 'quick overview' to 'I want to implement it').
+
+    Returns a dict suitable for merging into NavState:
+      goal_text       — the new goal text
+      goal_type       — re-classified goal type
+      bloom_ceiling   — Bloom ceiling for the new goal type
+      target_language — language inferred from the new goal text
+    """
+    session_id: str = state.get("session_id", "")
+    goal_type = classify_goal(new_goal_text, conn=conn, session_id=session_id)
+    ceiling = bloom_ceiling_for(goal_type)
+    target_language = lang.detect_language(new_goal_text, conn=conn, session_id=session_id)
+    return {
+        "goal_text": new_goal_text,
+        "goal_type": goal_type,
+        "bloom_ceiling": ceiling,
+        "target_language": target_language,
+    }
+
+
 # ── graph node ────────────────────────────────────────────────────────────────
 
 def goal_elicit_node(state: dict, conn: sqlite3.Connection) -> dict:
