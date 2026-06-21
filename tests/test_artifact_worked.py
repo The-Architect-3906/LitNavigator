@@ -26,3 +26,16 @@ def test_worked_uses_llm_then_assembles(monkeypatch):
     c = sqlite3.connect(":memory:"); init_db(c)
     out = worked_example.render(CONCEPTS, EV, citations=["c0"], conn=c, session_id="s")
     assert "Compute the gradient" in out and "What sign is the step?" in out
+
+def test_worked_strips_llm_enumerator_no_double_numbering(monkeypatch):
+    # LLM sometimes pre-numbers steps ("1. ...", "Step 1 — ..."); the emitter re-numbers,
+    # so the leading enumerator must be stripped to avoid "1. 1. ..." (seen in live output).
+    def fake(prompt, *, tier, stage, fallback, **k):
+        return {"steps": ["1. The agent fails a trajectory", "Step 2 — it writes a critique"],
+                "practice": {"question": "q?", "answer": "a"}}
+    monkeypatch.setattr(router, "complete_json", fake)
+    c = sqlite3.connect(":memory:"); init_db(c)
+    out = worked_example.render(CONCEPTS, EV, citations=["c0"], conn=c, session_id="s")
+    assert "1. 1." not in out and "1. Step 2" not in out
+    assert "1. The agent fails a trajectory" in out
+    assert "2. it writes a critique" in out

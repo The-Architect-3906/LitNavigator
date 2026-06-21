@@ -13,7 +13,12 @@ markup.
 from __future__ import annotations
 
 import os
+import re
 import sqlite3
+
+# Leading enumerator the LLM sometimes emits inside step text ("1. ", "1) ", "Step 1 — ",
+# "Step 2:"). We re-number deterministically, so strip it to avoid "1. 1. ..." double-numbering.
+_ENUM = re.compile(r"^\s*(?:step\s*)?\d+\s*[.):\-–—]\s*", re.IGNORECASE)
 
 
 def _templated(concept: dict, evidence: list[str]) -> dict:
@@ -121,7 +126,8 @@ def _to_markdown(concept: dict, built: dict, citations: list[str]) -> str:
     parts.append("")
 
     for i, step in enumerate(steps, start=1):
-        parts.append(f"{i}. {step}")
+        clean = _ENUM.sub("", str(step)).strip()
+        parts.append(f"{i}. {clean}")
     parts.append("")
 
     parts.append("### Practice")
