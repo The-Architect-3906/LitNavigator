@@ -18,12 +18,23 @@ REFD_MIN = 0.15   # minimum RefD score to corroborate a high-impact prereq edge
 
 
 def _judge(edge: dict, judge_labels: dict, *, session_id, conn, budget) -> bool:
-    """True if the prerequisite relation holds. Offline: read judge_labels. Live: frontier model."""
+    """True if the prerequisite relation holds. Offline: read judge_labels. Live: frontier model.
+    The judge is given concept DESCRIPTIONS + evidence TEXT (not bare slugs + chunk-ids) — starved of
+    content it rejected every prereq (the D3 downgrade-everything bug). Falls back to slug if absent."""
     key = f"{edge['prereq_slug']}->{edge['target_slug']}"
+    prereq_label = edge.get("prereq_desc") or edge["prereq_slug"].replace("_", " ")
+    target_label = edge.get("target_desc") or edge["target_slug"].replace("_", " ")
+    ev_text = " ".join(str(t) for t in (edge.get("evidence_text") or edge.get("evidence") or []))[:1000]
     prompt = (
-        f"Is '{edge['prereq_slug']}' genuinely a prerequisite for understanding "
-        f"'{edge['target_slug']}', based on the cited evidence chunks {edge['evidence']}? "
-        'Respond as JSON: {"is_prerequisite": true|false}'
+        "Evaluate a directed PREREQUISITE edge in a concept graph for an adaptive tutor.\n\n"
+        f"PREREQ: {prereq_label}\nTARGET: {target_label}\n\n"
+        f"Supporting evidence:\n{ev_text}\n\n"
+        "QUESTION: Does understanding the TARGET genuinely REQUIRE prior understanding of the PREREQ?\n"
+        "  - true: the core idea of the target is incomprehensible without the prereq.\n"
+        "  - false: the target can be taught without assuming the prereq, OR they are sibling/parallel "
+        "concepts, OR the direction is reversed.\n"
+        "'Builds on' or 'extends' alone is NOT enough — the dependency must be necessary, not merely helpful.\n"
+        'Respond JSON only: {"is_prerequisite": true|false}'
     )
     result = router.complete_json(prompt, tier="frontier", stage="digest_verify",
                                   fallback={"is_prerequisite": judge_labels.get(key, True)},

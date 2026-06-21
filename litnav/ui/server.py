@@ -41,7 +41,9 @@ _TEMPLATES = Environment(
 
 def _connect() -> sqlite3.Connection:
     # Default to the demo DB the CLI runner populates; honor an explicit override.
-    return sqlite3.connect(os.getenv("LITNAV_DB_PATH", DEMO_DB_PATH))
+    conn = sqlite3.connect(os.getenv("LITNAV_DB_PATH", DEMO_DB_PATH))
+    init_db(conn)  # idempotent: guarantees the schema so index/panel reads can't 500 on an empty DB
+    return conn
 
 
 def _trace_for(session_id: str) -> dict:
@@ -207,7 +209,10 @@ async def tutor_events(sid: str, request: Request):
         body = await request.json()
     except Exception:
         body = {}
-    message = (body.get("answer") or "").strip()
+    if not isinstance(body, dict):
+        body = {}
+    # str() so a non-string answer (number/list/bool) can't crash .strip() with a 500.
+    message = str(body.get("answer") or "").strip()
 
     def gen():
         try:

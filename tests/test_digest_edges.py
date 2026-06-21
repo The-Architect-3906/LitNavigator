@@ -21,8 +21,11 @@ CANDIDATE = {
 
 
 def _input(targets=None):
+    # TWO sources so c0->source0, c1->source1: multi_paper is COMPUTED from the cited evidence's
+    # source spread, so the similarity edge (cites c0+c1) is genuinely cross-paper (+0.10 bonus).
     return DigestInput("llm-agents",
-                       [SourceDoc("arxiv", "x", "X", None, ["c0 text", "c1 text"])],
+                       [SourceDoc("arxiv", "x", "X", None, ["c0 text"]),
+                        SourceDoc("arxiv", "y", "Y", None, ["c1 text"])],
                        target_slugs=targets or [])
 
 
@@ -55,25 +58,40 @@ def test_high_impact_only_for_targeted_slice(monkeypatch):
     assert prereq["high_impact"] is False            # reason_act not in targets
 
 
-def test_similarity_cosine_filter_drops_far_pairs(monkeypatch):
-    """Live path: similarity pairs below _SIM_COS_MIN are dropped; pairs at/above are kept."""
-    from litnav.llm import router as _router
+def _two_sim_candidate():
     concepts3 = [
         {"slug": "a", "name": "A", "domain": "d", "frontier_flag": None},
         {"slug": "b", "name": "B", "domain": "d", "frontier_flag": None},
         {"slug": "c", "name": "C", "domain": "d", "frontier_flag": None},
     ]
-    vecs = [[1.0, 0.0], [1.0, 0.0], [0.0, 1.0]]  # cos(a,b)=1.0 keep ; cos(a,c)=0.0 drop
-    monkeypatch.setattr(_router, "embed_texts", lambda *a, **k: vecs)
     candidate = {"prereq_edges": [], "similarity_edges": [
         {"a_slug": "a", "b_slug": "b", "evidence_chunks": ["c0"], "max_strength": "weak_hint", "multi_paper": False},
         {"a_slug": "a", "b_slug": "c", "evidence_chunks": ["c0"], "max_strength": "weak_hint", "multi_paper": False},
     ]}
     di = DigestInput("d", [SourceDoc("arxiv", "x", "X", None, ["text"])], target_slugs=[])
     c = sqlite3.connect(":memory:"); init_db(c)
+    return concepts3, candidate, di, c
+
+
+def test_similarity_judge_drops_unrelated_pairs(monkeypatch):
+    """The LLM PAIRWISE judge (not bare-name cosine) gates similarity edges: a low-score pair is
+    dropped, a high-score pair kept. (Replaces the old cosine-filter test.)"""
+    monkeypatch.setattr(edges, "_judge_similar",
+                        lambda a_desc, b_desc, evidence, **k: 0.8 if b_desc.startswith("B") else 0.05)
+    concepts3, candidate, di, c = _two_sim_candidate()
     out = edges.build_edges(di, concepts3, candidate=candidate, session_id="s", conn=c)
     sim = [e for e in out if e["edge_type"] == "similarity"]
     assert len(sim) == 1 and sim[0]["prereq_slug"] == "a" and sim[0]["target_slug"] == "b"
+
+
+def test_similarity_judge_offline_keeps_candidate(monkeypatch):
+    """Offline (provider=none) the judge falls back to score 1.0, so candidate similarity edges
+    survive deterministically — no live model needed."""
+    monkeypatch.setenv("LITNAV_LLM_PROVIDER", "none")
+    concepts3, candidate, di, c = _two_sim_candidate()
+    out = edges.build_edges(di, concepts3, candidate=candidate, session_id="s", conn=c)
+    sim = [e for e in out if e["edge_type"] == "similarity"]
+    assert len(sim) == 2
 
 
 def test_edges_skip_unknown_slugs(monkeypatch):

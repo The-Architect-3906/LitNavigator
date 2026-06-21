@@ -1,0 +1,59 @@
+{
+  "domain_key": "deep-learning-foundations",
+  "target_slugs": [],
+  "sources": [
+    {
+      "source_type": "arxiv",
+      "source_id": "1706.03762",
+      "title": "Foundations: tokens to transformers",
+      "url": null,
+      "chunks": [
+        "Tokenization is the first step in any neural language pipeline: raw text is split into a sequence of discrete tokens (typically subwords) drawn from a fixed vocabulary. Every downstream component consumes these token ids, so tokenization must happen before a model can represent or process the text.",
+        "An embedding layer maps each token id to a dense vector in a continuous space. Because the lookup is indexed by token id, embeddings presuppose a tokenized input - you cannot embed text that has not first been tokenized. Similar tokens end up with nearby vectors.",
+        "Self-attention computes, for each position, a weighted sum of value vectors using query-key dot products across the sequence. These queries, keys, and values are linear projections of the input embedding vectors, so attention operates on top of embeddings and requires them as input.",
+        "The Transformer architecture is built entirely from stacked multi-head self-attention blocks and position-wise feed-forward layers. Since its core computation is self-attention, understanding the attention mechanism is a prerequisite for understanding how a Transformer works."
+      ]
+    }
+  ],
+  "candidate": {
+    "concepts": [
+      {"slug": "tokenization", "name": "Tokenization", "domain": "deep-learning-foundations", "frontier_flag": null},
+      {"slug": "word_embeddings", "name": "Word Embeddings", "domain": "deep-learning-foundations", "frontier_flag": null},
+      {"slug": "attention", "name": "Attention Mechanism", "domain": "deep-learning-foundations", "frontier_flag": null},
+      {"slug": "transformer", "name": "Transformer Architecture", "domain": "deep-learning-foundations", "frontier_flag": "consensus"}
+    ],
+    "keypoints": [
+      {"kp_id": "kp_tok", "concept_slug": "tokenization", "name": "Text to tokens",
+       "objective": "Explain how tokenization splits raw text into a fixed vocabulary of subword tokens that every later component consumes.",
+       "evidence_chunk_id": "c0", "bloom_level": "understand"},
+      {"kp_id": "kp_emb", "concept_slug": "word_embeddings", "name": "Tokens to vectors",
+       "objective": "Explain how an embedding layer maps token ids to dense vectors so that semantically similar tokens lie near each other.",
+       "evidence_chunk_id": "c1", "bloom_level": "understand"},
+      {"kp_id": "kp_attn", "concept_slug": "attention", "name": "Weighting the sequence",
+       "objective": "Explain how self-attention forms a weighted combination of value vectors using query-key scores computed from the input embeddings.",
+       "evidence_chunk_id": "c2", "bloom_level": "understand"},
+      {"kp_id": "kp_tf", "concept_slug": "transformer", "name": "Stacking attention",
+       "objective": "Explain how the Transformer composes stacked multi-head self-attention and feed-forward layers into a full sequence model.",
+       "evidence_chunk_id": "c3", "bloom_level": "understand"}
+    ],
+    "prereq_edges": [
+      {"prereq_slug": "tokenization", "target_slug": "word_embeddings", "evidence_chunks": ["c0", "c1"], "max_strength": "explicit_assertion"},
+      {"prereq_slug": "word_embeddings", "target_slug": "attention", "evidence_chunks": ["c1", "c2"], "max_strength": "explicit_assertion"},
+      {"prereq_slug": "attention", "target_slug": "transformer", "evidence_chunks": ["c2", "c3"], "max_strength": "explicit_assertion"}
+    ],
+    "similarity_edges": [
+      {"a_slug": "attention", "b_slug": "transformer", "evidence_chunks": ["c3"], "max_strength": "general_statement"}
+    ],
+    "quiz_seeds": [
+      {"concept_slug": "tokenization", "question": "What does tokenization produce from raw text?", "answer_key": "a sequence of discrete tokens from a fixed vocabulary", "bloom_level": "recall"},
+      {"concept_slug": "word_embeddings", "question": "What does an embedding layer map a token id to?", "answer_key": "a dense vector", "bloom_level": "recall"},
+      {"concept_slug": "attention", "question": "What does self-attention compute over the sequence?", "answer_key": "a weighted sum of value vectors using query-key scores", "bloom_level": "recall"},
+      {"concept_slug": "transformer", "question": "What two layer types is a Transformer block built from?", "answer_key": "multi-head self-attention and feed-forward layers", "bloom_level": "recall"}
+    ],
+    "judge_labels": {
+      "tokenization->word_embeddings": true,
+      "word_embeddings->attention": true,
+      "attention->transformer": true
+    }
+  }
+}
