@@ -76,3 +76,10 @@ autonomous keep/revert gains are available** without either (a) quality-graded g
 quality beyond structural+binary) or (b) building the deferred product features (R3 spaced-retrieval
 delivery, R5 LLM flaw-gate) whose benefit a structural eval cannot detect. The honest loop result is:
 the measurable surfaces are strong; remaining work is feature-building, not parameter-tuning.
+
+## Milestone — full 10-scenario live e2e breadth check (plan Task 8 Step 7)
+Ran the Architect's `e2e_scenarios` live (10/10 scenarios, 0 errors, $0.117). **No regression from the
+applied fixes:** `grade_score` 1.0→1.0 and `flaw_gate_ok` 10/10→10/10 (the only metrics R2 could
+affect). `edge_acc_mean` 0.858→0.815 is **digest LLM non-determinism, not R2** (R2 touches distractor
+ranking, a different stage; per-scenario swings go both ways — S1 1.0→0.5 but S4 0.83→1.0, S6 0.0→0.4).
+My run's summary saved to `e2e-milestone-summary.json`; the Architect's committed baseline restored.

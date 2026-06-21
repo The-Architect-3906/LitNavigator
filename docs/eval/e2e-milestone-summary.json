@@ -1,0 +1,728 @@
+[
+  {
+    "id": 1,
+    "slug": "diffusion-models",
+    "language": "English",
+    "domain": "ML / generative models",
+    "intended_depth": "mastery",
+    "errors": [],
+    "discover": {
+      "intent": "systematic",
+      "n_sources": 5,
+      "n_fulltext": 2,
+      "secs": 11.9,
+      "top_source": {
+        "title": "Palette: Image-to-Image Diffusion Models",
+        "type": "web",
+        "authority": 0.86
+      }
+    },
+    "digest": {
+      "source": "Palette: Image-to-Image Diffusion Models",
+      "chars": 1300,
+      "db_concepts": 6,
+      "db_keypoints": 6,
+      "db_quiz": 6,
+      "edges": 7,
+      "prereq": 2,
+      "edge_accuracy": 0.5,
+      "kp_evidence_resolves": true,
+      "secs": 28.8
+    },
+    "teach": {
+      "goal_type": "mastery",
+      "intended": "mastery",
+      "depth_match": true,
+      "expertise": "expert",
+      "strategy": "concise",
+      "quiz_q": "What is the primary goal of image-to-image translation?",
+      "n_distractors": 3,
+      "flaw_gate_ok": true,
+      "grade_score": 1.0
+    },
+    "artifact": {
+      "selector_format": "combination",
+      "rendered": [
+        {
+          "format": "notes",
+          "len": 1238,
+          "citations": [
+            "c0",
+            "c1"
+          ],
+          "citations_resolve": true,
+          "nonempty": true
+        },
+        {
+          "format": "mindmap",
+          "len": 630,
+          "citations": [
+            "c0",
+            "c1"
+          ],
+          "citations_resolve": true,
+          "nonempty": true
+        }
+      ],
+      "secs": 3.8
+    },
+    "cost": {
+      "tokens": 9899,
+      "usd": 0.012735,
+      "was_live": true
+    }
+  },
+  {
+    "id": 2,
+    "slug": "crispr",
+    "language": "Chinese",
+    "domain": "Biology / gene editing",
+    "intended_depth": "survey",
+    "errors": [],
+    "discover": {
+      "intent": "crash-course",
+      "n_sources": 6,
+      "n_fulltext": 3,
+      "secs": 7.1,
+      "top_source": {
+        "title": "Mechanism and Applications of CRISPR/Cas-9-Mediated Genome Editing",
+        "type": "web",
+        "authority": 0.71
+      }
+    },
+    "digest": {
+      "source": "Mechanism and Applications of CRISPR/Cas-9-Mediated Genome Editing",
+      "chars": 1761,
+      "db_concepts": 6,
+      "db_keypoints": 6,
+      "db_quiz": 6,
+      "edges": 7,
+      "prereq": 3,
+      "edge_accuracy": 0.75,
+      "kp_evidence_resolves": true,
+      "secs": 32.9
+    },
+    "teach": {
+      "goal_type": "survey",
+      "intended": "survey",
+      "depth_match": true,
+      "expertise": "novice",
+      "strategy": "overview",
+      "quiz_q": "What is the primary function of the CRISPR/Cas-9 system?",
+      "n_distractors": 3,
+      "flaw_gate_ok": true,
+      "grade_score": 1.0
+    },
+    "artifact": {
+      "selector_format": "mindmap",
+      "rendered": [
+        {
+          "format": "notes",
+          "len": 1134,
+          "citations": [
+            "c1",
+            "c2"
+          ],
+          "citations_resolve": true,
+          "nonempty": true
+        },
+        {
+          "format": "mindmap",
+          "len": 527,
+          "citations": [
+            "c1",
+            "c2"
+          ],
+          "citations_resolve": true,
+          "nonempty": true
+        }
+      ],
+      "secs": 4.2
+    },
+    "cost": {
+      "tokens": 10202,
+      "usd": 0.012387,
+      "was_live": true
+    }
+  },
+  {
+    "id": 3,
+    "slug": "raft-consensus",
+    "language": "English",
+    "domain": "Distributed systems",
+    "intended_depth": "functional",
+    "errors": [],
+    "discover": {
+      "intent": "applied",
+      "n_sources": 2,
+      "n_fulltext": 2,
+      "secs": 7.1,
+      "top_source": {
+        "title": "VSSB-Raft: A Secure and Efficient Zero Trust Consensus Algorithm for Blockchain",
+        "type": "web",
+        "authority": 0.4
+      }
+    },
+    "digest": {
+      "source": "VSSB-Raft: A Secure and Efficient Zero Trust Consensus Algorithm for Blockchain",
+      "chars": 1131,
+      "db_concepts": 8,
+      "db_keypoints": 8,
+      "db_quiz": 8,
+      "edges": 8,
+      "prereq": 5,
+      "edge_accuracy": 1.0,
+      "kp_evidence_resolves": true,
+      "secs": 56.8
+    },
+    "teach": {
+      "goal_type": "functional",
+      "intended": "functional",
+      "depth_match": true,
+      "expertise": "intermediate",
+      "strategy": "worked_example",
+      "quiz_q": "What is the main principle of Zero Trust security?",
+      "n_distractors": 3,
+      "flaw_gate_ok": true,
+      "grade_score": 1.0
+    },
+    "artifact": {
+      "selector_format": "worked_example",
+      "rendered": [
+        {
+          "format": "notes",
+          "len": 1264,
+          "citations": [
+            "c1",
+            "c2"
+          ],
+          "citations_resolve": true,
+          "nonempty": true
+        },
+        {
+          "format": "mindmap",
+          "len": 434,
+          "citations": [
+            "c1",
+            "c2"
+          ],
+          "citations_resolve": true,
+          "nonempty": true
+        }
+      ],
+      "secs": 4.8
+    },
+    "cost": {
+      "tokens": 10592,
+      "usd": 0.012548,
+      "was_live": true
+    }
+  },
+  {
+    "id": 4,
+    "slug": "quantum-error-correction",
+    "language": "English",
+    "domain": "Physics / quantum computing",
+    "intended_depth": "survey",
+    "errors": [],
+    "discover": {
+      "intent": "crash-course",
+      "n_sources": 3,
+      "n_fulltext": 3,
+      "secs": 8.6,
+      "top_source": {
+        "title": "Quantum Error Correction Via Noise Guessing Decoding",
+        "type": "web",
+        "authority": 0.35
+      }
+    },
+    "digest": {
+      "source": "Quantum Error Correction Via Noise Guessing Decoding",
+      "chars": 1612,
+      "db_concepts": 8,
+      "db_keypoints": 8,
+      "db_quiz": 8,
+      "edges": 8,
+      "prereq": 6,
+      "edge_accuracy": 1.0,
+      "kp_evidence_resolves": true,
+      "secs": 44.9
+    },
+    "teach": {
+      "goal_type": "survey",
+      "intended": "survey",
+      "depth_match": true,
+      "expertise": "novice",
+      "strategy": "overview",
+      "quiz_q": "What is the primary purpose of Quantum Error Correction Codes (QECCs)?",
+      "n_distractors": 3,
+      "flaw_gate_ok": true,
+      "grade_score": 1.0
+    },
+    "artifact": {
+      "selector_format": "mindmap",
+      "rendered": [
+        {
+          "format": "notes",
+          "len": 1102,
+          "citations": [
+            "c1",
+            "c2"
+          ],
+          "citations_resolve": true,
+          "nonempty": true
+        },
+        {
+          "format": "mindmap",
+          "len": 509,
+          "citations": [
+            "c1",
+            "c2"
+          ],
+          "citations_resolve": true,
+          "nonempty": true
+        }
+      ],
+      "secs": 4.0
+    },
+    "cost": {
+      "tokens": 10810,
+      "usd": 0.01305,
+      "was_live": true
+    }
+  },
+  {
+    "id": 5,
+    "slug": "black-scholes",
+    "language": "Spanish",
+    "domain": "Finance / quantitative",
+    "intended_depth": "mastery",
+    "errors": [],
+    "discover": {
+      "intent": "systematic",
+      "n_sources": 6,
+      "n_fulltext": 3,
+      "secs": 10.7,
+      "top_source": {
+        "title": "Option Pricing when the Variance Changes Randomly: Theory, Estimation, and an Application",
+        "type": "web",
+        "authority": 0.81
+      }
+    },
+    "digest": {
+      "source": "Option Pricing when the Variance Changes Randomly: Theory, Estimation, and an Ap",
+      "chars": 1073,
+      "db_concepts": 6,
+      "db_keypoints": 6,
+      "db_quiz": 6,
+      "edges": 7,
+      "prereq": 3,
+      "edge_accuracy": 0.75,
+      "kp_evidence_resolves": true,
+      "secs": 33.3
+    },
+    "teach": {
+      "goal_type": "mastery",
+      "intended": "mastery",
+      "depth_match": true,
+      "expertise": "expert",
+      "strategy": "concise",
+      "quiz_q": "What is a European call option?",
+      "n_distractors": 3,
+      "flaw_gate_ok": true,
+      "grade_score": 1.0
+    },
+    "artifact": {
+      "selector_format": "combination",
+      "rendered": [
+        {
+          "format": "notes",
+          "len": 1236,
+          "citations": [
+            "c1",
+            "c2"
+          ],
+          "citations_resolve": true,
+          "nonempty": true
+        },
+        {
+          "format": "mindmap",
+          "len": 679,
+          "citations": [
+            "c1",
+            "c2"
+          ],
+          "citations_resolve": true,
+          "nonempty": true
+        }
+      ],
+      "secs": 4.8
+    },
+    "cost": {
+      "tokens": 15394,
+      "usd": 0.011149,
+      "was_live": true
+    }
+  },
+  {
+    "id": 6,
+    "slug": "mrna-vaccines",
+    "language": "English",
+    "domain": "Biochemistry",
+    "intended_depth": "functional",
+    "errors": [],
+    "discover": {
+      "intent": "systematic",
+      "n_sources": 5,
+      "n_fulltext": 1,
+      "secs": 12.3,
+      "top_source": {
+        "title": "Advances in mRNA Vaccines for Infectious Diseases",
+        "type": "web",
+        "authority": 0.77
+      }
+    },
+    "digest": {
+      "source": "Advances in mRNA Vaccines for Infectious Diseases",
+      "chars": 532,
+      "db_concepts": 6,
+      "db_keypoints": 6,
+      "db_quiz": 6,
+      "edges": 8,
+      "prereq": 2,
+      "edge_accuracy": 0.4,
+      "kp_evidence_resolves": true,
+      "secs": 32.1
+    },
+    "teach": {
+      "goal_type": "functional",
+      "intended": "functional",
+      "depth_match": true,
+      "expertise": "intermediate",
+      "strategy": "worked_example",
+      "quiz_q": "What is the primary function of RNA in RNA-based technologies?",
+      "n_distractors": 3,
+      "flaw_gate_ok": true,
+      "grade_score": 1.0
+    },
+    "artifact": {
+      "selector_format": "worked_example",
+      "rendered": [
+        {
+          "format": "notes",
+          "len": 1186,
+          "citations": [
+            "c1"
+          ],
+          "citations_resolve": true,
+          "nonempty": true
+        },
+        {
+          "format": "mindmap",
+          "len": 528,
+          "citations": [
+            "c1"
+          ],
+          "citations_resolve": true,
+          "nonempty": true
+        }
+      ],
+      "secs": 3.9
+    },
+    "cost": {
+      "tokens": 7916,
+      "usd": 0.011008,
+      "was_live": true
+    }
+  },
+  {
+    "id": 7,
+    "slug": "transformer-attention",
+    "language": "Chinese",
+    "domain": "NLP / deep learning",
+    "intended_depth": "mastery",
+    "errors": [],
+    "discover": {
+      "intent": "systematic",
+      "n_sources": 5,
+      "n_fulltext": 3,
+      "secs": 7.3,
+      "top_source": {
+        "title": "Transformer (deep learning)",
+        "type": "wikipedia",
+        "authority": 0.5
+      }
+    },
+    "digest": {
+      "source": "Transformer (deep learning)",
+      "chars": 754,
+      "db_concepts": 6,
+      "db_keypoints": 6,
+      "db_quiz": 6,
+      "edges": 6,
+      "prereq": 4,
+      "edge_accuracy": 0.75,
+      "kp_evidence_resolves": true,
+      "secs": 30.0
+    },
+    "teach": {
+      "goal_type": "mastery",
+      "intended": "mastery",
+      "depth_match": true,
+      "expertise": "expert",
+      "strategy": "concise",
+      "quiz_q": "What is the purpose of the Multi-Head Attention Mechanism in neural networks?",
+      "n_distractors": 3,
+      "flaw_gate_ok": true,
+      "grade_score": 1.0
+    },
+    "artifact": {
+      "selector_format": "combination",
+      "rendered": [
+        {
+          "format": "notes",
+          "len": 1193,
+          "citations": [
+            "c1"
+          ],
+          "citations_resolve": true,
+          "nonempty": true
+        },
+        {
+          "format": "mindmap",
+          "len": 523,
+          "citations": [
+            "c1"
+          ],
+          "citations_resolve": true,
+          "nonempty": true
+        }
+      ],
+      "secs": 4.3
+    },
+    "cost": {
+      "tokens": 9707,
+      "usd": 0.010233,
+      "was_live": true
+    }
+  },
+  {
+    "id": 8,
+    "slug": "behavioral-economics",
+    "language": "English",
+    "domain": "Economics",
+    "intended_depth": "survey",
+    "errors": [],
+    "discover": {
+      "intent": "crash-course",
+      "n_sources": 5,
+      "n_fulltext": 2,
+      "secs": 6.8,
+      "top_source": {
+        "title": "Nudge theory",
+        "type": "wikipedia",
+        "authority": 0.5
+      }
+    },
+    "digest": {
+      "source": "Nudge theory",
+      "chars": 399,
+      "db_concepts": 7,
+      "db_keypoints": 7,
+      "db_quiz": 7,
+      "edges": 8,
+      "prereq": 6,
+      "edge_accuracy": 1.0,
+      "kp_evidence_resolves": true,
+      "secs": 31.9
+    },
+    "teach": {
+      "goal_type": "survey",
+      "intended": "survey",
+      "depth_match": true,
+      "expertise": "novice",
+      "strategy": "overview",
+      "quiz_q": "What is Nudge Theory?",
+      "n_distractors": 3,
+      "flaw_gate_ok": true,
+      "grade_score": 1.0
+    },
+    "artifact": {
+      "selector_format": "mindmap",
+      "rendered": [
+        {
+          "format": "notes",
+          "len": 1099,
+          "citations": [
+            "c0"
+          ],
+          "citations_resolve": true,
+          "nonempty": true
+        },
+        {
+          "format": "mindmap",
+          "len": 528,
+          "citations": [
+            "c0"
+          ],
+          "citations_resolve": true,
+          "nonempty": true
+        }
+      ],
+      "secs": 3.6
+    },
+    "cost": {
+      "tokens": 8852,
+      "usd": 0.011674,
+      "was_live": true
+    }
+  },
+  {
+    "id": 9,
+    "slug": "rlhf",
+    "language": "English",
+    "domain": "ML / alignment",
+    "intended_depth": "functional",
+    "errors": [],
+    "discover": {
+      "intent": "cutting-edge",
+      "n_sources": 4,
+      "n_fulltext": 3,
+      "secs": 7.6,
+      "top_source": {
+        "title": "Reinforcement learning from human feedback",
+        "type": "wikipedia",
+        "authority": 0.5
+      }
+    },
+    "digest": {
+      "source": "Reinforcement learning from human feedback",
+      "chars": 278,
+      "db_concepts": 5,
+      "db_keypoints": 5,
+      "db_quiz": 5,
+      "edges": 6,
+      "prereq": 4,
+      "edge_accuracy": 1.0,
+      "kp_evidence_resolves": true,
+      "secs": 25.6
+    },
+    "teach": {
+      "goal_type": "functional",
+      "intended": "functional",
+      "depth_match": true,
+      "expertise": "intermediate",
+      "strategy": "worked_example",
+      "quiz_q": "What does RLHF stand for?",
+      "n_distractors": 3,
+      "flaw_gate_ok": true,
+      "grade_score": 1.0
+    },
+    "artifact": {
+      "selector_format": "worked_example",
+      "rendered": [
+        {
+          "format": "notes",
+          "len": 1084,
+          "citations": [
+            "c0"
+          ],
+          "citations_resolve": true,
+          "nonempty": true
+        },
+        {
+          "format": "mindmap",
+          "len": 486,
+          "citations": [
+            "c0"
+          ],
+          "citations_resolve": true,
+          "nonempty": true
+        }
+      ],
+      "secs": 3.4
+    },
+    "cost": {
+      "tokens": 8782,
+      "usd": 0.008774,
+      "was_live": true
+    }
+  },
+  {
+    "id": 10,
+    "slug": "graph-neural-nets",
+    "language": "French",
+    "domain": "Graph machine learning",
+    "intended_depth": "survey",
+    "errors": [],
+    "discover": {
+      "intent": "crash-course",
+      "n_sources": 5,
+      "n_fulltext": 1,
+      "secs": 8.9,
+      "top_source": {
+        "title": "Graph convolutional networks: a comprehensive review",
+        "type": "web",
+        "authority": 0.88
+      }
+    },
+    "digest": {
+      "source": "Graph convolutional networks: a comprehensive review",
+      "chars": 1805,
+      "db_concepts": 7,
+      "db_keypoints": 7,
+      "db_quiz": 7,
+      "edges": 8,
+      "prereq": 5,
+      "edge_accuracy": 1.0,
+      "kp_evidence_resolves": true,
+      "secs": 31.0
+    },
+    "teach": {
+      "goal_type": "survey",
+      "intended": "survey",
+      "depth_match": true,
+      "expertise": "novice",
+      "strategy": "overview",
+      "quiz_q": "What are the basic components of graph structures?",
+      "n_distractors": 3,
+      "flaw_gate_ok": true,
+      "grade_score": 1.0
+    },
+    "artifact": {
+      "selector_format": "mindmap",
+      "rendered": [
+        {
+          "format": "notes",
+          "len": 1191,
+          "citations": [
+            "c0",
+            "c1",
+            "c3",
+            "c2"
+          ],
+          "citations_resolve": true,
+          "nonempty": true
+        },
+        {
+          "format": "mindmap",
+          "len": 587,
+          "citations": [
+            "c0",
+            "c1",
+            "c3",
+            "c2"
+          ],
+          "citations_resolve": true,
+          "nonempty": true
+        }
+      ],
+      "secs": 3.2
+    },
+    "cost": {
+      "tokens": 10150,
+      "usd": 0.013144,
+      "was_live": true
+    }
+  }
+]
