@@ -73,6 +73,19 @@ def always_correct(answer_key: str, memo: dict) -> str:
     return answer_key
 
 
+def partial_then_full(answer_key: str, memo: dict) -> str:
+    """Harder profile: give a PARTIAL answer (first half of the key idea) on the first attempt of
+    each keypoint, then the full answer. Binary grading penalizes the partial (wrong→reteach);
+    partial-credit grading should reward it — so this profile has headroom to show a grading change."""
+    kp = memo.setdefault("_partial_seen", set())
+    key = answer_key
+    if key not in kp:
+        kp.add(key)
+        words = answer_key.split()
+        return " ".join(words[: max(1, len(words) // 2)])  # partial: first half of the key idea
+    return answer_key
+
+
 def _run_concept(conn: sqlite3.Connection, f: dict, learner) -> dict:
     cid = f["cid"]
     state = {

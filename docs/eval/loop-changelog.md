@@ -36,3 +36,25 @@ profile, before the autonomous keep/revert loop is meaningful.
 - *Deferred (need live eval or larger work):* R4 (RefD/GraphRAG reframe — editorial, recommend Architect
   review), R3 (deliver spaced-retrieval probes), R5 (LLM flaw-gate), R6 (partial-credit grading) — all
   need the live grading/prereq eval + a harder probe to be keep/revert-gated meaningfully.
+
+## Live eval-gated batch (R6/R5/R3) — empirical result
+Ran the loop **live** (LITNAV_LLM_PROVIDER=openai) with a new harder probe profile
+(`partial_then_full`) + a live-eval runner (`litnav/eval/probe_live.py`).
+
+**Live baseline:** `headline=0.8313` — grading_acc **1.0**, prereq_survival **0.833**, objective/quiz 1.0,
+mastered_rate 1.0, avg_mastery_delta 0.518.
+
+**Finding — most targets are at ceiling, so no autonomous keep/revert gain is available:**
+- **R6 (partial-credit grading):** `grading_acc` is already **1.0** (the GEPA key-idea grader nails all
+  16 paraphrase/wrong cases) and the probe masters even *partial* answers (grader is lenient) — so R6
+  has **no measurable headroom** here. Confirms the adversarial `revise` verdict and the exec-summary
+  warning that items are tagged to metrics they can't causally move. **Not applied** (no eval gain).
+- **R5 (LLM flaw-gate):** would move real quiz quality, but the structural `quiz_validity` golden is at
+  1.0 and can't see it → not eval-gateable without a quality-graded golden. **Deferred.**
+- **R3 (spaced retrieval):** probe `reteach_recovery` already 1.0 → no headroom. **Deferred.**
+
+**The one genuine weak spot:** `prereq_survival = 0.833`. Diagnosed 2/12 failures: a **directionality
+error** (judge accepts `RL → MDP`, the reversed dependency) and one debatable pair (`ReAct → multi-agent`).
+This is a REAL product lever — but the golden currently calls a proxy judge (`run._live_judge`), not the
+product's `digest/verify` judge. The honest next iteration: **wire the golden to the product prereq judge,
+add an explicit directionality check to that judge's prompt, then keep/revert on `prereq_survival`.**
