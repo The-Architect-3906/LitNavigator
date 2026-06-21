@@ -52,8 +52,8 @@ NODE_META: dict[str, dict[str, str]] = {
     },
     "grade_kp": {
         "skill": "assess",
-        "method": "BKT / Rasch-IRT mastery update (never LLM self-judge)",
-        "paper": "Corbett & Anderson 1995 (BKT); arXiv:2603.02830 (KT beats LLM)",
+        "method": "BKT-lite mastery heuristic (never LLM self-judge)",
+        "paper": "cf. Corbett & Anderson 1995 (BKT); arXiv:2603.02830 (KT beats LLM)",
     },
     "reteach_kp": {
         "skill": "teach",
@@ -96,12 +96,12 @@ NODE_META: dict[str, dict[str, str]] = {
     "induce": {
         "skill": "digest",
         "method": "off-graph induction — derive prereq + misconception from evidence",
-        "paper": "RefD — Liang et al., EMNLP 2015; GraphRAG (Microsoft)",
+        "paper": "RefD-style — cf. Liang et al. 2015 (EMNLP); LLM graph extraction",
     },
     "induce_scaffold": {
         "skill": "digest",
         "method": "off-graph induction — derive prereq + misconception from evidence",
-        "paper": "RefD — Liang et al., EMNLP 2015; GraphRAG (Microsoft)",
+        "paper": "RefD-style — cf. Liang et al. 2015 (EMNLP); LLM graph extraction",
     },
 
     # ── Legacy path ──────────────────────────────────────────────────────────
@@ -117,7 +117,7 @@ NODE_META: dict[str, dict[str, str]] = {
     },
     "grade": {
         "skill": "assess",
-        "method": "BKT / Rasch-IRT mastery (legacy path)",
+        "method": "BKT posterior mastery update (legacy path)",
         "paper": "Corbett & Anderson 1995 (BKT)",
     },
     "lecture": {

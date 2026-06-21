@@ -1,12 +1,14 @@
 """MCQ distractor generation, SAQUET-style flaw gating, and IRT difficulty estimation.
 
-- make_distractors: overgenerate ~6 candidates via cheap LLM, filter the answer, deduplicate, cap to n.
+- make_distractors: overgenerate ~6 candidates via cheap LLM, filter the answer, deduplicate, then
+  rank by misconception-plausibility (cheap LLM; offline = input order) and keep the top n.
 - flaw_gate: SAQUET-style rejection of bad items (empty stem, <2 distractors, distractor==answer).
 - estimate_difficulty: weaker/cheaper LLM simulator attempts the item; wrong -> harder (irt_b > 0),
   right -> easier (irt_b < 0); clamped to [-3, 3].
 """
 from __future__ import annotations
 
+import json
 import sqlite3
 
 from litnav.llm import router
@@ -27,7 +29,8 @@ def make_distractors(
     Calls the cheap LLM tier to overgenerate ~6 candidates, then:
       1. Drops any candidate that case-insensitively equals *answer_key*.
       2. Deduplicates (preserving order).
-      3. Returns the first *n*.
+      3. Ranks the survivors by how tempting each is to a student holding a common
+         misconception (cheap LLM) and returns the top *n*. Offline: input order is kept.
 
     Offline (provider=none): the client returns the fallback dict immediately, so the
     fallback list (minus the answer) is used instead.
@@ -63,10 +66,50 @@ def make_distractors(
             continue
         seen.add(key)
         filtered.append(d_norm)
-        if len(filtered) >= n:
-            break
 
-    return filtered
+    # Overgenerate-AND-RANK (Scarlatos et al., NAACL 2024 BEA): keep the most plausible n, not the
+    # first n. Offline the ranker returns input order, so behaviour is unchanged ($0, deterministic).
+    if len(filtered) > n:
+        filtered = _rank_distractors(
+            question, answer_key, filtered,
+            conn=conn, session_id=session_id, budget=budget,
+        )
+    return filtered[:n]
+
+
+def _rank_distractors(
+    question: str,
+    answer_key: str,
+    candidates: list[str],
+    *,
+    conn: sqlite3.Connection,
+    session_id: str,
+    budget: int | None = None,
+) -> list[str]:
+    """Order candidates from most to least tempting for a student with a common misconception.
+
+    Cheap LLM tier; offline (provider=none) the fallback keeps input order, so offline callers get
+    the prior first-n behaviour deterministically.
+    """
+    if len(candidates) <= 1:
+        return candidates
+    result = router.complete_json(
+        "Reorder these candidate WRONG answers from MOST to LEAST tempting for a student who holds a "
+        "common misconception about the question. Return the same strings, reordered.\n"
+        f"Question: {question}\nCorrect answer: {answer_key}\nCandidates: {json.dumps(candidates)}\n"
+        'Return JSON only: {"ranked": ["...", "..."]}',
+        tier="cheap",
+        stage="quizgen_rank",
+        fallback={"ranked": candidates},
+        session_id=session_id,
+        conn=conn,
+        budget=budget,
+    )
+    ranked = [r for r in (result.get("ranked") or []) if r in candidates]
+    for c in candidates:               # preserve any candidate the model dropped
+        if c not in ranked:
+            ranked.append(c)
+    return ranked
 
 
 def flaw_gate(item: dict) -> tuple[bool, str]:

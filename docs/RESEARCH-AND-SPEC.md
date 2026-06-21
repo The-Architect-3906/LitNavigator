@@ -40,17 +40,17 @@ and tells you what to learn next — all under a strict, metered cost budget.
 |--|--|--|
 | Discover — rank | Keyword pre-filter, then meaning-based re-rank of candidate sources | **BM25** (Robertson & Zaragoza); **SPECTER** scientific embeddings (Cohan et al. 2020) → we use `text-embedding-3-small` cosine |
 | Discover — relevance | A cheap LLM scores each source's fit to the *specific* goal and drops adjacent-but-wrong ones | (our relevance gate) |
-| Digest — prerequisites | A non-LLM "reference-distance" signal (does A's material point at B more than the reverse?) blended with an LLM judge | **RefD** — Liang et al., *Measuring Prerequisite Relations Among Concepts*, EMNLP 2015 |
-| Digest — extraction | LLM extracts concepts + keypoints from source text (graph-style) | GraphRAG (Microsoft) |
+| Digest — prerequisites | A non-LLM "reference-distance" signal (does A's material point at B more than the reverse?) blended with an LLM judge | **RefD-style** reference-distance — cf. Liang et al. 2015 (EMNLP); the implemented signal is corpus reference-distance, closer to **ACE** (JEDM 2024) |
+| Digest — extraction | LLM extracts concepts + keypoints from source text into a graph | (LLM graph-structured extraction) |
 | Teach — depth | Goal sets a Bloom's-taxonomy ceiling (survey / functional / mastery) | **Bloom's taxonomy** (Anderson & Krathwohl, revised) |
 | Teach — explanation | Concise, evidence-grounded, worked examples; strategy varies by learner | **Mayer** (multimedia learning); **Sweller / Kalyuga** (cognitive load, worked-example & expertise-reversal) |
 | Assess — questions | Bloom-leveled question generation; bad items rejected by a flaw gate | **BloomLLM** (EC-TEL 2024); **SAQUET** item-flaw gate (AIED 2024) |
 | Assess — difficulty | A deliberately weaker LLM "student" attempts the item; harder if it fails | **SMART** (EMNLP 2025) student-simulation + IRT |
-| Assess — mastery | Bayesian Knowledge Tracing / Rasch-IRT updated from real answers — **never LLM self-judgement** | **BKT** (Corbett & Anderson 1995); specialised-KT-beats-LLM (arXiv 2603.02830) |
+| Assess — mastery | A **BKT-lite** mastery heuristic (Bloom-weighted update; the legacy path uses a true BKT posterior), updated from real answers — **never LLM self-judgement** | cf. **BKT** (Corbett & Anderson 1995); specialised-KT-beats-LLM (arXiv 2603.02830) |
 | Assess — spacing | Spaced-repetition review schedule after mastery | **FSRS** |
 | Artifact | Study notes / slides / map / worked example; the testing (retrieval-practice) effect | **Mayer**; **Roediger & Karpicke 2006** |
-| Orchestration | The outer agent picks which skill to run per state | **ReAct** (Yao et al. 2022); **Plan-and-Solve** (Wang et al. 2023) |
-| Cost | Cheap model by default, frontier only when needed; cheap pre-filters before paid calls | **FrugalGPT**; **RouteLLM** (ACL 2025) |
+| Orchestration | The outer agent picks which skill to run per state | **ReAct** (Yao et al., ICLR 2023); **Plan-and-Solve** (Wang et al. 2023) |
+| Cost | Cheap model by default, frontier only when needed; cheap pre-filters before paid calls | **FrugalGPT**; **RouteLLM** (ICLR 2025) |
 | Provider access | One gateway to any LLM provider (OpenAI / Anthropic / Gemini / DeepSeek / local) | **LiteLLM** unified API |
 
 ## 4. Architecture (the design)
@@ -70,7 +70,7 @@ flowchart TD
       T["teach a keypoint, grounded in cited evidence<br/>· Mayer multimedia · worked-example effect · strategy policy"]
       Q["quiz at a rising Bloom level<br/>· Bloom-leveled QG · SAQUET distractor gate · IRT difficulty"]
       A{{"👤 you answer"}}
-      G["grade → update the learner model<br/>· BKT / Rasch-IRT mastery — never LLM self-judgement"]
+      G["grade → update the learner model<br/>· BKT-lite mastery — never LLM self-judgement"]
       T --> Q --> A --> G
       G -->|wrong → reteach with a new strategy| T
       G -->|"I'm lost → re-explain simpler"| T
@@ -87,7 +87,7 @@ flowchart TD
     subgraph X ["Cross-cutting — applies to every step above"]
       direction LR
       OL["Outer agent loop · ReAct + Plan-and-Solve<br/>picks which skill to run, per state"]
-      CS["Cost spine · one metered router<br/>model cascade · BKT/Rasch routing ≈ free · per-session budget cap"]
+      CS["Cost spine · one metered router<br/>model cascade · rule-computed routing ≈ free · per-session budget cap"]
     end
 
     classDef disc fill:#dde6f2,stroke:#3f4b5e,color:#0f1b2b;
