@@ -11,6 +11,15 @@
  .toggle button{background:transparent;color:#cdd5e0;border:0;padding:.35rem .8rem;font-size:.85rem;cursor:pointer}
  .toggle button.on{background:var(--accent);color:#fff}
  .mut{color:#7a8699;font-size:.8rem}
+
+ /* ── Research-detail toggle ── */
+ .detail-toggle{display:flex;align-items:center;gap:.4rem;font-size:.8rem;color:#cdd5e0;margin-left:.6rem}
+ .detail-toggle input{accent-color:var(--accent);cursor:pointer}
+ .research-chip{font-size:.72rem;color:#5b7494;border-left:2px solid #c5d4e8;padding-left:.45rem;margin:.18rem 0 0 1.6rem;line-height:1.45}
+ .research-chip .chip-skill{font-weight:600;color:var(--accent)}
+ .research-chip .chip-sep{color:#c5ccd8;margin:0 .25rem}
+ /* Hide chips when the toggle is off */
+ body:not(.show-detail) .research-chip{display:none}
  .cols{display:flex;gap:1rem;max-width:64rem;margin:1.2rem auto;padding:0 1rem;align-items:flex-start}
  .card{background:#fff;border:1px solid #e2e6ee;border-radius:10px;padding:1rem;margin-bottom:1rem}
 
@@ -72,6 +81,12 @@
  .learner-name{font-size:.85rem;font-weight:500;margin-top:.35rem}
  .misconception{font-size:.76rem;color:var(--warn);margin-top:.1rem}
 
+ /* ── Recommend-next card ── */
+ .rec-item{display:flex;align-items:baseline;gap:.45rem;padding:.22rem 0;font-size:.84rem}
+ .rec-icon{flex-shrink:0;width:1.1rem;text-align:center}
+ .rec-name{font-weight:500}
+ .rec-reason{color:#5b7494;font-size:.78rem}
+
  /* Mode switching */
  body.mode-chat #glass{display:none}
  body.mode-glass #chat{display:none}
@@ -80,7 +95,7 @@
    body.mode-glass #chat,body.mode-chat #glass{display:block}
  }
 </style></head>
-<body class="mode-chat" data-sid="{{ sid }}">
+<body class="mode-chat show-detail" data-sid="{{ sid }}">
 <header>
   <b>LitNavigator</b>
   <span>{{ concept_name or "tutor" }}</span>
@@ -89,6 +104,10 @@
     <button id="t-chat" class="on" onclick="setMode('chat')">Chat</button>
     <button id="t-glass" onclick="setMode('glass')">Glass box</button>
   </span>
+  <label class="detail-toggle" title="Show the research method/paper behind each agent step">
+    <input type="checkbox" id="detail-chk" checked onchange="toggleDetail(this.checked)">
+    Show research detail
+  </label>
 </header>
 
 <div class="cols">
@@ -201,6 +220,12 @@
       </div>
     </div>
 
+    <!-- Recommend next -->
+    <div class="card" id="recommend" style="display:none">
+      <b>What to learn next</b>
+      <div id="recommend-list"><span class="mut">–</span></div>
+    </div>
+
     <!-- Decision rationale -->
     <div class="card" id="why" {% if not rationale %}style="display:none"{% endif %}>
       <b>Why this step</b>
@@ -295,10 +320,38 @@ function setFlow(steps){
     const d=document.createElement('div');
     d.className='step '+s.state;
     const ic=s.state==='done'?'✓':(s.state==='active'?'▶':'○');
-    d.innerHTML='<span class="ic">'+ic+'</span><span>'+esc(s.label)+(s.detail?' <span class="mut">· '+esc(s.detail)+'</span>':'')+'</span>';
+    // Main step line
+    let html='<span class="ic">'+ic+'</span><span>'+esc(s.label)+(s.detail?' <span class="mut">· '+esc(s.detail)+'</span>':'')+'</span>';
+    // Research provenance chip (hidden when show-detail is off)
+    if(s.skill||s.method||s.paper){
+      const skill=s.skill&&s.skill!=='—'?'<span class="chip-skill">'+esc(s.skill)+'</span>':'';
+      const method=s.method&&s.method!=='—'?esc(s.method):'';
+      const paper=s.paper&&s.paper!=='—'?'<em>'+esc(s.paper)+'</em>':'';
+      const parts=[skill,method,paper].filter(Boolean);
+      if(parts.length){
+        html+='<div class="research-chip">'+parts.join('<span class="chip-sep">·</span>')+'</div>';
+      }
+    }
+    d.innerHTML=html;
     f.appendChild(d);
   });
 }
+
+function toggleDetail(on){
+  document.body.classList.toggle('show-detail',on);
+  try{localStorage.setItem('litnav-detail',on?'1':'0')}catch(e){}
+}
+// Restore detail preference
+(function(){
+  try{
+    const v=localStorage.getItem('litnav-detail');
+    if(v==='0'){
+      document.body.classList.remove('show-detail');
+      const chk=document.getElementById('detail-chk');
+      if(chk)chk.checked=false;
+    }
+  }catch(e){}
+})();
 
 // Track previous route_version to detect changes
 let _prevRouteV = null;
@@ -381,6 +434,22 @@ function updateGlass(e){
   if(e.cost){
     document.getElementById('cost').textContent=e.cost.tokens+' tok ≈ $'+e.cost.usd;
   }
+
+  // ── Recommend-next panel ──
+  const recPanel=document.getElementById('recommend');
+  const recList=document.getElementById('recommend-list');
+  const recs=e.recommend||[];
+  if(recs.length){
+    recPanel.style.display='';
+    recList.innerHTML=recs.map(r=>{
+      const icon=r.eligible?'✓':'🔒';
+      return '<div class="rec-item">'
+        +'<span class="rec-icon">'+icon+'</span>'
+        +'<span><span class="rec-name">'+esc(r.name)+'</span>'
+        +' <span class="rec-reason">'+esc(r.reason)+'</span></span>'
+        +'</div>';
+    }).join('');
+  }
 }
 
 function handleEvent(e, steps, inp){
@@ -393,7 +462,8 @@ function handleEvent(e, steps, inp){
     if(e.text)addBubble(e.kind==='boundary'?'ai boundary':'ai',e.text,true);
   } else if(e.type==='step'){
     steps.forEach(s=>s.state='done');
-    steps.push({label:e.label,detail:e.detail,state:'active'});
+    steps.push({label:e.label,detail:e.detail,state:'active',
+                skill:e.skill,method:e.method,paper:e.paper});
     setFlow(steps);
   } else if(e.type==='teach'){
     steps.forEach(s=>s.state='done');setFlow(steps);

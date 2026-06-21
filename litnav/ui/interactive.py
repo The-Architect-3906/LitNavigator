@@ -13,8 +13,10 @@ from typing import List, Optional
 from litnav.conversation import dispatch, _looks_learn_request
 from litnav.graph.builder import build_graph, make_initial_state
 from litnav.nodes.retrieve import retrieve_node
+from litnav.recommend.recommend_next import recommend_next
 from litnav.storage import repo
 from litnav.ui.cost import session_cost
+from litnav.ui.flow_meta import meta_for
 from litnav.ui.graph_svg import to_svg
 from litnav.ui.trace import concept_graph
 
@@ -86,8 +88,22 @@ class TutorSession:
                 detail += f" · {qr['detected_misconception']}"
         elif node == "induce":
             detail = "source=induced"
+        meta = meta_for(node)
         return {"type": "step", "node": node,
-                "label": self._STEP_LABELS.get(node, node), "detail": detail}
+                "label": self._STEP_LABELS.get(node, node), "detail": detail,
+                "skill": meta["skill"], "method": meta["method"], "paper": meta["paper"]}
+
+    def _recommend(self) -> list[dict]:
+        """Call recommend_next and return a serialisable list; empty on any error."""
+        try:
+            recs = recommend_next(self.conn, self.sid)
+            return [
+                {"concept_id": r.concept_id, "name": r.name,
+                 "reason": r.reason, "eligible": r.eligible, "score": r.score}
+                for r in recs
+            ]
+        except Exception:
+            return []
 
     def _terminal_events(self) -> list[dict]:
         cur = self.current()
@@ -102,7 +118,8 @@ class TutorSession:
              "learner": cur["learner"], "cited": cur["cited"], "decision": cur["decision"],
              "rationale": cur["rationale"], "induced": cur["induced"], "intent": cur.get("intent"),
              "graph": to_svg(concept_graph(self.conn, self.sid)),
-             "cost": session_cost(self.conn, self.sid)},
+             "cost": session_cost(self.conn, self.sid),
+             "recommend": self._recommend()},
             {"type": "done", "done": cur["done"], "mastery": cur.get("mastery"),
              "confidence": cur.get("confidence")},
         ])
