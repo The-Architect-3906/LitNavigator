@@ -32,6 +32,10 @@ def extract_concepts(di: DigestInput, *, candidate: dict, session_id: str | None
     prompt = (
         f"From the evidence below about the domain '{di.domain_key}', list the teachable concepts "
         "and, for each, its key points. Ground every item ONLY in the evidence. Do not invent.\n\n"
+        "IMPORTANT — the `objective` field must be a FULL SENTENCE describing what a learner will "
+        "understand or be able to do, and must name the mechanism or why/how, not just the topic. "
+        'Bad: "explain ReAct". Good: "Explain how ReAct interleaves reasoning traces and actions '
+        'so that the agent can ground its decisions in real-world observations."\n\n'
         f"Evidence:\n{chunk_blob}\n\n"
         'Respond as JSON: {"concepts": [{"slug","name","domain","frontier_flag"}], '
         '"keypoints": [{"kp_id","concept_slug","name","objective","evidence_chunk_id","bloom_level"}]}'
@@ -54,8 +58,12 @@ def extract_concepts(di: DigestInput, *, candidate: dict, session_id: str | None
     raw_kps = result.get("keypoints") if isinstance(result, dict) else None
     keypoints: list[dict] | None = None
     if isinstance(raw_kps, list):
-        cand = [dict(k) for k in raw_kps if isinstance(k, dict) and k.get("concept_slug") in slugs
-                and isinstance(k.get("kp_id"), str)]
+        cand = []
+        for k in raw_kps:
+            if isinstance(k, dict) and k.get("concept_slug") in slugs and k.get("kp_id") is not None:
+                k = dict(k)
+                k["kp_id"] = str(k["kp_id"])   # LLM often returns an int id; coerce, don't discard (cf. D1)
+                cand.append(k)
         if cand:
             keypoints = cand
     if keypoints is None:

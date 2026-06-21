@@ -123,7 +123,8 @@ def digest(di: DigestInput, *, conn: sqlite3.Connection, candidate: dict,
     concepts, keypoints = extract.extract_concepts(di, candidate=candidate,
                                                    session_id=session_id, conn=conn, budget=budget)
     scored = edges_mod.build_edges(di, concepts, candidate=candidate,
-                                   session_id=session_id, conn=conn, budget=budget)
+                                   session_id=session_id, conn=conn, budget=budget,
+                                   keypoints=keypoints)
     labels = candidate.get("judge_labels", {})
     accuracy, (verified, unverified) = verify_mod.verify_pass(
         scored, judge_labels=labels, session_id=session_id, conn=conn, budget=budget)

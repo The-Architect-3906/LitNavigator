@@ -74,3 +74,17 @@ def test_invalid_bloom_coerced_to_recall(monkeypatch):
     monkeypatch.setattr(router, "complete_json", lambda *a, **k: live)
     _, keypoints = extract.extract_concepts(_input(), candidate=CANDIDATE, session_id=None, conn=None)
     assert keypoints[0]["bloom_level"] == "recall"
+
+
+def test_int_kp_id_coerced_not_dropped(monkeypatch):
+    """Live LLMs often return kp_id as an INT; it must be coerced to str and KEPT, not discarded.
+    The old isinstance(kp_id, str) check dropped it -> candidate fallback -> zero/ wrong keypoints,
+    so live concepts had no real objectives. Twin of the D1 chunk-id coercion bug."""
+    live = {"concepts": [{"slug": "tool_use", "name": "Tool Use"}],
+            "keypoints": [{"kp_id": 1, "concept_slug": "tool_use",
+                           "objective": "Understand what a tool call is.", "bloom_level": "recall"}]}
+    monkeypatch.setattr(router, "complete_json", lambda *a, **k: live)
+    _, keypoints = extract.extract_concepts(_input(), candidate=CANDIDATE, session_id=None, conn=None)
+    assert len(keypoints) == 1, "int kp_id keypoint was dropped (regression)"
+    assert keypoints[0]["kp_id"] == "1", "kp_id must be coerced to str"
+    assert keypoints[0]["objective"].startswith("Understand"), "the live LLM objective must survive"

@@ -97,7 +97,7 @@ class TutorSession:
             if text
         ]
         events.extend([
-            {"type": "question", "text": cur.get("question") or ""},
+            {"type": "question", "text": cur.get("question") or "", "bloom_level": cur.get("bloom")},
             {"type": "state", "route": cur["route"], "route_version": cur["route_version"],
              "learner": cur["learner"], "cited": cur["cited"], "decision": cur["decision"],
              "rationale": cur["rationale"], "induced": cur["induced"], "intent": cur.get("intent"),
@@ -191,6 +191,7 @@ class TutorSession:
             "teach": teach_msg,
             "teach_messages": teach_messages,
             "question": quiz.get("question"),
+            "bloom": quiz.get("bloom_level"),
             "mastery": round(cs.get("mastery", 0.0), 3) if cs else None,
             "confidence": round(cs.get("confidence", 0.0), 3) if cs else None,
             "last_feedback": last.get("feedback"),
@@ -351,17 +352,17 @@ class AgentSession:
             else:
                 yield {"type": "reply", "text": self._grounded_aside(message, aside_slug)}
             if question:
-                yield {"type": "question", "text": question}
+                yield {"type": "question", "text": question, "bloom_level": cur.get("bloom")}
             yield {"type": "done", "done": False}
         elif d["action"] == "out_of_scope" and _looks_learn_request(message):
             # The learner wants to learn something we don't have — decline honestly and name it,
             # rather than a flat "I can teach: …" list. (Greetings/chit-chat fall through to chat.)
             yield {"type": "reply", "text": self._boundary_reply(message), "kind": "boundary"}
             if question:
-                yield {"type": "question", "text": question}
+                yield {"type": "question", "text": question, "bloom_level": cur.get("bloom")}
             yield {"type": "done", "done": bool(cur.get("done"))}
         else:  # chat, or out_of_scope that isn't a learn request (e.g. a greeting)
             yield {"type": "reply", "text": d["reply"] or "What would you like to learn?"}
             if question:
-                yield {"type": "question", "text": question}
+                yield {"type": "question", "text": question, "bloom_level": cur.get("bloom")}
             yield {"type": "done", "done": bool(cur.get("done"))}
