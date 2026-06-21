@@ -1,23 +1,24 @@
 # Inner-loop scenario 3 — raft-consensus  (persona=give_up, English)
 - goal: How do I build a working Raft consensus implementation?
 
-- digested top source: 'A Scalable Multi-Layer PBFT Consensus for Blockchain' → 4 target concepts, 7 keypoints, 7 quiz items
+- digested top source: 'RAFT Based Wireless Blockchain Networks in the Presence of Malicious J' → 4 target concepts, 6 keypoints, 6 quiz items
 
 ## RESULT  reached_done=True turns=12 fired={'teach': True, 'reteach': True, 'graded': 12, 'correct': 0, 'mastered': False, 'conceded': True, 'handle_lost': False}
-- route: ['Practical Byzantine Fault Tolerance (PBFT) Mechanism[conceded]', 'Scalability Challenges in PBFT[conceded]', 'Double-Layer PBFT Consensus[conceded]', 'Communication Complexity in Consensus Mechanisms[conceded]']
+- route: ['Raft Consensus Mechanism[conceded]', 'Wireless Blockchain Networks[conceded]', 'Malicious Jamming[conceded]', 'Poisson Point Process[conceded]']
 - teaching language=English (want English, ok=True)
-- artifact language=English (want English, ok=True) citations=['c1', 'c2', 'c3']
-- cost usd=0.027574 was_live=True
+- artifact language=English (want English, ok=True) citations=['c1']
+- cost usd=0.019634 was_live=True
+- recommend-next: Poisson Point Process[ready]; Raft Consensus Mechanism[ready]; Wireless Blockchain Networks[ready]; Malicious Jamming[ready]; Analytical Guidance for Deployment[ready]
 
 ## QUALITY (frontier judge, 1-5)
-- source_relevance=1 · teaching_quality=2 · quiz_quality=2 · feedback_quality=2 · reexplain_quality=5 · artifact_quality=2 · language_quality=5 · groundedness=3 · overall=2
-- issues: The session focuses on PBFT instead of Raft consensus, which is the learner's goal.
-  · source_relevance: 1 — The source and concepts are about PBFT, not Raft consensus, which is the learner's goal.
-  · teaching_quality: 2 — The teaching text is clear but irrelevant to the learner's goal of Raft consensus.
-  · quiz_quality: 2 — Quiz questions are relevant to PBFT but not to Raft consensus.
-  · feedback_quality: 2 — Feedback is repetitive and does not guide the learner towards their goal of Raft consensus.
-  · reexplain_quality: 5 — No re-explanation was needed as the learner never got lost.
-  · artifact_quality: 2 — Study notes are well-organized but irrelevant to the learner's goal of Raft consensus.
-  · language_quality: 5 — The language is fluent and clear in English.
-  · groundedness: 3 — Claims are grounded in the source evidence, but the source itself is irrelevant to the learner's goal.
-  · overall: 2 — The session is off-topic and does not address the learner's goal of building a Raft consensus implementation.
+- source_relevance=3 · teaching_quality=3 · quiz_quality=3 · feedback_quality=3 · reexplain_quality=5 · artifact_quality=3 · language_quality=5 · groundedness=4 · overall=3
+- issues: Lacks focus on practical implementation of Raft.
+  · source_relevance: 3 — The source and concepts are related to the Raft consensus mechanism but focus more on wireless blockchain networks and malicious jamming, which are tangential to the learner's goal of building a Raft implementation.
+  · teaching_quality: 3 — The teaching text explains the Raft mechanism in the context of wireless networks but lacks depth on building a Raft implementation.
+  · quiz_quality: 3 — Quiz questions are relevant to the source material but do not directly address building a Raft implementation.
+  · feedback_quality: 3 — Feedback is relevant to the questions but does not guide the learner towards building a Raft implementation.
+  · reexplain_quality: 5 — No re-explanation was needed as the learner did not get lost.
+  · artifact_quality: 3 — Study notes summarize key concepts but do not focus on practical steps for building a Raft implementation.
+  · language_quality: 5 — The teaching and notes are fluently written in English.
+  · groundedness: 4 — Most claims are grounded in the source, but there is some extrapolation beyond the evidence regarding practical implementation.
+  · overall: 3 — The session covers relevant concepts but lacks focus on the practical aspects of building a Raft implementation.

@@ -1,23 +1,24 @@
 # Inner-loop scenario 6 — mrna-vaccines  (persona=struggle, English)
 - goal: A working understanding of how mRNA vaccines are designed.
 
-- digested top source: 'Advances in mRNA Vaccines for Infectious Diseases' → 4 target concepts, 8 keypoints, 8 quiz items
+- digested top source: 'MRNA vaccine' → 4 target concepts, 6 keypoints, 6 quiz items
 
-## RESULT  reached_done=True turns=16 fired={'teach': True, 'reteach': True, 'graded': 16, 'correct': 12, 'mastered': True, 'conceded': False, 'handle_lost': False}
-- route: ['RNA-based Technologies[done]', 'mRNA Vaccine Mechanism[done]', 'Immune Response[done]', 'Vaccine Manufacturing[done]']
+## RESULT  reached_done=True turns=20 fired={'teach': True, 'reteach': True, 'graded': 20, 'correct': 15, 'mastered': True, 'conceded': False, 'handle_lost': False}
+- route: ['Lipid Nanoparticles[done]', 'mRNA Vaccine[done]', 'Protein Synthesis[done]', 'Antigen Encoding[done]', 'Immune Response[done]']
 - teaching language=English (want English, ok=True)
 - artifact language=English (want English, ok=True) citations=['c1']
-- cost usd=0.025777 was_live=True
+- cost usd=0.024504 was_live=True
+- recommend-next: Adaptive Immunity[ready]
 
 ## QUALITY (frontier judge, 1-5)
-- source_relevance=5 · teaching_quality=4 · quiz_quality=3 · feedback_quality=3 · reexplain_quality=5 · artifact_quality=4 · language_quality=5 · groundedness=4 · overall=4
-- issues: Repetitive quiz questions and minimal feedback.
+- source_relevance=5 · teaching_quality=4 · quiz_quality=3 · feedback_quality=4 · reexplain_quality=5 · artifact_quality=4 · language_quality=5 · groundedness=5 · overall=4
+- issues: Repetitive quiz questions and limited coverage of overall vaccine design.
   · source_relevance: 5 — The source and concepts are directly related to the learner's goal of understanding mRNA vaccine design.
-  · teaching_quality: 4 — The teaching text is clear and relevant, but slightly repetitive in explaining the mechanism.
-  · quiz_quality: 3 — Questions are repetitive and could be more varied to cover different aspects of the topic.
-  · feedback_quality: 3 — Feedback is minimal and does not provide detailed guidance for improvement.
+  · teaching_quality: 4 — The teaching text effectively explains the role of lipid nanoparticles and mRNA in vaccines, but could be more comprehensive on the overall vaccine design process.
+  · quiz_quality: 3 — The quiz questions are repetitive and overly focused on lipid nanoparticles, lacking diversity in assessing understanding of mRNA vaccine design.
+  · feedback_quality: 4 — Feedback is clear and correctly identifies key functions of lipid nanoparticles, but could be more varied.
   · reexplain_quality: 5 — No re-explanation was needed as the learner did not get lost.
-  · artifact_quality: 4 — Study notes are well-organized but could be more detailed in some areas.
-  · language_quality: 5 — The language is fluent and appropriate for the learner's goal.
-  · groundedness: 4 — Mostly grounded in evidence, but some claims could be more explicitly tied to the source.
-  · overall: 4 — Overall, the session was effective but could improve in quiz variety and feedback detail.
+  · artifact_quality: 4 — Study notes are concise and relevant, but could include more detail on the overall vaccine design process.
+  · language_quality: 5 — The teaching and notes are fluently written in English.
+  · groundedness: 5 — All claims are well-grounded in the provided source evidence.
+  · overall: 4 — The session is effective but could improve in quiz diversity and comprehensive coverage of mRNA vaccine design.
