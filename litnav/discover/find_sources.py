@@ -9,6 +9,7 @@ import sqlite3
 
 from litnav.discover.contract import DiscoverInput, DiscoverResult, Source
 from litnav.discover import intent as intent_mod, rank as rank_mod, fulltext as fulltext_mod
+from litnav.discover import relevance as relevance_mod
 from litnav.discover import query as query_mod
 from litnav.discover.adapters import openalex, wikipedia
 from litnav.storage import openworld_repo
@@ -41,6 +42,8 @@ def find(di: DiscoverInput, *, conn: sqlite3.Connection, session_id: str | None 
             pass                                   # an adapter outage is non-fatal
     ranked = rank_mod.rank_sources(sq, sources, conn=conn, session_id=session_id,
                                    k=di.k, budget=budget)
+    ranked = relevance_mod.relevance_gate(sq, ranked, conn=conn, session_id=session_id,
+                                          budget=budget, min_keep=min(2, len(ranked)))
     fulltext_mod.attach_fulltext(ranked, top_k=min(_FULLTEXT_TOPK, len(ranked)))
     for s in ranked:
         if not s.why:
