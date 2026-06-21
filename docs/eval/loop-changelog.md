@@ -24,3 +24,15 @@ profile, before the autonomous keep/revert loop is meaningful.
   effect is **live-only** and the structural quiz_validity golden can't see it. Kept on: closes a verified
   gap + **zero regression (337 green)** + correct by inspection. NOT an eval-gated keep — flagged honestly.
 - **Citation:** Scarlatos et al., NAACL 2024 BEA (overgenerate-and-rank).
+
+### R1 + R8 — claims/honesty fixes (docs) · stage=learner-model/discover · applied
+- **R1 (BKT overstatement):** methods ④d and storyboard ⑥ now say **"BKT-lite mastery heuristic
+  (cf. Corbett & Anderson 1995)"** instead of plain "BKT — Corbett & Anderson 1995", matching the
+  honest spec §11/§12 and the verified code (`kp_bump` + linear confidence, not a fitted BKT). The
+  cost line's "BKT/Rasch routing" → "mastery/difficulty updates are rule-based".
+- **R8 (venue/claim errors):** RouteLLM **ACL 2025 → ICLR 2025**; ReAct **→ ICLR 2023** (arXiv:2210.03629);
+  specialised-KT framing softened to "comparable at far lower cost" (not "always beats").
+- **Eval:** docs-only, not eval-gated; serves Responsible-AI / Presentation. Not destructive to code.
+- *Deferred (need live eval or larger work):* R4 (RefD/GraphRAG reframe — editorial, recommend Architect
+  review), R3 (deliver spaced-retrieval probes), R5 (LLM flaw-gate), R6 (partial-credit grading) — all
+  need the live grading/prereq eval + a harder probe to be keep/revert-gated meaningfully.
