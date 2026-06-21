@@ -6,6 +6,12 @@
       "runtimeExecutable": "python",
       "runtimeArgs": ["-m", "litnav.ui.server"],
       "port": 8000
+    },
+    {
+      "name": "litnav-ui-offline",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-c", "import os; os.environ['LITNAV_LLM_PROVIDER']='none'; import uvicorn; from litnav.ui.server import app; uvicorn.run(app, host='127.0.0.1', port=8000)"],
+      "port": 8000
     }
   ]
 }
