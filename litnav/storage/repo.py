@@ -521,3 +521,34 @@ def get_quiz_by_kp_bloom(
                 "expected_keypoints": r[11], "targets_misconception": r[12],
             }
     return None
+
+
+def get_any_quiz_for_kp(
+    conn: sqlite3.Connection,
+    keypoint_id: str,
+    exclude_ids: list[int] | None = None,
+) -> dict | None:
+    """Return any cached quiz for a keypoint, regardless of bloom level (preferring the lowest
+    bloom). Digested quiz seeds may be stored at a bloom outside the assess ladder
+    (recall/comprehension/application) — without a bloom-agnostic fallback they are unreachable
+    and the concept always concedes. Skips used ids."""
+    exclude = set(exclude_ids or [])
+    _ORDER = {"recall": 0, "comprehension": 1, "application": 2}
+    rows = conn.execute(
+        "SELECT id, concept_id, keypoint_id, bloom_level, question, answer_key, "
+        "qtype, difficulty, evidence_chunk_id, source_paper_id, rubric, "
+        "expected_keypoints, targets_misconception "
+        "FROM quiz_items WHERE keypoint_id=? ORDER BY id",
+        (keypoint_id,),
+    ).fetchall()
+    rows = [r for r in rows if r[0] not in exclude]
+    rows.sort(key=lambda r: _ORDER.get(r[3], 1))   # prefer lower bloom rung
+    for r in rows:
+        return {
+            "id": r[0], "concept_id": r[1], "keypoint_id": r[2],
+            "bloom_level": r[3], "question": r[4], "answer_key": r[5],
+            "qtype": r[6], "difficulty": r[7], "evidence_chunk_id": r[8],
+            "source_paper_id": r[9], "rubric": r[10],
+            "expected_keypoints": r[11], "targets_misconception": r[12],
+        }
+    return None

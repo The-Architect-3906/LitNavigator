@@ -38,7 +38,9 @@ def _get_or_generate(
 
     evidence = repo.get_chunk_text(conn, kp_meta.get("evidence_chunk_id") or "")
     if not evidence:
-        return None
+        # No evidence to generate from — rescue with any cached quiz for this keypoint
+        # (digested seeds may be stored at a bloom outside the assess ladder).
+        return repo.get_any_quiz_for_kp(conn, keypoint_id, exclude_ids=used_ids)
 
     spec = {
         "recall":        "Direct recall: ask what this key point IS. Short answer.",
@@ -62,7 +64,10 @@ def _get_or_generate(
         conn=conn,
     )
     if not result or not result.get("question"):
-        return None
+        # Generation produced nothing (offline, or unusable evidence). Last resort: any cached
+        # quiz for this keypoint regardless of bloom rung — keeps the digested teach loop alive
+        # instead of skipping straight to concede.
+        return repo.get_any_quiz_for_kp(conn, keypoint_id, exclude_ids=used_ids)
 
     # 3) Generate MCQ distractors (overgenerate-rank), flaw-gate, estimate IRT difficulty
     question_text = result["question"]
