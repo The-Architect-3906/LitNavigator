@@ -208,9 +208,17 @@ def assess_decider(state: NavState) -> str:
 
     if s.get("last_result") == "correct":
         idx = BLOOM_LADDER.index(bloom)
-        if idx + 1 < len(BLOOM_LADDER):
-            return "assess_next"   # upgrade bloom on same keypoint
-        # Hit top of ladder (application) with a correct answer → concept-level check
+        # Respect the goal's Bloom CEILING (survey→comprehension, functional/mastery→application).
+        # Without this, a survey goal keeps trying to upgrade past its ceiling: assess_next caps the
+        # bloom, re-poses the same question, and the concept NEVER advances — an infinite re-quiz loop
+        # (found by the inner-loop storyboard capture on a survey-goal scenario).
+        ceiling = state.get("bloom_ceiling") or BLOOM_LADDER[-1]
+        ceil_idx = BLOOM_LADDER.index(ceiling) if ceiling in BLOOM_LADDER else len(BLOOM_LADDER) - 1
+        if idx + 1 < len(BLOOM_LADDER) and idx < ceil_idx:
+            return "assess_next"   # upgrade bloom on same keypoint (still below the ceiling)
+        # At the Bloom ceiling (or ladder top) with a correct answer → concept-level mastery check.
+        # 'hold' = not yet mastered → keep quizzing at the ceiling (each correct raises mastery until
+        # the threshold is met); it does NOT escalate Bloom past the ceiling anymore.
         dec = route_decider_node(state)
         return {"advance": "advance_kp", "replan": "diagnose", "hold": "assess_next"}[dec]
 
