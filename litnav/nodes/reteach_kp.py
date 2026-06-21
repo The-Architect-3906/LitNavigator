@@ -50,6 +50,8 @@ def reteach_kp_node(state: NavState, conn: sqlite3.Connection) -> dict:
         "Then re-explain based on that gap."
     )
 
+    language = state.get("target_language") or "English"
+
     # Anti-over-help guard: do NOT embed the answer key in the prompt.
     # (The answer_key is intentionally NOT passed here — spec §6.3.)
     anti_over_help = (
@@ -68,7 +70,8 @@ def reteach_kp_node(state: NavState, conn: sqlite3.Connection) -> dict:
         f"A learner answered a {bloom}-level question about this key point incorrectly. "
         f"Re-teach ONLY this key point using the '{strategy}' strategy. "
         f"{instruction} Ground your explanation strictly in the evidence. "
-        f"Be targeted and concise (3-4 sentences). Do NOT quiz.\n\n"
+        f"Be targeted and concise (3-4 sentences). Do NOT quiz. "
+        f"Respond in {language}.\n\n"
         f"{anti_over_help}\n\n"
         f"Key point: {kp_meta['name']}\n"
         f"Objective: {kp_meta['objective']}\n"

@@ -145,25 +145,27 @@ def make_artifact(
     graph = {"concepts": renderer_concepts, "edges": edges}
 
     # ── 6. Dispatch to renderer(s) ────────────────────────────────────────────
+    lang = ai.language or "English"
+
     if fmt == "mindmap":
         content = mindmap.render(graph, citations)
 
     elif fmt == "notes":
         content = notes.render(
             renderer_concepts, evidence_by_concept, citations,
-            conn=conn, session_id=session_id,
+            conn=conn, session_id=session_id, language=lang,
         )
 
     elif fmt == "slides":
         content = slides.render(
             renderer_concepts, evidence_by_concept, citations,
-            conn=conn, session_id=session_id,
+            conn=conn, session_id=session_id, language=lang,
         )
 
     elif fmt == "worked_example":
         content = worked_example.render(
             renderer_concepts, evidence_by_concept, citations,
-            conn=conn, session_id=session_id,
+            conn=conn, session_id=session_id, language=lang,
         )
 
     elif fmt == "combination":
@@ -171,11 +173,11 @@ def make_artifact(
         map_section = mindmap.render(graph, citations)
         notes_section = notes.render(
             renderer_concepts, evidence_by_concept, citations,
-            conn=conn, session_id=session_id,
+            conn=conn, session_id=session_id, language=lang,
         )
         worked_section = worked_example.render(
             renderer_concepts, evidence_by_concept, citations,
-            conn=conn, session_id=session_id,
+            conn=conn, session_id=session_id, language=lang,
         )
         content = "\n\n---\n\n".join([map_section, notes_section, worked_section])
 

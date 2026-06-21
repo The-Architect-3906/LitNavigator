@@ -42,6 +42,8 @@ def grade_kp_node(state: NavState, conn: sqlite3.Connection) -> dict:
     fallback_correct = bool(
         answer.strip() and quiz.get("answer_key", "").lower() in answer.lower()
     )
+    language = state.get("target_language") or "English"
+
     # Grade for the KEY IDEA (paraphrases ok), not verbatim / over-strict rubric matching.
     # GEPA-tuned: the old "grade strictly" prompt rejected correct paraphrases on EVERY model (incl.
     # gpt-5.4 / gpt-5.5 — stronger models were *stricter*); the key-idea prompt scores 100% on the
@@ -52,7 +54,7 @@ def grade_kp_node(state: NavState, conn: sqlite3.Connection) -> dict:
         "Rules: (1) accept paraphrases, synonyms, and correct partial answers that still capture "
         "the key idea; (2) mark WRONG if it omits the key idea, gives only a fragment of a required "
         "set, is too vague to evaluate, or states a misconception; (3) ignore style, length, and "
-        "extra detail. Return JSON only.\n"
+        f"extra detail. Write the \"feedback\" field in {language}. Return JSON only.\n"
         f"Question: {quiz.get('question', '')}\n"
         f"Expected key idea: {quiz.get('answer_key', '')}\n"
         f"Supporting evidence: {evidence}\n"

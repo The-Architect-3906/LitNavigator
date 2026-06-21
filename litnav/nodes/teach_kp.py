@@ -69,6 +69,8 @@ def teach_kp_node(state: NavState, conn: sqlite3.Connection) -> dict:
         "direct":         "Explain directly and clearly.",
     }.get(teach_strategy, "Explain clearly and concisely.")
 
+    language = state.get("target_language") or "English"
+
     fallback = (
         f"**{kp_meta['name']}**\n\n"
         f"Objective: {kp_meta['objective']}\n\n"
@@ -79,7 +81,8 @@ def teach_kp_node(state: NavState, conn: sqlite3.Connection) -> dict:
         f"Teach ONLY the following key point, grounded strictly in the provided evidence. "
         f"Do NOT quiz or ask questions. "
         f"Teach using a '{teach_strategy}' approach: {strategy_clause} "
-        f"Be clear and concise (3-5 sentences).\n\n"
+        f"Be clear and concise (3-5 sentences). "
+        f"Respond in {language}.\n\n"
         f"Key point: {kp_meta['name']}\n"
         f"Learning objective: {kp_meta['objective']}\n"
         f"Evidence (cite this as your source): {evidence}",

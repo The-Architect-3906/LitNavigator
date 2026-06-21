@@ -10,6 +10,7 @@ class ArtifactInput:
     concept_ids: list[int]
     scenario: dict                 # {goal_type, user_request, content_kind}
     format: str | None = None      # optional override; else selected
+    language: str | None = None    # learner's output language (e.g. "Chinese"); None → "English"
 
 
 @dataclass

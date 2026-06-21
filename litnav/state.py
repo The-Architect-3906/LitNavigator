@@ -122,6 +122,7 @@ class NavState(TypedDict):
     goal_type: Optional[str]       # "mastery" | "functional" | "survey"
     goal_text: Optional[str]       # raw learner goal text
     bloom_ceiling: Optional[str]   # Bloom level cap derived from goal_type
+    target_language: Optional[str] # output language inferred from goal text (e.g. "Chinese")
 
     # Conversation intent set by the dispatcher for the current turn
     # "lost" → handle_lost node; None → normal flow

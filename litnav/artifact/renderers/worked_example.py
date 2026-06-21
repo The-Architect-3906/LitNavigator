@@ -55,11 +55,12 @@ def _templated(concept: dict, evidence: list[str]) -> dict:
     }
 
 
-def _build_prompt(concept: dict, evidence: list[str]) -> str:
+def _build_prompt(concept: dict, evidence: list[str], language: str = "English") -> str:
     name = concept.get("name") or concept.get("slug") or "?"
     lines = [
         f"Produce a step-by-step worked example for the concept '{name}' grounded ONLY in the evidence below.",
         "Rules: each step must be concrete and derived from the evidence; do NOT invent facts.",
+        f"Write ALL output in {language}.",
         'Return ONLY valid JSON: {"steps":["<step text>",...],"practice":{"question":"<Q>","answer":"<A>"}}',
         "Include 3–5 numbered steps and exactly one practice item with a question and answer.",
         "",
@@ -77,12 +78,13 @@ def _build(
     conn: sqlite3.Connection,
     session_id: str,
     budget: int | None,
+    language: str = "English",
 ) -> dict:
     """Return a worked-example dict from LLM or deterministic fallback."""
     from litnav.llm import router
 
     fallback = _templated(concept, evidence)
-    prompt = _build_prompt(concept, evidence)
+    prompt = _build_prompt(concept, evidence, language=language)
 
     result = router.complete_json(
         prompt,
@@ -157,6 +159,7 @@ def render(
     conn: sqlite3.Connection,
     session_id: str,
     budget: int | None = None,
+    language: str = "English",
 ) -> str:
     """Render worked examples as a Markdown string.
 
@@ -172,6 +175,9 @@ def render(
         Passed through to the router for cost metering.
     budget:
         Optional token budget; forwarded to the router.
+    language:
+        The learner's output language (e.g. "Chinese"). Injected into the LLM prompt.
+        Offline/template path is language-neutral (structural Markdown only).
     """
     provider = os.environ.get("LITNAV_LLM_PROVIDER", "").lower()
     offline = provider in ("none", "offline")
@@ -185,7 +191,8 @@ def render(
         if offline:
             built = _templated(concept, evidence)
         else:
-            built = _build(concept, evidence, conn=conn, session_id=session_id, budget=budget)
+            built = _build(concept, evidence, conn=conn, session_id=session_id, budget=budget,
+                           language=language)
 
         # Per-section markdown (includes its own Citations line for simplicity)
         md_parts.append(_to_markdown(concept, built, citations))

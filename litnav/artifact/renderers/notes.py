@@ -42,11 +42,13 @@ def _offline_template(concepts: list[dict], evidence_by_concept: dict[str, list[
     return notes_list
 
 
-def _build_prompt(concepts: list[dict], evidence_by_concept: dict[str, list[str]]) -> str:
+def _build_prompt(concepts: list[dict], evidence_by_concept: dict[str, list[str]],
+                  language: str = "English") -> str:
     lines = [
         "Produce Cornell-style study notes grounded ONLY in the evidence below.",
         "Rules: concise (Mayer's coherence principle) — do NOT copy sentences verbatim;",
         "distil each concept into meaningful cues (questions) and a SHORT summary phrase.",
+        f"Write ALL output in {language}.",
         "Return JSON: {\"notes\":[{\"concept\":\"<name>\",\"cues\":[\"<q>\"],\"summary\":\"<short phrase>\"}]}",
         "",
         "Evidence:",
@@ -69,6 +71,7 @@ def render(
     conn: sqlite3.Connection,
     session_id: str,
     budget: int | None = None,
+    language: str = "English",
 ) -> str:
     """Render Cornell-style study notes as a Markdown string.
 
@@ -84,6 +87,9 @@ def render(
         Passed through to the router for cost metering.
     budget:
         Optional token budget; forwarded to the router.
+    language:
+        The learner's output language (e.g. "Chinese"). Injected into the LLM prompt.
+        Offline/template path is language-neutral (structural Markdown only).
     """
     provider = os.environ.get("LITNAV_LLM_PROVIDER", "").lower()
     offline = provider in ("none", "offline")
@@ -97,7 +103,7 @@ def render(
         notes_list = fallback_notes
     else:
         from litnav.llm import router
-        prompt = _build_prompt(concepts, evidence_by_concept)
+        prompt = _build_prompt(concepts, evidence_by_concept, language=language)
         result = router.complete_json(
             prompt,
             tier="cheap",

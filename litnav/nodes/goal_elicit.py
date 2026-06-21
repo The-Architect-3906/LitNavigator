@@ -16,7 +16,7 @@ from __future__ import annotations
 import re
 import sqlite3
 
-from litnav.llm import router
+from litnav.llm import router, lang
 from litnav.state import bloom_ceiling_for
 from litnav.storage import openworld_repo
 
@@ -110,6 +110,7 @@ def goal_elicit_node(state: dict, conn: sqlite3.Connection) -> dict:
 
     goal_type = classify_goal(goal_text, conn=conn, session_id=session_id)
     ceiling = bloom_ceiling_for(goal_type)
+    target_language = lang.detect_language(goal_text, conn=conn, session_id=session_id)
 
     openworld_repo.set_goal(
         conn,
@@ -123,6 +124,7 @@ def goal_elicit_node(state: dict, conn: sqlite3.Connection) -> dict:
         "goal_type": goal_type,
         "goal_text": goal_text,
         "bloom_ceiling": ceiling,
+        "target_language": target_language,
         "rationale": f"Goal elicitation: '{goal_text[:80]}' → {goal_type} (bloom_ceiling={ceiling})",
         "history": [{"event": "goal_elicit", "goal_type": goal_type, "bloom_ceiling": ceiling}],
     }

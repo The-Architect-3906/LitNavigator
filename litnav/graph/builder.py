@@ -262,6 +262,7 @@ def make_initial_state(
         "goal_text": goal_text,
         "goal_type": goal_type,
         "bloom_ceiling": None,
+        "target_language": None,
         "history": [],
     }
 
