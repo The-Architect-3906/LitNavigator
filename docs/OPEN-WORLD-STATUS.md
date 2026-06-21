@@ -1,6 +1,6 @@
 # Open-World LitNavigator — Status & Progress
 
-**Branch:** `feat/open-world-digest` · **Updated:** 2026-06-21 · **Tests:** 268 passed
+**Branch:** `feat/open-world-digest` · **Updated:** 2026-06-21 · **Tests:** 272 passed
 
 This is the single source of truth for *where the open-world build is*. It is organized by the
 architecture spec's milestones (§9). Detailed execution records, the live-first re-audit, the
@@ -86,11 +86,18 @@ silent fallback** (a dead provider raises, never silently returns a fixture).
 - **Live-surfaced fix:** `gpt-4o-mini` sometimes pre-numbers worked-example steps ("1. …", "Step 2 — …") → the deterministic emitter double-numbered ("1. 1. …"); now strips a leading enumerator before re-numbering (regression test added). *(This is exactly the kind of defect only a live run exposes — offline templates never pre-number.)*
 - **Deferred (recorded):** Marp→`.pptx` is an external `marp-cli` post-step (we emit the `.md`), not a model; UI surfacing of artifacts → OW-6.
 
+### OW-5.1 — persistence-chain repair ✅ (exposed by fresh-topic live e2e)
+A fresh random topic (`diffusion models`, outside every fixture) run end-to-end LIVE revealed the digest→teach→artifact chain was **broken on real data while every gate was green** — because the gates asserted on in-memory returns / hand-seeded fixtures, never the persisted graph downstream stages consume.
+- **Root causes & fixes:** (1) `create_concept` used `INSERT OR IGNORE`; an LLM `frontier_flag` outside the `CHECK` set silently dropped **every** concept → empty graph — now coerced to NULL (`repo.py`). (2) keypoint `evidence_chunk_id` (`'1','2'…`) never matched `cN` chunk ids — now normalized to a real chunk at write time (`pipeline.py`). (3) `make_artifact` read only `paper_chunks.concept_id` (NULL for digested data) → empty/uncited artifacts — now gathers via keypoint objectives + keypoint→chunk, with a **source-chunk pool fallback** so artifacts stay grounded + cited even when extraction yields no keypoints.
+- **Gate hardening:** `verify_digest_live` now asserts concepts PERSIST + keypoint evidence resolves; **new `verify_openworld_e2e_live`** runs a fresh topic discover→digest→teach→artifact and asserts the persisted graph + non-empty grounded artifacts with resolving citations.
+- **Live result (fresh `variational autoencoders`):** 7 concepts PERSISTED, keypoint evidence + quiz FKs valid, goal classified `mastery`, notes/slides/mindmap all non-empty + cited (resolve to real chunks). **~$0.003/run.**
+- **Open findings (for the 10-scenario eval):** keypoint extraction is sparse/non-deterministic (sometimes 0); single-source full text isn't sub-chunked, so citations can collapse to `c0`; single-source digest yields 0 surviving prereq edges (richer/multi-source needed).
+
 ---
 
 ## Consolidated verification
 
-**Offline gates (deterministic, $0):** `verify_m0` `verify_m1` `verify_m2` `verify_m3` `verify_cost` `verify_digest` `verify_discover` `verify_teach_assess` `verify_artifact` — all green. `pytest -q` = **268 passed**.
+**Offline gates (deterministic, $0):** `verify_m0` `verify_m1` `verify_m2` `verify_m3` `verify_cost` `verify_digest` `verify_discover` `verify_teach_assess` `verify_artifact` — all green. `pytest -q` = **272 passed**.
 
 **LIVE gates (real provider, metered):**
 | gate | result | cost |
@@ -101,6 +108,7 @@ silent fallback** (a dead provider raises, never silently returns a fixture).
 | `verify_discover_live` | ALL PASS (6 sources) | ~$0.0021 |
 | `verify_teach_assess_live` | ALL PASS (goal/distractors/metered grade) | ~$0.00015 |
 | `verify_artifact_live` | ALL PASS (notes/slides/worked live; citations resolve; metered stage=artifact) | ~$0.0004 |
+| `verify_openworld_e2e_live` | ALL PASS (fresh topic discover→digest→teach→artifact; persisted graph; grounded cited artifacts) | ~$0.003 |
 
 **Spec compliance:** OW-0..OW-3 fully aligned (research↔spec↔plan↔code↔tests); 7 prior deviations (RefD, query cache, papers.source_id, result cache, BM25, 80% alert, qwen bypass) all fixed; deferred items flagged inline in the spec. (Audit detail in `archive/`.)
 
