@@ -22,20 +22,6 @@ _SIM_MIN_SCORE = 0.15   # keep a similarity edge if the LLM pairwise judge score
                         # (Replaces a bare-name cosine floor, which couldn't separate related from unrelated.)
 
 
-def _label_strength(chunk_texts: list[str], fallback: str, *, session_id, conn, budget) -> str:
-    """Metered analogue of induce._label_strength — cheap tier, candidate fallback."""
-    prompt = (
-        "Rate how strongly the evidence asserts the prerequisite relation it is cited for.\n"
-        f"Evidence: {chunk_texts}\n"
-        'Respond as JSON: {"max_strength": "weak_hint" | "general_statement" | "explicit_assertion"}'
-    )
-    result = router.complete_json(prompt, tier="cheap", stage="digest",
-                                  fallback={"max_strength": fallback}, session_id=session_id,
-                                  conn=conn, budget=budget)
-    labelled = result.get("max_strength", fallback) if isinstance(result, dict) else fallback
-    return labelled if labelled in _VALID_STRENGTH else fallback
-
-
 def _judge_similar(a_desc: str, b_desc: str, evidence: list[str], *,
                    domain: str = "", session_id, conn, budget) -> float:
     """LLM pairwise relational judge (cross-encoder) for a 'similar' edge — replaces bare-name cosine.
