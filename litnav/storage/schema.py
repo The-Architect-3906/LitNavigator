@@ -219,6 +219,29 @@ CREATE TABLE IF NOT EXISTS digest_cache (
     built_at TEXT,
     human_checked INTEGER DEFAULT 0
 );
+
+CREATE TABLE IF NOT EXISTS discover_results (
+    query_key TEXT PRIMARY KEY,
+    result_json TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS result_cache (
+    stage TEXT,
+    input_hash TEXT,
+    embedding TEXT,
+    result_json TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (stage, input_hash)
+);
+
+CREATE TABLE IF NOT EXISTS retention_log (
+    session_id TEXT,
+    concept_id INTEGER,
+    predicted REAL,
+    actual REAL,
+    probed_at TEXT
+);
 """
 
 
@@ -241,6 +264,7 @@ def init_db(conn: sqlite3.Connection) -> None:
         "ALTER TABLE concepts ADD COLUMN slice_key TEXT",
         "ALTER TABLE concept_edges ADD COLUMN slice_key TEXT",
         "ALTER TABLE digest_cache ADD COLUMN model_key TEXT",
+        "ALTER TABLE papers ADD COLUMN source_id TEXT",
     ]:
         try:
             conn.execute(stmt)

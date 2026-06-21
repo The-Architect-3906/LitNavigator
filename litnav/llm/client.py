@@ -14,6 +14,8 @@ from __future__ import annotations
 import os
 import threading
 
+from litnav.llm import registry
+
 # Per-thread token cost: each calling thread sees its own counter so concurrent
 # sessions do not bleed cost into each other's records.
 _tls = threading.local()
@@ -68,21 +70,27 @@ def _client():
     return OpenAI(api_key=_api_key(), base_url=base) if base else OpenAI(api_key=_api_key())
 
 
-def complete_json(prompt: str, *, schema_hint: str = "", fallback: dict, model: str | None = None) -> dict:
+def complete_json(prompt: str, *, schema_hint: str = "", fallback: dict, model: str | None = None, temperature: float = 0.0) -> dict:
     """Return a JSON dict from the configured LLM, or `fallback` when provider=none / on error."""
     _tls.cost = 0
     _tls.was_live = False
     _tls.model = None
     if _provider() == "none":
         return fallback
+    actual = "qwen-plus" if _provider() == "qwen" else (model or _chat_model())
+    if actual not in registry.enabled_model_names():
+        raise ValueError(
+            f"model {actual!r} is not in MODEL_REGISTRY (enable it there first; "
+            f"provider={_provider()!r}). Enabled: {sorted(registry.enabled_model_names())}."
+        )
+    _tls.model = actual
     try:
         import json
-        actual = "qwen-plus" if _provider() == "qwen" else (model or _chat_model())
-        _tls.model = actual
         response = _client().chat.completions.create(
             model=actual,
             messages=[{"role": "user", "content": prompt}],
             response_format={"type": "json_object"},
+            temperature=temperature,
             timeout=30,
         )
         try:
@@ -98,20 +106,26 @@ def complete_json(prompt: str, *, schema_hint: str = "", fallback: dict, model: 
         return fallback
 
 
-def complete_text(prompt: str, *, fallback: str, max_tokens: int = 400, model: str | None = None) -> str:
+def complete_text(prompt: str, *, fallback: str, max_tokens: int = 400, model: str | None = None, temperature: float = 0.0) -> str:
     """Return a free-text completion (e.g. a grounded teaching turn), or `fallback` offline/on error."""
     _tls.cost = 0
     _tls.was_live = False
     _tls.model = None
     if _provider() == "none":
         return fallback
+    actual = "qwen-plus" if _provider() == "qwen" else (model or _chat_model())
+    if actual not in registry.enabled_model_names():
+        raise ValueError(
+            f"model {actual!r} is not in MODEL_REGISTRY (enable it there first; "
+            f"provider={_provider()!r}). Enabled: {sorted(registry.enabled_model_names())}."
+        )
+    _tls.model = actual
     try:
-        actual = "qwen-plus" if _provider() == "qwen" else (model or _chat_model())
-        _tls.model = actual
         response = _client().chat.completions.create(
             model=actual,
             messages=[{"role": "user", "content": prompt}],
             max_tokens=max_tokens,
+            temperature=temperature,
             timeout=30,
         )
         try:

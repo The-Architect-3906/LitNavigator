@@ -4,7 +4,8 @@ Confidence is ALWAYS computed by induced_confidence (reused verbatim from the M3
 the LLM may only label evidence strength. Prereq + similarity edges are now LLM-PROPOSED over the
 EXTRACTED concept slugs live (open-world capability); the candidate is the offline fallback (mirrors
 induce._extract_misconception: LLM proposes, candidate is fallback, confidence is rule-computed).
-Similarity edges are additionally cosine-filtered over concept-name embeddings live.
+Similarity edges are additionally validated live by an LLM pairwise judge (cross-encoder); prereq
+confidence is rule-computed and multi_paper is computed from the source map (never LLM-supplied).
 """
 from __future__ import annotations
 
@@ -119,7 +120,7 @@ def _propose_edges(concepts: list[dict], by_chunk: dict, candidate: dict, *,
     fallback = {"prereq_edges": candidate.get("prereq_edges", []),
                 "similarity_edges": candidate.get("similarity_edges", [])}
     result = router.complete_json(prompt, tier="cheap", stage="digest", fallback=fallback,
-                                  session_id=session_id, conn=conn, budget=budget)
+                                  session_id=session_id, conn=conn, budget=budget, cache=True)
     if not isinstance(result, dict):
         return fallback
     return {"prereq_edges": result.get("prereq_edges") or [],

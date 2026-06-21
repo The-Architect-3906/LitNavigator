@@ -23,6 +23,11 @@ RECORDED_NEEDS: list[dict] = [
 ]
 
 
+def enabled_model_names() -> set[str]:
+    """Return the set of model name strings that are currently enabled in MODEL_REGISTRY."""
+    return {spec["model"] for spec in MODEL_REGISTRY.values()}
+
+
 def is_enabled(tier: str) -> bool:
     return tier in MODEL_REGISTRY
 

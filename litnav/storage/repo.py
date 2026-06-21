@@ -372,14 +372,18 @@ def create_quiz_item(conn: sqlite3.Connection, concept_id: int, question: str, a
                      rubric: str | None = None,
                      expected_keypoints: str | None = None,
                      keypoint_id: str | None = None,
-                     bloom_level: str = "recall") -> int:
+                     bloom_level: str = "recall",
+                     distractors_json: str | None = None,
+                     irt_b: float | None = None) -> int:
     cur = conn.execute(
         "INSERT INTO quiz_items "
         "(concept_id, keypoint_id, bloom_level, question, answer_key, qtype, difficulty, "
-        " evidence_chunk_id, source_paper_id, rubric, expected_keypoints, targets_misconception) "
-        "VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+        " evidence_chunk_id, source_paper_id, rubric, expected_keypoints, targets_misconception, "
+        " distractors_json, irt_b) "
+        "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
         (concept_id, keypoint_id, bloom_level, question, answer_key, qtype, difficulty,
-         evidence_chunk_id, source_paper_id, rubric, expected_keypoints, targets_misconception),
+         evidence_chunk_id, source_paper_id, rubric, expected_keypoints, targets_misconception,
+         distractors_json, irt_b),
     )
     conn.commit()
     return int(cur.lastrowid)
@@ -390,11 +394,12 @@ def get_chunk_paper_id(conn: sqlite3.Connection, chunk_id: str) -> int | None:
     return row[0] if row else None
 
 
-def create_paper(conn: sqlite3.Connection, *, arxiv_id: str | None, title: str,
+def create_paper(conn: sqlite3.Connection, *, source_id: str | None = None,
+                 arxiv_id: str | None = None, title: str,
                  source_type: str | None = None, url: str | None = None) -> int:
     cur = conn.execute(
-        "INSERT INTO papers (arxiv_id, title, source_type, url) VALUES (?,?,?,?)",
-        (arxiv_id, title, source_type, url),
+        "INSERT INTO papers (arxiv_id, title, source_type, url, source_id) VALUES (?,?,?,?,?)",
+        (arxiv_id, title, source_type, url, source_id),
     )
     conn.commit()
     return int(cur.lastrowid)

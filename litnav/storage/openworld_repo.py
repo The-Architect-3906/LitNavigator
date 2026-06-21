@@ -70,6 +70,22 @@ def cache_get(conn: sqlite3.Connection, slice_key: str) -> dict | None:
             "human_checked": bool(row[3]), "model_key": row[4]}
 
 
+def discover_cache_get(conn: sqlite3.Connection, query_key: str) -> str | None:
+    row = conn.execute(
+        "SELECT result_json FROM discover_results WHERE query_key=?", (query_key,)
+    ).fetchone()
+    return row[0] if row else None
+
+
+def discover_cache_put(conn: sqlite3.Connection, query_key: str, result_json: str) -> None:
+    conn.execute(
+        "INSERT INTO discover_results (query_key, result_json) VALUES (?,?) "
+        "ON CONFLICT(query_key) DO UPDATE SET result_json=excluded.result_json",
+        (query_key, result_json),
+    )
+    conn.commit()
+
+
 def cache_put(conn: sqlite3.Connection, slice_key: str, *, graph_version: int = 1,
               human_checked: bool = False, model_key: str | None = None) -> None:
     """Mark a digested slice as cached. Upsert keyed by slice_key."""

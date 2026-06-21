@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import datetime as _dt
 import sqlite3
 
+from litnav.assess import spacing as _spacing
 from litnav.state import NavState
 from litnav.storage import repo
 
@@ -30,6 +32,17 @@ def advance_node(state: NavState, conn: sqlite3.Connection) -> dict:
         conn, session_id, route_version, "advance", "advance", rationale,
         state_snapshot={"concept_id": concept_id, "mastery": mastery},
     )
+
+    # FSRS-lite: schedule a delayed retention probe for the mastered concept (best-effort,
+    # never breaks the advance flow; spec §6.3, risk B).
+    try:
+        _spacing.schedule_review(
+            conn, session_id, concept_id,
+            mastery=mastery,
+            now=_dt.datetime.now().isoformat(timespec="seconds"),
+        )
+    except Exception:
+        pass
 
     return {
         "route": route,

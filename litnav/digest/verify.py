@@ -14,6 +14,8 @@ import sqlite3
 from litnav.digest.contract import VERIFY_THRESHOLD
 from litnav.llm import router
 
+REFD_MIN = 0.15   # minimum RefD score to corroborate a high-impact prereq edge
+
 
 def _judge(edge: dict, judge_labels: dict, *, session_id, conn, budget) -> bool:
     """True if the prerequisite relation holds. Offline: read judge_labels. Live: frontier model.
@@ -84,7 +86,7 @@ def edge_accuracy(edges: list[dict], *, judge_labels: dict, session_id: str | No
 
 def verify_pass(edges: list[dict], *, judge_labels: dict, session_id: str | None,
                 conn: sqlite3.Connection | None, budget: int | None = None,
-                sample_n: int = 10) -> tuple[float, tuple[list[dict], list[dict]]]:
+                sample_n: int = 10, refd: dict | None = None) -> tuple[float, tuple[list[dict], list[dict]]]:
     """Judge each HIGH-IMPACT prereq edge ONCE for the downgrade decision; REUSE those verdicts to
     compute edge_accuracy over a shuffled sample of ALL proposed prereq edges (proposal quality).
     Returns (edge_accuracy, (out, unverified)). Replaces the edge_accuracy+verify_edges double-judge.
@@ -108,7 +110,9 @@ def verify_pass(edges: list[dict], *, judge_labels: dict, session_id: str | None
             continue
         ok = e["confidence"] >= VERIFY_THRESHOLD
         if ok and e.get("high_impact"):
-            ok = judged(i)
+            refd_score = (refd or {}).get((e["prereq_slug"], e["target_slug"]), 0.0)
+            e["refd"] = refd_score
+            ok = judged(i) or refd_score >= REFD_MIN   # judge OR RefD corroboration keeps the prereq
         if ok:
             e["verified"] = True
         else:

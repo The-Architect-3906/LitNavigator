@@ -30,10 +30,15 @@ def extract_concepts(di: DigestInput, *, candidate: dict, session_id: str | None
     Returned dicts are fresh copies (never the candidate's objects)."""
     chunk_blob = "\n---\n".join(ch for s in di.sources for ch in s.chunks)
     prompt = (
-        f"From the evidence below about the domain '{di.domain_key}', list the teachable concepts "
-        "and, for each, its key points. Ground every item ONLY in the evidence. Do not invent.\n\n"
-        "IMPORTANT — the `objective` field must be a FULL SENTENCE describing what a learner will "
-        "understand or be able to do, and must name the mechanism or why/how, not just the topic. "
+        f"Decompose the evidence below (domain: '{di.domain_key}') into a TEACHABLE concept map.\n"
+        "Extract 4-8 DISTINCT, specific sub-concepts. Each must be a single precise technical idea that "
+        "could be taught and quizzed on its own (e.g. 'chain-of-thought prompting', 'tool invocation', "
+        "'observation feedback loop'), NOT one umbrella term for the whole work. "
+        "Do NOT return a single concept for the whole paper — break it into its component ideas. "
+        "Favor concepts that have prerequisite or relatedness links among each other. "
+        "Give each a short snake_case slug. Ground every item ONLY in the evidence; do not invent.\n\n"
+        "IMPORTANT — each keypoint's `objective` must be a FULL SENTENCE describing what a learner will "
+        "understand or be able to do, naming the mechanism or why/how, not just the topic. "
         'Bad: "explain ReAct". Good: "Explain how ReAct interleaves reasoning traces and actions '
         'so that the agent can ground its decisions in real-world observations."\n\n'
         f"Evidence:\n{chunk_blob}\n\n"
@@ -41,7 +46,7 @@ def extract_concepts(di: DigestInput, *, candidate: dict, session_id: str | None
         '"keypoints": [{"kp_id","concept_slug","name","objective","evidence_chunk_id","bloom_level"}]}'
     )
     result = router.complete_json(prompt, tier="cheap", stage="digest", fallback=candidate,
-                                  session_id=session_id, conn=conn, budget=budget)
+                                  session_id=session_id, conn=conn, budget=budget, cache=True)
 
     raw_concepts = result.get("concepts") if isinstance(result, dict) else None
     if isinstance(raw_concepts, list):

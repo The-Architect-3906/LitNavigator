@@ -2,12 +2,14 @@
 
 Called in a loop until all keypoints for the current concept are taught,
 then the graph transitions to the ASSESS phase (assess_next).
+Uses a deterministic strategy policy (goal_type × expertise × KT mastery) per spec §6.3.
 """
 from __future__ import annotations
 
 import sqlite3
 
-from litnav.llm import client as llm_client
+from litnav.assess import strategy as strat_policy
+from litnav.llm import router
 from litnav.state import ConceptProgress, KeyPointState, NavState
 from litnav.storage import repo
 
@@ -51,19 +53,41 @@ def teach_kp_node(state: NavState, conn: sqlite3.Connection) -> dict:
     new_idx = cp["taught_idx"] + 1
     is_last = new_idx >= len(cp["keypoints"])
 
+    # Compute teaching strategy from the policy: goal × expertise × KT mastery (spec §6.3)
+    kp_mastery = cp["keypoint_state"].get(kp_id, {}).get("mastery", 0.3) if cp.get("keypoint_state") else 0.3
+    teach_strategy = strat_policy.choose_strategy(
+        goal_type=state.get("goal_type"),
+        expertise=state.get("intent"),   # "researcher" maps to expert mode if present
+        mastery=kp_mastery,
+    )
+
+    strategy_clause = {
+        "concise":        "Be concise and precise — the learner has strong prior knowledge.",
+        "overview":       "Give a high-level overview; breadth matters more than depth here.",
+        "worked_example": "Ground the explanation in a concrete worked example.",
+        "analogy":        "Use a relatable real-world analogy to build intuition.",
+        "direct":         "Explain directly and clearly.",
+    }.get(teach_strategy, "Explain clearly and concisely.")
+
     fallback = (
         f"**{kp_meta['name']}**\n\n"
         f"Objective: {kp_meta['objective']}\n\n"
         f"From the paper: {evidence}"
     )
-    explanation = llm_client.complete_text(
+    explanation = router.complete_text(
         f"You are tutoring a researcher who is new to this subfield. "
         f"Teach ONLY the following key point, grounded strictly in the provided evidence. "
-        f"Do NOT quiz or ask questions. Be clear and concise (3-5 sentences).\n\n"
+        f"Do NOT quiz or ask questions. "
+        f"Teach using a '{teach_strategy}' approach: {strategy_clause} "
+        f"Be clear and concise (3-5 sentences).\n\n"
         f"Key point: {kp_meta['name']}\n"
         f"Learning objective: {kp_meta['objective']}\n"
         f"Evidence (cite this as your source): {evidence}",
+        tier="cheap",
+        stage="teach",
         fallback=fallback,
+        session_id=state["session_id"],
+        conn=conn,
         max_tokens=300,
     )
 

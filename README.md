@@ -1,13 +1,13 @@
 <div align="center">
 
-# 🧭 LitNavigator
+# 🧭 LitNavigator — Open-World Edition
 
-### An AI tutor that reads the research papers and then teaches *you* — step by step, adapted to what you actually know.
+### Give it any learning goal. It finds the most suitable real sources, digests them into a teachable concept map, and tutors *you* through it — adaptively, grounded in the literature, under strict cost control.
 
-![Status](https://img.shields.io/badge/status-M3%20complete-brightgreen)
+![Status](https://img.shields.io/badge/open--world-OW--0..5%20complete%20(live)-brightgreen)
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
-![Framework](https://img.shields.io/badge/agent-LangGraph-black)
-![License](https://img.shields.io/badge/license-MIT-green)
+![Agent](https://img.shields.io/badge/agent-LangGraph%20%2B%20ReAct-black)
+![Live](https://img.shields.io/badge/validation-live--first-orange)
 ![ICCSE 2026](https://img.shields.io/badge/ICCSE%202026-Agentic%20AI%20Competition-purple)
 
 </div>
@@ -16,16 +16,16 @@
 
 ## The gap nobody fills
 
-> *You have a pile of papers. You need to understand the field. Who explains it to you?*
+> *You have a question about a research field. Who goes and gets the right papers, turns them into a syllabus, and then teaches it to you — adapting as you stumble?*
 
-| | Models you | Adaptive teach/test/reteach | Prereq sequencing | Misconception diagnosis | From living literature | Curriculum source |
+| | Models you | Adaptive teach/test/reteach | Prereq sequencing | From living literature | **Finds its own sources** | Curriculum source |
 |:--|:--:|:--:|:--:|:--:|:--:|:--|
-| Elicit / SciSpace | ✗ | ✗ | ✗ | ✗ | ✓ | — |
-| NotebookLM | ✗ | ✗ | ✗ | ✗ | ✓ | — |
-| Khanmigo / LearnLM | ✓ | ✓ | ✓ | ✓ | ✗ | human-authored |
-| **LitNavigator** | ✓ | ✓ | ✓ | ✓ | ✓ | **induced from papers** |
+| Elicit / SciSpace | ✗ | ✗ | ✗ | ✓ | ✓ | — |
+| NotebookLM | ✗ | ✗ | ✗ | ✓ (you upload) | ✗ | — |
+| Khanmigo / LearnLM | ✓ | ✓ | ✓ | ✗ | ✗ | human-authored |
+| **LitNavigator (open-world)** | ✓ | ✓ | ✓ | ✓ | ✓ | **discovered + digested live** |
 
-That last column is the empty square: an adaptive tutor whose syllabus, prerequisites, and misconceptions are all derived from the open research frontier.
+The closed-world edition (M0–M3) tutored from a *curated* paper pack. The **open-world** edition removes the boundary: it **discovers** sources for any goal and **digests** them into the concept graph on demand.
 
 ---
 
@@ -33,81 +33,56 @@ That last column is the empty square: an adaptive tutor whose syllabus, prerequi
 
 ```mermaid
 flowchart TD
-    A([Your learning goal]) --> P[planner\ntopo-sort route from concept graph]
-    P --> S{In curated graph?}
-    S -->|new concept| I[induce_scaffold\nderive prereqs · mine misconceptions\nfrom papers — source='induced' + evidence]
-    S -->|yes| R[retrieve evidence]
-    I --> R
-    R --> T[teach\npaper-grounded explanation]
-    T --> C[check\nSocratic Q]
-    C --> G[grade\nBKT mastery update · detect misconception]
-    G --> RT{tutor_router}
-    RT -->|mastered ≥ 0.8| ADV[advance]
-    RT -->|misconception| RE[reteach\nswitch strategy]
-    RE --> T
-    RT -->|missing prereq| DG[diagnose + replan\ninsert prereq into route]
-    RT -->|exhausted| CC[concede honestly]
-    CC --> ADV
-    DG --> S
-    ADV --> S
+    G([Your learning goal]) --> OL{{Outer agent loop · ReAct + Plan-and-Solve\ndecides which stage skill to run, per state}}
 
-    classDef base fill:#dde6f2,stroke:#3f4b5e,color:#0f1b2b;
+    OL -->|no graph yet| FS[find-sources · DISCOVER\nintent → OpenAlex + Wikipedia\n→ BM25 prefilter → embed rerank\n→ dedup + authority → top-k full text]
+    FS --> DG[digest-corpus · DIGEST\nextract concepts → RefD + LLM edges\n→ gpt-4o verify high-impact → confidence\n→ similarity fallback · edge-accuracy]
+    DG --> CG[(Concept graph · SQLite\nthe spine everything reads/writes\nprereq solid · similarity dashed · digested)]
+
+    OL -->|graph exists| IN[LangGraph inner loop · checkpointed\norient → teach_kp → assess → grade → route\nmastery = BKT/Rasch, never LLM self-judge]
+    CG --> IN
+    OL -->|deck / notes / map| MA[make-artifact · ARTIFACT\nscenario → format selector\nmind-map / notes / slides / worked-example\nretrieval prompt + citations on each]
+    CG --> MA
+    OL -->|session end| RN[recommend-next · OW-6]
+
+    FS -.every LLM/embed call.-> RT
+    DG -.-> RT
+    IN -.-> RT
+    subgraph SPINE [Cost spine · OW-0]
+      RT[router — single metered chokepoint\ntier registry · per-session budget cap\nresult cache · liveness assertion]
+    end
+
+    classDef disc fill:#dde6f2,stroke:#3f4b5e,color:#0f1b2b;
+    classDef dig fill:#c7ecd4,stroke:#258a51,color:#0c3019;
     classDef teach fill:#d7ccff,stroke:#5b49c4,color:#1c1444;
-    classDef route fill:#ffdf9e,stroke:#b3700d,color:#43280a;
-    classDef induce fill:#c7ecd4,stroke:#258a51,color:#0c3019;
-    classDef gap fill:#ffd0bf,stroke:#cf4f24,color:#481606;
-    class A,P,S,R,ADV base;
-    class T,C,G,RE teach;
-    class RT route;
-    class I induce;
-    class DG,CC gap;
+    classDef spine fill:#ffdf9e,stroke:#b3700d,color:#43280a;
+    classDef art fill:#ffd9ec,stroke:#b03a7a,color:#3d0f27;
+    classDef pending fill:#eee,stroke:#999,color:#555,stroke-dasharray:4 3;
+    class G,OL disc; class FS disc; class DG,CG dig; class IN teach; class RT spine; class MA art; class RN pending;
 ```
 
-**Three loops in one system:**
+**Stage skills** the outer loop invokes (each contracted, metered, live-verified):
 
-| Loop | What it does |
-|:--|:--|
-| **Outer** `planner → advance / replan` | Decides what concept comes next; inserts a missing prereq the moment a quiz exposes the gap |
-| **Inner** `teach → check → grade → reteach` | Teaches one concept; switches explanation strategy on a detected misconception; honestly concedes rather than looping forever |
-| **Induction** `induce_scaffold` | When you step off the graph, induces prereqs and mines misconceptions from the corpus — confidence computed by a transparent evidence rule, never hallucinated |
+| Stage | Status | What it does |
+|:--|:--:|:--|
+| **find-sources** (DISCOVER) | ✅ live | goal + intent → real OpenAlex/Wikipedia sources, ranked by relevance × authority, top-k full text fetched |
+| **digest-corpus** (DIGEST) | ✅ live | sources → distinct concepts → prerequisite (RefD **+** LLM) and similarity edges → `gpt-4o` verify → grounded, cited graph |
+| **teach / assess** (inner loop) | ✅ live | per-keypoint adaptive teaching; goal-elicited Bloom ceiling; metered grade with frontier escalation near the mastery threshold; MCQ distractors + flaw gate + IRT difficulty; FSRS spacing + retention probe; mastery from answers (BKT/Rasch), never LLM self-judgment |
+| **make-artifact** (ARTIFACT) | ✅ live | scenario → format selector → mind-map / Cornell notes / Marp slides / worked-example / combination; every artifact carries a retrieval prompt + resolving citations |
+| **recommend-next** | ⏳ OW-6 | hard-prereq filter + soft mastery-gain ranker |
 
 ---
 
-## Three demo moments
+## Live-first — the validation principle
 
-```
-① "Let me re-explain from a different angle."          [M2 ✅ implemented]
-   You think ReAct is just chain-of-thought prompting.
-   → Misconception detected, strategy switches direct → analogy,
-     mastery rises past threshold, route advances. (If it still won't land
-     after the strategies are exhausted, the tutor concedes honestly.)
+Open-world capability is meaningless if only tested offline. So **every capability skill has a LIVE gate** that runs against a real provider and asserts structure + quality + **real metered cost**; offline gates are kept only for deterministic safety/math. A strict mode makes a real call *provably distinct* from a silent fallback (a dead provider raises, never quietly returns a fixture).
 
-② "You need to shore this up first."                    [M1 ✅ implemented]
-   A quiz reveals a missing prerequisite.
-   → Prereq inserted mid-session. route_version increments.
+What this caught and fixed, on real runs:
+- the digest's `frontier` tier was silently calling `gpt-4o-mini` (billed at gpt-4o rates) — **tier routing fixed**, the judge now runs on real `gpt-4o`;
+- a chunk-id format bug dropped **100%** of proposed edges — fixed; edges now build;
+- the cheap model self-judging gave false confidence — the real `gpt-4o` judge corrects it; and a non-LLM **RefD** signal recovers genuine prerequisites the judge alone rejects.
 
-③ "This concept isn't in your map yet — let me go to the papers."   [M3 ✅ implemented]
-   You ask about multi-agent debate (off the curated graph).
-   → induce_scaffold reads the corpus, induces the prereq edge
-     multi_agent → multi_agent_debate (conf 0.75, source=induced),
-     mines the misconception "more agents/rounds is always better" (conf 0.65),
-     and teaches it as "contested" — confidence rule-computed, every claim cited.
-
-The demo corpus is the agent-paper pack in `papers/agent-competition/` (ReAct,
-Toolformer, Reflexion, Generative Agents, Voyager, the autonomous-agents survey,
-MetaGPT, CAMEL). M2's tutor loop runs on this agent domain end to end.
-```
-
----
-
-## Built for your purpose, not just your topic
-
-The same engine re-scopes to *why* you need the field — because its curriculum is induced from the live literature, not authored once. Two intents on the same agents corpus:
-
-- **Researcher entering the field** → the full prerequisite chain (ReAct → tool use → reflection → memory → multi-agent), methods, and the open problems worth working on; high mastery bar; contested/open points framed as research opportunities.
-- **Journalist prepping to interview an AI scientist** → a 30-minute orientation: what an LLM agent is, the 2–3 landmark ideas, where the live debates are, and good questions to ask; a "can hold the conversation" bar; implementation skipped; the consensus-vs-controversy map as talking points.
-
-A fixed-curriculum tutor has no curriculum for an arbitrary subfield to re-scope, and a static source assistant won't reorder around your goal — LitNavigator can. *(Implemented: `python -m litnav.app demo-intent` shows both routes on the same corpus.)*
+A full digest (discover → 8 concepts → RefD+LLM edges → gpt-4o judge) costs **≈ $0.003**. Offline, everything runs at **$0**.
 
 ---
 
@@ -115,84 +90,76 @@ A fixed-curriculum tutor has no curriculum for an arbitrary subfield to re-scope
 
 ```bash
 pip install -r requirements.txt
-python -m litnav.evaluation.verify_m0   # G0: state machine + SQLite writes
-python -m litnav.evaluation.verify_m1   # G1: route replans on a prereq gap (LangGraph + checkpoint)
-python -m litnav.evaluation.verify_m2   # G2: teach/reteach/concede + misconception detection (agent corpus)
-python -m litnav.evaluation.verify_m3   # G3: induce prereq + misconception for an off-skeleton concept
-pytest -q                               # full test suite
+
+# Offline gates (deterministic, $0, no key, no network)
+python -m litnav.evaluation.verify_cost      # cost spine: metering + budget cap + record-only refusal
+python -m litnav.evaluation.verify_digest    # digest determinism/schema unit gate
+python -m litnav.evaluation.verify_discover  # find-sources parsing/rank/dedup/intent
+python -m litnav.evaluation.verify_teach_assess  # goal/Bloom/flaw-gate/FSRS/strategy determinism
+python -m litnav.evaluation.verify_artifact  # format selector + mind-map/combination + citations
+python -m litnav.evaluation.verify_m0        # legacy closed-world gates (still green)
+pytest -q                                    # full suite — 268 passed
+
+# LIVE gates (real provider; set LITNAV_LLM_PROVIDER=openai + LITNAV_LLM_API_KEY in .env)
+python -m litnav.evaluation.verify_liveness      # a real call is distinguishable from a fallback
+python -m litnav.evaluation.verify_cost_live     # budget cap fires on real spend
+python -m litnav.evaluation.verify_digest_live   # real LLM extracts + builds + judges a graph
+python -m litnav.evaluation.verify_discover_live # real OpenAlex/Wikipedia/arXiv discovery → digest
+python -m litnav.evaluation.verify_teach_assess_live # real goal elicit + distractors + metered grade
+python -m litnav.evaluation.verify_artifact_live # real notes/slides/worked-example, citations resolve, metered
 ```
 
-Expected `verify_m0` output:
-```
-G0 PASS: session written
-G0 PASS: route written
-G0 PASS: learner_state updated
-G0 PASS: quiz_attempt written
-G0 PASS: decision written
-G0 PASS: offline run
-```
+> Offline is the deterministic floor; the LIVE gates are the proof the capability works. See
+> [`docs/2026-06-20-live-gate-execution-contract.md`](docs/2026-06-20-live-gate-execution-contract.md) for how they run (provider, budget cap, liveness, outage policy).
 
-> M0 and M1 require no LLM key and no network access. The LLM (OpenAI `gpt-4o-mini` by default, provider-agnostic — Qwen also supported — with offline fallback everywhere) enters at M2.
-
-### Interactive agent UI
-
+### Interactive agent UI (closed-world tutor)
 ```bash
-python -m litnav.ui.server        # open http://127.0.0.1:8000/tutor
+python -m litnav.ui.server     # http://127.0.0.1:8000/tutor — Chat + Glass-box views
 ```
-Type a goal → the agent plans, teaches (LLM-grounded; deterministic offline), quizzes, and
-adapts; toggle the **Chat** and **Glass box** views. Live LLM needs a key in `.env`
-(`LITNAV_LLM_PROVIDER=openai`, `LITNAV_LLM_API_KEY=...`); without one it runs offline at $0.
-
-### Standalone executable (no Python needed)
-
-```powershell
-pip install pyinstaller
-./build_exe.ps1                   # -> dist/LitNavigator/LitNavigator.exe
-```
-Double-click the exe: it starts the local server and opens the browser, **offline by default**
-(no key, $0, full agentic flow). Drop a `.env` next to the exe to enable live LLM teaching.
 
 ---
 
-## Roadmap
+## Roadmap (open-world milestones)
 
-| Milestone | What it proves | Status |
-|:--|:--|:--:|
-| **M0** · Fake-data walking skeleton | State machine loop + SQLite persistence | ✅ Done |
-| **M1** · Navigator | Route changes because of learner state; LangGraph StateGraph + prereq replan + SqliteSaver checkpoint (G1 green) | ✅ Done |
-| **M2** · Tutor | teach → reteach → concede on the agent corpus; misconception detection (LLM / offline fallback); grounded LLM teaching; parallel-form quizzes; learning gain (G2 green) | ✅ Done |
-| **M3** · Literature induction | `induce_scaffold` — induce a prereq edge + mine a misconception for an off-skeleton concept (LLM proposes it from the real chunks, offline candidate fallback), rule-computed confidence + provenance, panel marks curated vs induced (G3 green) | ✅ Done |
-| **M4** · Polish | intent/audience modes ✅ (`demo-intent`); semantic/vector retrieval ✅ (opt-in, `LITNAV_RETRIEVAL=vector`); live induction recording ✅; still: cross-session memory | 🟡 Mostly done |
-| **Product** · Interactive agent UI | ✅ free-text agent at `/tutor`: **type a goal** → it plans, teaches (LLM-grounded, typewriter), quizzes, and adapts live (reteach / replan / induce); two switchable views — **Chat** and a **Glass box** whose agent-flow + cited evidence + cost stream node-by-node (SSE); intent modes (researcher/journalist) in-UI. Out-of-scope goals get an honest decline. Remaining: restart persistence | 🟢 Done |
+| Milestone | Status | Proof |
+|:--|:--:|:--|
+| **Phase 0** · LLM liveness precondition | ✅ done · live | `verify_liveness` |
+| **OW-0** · Cost spine (registry · metered router · budget cap · result cache) | ✅ done · live | `verify_cost_live` |
+| **OW-1** · Data model (concept-graph + learner + cache + ledger schema) | ✅ done | schema + repo tests |
+| **OW-2** · digest-corpus (RefD+LLM edges, gpt-4o verify, cache) | ✅ done · live | `verify_digest_live` |
+| **OW-3** · find-sources (OpenAlex+Wikipedia, BM25+rerank, full text) | ✅ done · live | `verify_discover_live` |
+| **OW-4** · TEACH/ASSESS (goal elicitation, Bloom quiz, distractors, IRT, FSRS, retention probe, escalation) | ✅ done · live | `verify_teach_assess_live` |
+| **OW-5** · make-artifact (selector → map/notes/slides/worked-example/combination; retrieval prompt + citations on each) | ✅ done · live | `verify_artifact_live` |
+| **OW-6** · recommend-next + dual frontend (Glass-box on `cost_ledger`, teacher override) | ⏳ next | — |
+| **OW-7** · live cold-start (streamed real-topic digest→teach) | ⏳ pending (digest path already live) | — |
 
-> **M0–M3 (the gated core) is complete and green** — `verify_m0/m1/m2/m3` all pass fully offline. M4 is icing; the interactive product UI is beyond the competition gates.
-
-**Enablers (needed only by specific items, not the gated core):**
-
-- **Real PDF chunk extraction** — ✅ **done.** `data/seed/agents_corpus.json` holds real abstract/intro text extracted from all 8 PDFs (32 chunks, each tagged to a concept); regenerate with `python -m litnav.ingest.pdf_extract`. *No API / no compute.* The tuned `agents_m2/m3.json` stay as the demo-core; this corpus is the real-data set and the basis for future grounded teaching / live induction.
-- **LLM API key (OpenAI `gpt-4o-mini`, or Qwen)** — ✅ **wired.** Drives live induction, grounded teaching, and misconception detection; set `LITNAV_LLM_PROVIDER`/`LITNAV_LLM_API_KEY` in `.env`. The LLM is an optional path everywhere; offline fixtures are the fallback, so all gates pass with `provider=none`.
-- **Embeddings (OpenAI `text-embedding-3-small`)** — ✅ **wired** for opt-in semantic retrieval. Vectors are stored in the `chunk_vectors` table (cosine ranking, no external vector DB); build with `python -m litnav.retrieval.vector`, enable with `LITNAV_RETRIEVAL=vector`. Concept-tagged retrieval is the default fallback.
+Full per-module detail, live results, costs, and the deferred/flagged items: **[`docs/OPEN-WORLD-STATUS.md`](docs/OPEN-WORLD-STATUS.md)**.
 
 ---
 
 ## Design principles
-
-- **Nothing is black-box.** Every routing decision leaves a rationale chain: answer → concept/misconception → action taken.
-- **Confidence ≠ mastery.** After one question, mastery may look high but confidence is low — the system says so explicitly.
-- **Induced scaffolding is never silent.** Induced prereqs and misconceptions are marked `source='induced'`, with evidence chunks and rule-computed confidence attached.
-- **Honest concede.** If the system has tried multiple explanations and hasn't gotten through, it flags low confidence and moves on — it does not pretend to have taught.
+- **Grounded, not bluffing.** Open-domain ≠ ungrounded — it *fetches and digests* a source, then teaches from cited evidence.
+- **The learner model is BKT/Rasch, never LLM self-assessment.**
+- **Cost is a first-class constraint** — one metered chokepoint, a tier cascade, caching, a per-session budget cap; only approved models are callable, any other is record-only until approved.
+- **Prereq edges are a soft constraint** (RefD + LLM + similarity fallback), never a hard gate; confidence is rule-computed and surfaced, never hallucinated.
+- **No silent deviations.** Code is kept on one line with the research and the full spec; anything deferred is flagged in the spec.
 
 ---
 
 ## Tech stack
+`LangGraph` (inner loop) · ReAct outer loop · `SQLite` (concept graph · learner model · cost ledger · caches) · OpenAI `gpt-4o-mini` (cheap) + `gpt-4o` (frontier judge) + `text-embedding-3-small` — provider-agnostic, offline-capable · OpenAlex / Wikipedia / arXiv (live discovery) · RefD (Liang 2015) prerequisite signal · `pytest`
 
-`LangGraph` · `SQLite + FTS5` · OpenAI `gpt-4o-mini` (M2+, provider-agnostic — Qwen also supported) · OpenAI `text-embedding-3-small` (M4 semantic retrieval, stored in SQLite) · `pytest`
+## Documentation
+| Doc | Role |
+|:--|:--|
+| [`docs/2026-06-20-open-world-research-brief.md`](docs/2026-06-20-open-world-research-brief.md) | research questions + rationale |
+| [`docs/2026-06-20-open-world-literature-review.md`](docs/2026-06-20-open-world-literature-review.md) | verified literature + evidence grades + risks |
+| [`docs/2026-06-20-open-world-architecture-spec.md`](docs/2026-06-20-open-world-architecture-spec.md) | **full architecture spec (source of truth)** |
+| [`docs/OPEN-WORLD-STATUS.md`](docs/OPEN-WORLD-STATUS.md) | **per-module status / done / live results** |
+| `docs/superpowers/plans/` | per-milestone implementation plans |
+| `docs/archive/` | per-cycle eval log, audits, re-audit; `closed-world/` = legacy M0–M4 docs |
 
 ---
 
 ## Acknowledgments
-
-Built for the **ICCSE 2026 Agentic AI Competition** (NTU · Tsinghua · Shandong · Xinjiang · UBC · Alibaba).
-Compute supported by QoderWork and Alibaba Cloud "Cloud for Research."
-
-**License:** MIT — see [LICENSE](LICENSE).
+Built for the **ICCSE 2026 Agentic AI Competition** (NTU · Tsinghua · Shandong · Xinjiang · UBC · Alibaba). Compute supported by QoderWork and Alibaba Cloud "Cloud for Research." **License:** MIT — see [LICENSE](LICENSE).

@@ -29,15 +29,21 @@ def _write_sources(conn: sqlite3.Connection, di: DigestInput) -> None:
     evidence_chunk_id references resolve to real text."""
     idx = 0
     for s in di.sources:
-        # Check for an existing paper by arxiv_id to avoid UNIQUE constraint failures on re-digest
+        # Check for an existing paper by source_id to avoid duplicate rows on re-digest
         existing_row = conn.execute(
-            "SELECT id FROM papers WHERE arxiv_id=?", (s.source_id,)
+            "SELECT id FROM papers WHERE source_id=?", (s.source_id,)
         ).fetchone()
         if existing_row:
             pid = existing_row[0]
         else:
-            pid = repo.create_paper(conn, arxiv_id=s.source_id, title=s.title,
-                                    source_type=s.source_type, url=s.url)
+            pid = repo.create_paper(
+                conn,
+                source_id=s.source_id,
+                arxiv_id=(s.source_id if s.source_type == "arxiv" else None),
+                title=s.title,
+                source_type=s.source_type,
+                url=s.url,
+            )
         for ci, text in enumerate(s.chunks):
             repo.create_paper_chunk(conn, f"c{idx}", pid, None, text, chunk_index=ci)
             idx += 1
@@ -95,7 +101,7 @@ def _propose_quiz_seeds(concepts: list[dict], by_chunk: dict, candidate: dict, *
     )
     fallback = {"quiz_seeds": candidate.get("quiz_seeds", [])}
     result = router.complete_json(prompt, tier="cheap", stage="digest", fallback=fallback,
-                                  session_id=session_id, conn=conn, budget=budget)
+                                  session_id=session_id, conn=conn, budget=budget, cache=True)
     seeds = result.get("quiz_seeds") if isinstance(result, dict) else None
     if not isinstance(seeds, list):
         seeds = candidate.get("quiz_seeds", [])
@@ -126,8 +132,15 @@ def digest(di: DigestInput, *, conn: sqlite3.Connection, candidate: dict,
                                    session_id=session_id, conn=conn, budget=budget,
                                    keypoints=keypoints)
     labels = candidate.get("judge_labels", {})
+    from litnav.digest import refd as refd_mod
+    _by_chunk = {}
+    _i = 0
+    for s in di.sources:
+        for ch in s.chunks:
+            _by_chunk[f"c{_i}"] = ch; _i += 1
+    refd_scores = refd_mod.refd_scores(concepts, _by_chunk)
     accuracy, (verified, unverified) = verify_mod.verify_pass(
-        scored, judge_labels=labels, session_id=session_id, conn=conn, budget=budget)
+        scored, judge_labels=labels, session_id=session_id, conn=conn, budget=budget, refd=refd_scores)
     quiz_seeds = _propose_quiz_seeds(concepts, {}, candidate, session_id=session_id,
                                      conn=conn, budget=budget)
 
