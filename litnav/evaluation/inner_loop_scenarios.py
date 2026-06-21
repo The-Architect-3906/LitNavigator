@@ -261,6 +261,15 @@ def _run_live_one(sc, log) -> dict:
     log(f"- teaching language={teach_lang} (want {language}, ok={summ['teach_lang_ok']})")
     log(f"- artifact language={art_lang} (want {language}, ok={summ['artifact_lang_ok']}) citations={art.citations}")
     log(f"- cost usd={sp['usd']} was_live={llm_client.was_live()}")
+    # recommend-next (OW-6): what to learn next from this session's graph + mastery
+    try:
+        from litnav.recommend.recommend_next import recommend_next
+        recs = recommend_next(conn, sid, k=5)
+        summ["recommend"] = [{"name": r.name, "eligible": r.eligible, "reason": r.reason} for r in recs]
+        log("- recommend-next: " + ("; ".join(
+            f"{r.name}[{'ready' if r.eligible else 'blocked'}]" for r in recs) or "(none)"))
+    except Exception as e:
+        summ["recommend"] = []; summ["errors"].append(f"recommend: {e}")
     q = summ.get("quality") or {}
     qline = " · ".join(f"{d}={ (q.get(d) or {}).get('score') }" for d in _QDIMS)
     log(f"\n## QUALITY (frontier judge, 1-5)\n- {qline}")
