@@ -1,0 +1,422 @@
+{
+  "goal": "Explain the basics of quantum error correction for a beginner.",
+  "persona": "lost_then_recover",
+  "language": "English",
+  "intent_used": "crash-course",
+  "n_sources": 3,
+  "top_source": "Quantum Error Correction Via Noise Guessing Decoding",
+  "source_chunks": 4,
+  "concepts": [
+    {
+      "slug": "quantum_error_correction_codes",
+      "name": "Quantum Error Correction Codes (QECCs)"
+    },
+    {
+      "slug": "stabilizer_codes",
+      "name": "Stabilizer Codes"
+    },
+    {
+      "slug": "finite_blocklength_regime",
+      "name": "Finite Blocklength Regime"
+    },
+    {
+      "slug": "grand_decoding",
+      "name": "GRAND Decoding"
+    },
+    {
+      "slug": "quantum_random_linear_codes",
+      "name": "Quantum Random Linear Codes (QRLCs)"
+    },
+    {
+      "slug": "quantum_grand_algorithm",
+      "name": "Quantum-GRAND Algorithm"
+    },
+    {
+      "slug": "syndrome_decoding",
+      "name": "Syndrome Decoding"
+    },
+    {
+      "slug": "adaptive_code_membership_test",
+      "name": "Adaptive Code Membership Test"
+    }
+  ],
+  "route_final": [
+    {
+      "name": "Stabilizer Codes",
+      "status": "done"
+    },
+    {
+      "name": "Quantum Error Correction Codes (QECCs)",
+      "status": "done"
+    },
+    {
+      "name": "Finite Blocklength Regime",
+      "status": "done"
+    },
+    {
+      "name": "GRAND Decoding",
+      "status": "done"
+    }
+  ],
+  "history": [
+    {
+      "event": "goal_elicit",
+      "goal_type": "survey",
+      "bloom_ceiling": "comprehension"
+    },
+    {
+      "event": "planner",
+      "route": [
+        2,
+        1,
+        3,
+        4
+      ]
+    },
+    {
+      "event": "orient_tour",
+      "text": "In our journey, we'll first explore **Stabilizer Codes**, which are a type of quantum code that helps protect information from errors. Next, we'll move to **Quantum Error Correction Codes (QECCs)**, which build on stabilizer codes to correc",
+      "concepts": [
+        "Stabilizer Codes",
+        "Quantum Error Correction Codes (QECCs)",
+        "Finite Blocklength Regime",
+        "GRAND Decoding"
+      ]
+    },
+    {
+      "event": "teach_kp",
+      "concept_id": 2,
+      "keypoint_id": "2",
+      "idx": 1,
+      "total": 1,
+      "text": "Stabilizer codes are a class of quantum error-correcting codes that utilize the mathematical framework of stabilizer groups to protect quantum information from errors due to decoherence and other noise. They are structured around a set of s",
+      "closing": "\n\nNow let's check your understanding."
+    },
+    {
+      "event": "assess_next",
+      "keypoint_id": "2",
+      "bloom": "recall",
+      "quiz_id": 9,
+      "question": "What is the purpose of stabilizer codes in quantum error correction?",
+      "reused": false
+    },
+    {
+      "event": "handle_lost",
+      "keypoint_id": "2",
+      "bloom": "recall",
+      "strategy": "analogy",
+      "text": "No problem — let me back up and try a different angle.\n\nThink of stabilizer codes like a group of friends trying to solve a puzzle together. Each friend has a specific piece of the puzzle (the code), and they need to work together to figure"
+    },
+    {
+      "event": "assess_next",
+      "keypoint_id": "2",
+      "bloom": "recall",
+      "quiz_id": 9,
+      "question": "What is the purpose of stabilizer codes in quantum error correction?",
+      "reused": false
+    },
+    {
+      "event": "grade_kp",
+      "keypoint_id": "2",
+      "bloom": "recall",
+      "correct": true,
+      "mastery": 0.475,
+      "quiz_id": 9
+    },
+    {
+      "event": "assess_next",
+      "keypoint_id": "2",
+      "bloom": "comprehension",
+      "quiz_id": 10,
+      "question": "How do stabilizer codes relate to the decoding strategies like GRAND in the context of quantum error correction?",
+      "reused": false
+    },
+    {
+      "event": "grade_kp",
+      "keypoint_id": "2",
+      "bloom": "comprehension",
+      "correct": true,
+      "mastery": 0.685,
+      "quiz_id": 10
+    },
+    {
+      "event": "assess_next",
+      "keypoint_id": "2",
+      "bloom": "comprehension",
+      "quiz_id": 11,
+      "question": "How do stabilizer codes relate to the decoding strategies like GRAND in the context of quantum error correction?",
+      "reused": false
+    },
+    {
+      "event": "grade_kp",
+      "keypoint_id": "2",
+      "bloom": "comprehension",
+      "correct": true,
+      "mastery": 0.811,
+      "quiz_id": 11
+    },
+    {
+      "event": "advance",
+      "concept_id": 2,
+      "mastery": 0.811,
+      "confidence": 0.9
+    },
+    {
+      "event": "teach_kp",
+      "concept_id": 1,
+      "keypoint_id": "1",
+      "idx": 1,
+      "total": 1,
+      "text": "Quantum error correction codes (QECCs) are crucial for ensuring the reliability of quantum communications and computations, as they protect quantum information from errors due to decoherence and other noise. The principles behind classical ",
+      "closing": "\n\nNow let's check your understanding."
+    },
+    {
+      "event": "assess_next",
+      "keypoint_id": "1",
+      "bloom": "recall",
+      "quiz_id": 12,
+      "question": "What is the primary function of the GRAND strategy in relation to classical codes?",
+      "reused": false
+    },
+    {
+      "event": "grade_kp",
+      "keypoint_id": "1",
+      "bloom": "recall",
+      "correct": true,
+      "mastery": 0.475,
+      "quiz_id": 12
+    },
+    {
+      "event": "assess_next",
+      "keypoint_id": "1",
+      "bloom": "comprehension",
+      "quiz_id": 13,
+      "question": "How does the GRAND decoding strategy relate to the efficiency of decoding classical random linear codes, and why is this relevant for understanding quantum error correction codes?",
+      "reused": false
+    },
+    {
+      "event": "grade_kp",
+      "keypoint_id": "1",
+      "bloom": "comprehension",
+      "correct": true,
+      "mastery": 0.685,
+      "quiz_id": 13
+    },
+    {
+      "event": "assess_next",
+      "keypoint_id": "1",
+      "bloom": "comprehension",
+      "quiz_id": 14,
+      "question": "How does the GRAND decoding strategy relate to the efficiency of decoding classical random linear codes, and why is this significant for quantum error correction codes?",
+      "reused": false
+    },
+    {
+      "event": "grade_kp",
+      "keypoint_id": "1",
+      "bloom": "comprehension",
+      "correct": true,
+      "mastery": 0.811,
+      "quiz_id": 14
+    },
+    {
+      "event": "advance",
+      "concept_id": 1,
+      "mastery": 0.811,
+      "confidence": 0.9
+    },
+    {
+      "event": "teach_kp",
+      "concept_id": 3,
+      "keypoint_id": "3",
+      "idx": 1,
+      "total": 1,
+      "text": "The finite blocklength regime is crucial in quantum error correction as it addresses the limitations of traditional coding strategies when dealing with short codewords. Recent advancements, such as the GRAND (guessing random additive noise ",
+      "closing": "\n\nNow let's check your understanding."
+    },
+    {
+      "event": "assess_next",
+      "keypoint_id": "3",
+      "bloom": "recall",
+      "quiz_id": 15,
+      "question": "What is the significance of the finite blocklength regime in the context of quantum error correction as highlighted by the GRAND decoding strategy?",
+      "reused": false
+    },
+    {
+      "event": "grade_kp",
+      "keypoint_id": "3",
+      "bloom": "recall",
+      "correct": true,
+      "mastery": 0.475,
+      "quiz_id": 15
+    },
+    {
+      "event": "assess_next",
+      "keypoint_id": "3",
+      "bloom": "comprehension",
+      "quiz_id": 16,
+      "question": "How does the GRAND decoding strategy relate to the finite blocklength regime in quantum error correction?",
+      "reused": false
+    },
+    {
+      "event": "grade_kp",
+      "keypoint_id": "3",
+      "bloom": "comprehension",
+      "correct": true,
+      "mastery": 0.685,
+      "quiz_id": 16
+    },
+    {
+      "event": "assess_next",
+      "keypoint_id": "3",
+      "bloom": "comprehension",
+      "quiz_id": 17,
+      "question": "How does the GRAND decoding strategy relate to the finite blocklength regime in quantum error correction?",
+      "reused": false
+    },
+    {
+      "event": "grade_kp",
+      "keypoint_id": "3",
+      "bloom": "comprehension",
+      "correct": true,
+      "mastery": 0.811,
+      "quiz_id": 17
+    },
+    {
+      "event": "advance",
+      "concept_id": 3,
+      "mastery": 0.811,
+      "confidence": 0.9
+    },
+    {
+      "event": "teach_kp",
+      "concept_id": 4,
+      "keypoint_id": "4",
+      "idx": 1,
+      "total": 1,
+      "text": "The GRAND decoding strategy is an efficient method for decoding classical random linear codes by leveraging noise statistics. This approach is particularly effective in quantum systems, leading to the development of quantum random linear co",
+      "closing": "\n\nNow let's check your understanding."
+    },
+    {
+      "event": "assess_next",
+      "keypoint_id": "4",
+      "bloom": "recall",
+      "quiz_id": 18,
+      "question": "What does the GRAND decoding strategy aim to efficiently decode?",
+      "reused": false
+    },
+    {
+      "event": "grade_kp",
+      "keypoint_id": "4",
+      "bloom": "recall",
+      "correct": true,
+      "mastery": 0.475,
+      "quiz_id": 18
+    },
+    {
+      "event": "assess_next",
+      "keypoint_id": "4",
+      "bloom": "comprehension",
+      "quiz_id": 19,
+      "question": "How does the combination of quantum random linear codes (QRLCs) and the quantum-GRAND decoding strategy enhance the decoding of quantum error correction codes (QECCs) under changing conditions?",
+      "reused": false
+    },
+    {
+      "event": "grade_kp",
+      "keypoint_id": "4",
+      "bloom": "comprehension",
+      "correct": true,
+      "mastery": 0.685,
+      "quiz_id": 19
+    },
+    {
+      "event": "assess_next",
+      "keypoint_id": "4",
+      "bloom": "comprehension",
+      "quiz_id": 20,
+      "question": "How does the combination of quantum random linear codes (QRLCs) and the quantum-GRAND decoding strategy enhance the decoding of quantum error correction codes (QECCs)?",
+      "reused": false
+    },
+    {
+      "event": "grade_kp",
+      "keypoint_id": "4",
+      "bloom": "comprehension",
+      "correct": true,
+      "mastery": 0.811,
+      "quiz_id": 20
+    },
+    {
+      "event": "advance",
+      "concept_id": 4,
+      "mastery": 0.811,
+      "confidence": 0.9
+    }
+  ],
+  "attempts": [
+    {
+      "answer": "to correct errors in quantum information",
+      "score": 1.0,
+      "feedback": "Your answer correctly identifies the purpose of stabilizer codes."
+    },
+    {
+      "answer": "Stabilizer codes provide a framework for error correction that can be efficiently decoded using strategies like GRAND, which focuses on noise statistics.",
+      "score": 1.0,
+      "feedback": "Your answer accurately conveys the key idea about stabilizer codes and GRAND."
+    },
+    {
+      "answer": "Stabilizer codes provide a framework for error correction that can be efficiently decoded using strategies like GRAND, which focuses on noise statistics.",
+      "score": 1.0,
+      "feedback": "Your answer accurately conveys the key idea about stabilizer codes and GRAND."
+    },
+    {
+      "answer": "efficiently decode classical random linear codes",
+      "score": 1.0,
+      "feedback": "Your answer correctly identifies the primary function of the GRAND strategy."
+    },
+    {
+      "answer": "GRAND improves decoding efficiency by utilizing noise statistics, which is crucial for QECCs as they also need to manage errors in quantum communications.",
+      "score": 1.0,
+      "feedback": "Your answer accurately captures the key idea about GRAND's role in improving decoding efficiency and its relevance to quantum error correction codes."
+    },
+    {
+      "answer": "GRAND improves decoding efficiency by utilizing noise statistics, which is significant for QECCs as it highlights the importance of noise management in quantum communications.",
+      "score": 1.0,
+      "feedback": "Your answer accurately captures the key idea about GRAND's role in improving decoding efficiency and its significance for quantum error correction codes."
+    },
+    {
+      "answer": "efficiently decode classical random linear codes near the maximum rate",
+      "score": 1.0,
+      "feedback": "Your answer accurately captures the key idea."
+    },
+    {
+      "answer": "GRAND efficiently decodes classical random linear codes near the maximum rate of the finite blocklength regime.",
+      "score": 1.0,
+      "feedback": "Your answer accurately conveys the key idea."
+    },
+    {
+      "answer": "GRAND efficiently decodes classical random linear codes near the maximum rate of the finite blocklength regime.",
+      "score": 1.0,
+      "feedback": "Your answer accurately conveys the key idea."
+    },
+    {
+      "answer": "classical random linear codes",
+      "score": 1.0,
+      "feedback": "Your answer correctly identifies the key idea."
+    },
+    {
+      "answer": "It allows for efficient decoding of QECCs that can adapt to changing conditions.",
+      "score": 1.0,
+      "feedback": "Great job! You captured the key idea perfectly."
+    },
+    {
+      "answer": "it allows for decoding that adapts to changing conditions",
+      "score": 1.0,
+      "feedback": "Your answer correctly captures the key idea."
+    }
+  ],
+  "artifact_notes_head": "# Study notes\n\n## Quantum Error Correction Codes (QECCs)\n\n**Cues:**\n- What is the role of QECCs in quantum communication?\n- Why are QECCs important for quantum computation?\n\n**Summary:** Essential for reliable quantum communication and computation.\n\n> Recall prompt: without looking, answer each cue above from memory.\n\n## Stabilizer Codes\n\n**Cues:**\n- What is the structure of stabilizer codes?\n- What purpose do stabilizer codes serve in quantum error correction?\n\n**Summary:** Framework for implementing QECCs.\n",
+  "artifact_citations": [
+    "c1",
+    "c2"
+  ],
+  "cost_usd": 0.01897
+}

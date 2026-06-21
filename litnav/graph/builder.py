@@ -24,6 +24,7 @@ from litnav.nodes.lecture import lecture_node
 from litnav.nodes.reteach import reteach_node
 from litnav.nodes.reteach_kp import reteach_kp_node
 from litnav.nodes.handle_lost import handle_lost_node
+from litnav.nodes.goal_elicit import goal_elicit_node
 from litnav.nodes.orient_tour import orient_tour_node
 from litnav.nodes.route_decider import advance_kp_node
 from litnav.nodes.select_next import route_after_select, select_next_node
@@ -91,6 +92,7 @@ def build_graph(
         updates["pending_induction"] = None              # consume the request so we don't re-induce
         return updates
 
+    def _goal_elicit(s: NavState) -> dict:   return goal_elicit_node(s, domain_conn)
     def _orient(s: NavState) -> dict:        return orient_tour_node(s, domain_conn)
     def _handle_lost(s: NavState) -> dict:   return handle_lost_node(s, domain_conn)
 
@@ -103,6 +105,7 @@ def build_graph(
         return "select_next"
 
     workflow = StateGraph(NavState)
+    workflow.add_node("goal_elicit", _goal_elicit)
     workflow.add_node("planner", _planner)
     workflow.add_node("orient_tour", _orient)
     workflow.add_node("select_next", _select_next)
@@ -126,7 +129,9 @@ def build_graph(
     workflow.add_node("advance_kp", _advance_kp)
     workflow.add_node("handle_lost", _handle_lost)
 
-    workflow.set_entry_point("planner")
+    # goal_elicit runs once at the start of every session (idempotent on re-entry)
+    workflow.set_entry_point("goal_elicit")
+    workflow.add_edge("goal_elicit", "planner")
     workflow.add_conditional_edges("planner", _route_after_planner,
                                    {"induce": "induce", "orient_tour": "orient_tour",
                                     "select_next": "select_next"})
@@ -173,6 +178,7 @@ def build_graph(
         "assess_next": "assess_next",   # correct → bloom upgrade; or hold → next question
         "reteach_kp": "reteach_kp",    # wrong + reteach_count < 2
         "advance_kp": "advance_kp",    # mastery+confidence met, OR reteach exhausted (concede)
+        "diagnose": "diagnose",         # A12: prereq-detour on keypoint path
     })
     workflow.add_edge("reteach_kp", "assess_next")
     workflow.add_edge("advance_kp", "select_next")
@@ -215,6 +221,8 @@ def make_initial_state(
     mastery_threshold: float = 0.8,
     pending_induction: Optional[dict] = None,
     intent: Optional[str] = None,
+    goal_text: Optional[str] = None,
+    goal_type: Optional[str] = None,
 ) -> NavState:
     from litnav.intent import resolve as _resolve_intent
     _cfg = _resolve_intent(intent)
@@ -251,6 +259,11 @@ def make_initial_state(
         "concept_progress": None,
         "orient_done": None,
         "user_intent": None,
+        # Goal elicitation (OW-4) — populated by goal_elicit node; None on fresh session
+        "goal_text": goal_text,
+        "goal_type": goal_type,
+        "bloom_ceiling": None,
+        "target_language": None,
         "history": [],
     }
 

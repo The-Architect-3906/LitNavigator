@@ -16,9 +16,9 @@ CREATE TABLE IF NOT EXISTS concepts (
 CREATE TABLE IF NOT EXISTS concept_edges (
     prereq_concept INTEGER REFERENCES concepts(id),
     target_concept INTEGER REFERENCES concepts(id),
-    edge_type TEXT CHECK(edge_type IN ('prerequisite','related','supports','contrasts')),
+    edge_type TEXT CHECK(edge_type IN ('prerequisite','related','supports','contrasts','similarity')),
     weight REAL DEFAULT 1.0,
-    source TEXT CHECK(source IN ('curated','induced')) DEFAULT 'curated',
+    source TEXT CHECK(source IN ('curated','induced','digested')) DEFAULT 'curated',
     confidence REAL DEFAULT 1.0,
     evidence TEXT,
     PRIMARY KEY (prereq_concept, target_concept, edge_type)
@@ -33,7 +33,9 @@ CREATE TABLE IF NOT EXISTS papers (
     source_org TEXT,
     year INTEGER,
     full_text TEXT,
-    pdf_path TEXT
+    pdf_path TEXT,
+    source_type TEXT,
+    url TEXT
 );
 
 CREATE TABLE IF NOT EXISTS paper_chunks (
@@ -53,7 +55,8 @@ CREATE TABLE IF NOT EXISTS keypoints (
     name TEXT NOT NULL,
     objective TEXT,
     evidence_chunk_id TEXT REFERENCES paper_chunks(id),
-    sort_order INTEGER DEFAULT 0
+    sort_order INTEGER DEFAULT 0,
+    bloom_level TEXT DEFAULT 'recall'
 );
 
 CREATE TABLE IF NOT EXISTS quiz_items (
@@ -69,7 +72,9 @@ CREATE TABLE IF NOT EXISTS quiz_items (
     source_paper_id INTEGER REFERENCES papers(id),
     rubric TEXT,
     expected_keypoints TEXT,
-    targets_misconception TEXT
+    targets_misconception TEXT,
+    distractors_json TEXT,
+    irt_b REAL
 );
 
 CREATE TABLE IF NOT EXISTS sessions (
@@ -90,6 +95,7 @@ CREATE TABLE IF NOT EXISTS learner_state (
     tried_strategies TEXT,
     depth TEXT,
     evidence TEXT,
+    irt_theta REAL,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (session_id, concept_id)
 );
@@ -176,6 +182,66 @@ CREATE TABLE IF NOT EXISTS induction_log (
     confidence_basis TEXT,        -- JSON: {n_chunks, max_strength, multi_paper}
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS cost_ledger (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_id TEXT,
+    ts TEXT,
+    stage TEXT,
+    tier TEXT,
+    model TEXT,
+    total_tokens INTEGER DEFAULT 0,
+    usd REAL DEFAULT 0,
+    cache_hit INTEGER DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS learner_goal (
+    session_id TEXT REFERENCES sessions(id),
+    goal_text TEXT,
+    goal_type TEXT CHECK(goal_type IN ('mastery','functional','survey')) DEFAULT 'mastery',
+    target_concepts_json TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (session_id)
+);
+
+CREATE TABLE IF NOT EXISTS review_queue (
+    session_id TEXT REFERENCES sessions(id),
+    concept_id INTEGER REFERENCES concepts(id),
+    due_at TEXT,
+    fsrs_state_json TEXT,
+    PRIMARY KEY (session_id, concept_id)
+);
+
+CREATE TABLE IF NOT EXISTS digest_cache (
+    slice_key TEXT PRIMARY KEY,
+    status TEXT CHECK(status IN ('cached','building')) DEFAULT 'building',
+    graph_version INTEGER DEFAULT 1,
+    built_at TEXT,
+    human_checked INTEGER DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS discover_results (
+    query_key TEXT PRIMARY KEY,
+    result_json TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS result_cache (
+    stage TEXT,
+    input_hash TEXT,
+    embedding TEXT,
+    result_json TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (stage, input_hash)
+);
+
+CREATE TABLE IF NOT EXISTS retention_log (
+    session_id TEXT,
+    concept_id INTEGER,
+    predicted REAL,
+    actual REAL,
+    probed_at TEXT
+);
 """
 
 
@@ -187,6 +253,18 @@ def init_db(conn: sqlite3.Connection) -> None:
         "ALTER TABLE quiz_items ADD COLUMN bloom_level TEXT DEFAULT 'recall'",
         "ALTER TABLE quiz_items ADD COLUMN rubric TEXT",
         "ALTER TABLE quiz_items ADD COLUMN expected_keypoints TEXT",
+        "ALTER TABLE keypoints ADD COLUMN bloom_level TEXT DEFAULT 'recall'",
+        "ALTER TABLE quiz_items ADD COLUMN distractors_json TEXT",
+        "ALTER TABLE quiz_items ADD COLUMN irt_b REAL",
+        "ALTER TABLE papers ADD COLUMN source_type TEXT",
+        "ALTER TABLE papers ADD COLUMN url TEXT",
+        "ALTER TABLE learner_state ADD COLUMN irt_theta REAL",
+        "ALTER TABLE concepts ADD COLUMN source TEXT DEFAULT 'curated'",
+        "ALTER TABLE concepts ADD COLUMN domain TEXT",
+        "ALTER TABLE concepts ADD COLUMN slice_key TEXT",
+        "ALTER TABLE concept_edges ADD COLUMN slice_key TEXT",
+        "ALTER TABLE digest_cache ADD COLUMN model_key TEXT",
+        "ALTER TABLE papers ADD COLUMN source_id TEXT",
     ]:
         try:
             conn.execute(stmt)

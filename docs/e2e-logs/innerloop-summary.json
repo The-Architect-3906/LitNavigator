@@ -1,0 +1,835 @@
+[
+  {
+    "id": 1,
+    "slug": "diffusion-models",
+    "language": "English",
+    "persona": "mastery",
+    "errors": [],
+    "quality": {
+      "source_relevance": {
+        "score": 5,
+        "reason": "The source and concepts are directly related to the learner's goal of mastering diffusion models for image generation."
+      },
+      "teaching_quality": {
+        "score": 4,
+        "reason": "The teaching text effectively explains key concepts like denoising autoencoders and latent space training, though it could be more concise."
+      },
+      "quiz_quality": {
+        "score": 4,
+        "reason": "Quiz questions are relevant and test understanding of key concepts, but could be more varied in format."
+      },
+      "feedback_quality": {
+        "score": 4,
+        "reason": "Feedback is positive and reinforces key ideas, but lacks depth in explaining why answers are correct."
+      },
+      "reexplain_quality": {
+        "score": 5,
+        "reason": "No re-explanation was needed as the learner did not get lost."
+      },
+      "artifact_quality": {
+        "score": 4,
+        "reason": "Study notes are well-organized and cover key concepts, but could include more detailed explanations."
+      },
+      "language_quality": {
+        "score": 5,
+        "reason": "The teaching and notes are fluently written in English."
+      },
+      "groundedness": {
+        "score": 5,
+        "reason": "All claims are supported by the source evidence provided."
+      },
+      "overall": {
+        "score": 4,
+        "reason": "The session effectively covers the learner's goal with relevant content and clear explanations, though there is room for improvement in feedback and quiz variety."
+      },
+      "issues": "None"
+    },
+    "reached_done": true,
+    "turns": 12,
+    "fired": {
+      "teach": true,
+      "reteach": false,
+      "graded": 12,
+      "correct": 12,
+      "mastered": true,
+      "conceded": false,
+      "handle_lost": false
+    },
+    "route_version": 1,
+    "route": [
+      "Denoising Autoencoders[done]",
+      "Latent Space Training[done]",
+      "Cross-Attention Layers[done]",
+      "Image Inpainting[done]"
+    ],
+    "concepts_taught": 4,
+    "teach_lang": "English",
+    "teach_lang_ok": true,
+    "artifact_lang": "English",
+    "artifact_lang_ok": true,
+    "artifact_citations": [
+      "c0",
+      "c1",
+      "c2",
+      "c3"
+    ],
+    "secs": 153.4,
+    "cost_usd": 0.02674,
+    "was_live": true,
+    "recommend": [
+      {
+        "name": "Class-Conditional Image Synthesis",
+        "eligible": true,
+        "reason": "Ready now — unlocks 0 concepts"
+      },
+      {
+        "name": "Text-to-Image Synthesis",
+        "eligible": true,
+        "reason": "Ready now — unlocks 0 concepts"
+      },
+      {
+        "name": "Computational Efficiency",
+        "eligible": true,
+        "reason": "Ready now — unlocks 0 concepts"
+      },
+      {
+        "name": "High-Resolution Synthesis",
+        "eligible": true,
+        "reason": "Ready now — unlocks 0 concepts"
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "slug": "crispr",
+    "language": "Chinese",
+    "persona": "struggle",
+    "errors": [],
+    "quality": {
+      "source_relevance": {
+        "score": 5,
+        "reason": "The source and concepts are directly relevant to the learner's goal of understanding CRISPR gene editing principles."
+      },
+      "teaching_quality": {
+        "score": 5,
+        "reason": "The teaching text provides a clear and concise overview of CRISPR/Cas-9, covering all necessary components and mechanisms."
+      },
+      "quiz_quality": {
+        "score": 4,
+        "reason": "The quiz questions are mostly relevant and test understanding, but there is some redundancy in questions about sgRNA."
+      },
+      "feedback_quality": {
+        "score": 4,
+        "reason": "Feedback is mostly accurate and helpful, but could be more detailed in some areas."
+      },
+      "reexplain_quality": {
+        "score": 5,
+        "reason": "No re-explanation was needed as the learner did not get lost."
+      },
+      "artifact_quality": {
+        "score": 5,
+        "reason": "The study notes are well-organized and effectively summarize the key concepts."
+      },
+      "language_quality": {
+        "score": 5,
+        "reason": "The teaching and notes are fluently in Chinese, with appropriate use of technical terms."
+      },
+      "groundedness": {
+        "score": 5,
+        "reason": "All claims are well-grounded in the provided source evidence."
+      },
+      "overall": {
+        "score": 5,
+        "reason": "The session effectively met the learner's goal with high-quality teaching and materials."
+      },
+      "issues": "None"
+    },
+    "reached_done": true,
+    "turns": 16,
+    "fired": {
+      "teach": true,
+      "reteach": true,
+      "graded": 16,
+      "correct": 12,
+      "mastered": true,
+      "conceded": false,
+      "handle_lost": false
+    },
+    "route_version": 1,
+    "route": [
+      "CRISPR/Cas-9 System[done]",
+      "Function of sgRNA[done]",
+      "Action of Cas-9 Nuclease[done]",
+      "DNA Repair Mechanisms[done]"
+    ],
+    "concepts_taught": 4,
+    "teach_lang": "Chinese",
+    "teach_lang_ok": true,
+    "artifact_lang": "Chinese",
+    "artifact_lang_ok": true,
+    "artifact_citations": [
+      "c1",
+      "c2"
+    ],
+    "secs": 178.2,
+    "cost_usd": 0.027702,
+    "was_live": true,
+    "recommend": [
+      {
+        "name": "Applications of CRISPR",
+        "eligible": true,
+        "reason": "Ready now — unlocks 0 concepts"
+      },
+      {
+        "name": "Challenges in CRISPR Technology",
+        "eligible": true,
+        "reason": "Ready now — unlocks 0 concepts"
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "slug": "raft-consensus",
+    "language": "English",
+    "persona": "give_up",
+    "errors": [],
+    "quality": {
+      "source_relevance": {
+        "score": 3,
+        "reason": "The source and concepts are related to the Raft consensus mechanism but focus more on wireless blockchain networks and malicious jamming, which are tangential to the learner's goal of building a Raft implementation."
+      },
+      "teaching_quality": {
+        "score": 3,
+        "reason": "The teaching text explains the Raft mechanism in the context of wireless networks but lacks depth on building a Raft implementation."
+      },
+      "quiz_quality": {
+        "score": 3,
+        "reason": "Quiz questions are relevant to the source material but do not directly address building a Raft implementation."
+      },
+      "feedback_quality": {
+        "score": 3,
+        "reason": "Feedback is relevant to the questions but does not guide the learner towards building a Raft implementation."
+      },
+      "reexplain_quality": {
+        "score": 5,
+        "reason": "No re-explanation was needed as the learner did not get lost."
+      },
+      "artifact_quality": {
+        "score": 3,
+        "reason": "Study notes summarize key concepts but do not focus on practical steps for building a Raft implementation."
+      },
+      "language_quality": {
+        "score": 5,
+        "reason": "The teaching and notes are fluently written in English."
+      },
+      "groundedness": {
+        "score": 4,
+        "reason": "Most claims are grounded in the source, but there is some extrapolation beyond the evidence regarding practical implementation."
+      },
+      "overall": {
+        "score": 3,
+        "reason": "The session covers relevant concepts but lacks focus on the practical aspects of building a Raft implementation."
+      },
+      "issues": "Lacks focus on practical implementation of Raft."
+    },
+    "reached_done": true,
+    "turns": 12,
+    "fired": {
+      "teach": true,
+      "reteach": true,
+      "graded": 12,
+      "correct": 0,
+      "mastered": false,
+      "conceded": true,
+      "handle_lost": false
+    },
+    "route_version": 1,
+    "route": [
+      "Raft Consensus Mechanism[conceded]",
+      "Wireless Blockchain Networks[conceded]",
+      "Malicious Jamming[conceded]",
+      "Poisson Point Process[conceded]"
+    ],
+    "concepts_taught": 0,
+    "teach_lang": "English",
+    "teach_lang_ok": true,
+    "artifact_lang": "English",
+    "artifact_lang_ok": true,
+    "artifact_citations": [
+      "c1"
+    ],
+    "secs": 159.0,
+    "cost_usd": 0.019634,
+    "was_live": true,
+    "recommend": [
+      {
+        "name": "Poisson Point Process",
+        "eligible": true,
+        "reason": "Ready now — unlocks 1 concept"
+      },
+      {
+        "name": "Raft Consensus Mechanism",
+        "eligible": true,
+        "reason": "Ready now — unlocks 0 concepts"
+      },
+      {
+        "name": "Wireless Blockchain Networks",
+        "eligible": true,
+        "reason": "Ready now — unlocks 0 concepts"
+      },
+      {
+        "name": "Malicious Jamming",
+        "eligible": true,
+        "reason": "Ready now — unlocks 0 concepts"
+      },
+      {
+        "name": "Analytical Guidance for Deployment",
+        "eligible": true,
+        "reason": "Ready now — unlocks 0 concepts"
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "slug": "quantum-error-correction",
+    "language": "English",
+    "persona": "lost_then_recover",
+    "errors": [],
+    "quality": {
+      "source_relevance": {
+        "score": 5,
+        "reason": "The source and concepts are directly related to the learner's goal of understanding quantum error correction."
+      },
+      "teaching_quality": {
+        "score": 3,
+        "reason": "The teaching text covers relevant concepts but lacks clarity and depth in explaining the quantum error correction process."
+      },
+      "quiz_quality": {
+        "score": 4,
+        "reason": "The quiz questions are relevant and cover key concepts, but could be more varied in format."
+      },
+      "feedback_quality": {
+        "score": 4,
+        "reason": "Feedback is specific and acknowledges correct understanding, but could offer more guidance on incorrect answers."
+      },
+      "reexplain_quality": {
+        "score": 5,
+        "reason": "Re-explanation was not needed, indicating clarity in initial explanations."
+      },
+      "artifact_quality": {
+        "score": 3,
+        "reason": "Study notes are organized but lack depth and detailed explanations of key concepts."
+      },
+      "language_quality": {
+        "score": 5,
+        "reason": "The language is fluent and appropriate for the learner's goal."
+      },
+      "groundedness": {
+        "score": 4,
+        "reason": "Most claims are grounded in the source, but some explanations could be more directly tied to the evidence."
+      },
+      "overall": {
+        "score": 4,
+        "reason": "The session is generally effective but could improve in depth and clarity of explanations."
+      },
+      "issues": "Lacks depth in explaining quantum error correction process."
+    },
+    "reached_done": true,
+    "turns": 16,
+    "fired": {
+      "teach": true,
+      "reteach": false,
+      "graded": 15,
+      "correct": 15,
+      "mastered": true,
+      "conceded": false,
+      "handle_lost": true
+    },
+    "route_version": 1,
+    "route": [
+      "Entangled Quantum States[done]",
+      "Decoherence[done]",
+      "Nonlocal Degrees of Freedom[done]",
+      "Measurements on Qubits[done]",
+      "Quantum Error Correction Process[done]"
+    ],
+    "concepts_taught": 5,
+    "teach_lang": "English",
+    "teach_lang_ok": true,
+    "artifact_lang": "English",
+    "artifact_lang_ok": true,
+    "artifact_citations": [
+      "c1"
+    ],
+    "secs": 177.8,
+    "cost_usd": 0.020837,
+    "was_live": true,
+    "recommend": [
+      {
+        "name": "Two-Dimensional Topological Order",
+        "eligible": true,
+        "reason": "Ready now — unlocks 0 concepts"
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "slug": "black-scholes",
+    "language": "Spanish",
+    "persona": "mastery",
+    "errors": [],
+    "quality": {
+      "source_relevance": {
+        "score": 5,
+        "reason": "The source and concepts are directly related to the learner's goal of understanding the Black-Scholes pricing model."
+      },
+      "teaching_quality": {
+        "score": 4,
+        "reason": "The teaching text effectively explains the Black-Scholes model and its components, though it could be more detailed in mathematical derivations."
+      },
+      "quiz_quality": {
+        "score": 4,
+        "reason": "The quiz questions are relevant and cover key aspects of the Black-Scholes model, but could be more challenging."
+      },
+      "feedback_quality": {
+        "score": 4,
+        "reason": "Feedback is accurate and reinforces key concepts, but lacks depth in explaining why answers are correct."
+      },
+      "reexplain_quality": {
+        "score": 5,
+        "reason": "No re-explanation was needed as the learner did not get lost."
+      },
+      "artifact_quality": {
+        "score": 4,
+        "reason": "Study notes are concise and relevant, but could include more detailed explanations or examples."
+      },
+      "language_quality": {
+        "score": 5,
+        "reason": "The teaching and notes are fluently in Spanish, with appropriate use of English for specific terms."
+      },
+      "groundedness": {
+        "score": 5,
+        "reason": "All claims are well-grounded in the provided source evidence."
+      },
+      "overall": {
+        "score": 4,
+        "reason": "Overall, the session was effective and relevant, with minor areas for improvement in depth and challenge."
+      },
+      "issues": "Minor lack of depth in explanations and challenge in quiz questions."
+    },
+    "reached_done": true,
+    "turns": 12,
+    "fired": {
+      "teach": true,
+      "reteach": false,
+      "graded": 12,
+      "correct": 12,
+      "mastered": true,
+      "conceded": false,
+      "handle_lost": false
+    },
+    "route_version": 1,
+    "route": [
+      "Black-Scholes Model[done]",
+      "Black-Scholes Equation[done]",
+      "Black-Scholes Formula[done]",
+      "European-style Options[done]"
+    ],
+    "concepts_taught": 4,
+    "teach_lang": "Spanish",
+    "teach_lang_ok": true,
+    "artifact_lang": "Spanish",
+    "artifact_lang_ok": true,
+    "artifact_citations": [
+      "c1"
+    ],
+    "secs": 160.7,
+    "cost_usd": 0.024884,
+    "was_live": true,
+    "recommend": [
+      {
+        "name": "Risk-Return Relationship",
+        "eligible": true,
+        "reason": "Ready now — unlocks 0 concepts"
+      },
+      {
+        "name": "Fischer Black and Myron Scholes",
+        "eligible": true,
+        "reason": "Ready now — unlocks 0 concepts"
+      },
+      {
+        "name": "Robert C. Merton's Contribution",
+        "eligible": true,
+        "reason": "Ready now — unlocks 0 concepts"
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "slug": "mrna-vaccines",
+    "language": "English",
+    "persona": "struggle",
+    "errors": [],
+    "quality": {
+      "source_relevance": {
+        "score": 5,
+        "reason": "The source and concepts are directly related to the learner's goal of understanding mRNA vaccine design."
+      },
+      "teaching_quality": {
+        "score": 4,
+        "reason": "The teaching text effectively explains the role of lipid nanoparticles and mRNA in vaccines, but could be more comprehensive on the overall vaccine design process."
+      },
+      "quiz_quality": {
+        "score": 3,
+        "reason": "The quiz questions are repetitive and overly focused on lipid nanoparticles, lacking diversity in assessing understanding of mRNA vaccine design."
+      },
+      "feedback_quality": {
+        "score": 4,
+        "reason": "Feedback is clear and correctly identifies key functions of lipid nanoparticles, but could be more varied."
+      },
+      "reexplain_quality": {
+        "score": 5,
+        "reason": "No re-explanation was needed as the learner did not get lost."
+      },
+      "artifact_quality": {
+        "score": 4,
+        "reason": "Study notes are concise and relevant, but could include more detail on the overall vaccine design process."
+      },
+      "language_quality": {
+        "score": 5,
+        "reason": "The teaching and notes are fluently written in English."
+      },
+      "groundedness": {
+        "score": 5,
+        "reason": "All claims are well-grounded in the provided source evidence."
+      },
+      "overall": {
+        "score": 4,
+        "reason": "The session is effective but could improve in quiz diversity and comprehensive coverage of mRNA vaccine design."
+      },
+      "issues": "Repetitive quiz questions and limited coverage of overall vaccine design."
+    },
+    "reached_done": true,
+    "turns": 20,
+    "fired": {
+      "teach": true,
+      "reteach": true,
+      "graded": 20,
+      "correct": 15,
+      "mastered": true,
+      "conceded": false,
+      "handle_lost": false
+    },
+    "route_version": 1,
+    "route": [
+      "Lipid Nanoparticles[done]",
+      "mRNA Vaccine[done]",
+      "Protein Synthesis[done]",
+      "Antigen Encoding[done]",
+      "Immune Response[done]"
+    ],
+    "concepts_taught": 5,
+    "teach_lang": "English",
+    "teach_lang_ok": true,
+    "artifact_lang": "English",
+    "artifact_lang_ok": true,
+    "artifact_citations": [
+      "c1"
+    ],
+    "secs": 231.9,
+    "cost_usd": 0.024504,
+    "was_live": true,
+    "recommend": [
+      {
+        "name": "Adaptive Immunity",
+        "eligible": true,
+        "reason": "Ready now — unlocks 0 concepts"
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "slug": "transformer-attention",
+    "language": "Chinese",
+    "persona": "mastery",
+    "errors": [],
+    "quality": {
+      "source_relevance": {
+        "score": 5,
+        "reason": "The concepts taught are directly related to the learner's goal of understanding the mathematical principles of the Transformer's self-attention mechanism."
+      },
+      "teaching_quality": {
+        "score": 4,
+        "reason": "The teaching text is clear and covers relevant concepts, but could delve deeper into the mathematical principles as per the learner's goal."
+      },
+      "quiz_quality": {
+        "score": 4,
+        "reason": "The quiz questions are relevant and test understanding of key concepts, but could be more challenging to assess deeper understanding."
+      },
+      "feedback_quality": {
+        "score": 5,
+        "reason": "Feedback is specific and reinforces key ideas effectively."
+      },
+      "reexplain_quality": {
+        "score": 5,
+        "reason": "No re-explanation was needed as the learner did not get lost."
+      },
+      "artifact_quality": {
+        "score": 4,
+        "reason": "Study notes are well-organized and relevant, but could include more detailed explanations."
+      },
+      "language_quality": {
+        "score": 5,
+        "reason": "The teaching and notes are fluently in Chinese, with appropriate use of English for technical terms."
+      },
+      "groundedness": {
+        "score": 5,
+        "reason": "All claims are well-grounded in the provided source evidence."
+      },
+      "overall": {
+        "score": 4,
+        "reason": "The session is well-executed but could improve by aligning more closely with the learner's goal of understanding mathematical principles."
+      },
+      "issues": "Could focus more on mathematical principles of self-attention."
+    },
+    "reached_done": true,
+    "turns": 12,
+    "fired": {
+      "teach": true,
+      "reteach": false,
+      "graded": 12,
+      "correct": 12,
+      "mastered": true,
+      "conceded": false,
+      "handle_lost": false
+    },
+    "route_version": 1,
+    "route": [
+      "Token Representation via Word Embeddings[done]",
+      "Multi-Head Attention Mechanism[done]",
+      "Contextualization of Tokens[done]",
+      "Positional Encoding in Transformers[done]"
+    ],
+    "concepts_taught": 4,
+    "teach_lang": "Chinese",
+    "teach_lang_ok": true,
+    "artifact_lang": "Chinese",
+    "artifact_lang_ok": true,
+    "artifact_citations": [
+      "c1"
+    ],
+    "secs": 166.5,
+    "cost_usd": 0.023825,
+    "was_live": true,
+    "recommend": [
+      {
+        "name": "Permutation Invariance of Self-Attention",
+        "eligible": true,
+        "reason": "Ready now — unlocks 0 concepts"
+      },
+      {
+        "name": "Context Window in Attention Mechanism",
+        "eligible": true,
+        "reason": "Ready now — unlocks 0 concepts"
+      }
+    ]
+  },
+  {
+    "id": 8,
+    "slug": "behavioral-economics",
+    "language": "English",
+    "persona": "give_up",
+    "errors": [],
+    "quality": {
+      "source_relevance": {
+        "score": 5,
+        "reason": "The source and concepts are directly related to the learner's goal of understanding behavioral economics and nudges."
+      },
+      "teaching_quality": {
+        "score": 4,
+        "reason": "The teaching text effectively explains nudge theory and its application, though it could be more concise."
+      },
+      "quiz_quality": {
+        "score": 4,
+        "reason": "Quiz questions are relevant and cover key aspects of nudge theory, but are somewhat repetitive."
+      },
+      "feedback_quality": {
+        "score": 3,
+        "reason": "Feedback is repetitive and could be more specific to guide the learner's improvement."
+      },
+      "reexplain_quality": {
+        "score": 5,
+        "reason": "No re-explanation was needed as the learner did not get lost."
+      },
+      "artifact_quality": {
+        "score": 4,
+        "reason": "Study notes are well-structured and relevant, but could be more detailed."
+      },
+      "language_quality": {
+        "score": 5,
+        "reason": "The teaching and notes are fluently in English with no language issues."
+      },
+      "groundedness": {
+        "score": 5,
+        "reason": "All claims are well-grounded in the provided source evidence."
+      },
+      "overall": {
+        "score": 4,
+        "reason": "Overall, the session was effective but could benefit from more concise teaching and varied feedback."
+      },
+      "issues": "Repetitive feedback and quiz questions."
+    },
+    "reached_done": true,
+    "turns": 12,
+    "fired": {
+      "teach": true,
+      "reteach": true,
+      "graded": 12,
+      "correct": 0,
+      "mastered": false,
+      "conceded": true,
+      "handle_lost": false
+    },
+    "route_version": 1,
+    "route": [
+      "Decision Environment[conceded]",
+      "Nudge Theory[conceded]",
+      "Behavioral Influence[conceded]",
+      "Compliance Methods[conceded]"
+    ],
+    "concepts_taught": 0,
+    "teach_lang": "English",
+    "teach_lang_ok": true,
+    "artifact_lang": "English",
+    "artifact_lang_ok": true,
+    "artifact_citations": [
+      "c0"
+    ],
+    "secs": 167.8,
+    "cost_usd": 0.023223,
+    "was_live": true,
+    "recommend": [
+      {
+        "name": "Decision Environment",
+        "eligible": true,
+        "reason": "Ready now — unlocks 1 concept"
+      },
+      {
+        "name": "Social Psychology",
+        "eligible": true,
+        "reason": "Ready now — unlocks 0 concepts"
+      },
+      {
+        "name": "Nudge Theory",
+        "eligible": false,
+        "reason": "Blocked — needs Decision Environment first"
+      },
+      {
+        "name": "Behavioral Influence",
+        "eligible": false,
+        "reason": "Blocked — needs Nudge Theory first"
+      },
+      {
+        "name": "Compliance Methods",
+        "eligible": false,
+        "reason": "Blocked — needs Nudge Theory first"
+      }
+    ]
+  },
+  {
+    "id": 9,
+    "slug": "rlhf",
+    "language": "English",
+    "persona": "struggle",
+    "errors": [],
+    "quality": {
+      "source_relevance": {
+        "score": 5,
+        "reason": "The source and concepts are directly related to the learner's goal of applying RLHF to fine-tune an LLM."
+      },
+      "teaching_quality": {
+        "score": 4,
+        "reason": "The teaching text effectively explains RLHF and its components, though it could be more concise."
+      },
+      "quiz_quality": {
+        "score": 4,
+        "reason": "Quiz questions are relevant and cover key aspects of RLHF, but some are repetitive."
+      },
+      "feedback_quality": {
+        "score": 4,
+        "reason": "Feedback is mostly accurate and helpful, though it could be more specific in some areas."
+      },
+      "reexplain_quality": {
+        "score": 5,
+        "reason": "No re-explanation was needed as the learner did not get lost."
+      },
+      "artifact_quality": {
+        "score": 4,
+        "reason": "Study notes are well-organized and cover key concepts, but could be more detailed."
+      },
+      "language_quality": {
+        "score": 5,
+        "reason": "The language used is fluent and appropriate for the subject matter."
+      },
+      "groundedness": {
+        "score": 5,
+        "reason": "All claims are well-grounded in the provided evidence."
+      },
+      "overall": {
+        "score": 4,
+        "reason": "The session was effective and relevant, with minor areas for improvement in quiz and feedback quality."
+      },
+      "issues": "none"
+    },
+    "reached_done": true,
+    "turns": 16,
+    "fired": {
+      "teach": true,
+      "reteach": true,
+      "graded": 16,
+      "correct": 12,
+      "mastered": true,
+      "conceded": false,
+      "handle_lost": false
+    },
+    "route_version": 1,
+    "route": [
+      "Human Preferences[done]",
+      "Reward Model[done]",
+      "Reinforcement Learning from Human Feedback[done]",
+      "Training Process[done]"
+    ],
+    "concepts_taught": 4,
+    "teach_lang": "English",
+    "teach_lang_ok": true,
+    "artifact_lang": "English",
+    "artifact_lang_ok": true,
+    "artifact_citations": [
+      "c0"
+    ],
+    "secs": 184.2,
+    "cost_usd": 0.023372,
+    "was_live": true,
+    "recommend": [
+      {
+        "name": "Alignment of Intelligent Agents",
+        "eligible": true,
+        "reason": "Ready now — unlocks 0 concepts"
+      },
+      {
+        "name": "Reinforcement Learning",
+        "eligible": true,
+        "reason": "Ready now — unlocks 0 concepts"
+      }
+    ]
+  },
+  {
+    "id": 10,
+    "slug": "graph-neural-nets",
+    "language": "French",
+    "persona": "lost_then_recover",
+    "errors": [
+      "no full-text source"
+    ]
+  }
+]

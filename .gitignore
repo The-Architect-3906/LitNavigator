@@ -18,3 +18,8 @@ venv/
 build/
 dist/
 *.spec
+
+# Generated artifact output
+artifacts/
+
+.DS_Store

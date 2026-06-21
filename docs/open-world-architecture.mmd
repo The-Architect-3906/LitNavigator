@@ -1,0 +1,94 @@
+flowchart TD
+    G([🎯 Your learning goal])
+
+    %% ===================== OPEN-WORLD: build the graph on demand =====================
+    subgraph DISC [find-sources · DISCOVER · OW-3 / 3.1]
+      direction TB
+      FS0[normalize query\nany-language goal → English search query]
+      FS1[intent classify\ngoal → survey · applied · cutting-edge]
+      FS2[OpenAlex + Wikipedia adapters\nmetadata + authority]
+      FS3[BM25 prefilter → embedding-cosine rerank\n+ authority + dedup]
+      FSG[relevance gate\ncheap LLM drops off-topic sources]
+      FS4[top-k full text → sub-chunked c0..cN]
+      FS0 --> FS1 --> FS2 --> FS3 --> FSG --> FS4
+    end
+    subgraph DIG [digest-corpus · DIGEST · OW-2]
+      direction TB
+      DG1[extract concepts + keypoints\ncheap · temp 0 · grounded in chunks]
+      DG2[propose edges\nRefD prereq signal + LLM + cosine]
+      DG3[gpt-4o verify high-impact edges\ninduced_confidence · downgrade unsupported]
+      DG4[persist concepts · edges · keypoints · quiz · chunks\nsource=digested · slice cache]
+      DG1 --> DG2 --> DG3 --> DG4
+    end
+    G --> FS0
+    FS4 --> DG1
+    DG4 --> CG[(Concept graph · SQLite\nconcepts · edges · keypoints · quiz · chunks\nprereq solid · similarity dashed · digested)]
+
+    %% ===================== INNER LOOP — LangGraph, checkpointed =====================
+    CG --> GE[goal_elicit\ngoal_type → Bloom ceiling]
+    GE --> PL[planner\nroute over target concepts]
+    PL -->|new concept| IND[induce_scaffold\nderive prereqs · mine misconceptions]
+    PL -->|multi-stop route| OT[orient_tour\nshow the roadmap first]
+    IND --> SN
+    OT --> SN
+    PL -->|else| SN
+    SN{select_next\n↻ next concept · or done}
+    SN -->|next concept| RT[retrieve evidence\ncited chunks]
+    RT -->|concept has keypoints| IK[init_kp → teach_kp\npaper-grounded explanation]
+    RT -->|no keypoints| LT[teach · legacy fallback]
+
+    subgraph TA [TEACH · ASSESS — keypoint by keypoint]
+      direction TB
+      IK --> AN[assess_next\nquiz at rising Bloom · learner answers]
+      AN -->|lost| HL[handle_lost\nre-explain · no grade]
+      HL --> AN
+      AN -->|answer| GK[grade_kp\nBKT/Rasch mastery · detect misconception\nfrontier escalation near threshold]
+      GK -->|correct → Bloom up · or hold| AN
+      GK -->|wrong · retries left| RK[reteach_kp\nswitch strategy]
+      RK --> AN
+      GK -->|mastered ≥ threshold · or reteach exhausted| AK[advance_kp]
+    end
+    AK --> SN
+
+    subgraph LEG [fallback — concepts without authored keypoints]
+      direction TB
+      LT -->|has quiz| CK[check · Socratic Q]
+      LT -->|quizless| LEC[lecture · no mastery claim]
+      CK --> GR[grade · BKT · detect misconception]
+      GR -->|misconception · retries left| RE[reteach] --> LT
+      GR -->|missing prereq| DI[diagnose → replan\ninsert missing prereq]
+    end
+    GR -->|mastered| SN
+    LEC --> SN
+    DI --> SN
+
+    %% ===================== ARTIFACTS + NEXT =====================
+    SN -->|all concepts done| ART
+    ART[make-artifact · ARTIFACT · OW-5\nselect format → mind-map · notes · slides ·\nworked-example · combination\nretrieval prompt + citations · in learner's language]
+    ART --> RN[recommend-next · OW-6\nhard-prereq filter + mastery-gain ranker]
+    RN --> DONE([✅ session done])
+    CG -.on demand · deck · notes · map.-> ART
+
+    %% ===================== COST SPINE — single metered chokepoint =====================
+    subgraph SPINE [Cost spine · OW-0]
+      RTR[router\ntier registry · per-session budget cap + 80% alert\nresult cache · strict liveness · cost_ledger]
+    end
+    FS1 -.meter.-> RTR
+    DG1 -.-> RTR
+    DG3 -.-> RTR
+    GE -.-> RTR
+    GK -.-> RTR
+    ART -.-> RTR
+
+    classDef disc fill:#dde6f2,stroke:#3f4b5e,color:#0f1b2b;
+    classDef dig fill:#c7ecd4,stroke:#258a51,color:#0c3019;
+    classDef teach fill:#d7ccff,stroke:#5b49c4,color:#1c1444;
+    classDef spine fill:#ffdf9e,stroke:#b3700d,color:#43280a;
+    classDef art fill:#ffd9ec,stroke:#b03a7a,color:#3d0f27;
+    classDef store fill:#eaf3ff,stroke:#2d5d8f,color:#0f1b2b;
+    classDef pending fill:#eee,stroke:#999,color:#555,stroke-dasharray:4 3;
+    class G disc;
+    class FS0,FS1,FS2,FS3,FSG,FS4 disc;
+    class DG1,DG2,DG3,DG4 dig; class CG store;
+    class GE,PL,IND,OT,SN,RT,IK,AN,HL,GK,RK,AK,LT,CK,LEC,GR,RE,DI teach;
+    class ART art; class RN pending; class DONE store; class RTR spine;

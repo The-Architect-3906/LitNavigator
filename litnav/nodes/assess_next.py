@@ -7,9 +7,11 @@ so the live demo never depends on a live LLM call for question generation.
 """
 from __future__ import annotations
 
+import json
 import sqlite3
 
-from litnav.llm import client as llm_client
+from litnav.assess import quizgen
+from litnav.llm import router
 from litnav.state import BLOOM_LADDER, NavState
 from litnav.storage import repo
 
@@ -20,6 +22,7 @@ def _get_or_generate(
     keypoint_id: str,
     bloom: str,
     used_ids: list[int],
+    session_id: str | None = None,
 ) -> dict | None:
     """Cache-first quiz retrieval. Falls back to LLM generation on miss."""
     # 1) Cache hit (quiz_items table keyed by keypoint_id + bloom_level)
@@ -35,7 +38,9 @@ def _get_or_generate(
 
     evidence = repo.get_chunk_text(conn, kp_meta.get("evidence_chunk_id") or "")
     if not evidence:
-        return None
+        # No evidence to generate from — rescue with any cached quiz for this keypoint
+        # (digested seeds may be stored at a bloom outside the assess ladder).
+        return repo.get_any_quiz_for_kp(conn, keypoint_id, exclude_ids=used_ids)
 
     spec = {
         "recall":        "Direct recall: ask what this key point IS. Short answer.",
@@ -43,26 +48,71 @@ def _get_or_generate(
         "application":   "Application: give a concrete scenario and ask whether/how this concept applies. Short answer.",
     }.get(bloom, "Short answer quiz question.")
 
-    result = llm_client.complete_json(
+    # A15 — quiz variety: avoid re-posing near-identical questions on the same keypoint.
+    prior_qs = [r[0] for r in conn.execute(
+        "SELECT question FROM quiz_items WHERE keypoint_id=?", (keypoint_id,)).fetchall() if r[0]]
+    variety = ("Pick ONE distinct lens (different from any earlier question): definition · "
+               "mechanism/why · contrast with a common misconception · a concrete application scenario.")
+    avoid = (f"\nDo NOT repeat or paraphrase these already-asked questions: {prior_qs}" if prior_qs else "")
+    result = router.complete_json(
         f"Generate ONE quiz question STRICTLY grounded in the evidence below. "
         f"Do not add facts not in the evidence. JSON only:\n"
         f'{{"question": "<question text>", "answer_key": "<key phrase>", '
         f'"rubric": "<grading rubric>", "expected_keypoints": ["keyword1", "keyword2"]}}\n'
         f"Bloom level: {bloom} — {spec}\n"
+        f"{variety}{avoid}\n"
         f"Key point: {kp_meta['name']}\n"
         f"Objective: {kp_meta['objective']}\n"
         f"Evidence: {evidence}",
+        tier="cheap",
+        stage="assess",
         fallback=None,
+        session_id=session_id,
+        conn=conn,
     )
     if not result or not result.get("question"):
-        return None
+        # Generation produced nothing (offline, or unusable evidence). Last resort: any cached
+        # quiz for this keypoint regardless of bloom rung — keeps the digested teach loop alive
+        # instead of skipping straight to concede.
+        return repo.get_any_quiz_for_kp(conn, keypoint_id, exclude_ids=used_ids)
 
-    # 3) Cache generated item back into quiz_items table
+    # 3) Generate MCQ distractors (overgenerate-rank), flaw-gate, estimate IRT difficulty
+    question_text = result["question"]
+    answer_key_text = result.get("answer_key", "")
+
+    distractors = quizgen.make_distractors(
+        question_text, answer_key_text,
+        conn=conn, session_id=session_id,
+        fallback=result.get("distractors") or [],
+    )
+    item_for_gate = {"question": question_text, "answer_key": answer_key_text,
+                     "distractors": distractors}
+    ok, reason = quizgen.flaw_gate(item_for_gate)
+    if not ok:
+        # Regenerate distractors once more on flaw failure
+        distractors = quizgen.make_distractors(
+            question_text, answer_key_text,
+            conn=conn, session_id=session_id,
+            fallback=result.get("distractors") or [],
+        )
+        item_for_gate = {"question": question_text, "answer_key": answer_key_text,
+                         "distractors": distractors}
+        ok2, _ = quizgen.flaw_gate(item_for_gate)
+        if not ok2:
+            # Still flawed: fall back to short-answer (empty distractors), do NOT crash
+            distractors = []
+
+    irt_b = quizgen.estimate_difficulty(
+        {"question": question_text, "answer_key": answer_key_text},
+        conn=conn, session_id=session_id,
+    )
+
+    # 4) Cache generated item back into quiz_items table
     generated_id = repo.create_quiz_item(
         conn,
         concept_id=concept_id,
-        question=result["question"],
-        answer_key=result.get("answer_key", ""),
+        question=question_text,
+        answer_key=answer_key_text,
         qtype="explain",
         difficulty={"recall": 1, "comprehension": 2, "application": 3}.get(bloom, 1),
         evidence_chunk_id=kp_meta["evidence_chunk_id"],
@@ -71,17 +121,21 @@ def _get_or_generate(
         expected_keypoints=str(result.get("expected_keypoints", [])),
         keypoint_id=keypoint_id,
         bloom_level=bloom,
+        distractors_json=json.dumps(distractors),
+        irt_b=irt_b,
     )
     return {
         "id": generated_id,
         "concept_id": concept_id,
         "keypoint_id": keypoint_id,
         "bloom_level": bloom,
-        "question": result["question"],
-        "answer_key": result.get("answer_key", ""),
+        "question": question_text,
+        "answer_key": answer_key_text,
         "rubric": result.get("rubric"),
         "expected_keypoints": str(result.get("expected_keypoints", [])),
         "evidence_chunk_id": kp_meta["evidence_chunk_id"],
+        "distractors": distractors,
+        "irt_b": irt_b,
     }
 
 
@@ -105,10 +159,19 @@ def assess_next_node(state: NavState, conn: sqlite3.Connection) -> dict:
     if last_result == "correct" and last_kp:
         cur_idx = BLOOM_LADDER.index(bloom)
         if cur_idx + 1 < len(BLOOM_LADDER):
-            bloom = BLOOM_LADDER[cur_idx + 1]
-            target_kp_id = last_kp  # stay on same keypoint at higher level
+            candidate = BLOOM_LADDER[cur_idx + 1]
+            # Respect bloom_ceiling if set (OW-4 goal elicitation)
+            ceiling = state.get("bloom_ceiling")
+            if ceiling and ceiling in BLOOM_LADDER:
+                ceiling_idx = BLOOM_LADDER.index(ceiling)
+                if cur_idx + 1 > ceiling_idx:
+                    candidate = None   # already at or beyond ceiling — don't upgrade
+            if candidate is not None:
+                bloom = candidate
+                target_kp_id = last_kp  # stay on same keypoint at higher level
 
-    quiz = _get_or_generate(conn, cp["concept_id"], target_kp_id, bloom, used_ids)
+    quiz = _get_or_generate(conn, cp["concept_id"], target_kp_id, bloom, used_ids,
+                            session_id=state["session_id"])
     reused = False
     if quiz is None and kp_states.get(target_kp_id, {}).get("last_result") == "wrong":
         # After a reteach, the learner still needs a same-level check. If the fixture only

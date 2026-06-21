@@ -44,32 +44,43 @@ def route_decider_node(state: NavState) -> str:
 
 
 def advance_kp_node(state: NavState, conn: sqlite3.Connection) -> dict:
-    """Mark concept as done, persist advance decision."""
+    """Leave the concept and move on — honestly distinguishing a true ADVANCE (thresholds met)
+    from a CONCEDE (reteach exhausted, thresholds not met). assess_decider routes both cases
+    here, so this node must not claim mastery it didn't reach."""
     cp = state["concept_progress"]
     concept_id = cp["concept_id"]
     kp_states = cp["keypoint_state"]
 
     m = _concept_mastery(kp_states)
     c = _concept_confidence(kp_states)
+    mastered = m >= KP_MASTERY_THRESHOLD and c >= KP_CONF_THRESHOLD
+    decision = "advance" if mastered else "concede"
+    new_status = "done" if mastered else "conceded"
 
     route = [dict(s) for s in state["route"]]
     for step in route:
         if step["concept_id"] == concept_id and step.get("status") == "pending":
-            step["status"] = "done"
+            step["status"] = new_status
             repo.update_route_step_status(
                 conn, state["session_id"], state["route_version"],
-                step["step_id"], "done",
+                step["step_id"], new_status,
             )
             break
 
-    rationale = (
-        f"ADVANCE concept {concept_id}: mastery={m:.3f}≥{KP_MASTERY_THRESHOLD}, "
-        f"confidence={c:.3f}≥{KP_CONF_THRESHOLD} (≥2 correct observations). "
-        f"No unresolved misconceptions."
-    )
+    if mastered:
+        rationale = (
+            f"ADVANCE concept {concept_id}: mastery={m:.3f}≥{KP_MASTERY_THRESHOLD}, "
+            f"confidence={c:.3f}≥{KP_CONF_THRESHOLD} (≥2 correct observations). Concept mastered."
+        )
+    else:
+        rationale = (
+            f"CONCEDE concept {concept_id}: reteach exhausted and thresholds not met "
+            f"(mastery={m:.3f}<{KP_MASTERY_THRESHOLD} or confidence={c:.3f}<{KP_CONF_THRESHOLD}). "
+            f"Marking not-yet-mastered and moving on rather than looping."
+        )
     repo.record_decision(
         conn, state["session_id"], state["route_version"],
-        "route_decider", "advance", rationale,
+        "route_decider", decision, rationale,
         state_snapshot={"concept_id": concept_id, "mastery": m, "confidence": c},
     )
 
@@ -77,6 +88,7 @@ def advance_kp_node(state: NavState, conn: sqlite3.Connection) -> dict:
         "route": route,
         "concept_progress": None,   # clear so next concept starts fresh (P2 fix)
         "current_quiz_item": None,  # no active question after concept advance
+        "decision": decision,
         "rationale": rationale,
-        "history": [{"event": "advance_kp", "concept_id": concept_id, "mastery": m, "confidence": c}],
+        "history": [{"event": decision, "concept_id": concept_id, "mastery": m, "confidence": c}],
     }

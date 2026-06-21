@@ -244,9 +244,10 @@ def get_last_tutor_post_score(
 
 def get_concept_by_slug(conn: sqlite3.Connection, slug: str) -> dict | None:
     row = conn.execute(
-        "SELECT id, slug, name, frontier_flag FROM concepts WHERE slug=?", (slug,)
+        "SELECT id, slug, name, frontier_flag, source, domain FROM concepts WHERE slug=?", (slug,)
     ).fetchone()
-    return {"id": row[0], "slug": row[1], "name": row[2], "frontier_flag": row[3]} if row else None
+    return {"id": row[0], "slug": row[1], "name": row[2], "frontier_flag": row[3],
+            "source": row[4], "domain": row[5]} if row else None
 
 
 def next_concept_id(conn: sqlite3.Connection) -> int:
@@ -254,23 +255,86 @@ def next_concept_id(conn: sqlite3.Connection) -> int:
     return int(row[0]) + 1
 
 
+# Allowed by the concepts.frontier_flag CHECK constraint. Anything else (e.g. an LLM emitting
+# 'established'/'novel') must be coerced to NULL — otherwise INSERT OR IGNORE silently DROPS the
+# whole concept row on the CHECK violation, leaving the graph empty (the OW-5.1 persistence bug).
+_FRONTIER_FLAGS = {"consensus", "contested", "open"}
+
+
 def create_concept(conn: sqlite3.Connection, concept_id: int, slug: str, name: str,
-                   frontier_flag: str | None = None) -> None:
+                   frontier_flag: str | None = None, *, source: str = "curated",
+                   domain: str | None = None, slice_key: str | None = None) -> None:
+    if frontier_flag not in _FRONTIER_FLAGS:
+        frontier_flag = None
     conn.execute(
-        "INSERT OR IGNORE INTO concepts (id, slug, name, frontier_flag) VALUES (?,?,?,?)",
-        (concept_id, slug, name, frontier_flag),
+        "INSERT OR IGNORE INTO concepts (id, slug, name, frontier_flag, source, domain, slice_key) "
+        "VALUES (?,?,?,?,?,?,?)",
+        (concept_id, slug, name, frontier_flag, source, domain, slice_key),
     )
     conn.commit()
 
 
-def record_induced_edge(conn: sqlite3.Connection, prereq_concept: int, target_concept: int,
-                        confidence: float, evidence_chunks: list[str]) -> None:
+def record_edge(conn: sqlite3.Connection, prereq_concept: int, target_concept: int, *,
+                edge_type: str, source: str, confidence: float,
+                evidence_chunks: list[str], slice_key: str | None = None) -> None:
+    """Generic typed edge writer. edge_type in {prerequisite, similarity, ...}; source in
+    {curated, induced, digested}. Idempotent on (prereq, target, edge_type)."""
     conn.execute(
         "INSERT OR IGNORE INTO concept_edges "
-        "(prereq_concept, target_concept, edge_type, source, confidence, evidence) "
-        "VALUES (?,?,?,?,?,?)",
-        (prereq_concept, target_concept, "prerequisite", "induced", confidence,
-         json.dumps(evidence_chunks)),
+        "(prereq_concept, target_concept, edge_type, source, confidence, evidence, slice_key) "
+        "VALUES (?,?,?,?,?,?,?)",
+        (prereq_concept, target_concept, edge_type, source, confidence,
+         json.dumps(evidence_chunks), slice_key),
+    )
+    conn.commit()
+
+
+def get_slice_graph(conn: sqlite3.Connection, slice_key: str) -> dict:
+    """Reconstruct the digested graph for a slice: concepts + edges tagged with slice_key."""
+    crows = conn.execute(
+        "SELECT slug, name, domain, frontier_flag FROM concepts WHERE slice_key=?", (slice_key,)
+    ).fetchall()
+    concepts = [{"slug": r[0], "name": r[1], "domain": r[2], "frontier_flag": r[3]} for r in crows]
+    id_to_slug = {r[0]: r[1] for r in
+                  conn.execute("SELECT id, slug FROM concepts WHERE slice_key=?", (slice_key,))}
+    erows = conn.execute(
+        "SELECT prereq_concept, target_concept, edge_type, confidence, evidence "
+        "FROM concept_edges WHERE slice_key=?", (slice_key,)
+    ).fetchall()
+    edges = [{"prereq_slug": id_to_slug.get(r[0]), "target_slug": id_to_slug.get(r[1]),
+              "edge_type": r[2], "confidence": r[3],
+              "evidence": json.loads(r[4]) if r[4] else []} for r in erows]
+    return {"concepts": concepts, "edges": edges}
+
+
+def record_induced_edge(conn: sqlite3.Connection, prereq_concept: int, target_concept: int,
+                        confidence: float, evidence_chunks: list[str]) -> None:
+    record_edge(conn, prereq_concept, target_concept, edge_type="prerequisite",
+                source="induced", confidence=confidence, evidence_chunks=evidence_chunks)
+
+
+def get_concept_edges(conn: sqlite3.Connection, source: str | None = None) -> list[dict]:
+    """All edges, optionally filtered by source. evidence is decoded from JSON."""
+    sql = ("SELECT prereq_concept, target_concept, edge_type, source, confidence, evidence "
+           "FROM concept_edges")
+    params: tuple[str, ...] = ()
+    if source is not None:
+        sql += " WHERE source=?"
+        params = (source,)
+    rows = conn.execute(sql, params).fetchall()
+    return [{"prereq_concept": r[0], "target_concept": r[1], "edge_type": r[2],
+             "source": r[3], "confidence": r[4],
+             "evidence": json.loads(r[5]) if r[5] else []} for r in rows]
+
+
+def create_keypoint(conn: sqlite3.Connection, kp_id: str, concept_id: int, name: str,
+                    objective: str, evidence_chunk_id: str | None = None,
+                    sort_order: int = 0, bloom_level: str = "recall") -> None:
+    conn.execute(
+        "INSERT OR IGNORE INTO keypoints "
+        "(id, concept_id, name, objective, evidence_chunk_id, sort_order, bloom_level) "
+        "VALUES (?,?,?,?,?,?,?)",
+        (kp_id, concept_id, name, objective, evidence_chunk_id, sort_order, bloom_level),
     )
     conn.commit()
 
@@ -316,14 +380,18 @@ def create_quiz_item(conn: sqlite3.Connection, concept_id: int, question: str, a
                      rubric: str | None = None,
                      expected_keypoints: str | None = None,
                      keypoint_id: str | None = None,
-                     bloom_level: str = "recall") -> int:
+                     bloom_level: str = "recall",
+                     distractors_json: str | None = None,
+                     irt_b: float | None = None) -> int:
     cur = conn.execute(
         "INSERT INTO quiz_items "
         "(concept_id, keypoint_id, bloom_level, question, answer_key, qtype, difficulty, "
-        " evidence_chunk_id, source_paper_id, rubric, expected_keypoints, targets_misconception) "
-        "VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+        " evidence_chunk_id, source_paper_id, rubric, expected_keypoints, targets_misconception, "
+        " distractors_json, irt_b) "
+        "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
         (concept_id, keypoint_id, bloom_level, question, answer_key, qtype, difficulty,
-         evidence_chunk_id, source_paper_id, rubric, expected_keypoints, targets_misconception),
+         evidence_chunk_id, source_paper_id, rubric, expected_keypoints, targets_misconception,
+         distractors_json, irt_b),
     )
     conn.commit()
     return int(cur.lastrowid)
@@ -332,6 +400,28 @@ def create_quiz_item(conn: sqlite3.Connection, concept_id: int, question: str, a
 def get_chunk_paper_id(conn: sqlite3.Connection, chunk_id: str) -> int | None:
     row = conn.execute("SELECT paper_id FROM paper_chunks WHERE id=?", (chunk_id,)).fetchone()
     return row[0] if row else None
+
+
+def create_paper(conn: sqlite3.Connection, *, source_id: str | None = None,
+                 arxiv_id: str | None = None, title: str,
+                 source_type: str | None = None, url: str | None = None) -> int:
+    cur = conn.execute(
+        "INSERT INTO papers (arxiv_id, title, source_type, url, source_id) VALUES (?,?,?,?,?)",
+        (arxiv_id, title, source_type, url, source_id),
+    )
+    conn.commit()
+    return int(cur.lastrowid)
+
+
+def create_paper_chunk(conn: sqlite3.Connection, chunk_id: str, paper_id: int,
+                       concept_id: int | None, text: str, chunk_index: int = 0,
+                       section: str = "digested") -> None:
+    conn.execute(
+        "INSERT OR IGNORE INTO paper_chunks "
+        "(id, paper_id, concept_id, section, chunk_index, text) VALUES (?,?,?,?,?,?)",
+        (chunk_id, paper_id, concept_id, section, chunk_index, text),
+    )
+    conn.commit()
 
 
 def get_induced_edges(conn: sqlite3.Connection) -> list[dict]:
@@ -386,13 +476,14 @@ def count_chunk_vectors(conn: sqlite3.Connection) -> int:
 def get_keypoints(conn: sqlite3.Connection, concept_id: int) -> list[dict]:
     """Return keypoints for a concept in sort_order. Empty list if none seeded."""
     rows = conn.execute(
-        "SELECT id, concept_id, name, objective, evidence_chunk_id, sort_order "
+        "SELECT id, concept_id, name, objective, evidence_chunk_id, sort_order, bloom_level "
         "FROM keypoints WHERE concept_id=? ORDER BY sort_order",
         (concept_id,),
     ).fetchall()
     return [
         {"id": r[0], "concept_id": r[1], "name": r[2],
-         "objective": r[3], "evidence_chunk_id": r[4], "sort_order": r[5]}
+         "objective": r[3], "evidence_chunk_id": r[4], "sort_order": r[5],
+         "bloom_level": r[6]}
         for r in rows
     ]
 
@@ -429,4 +520,35 @@ def get_quiz_by_kp_bloom(
                 "source_paper_id": r[9], "rubric": r[10],
                 "expected_keypoints": r[11], "targets_misconception": r[12],
             }
+    return None
+
+
+def get_any_quiz_for_kp(
+    conn: sqlite3.Connection,
+    keypoint_id: str,
+    exclude_ids: list[int] | None = None,
+) -> dict | None:
+    """Return any cached quiz for a keypoint, regardless of bloom level (preferring the lowest
+    bloom). Digested quiz seeds may be stored at a bloom outside the assess ladder
+    (recall/comprehension/application) — without a bloom-agnostic fallback they are unreachable
+    and the concept always concedes. Skips used ids."""
+    exclude = set(exclude_ids or [])
+    _ORDER = {"recall": 0, "comprehension": 1, "application": 2}
+    rows = conn.execute(
+        "SELECT id, concept_id, keypoint_id, bloom_level, question, answer_key, "
+        "qtype, difficulty, evidence_chunk_id, source_paper_id, rubric, "
+        "expected_keypoints, targets_misconception "
+        "FROM quiz_items WHERE keypoint_id=? ORDER BY id",
+        (keypoint_id,),
+    ).fetchall()
+    rows = [r for r in rows if r[0] not in exclude]
+    rows.sort(key=lambda r: _ORDER.get(r[3], 1))   # prefer lower bloom rung
+    for r in rows:
+        return {
+            "id": r[0], "concept_id": r[1], "keypoint_id": r[2],
+            "bloom_level": r[3], "question": r[4], "answer_key": r[5],
+            "qtype": r[6], "difficulty": r[7], "evidence_chunk_id": r[8],
+            "source_paper_id": r[9], "rubric": r[10],
+            "expected_keypoints": r[11], "targets_misconception": r[12],
+        }
     return None
