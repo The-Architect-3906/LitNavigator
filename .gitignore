@@ -21,3 +21,5 @@ dist/
 
 # Generated artifact output
 artifacts/
+
+.DS_Store
