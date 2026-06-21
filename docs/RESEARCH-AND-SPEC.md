@@ -51,6 +51,7 @@ and tells you what to learn next — all under a strict, metered cost budget.
 | Artifact | Study notes / slides / map / worked example; the testing (retrieval-practice) effect | **Mayer**; **Roediger & Karpicke 2006** |
 | Orchestration | The outer agent picks which skill to run per state | **ReAct** (Yao et al. 2022); **Plan-and-Solve** (Wang et al. 2023) |
 | Cost | Cheap model by default, frontier only when needed; cheap pre-filters before paid calls | **FrugalGPT**; **RouteLLM** (ACL 2025) |
+| Provider access | One gateway to any LLM provider (OpenAI / Anthropic / Gemini / DeepSeek / local) | **LiteLLM** unified API |
 
 ## 4. Architecture (the design)
 
@@ -122,10 +123,13 @@ The system is **five contracted "stage skills"** orchestrated by an outer agent 
    prerequisites are met, ranked by how much they unlock).
 
 ### 4.2 Cross-cutting
-- **Cost spine** — one router is the single chokepoint for every LLM/embedding call: a model registry
-  (only approved models are callable), tier routing (cheap by default, frontier on demand), a
-  per-session budget cap with an 80% alert, a result cache, and a strict-liveness mode that makes a
-  real call provably distinct from a silent fallback. Every call is written to a cost ledger.
+- **Cost spine** — one router is the single chokepoint for every LLM/embedding call: a tier registry
+  (cheap / frontier / embed, with env-overridable models + rates), tier routing (cheap by default,
+  frontier on demand), a per-session budget cap with an 80% alert, a result cache, and a
+  strict-liveness mode that makes a real call provably distinct from a silent fallback. Every call is
+  written to a cost ledger. The client routes through **LiteLLM**, so it is **provider-agnostic** —
+  OpenAI, Anthropic, Gemini, DeepSeek, Groq, Bedrock, Azure, Ollama / any OpenAI-compatible server —
+  configured by env, with `provider=none` fully offline ($0).
 - **Honesty invariants** — mastery / confidence / routing are **rule-computed**, never emitted by the
   model; every taught claim and artifact is grounded in cited source chunks; prerequisite confidence
   is rule-computed and surfaced, never hallucinated.
