@@ -1,151 +1,116 @@
-# LitNavigator — Backend Roadmap
+# Backend — What's Next
 
-**Branch:** `feat/open-world-digest` · **Updated:** 2026-06-21
+*The remaining backend work, in priority order, in plain language.* What already ships:
+[BACKEND-COMPLETE](BACKEND-COMPLETE.md). Measured quality that motivates this list:
+[E2E-REPORT](E2E-REPORT.md).
 
-What remains after OW-0..6 land. Items are marked P0 (blocking), P1 (high), P2 (medium),
-or **deferred** (recorded for the future, not planned for the current sprint).
-
----
-
-## OW-7 — Live cold-start, streamed (P0 for demo)
-
-The digest path already works live; OW-7 finishes the **user-facing experience** of a cold start:
-
-- **Streamed progress to the UI:** "finding sources → extracting concepts → building map"
-  (currently digest runs in-process and the UI gets the result at the end). Requires the
-  frontend SSE streaming to hook into the digest pipeline stages.
-- **Demo cache pre-fill:** for the competition demo, one topic's digest cache is pre-filled so
-  the shown topic is instant; a genuinely fresh topic shows the real cold path (with streamed
-  progress).
-- **Multi-source digest for breadth:** the code supports multi-source input; a single-source
-  digest still yields 0 surviving prereq edges on some topics (validated A4). OW-7 should
-  run the live pipeline with 3+ sources, matching the storyboard scenario.
-- **Incremental graph extension:** when the learner strays into a sub-area not in the current
-  graph, extend the digest in-session rather than failing silently. Requires inner-loop
-  awareness of the graph boundary (OW-4 deferred item).
-
-**Priority:** P0 — this is the demo highlight.
+Each item is tagged **P0** (blocks the competition demo), **P1** (high value), **P2** (nice to have),
+or **deferred** (recorded for later, not this sprint).
 
 ---
 
-## A12 / A13 — Deeper wiring into the auto loop (P1)
+## 1. Live cold-start, streamed to the screen — *P0*
 
-**A12 — Prereq-detour (diagnose → replan)** is implemented as graph nodes (`nodes/diagnose.py`,
-`nodes/replan.py`) and tested on the legacy path. The keypoint path can trigger it, but the
-wiring into the auto outer-loop planner (so the system can autonomously notice a prereq gap and
-re-route without human intervention) is not yet end-to-end tested in an automated way.
-Action: add a live smoke test that drives a learner into a missing-prereq situation and asserts
-the replan fires and resolves.
+Today the digest pipeline (find → extract → build map) runs to completion before the UI shows
+anything. For a live demo of a *brand-new* topic, the learner should watch it happen.
 
-**A13 — Mid-session goal pivot** (`nodes/goal_pivot.py`) is implemented but not exercised by
-the current inner-loop harness. Action: add a `goal_pivot` learner persona to
-`inner_loop_scenarios.py` that signals a mid-session intent change and asserts the Bloom ceiling
-re-adjusts and the route re-plans.
+- **Stream the stages** "finding sources → extracting concepts → building the map → verifying
+  links" to the page as they run, instead of one silent wait. (Backend side of the frontend's
+  streamed-digest item.)
+- **Pre-warm one demo topic** so the headline demo is instant, while a genuinely fresh topic still
+  shows the real cold path with live progress.
+- **Extend the map mid-session:** if the learner wanders into a sub-area the current map doesn't
+  cover, digest it on the fly instead of quietly stopping.
 
----
+This is the demo centrepiece.
 
-## A14 — Source-specificity / discovery precision (P1)
+## 2. Multi-source digest for breadth — *P0*
 
-The A14 fix raised `source_relevance` from 4.0 → 4.78 in the final eval. The remaining gap
-(e.g., scenario 3 raft overall=3, borderline source) comes from **goal-specific precision** — the
-gate catches obvious off-topic mismatches (a film, a different field), but not "topically adjacent
-but wrong" (Raft→PBFT-variant-labeled-as-Raft). Improvements:
+The digest code already accepts several sources, but the live pipeline currently builds from one. A
+single source sometimes yields **zero surviving prerequisite links** on a given topic — the
+prerequisite signal needs evidence from more than one document to be reliable. Running 3+ sources per
+topic (as the storyboard scenario does) is the fix.
 
-- Iterate the query decomposition to include key discriminating terms from the goal (e.g., for
-  "Raft consensus algorithm", insist the result is about the Raft log-replication protocol).
-- Add a second cheap-LLM specificity check ("is this source specifically about X, or only
-  adjacent to X?") for P ≥ 0.5 relevance sources.
+## 3. Sharper source discovery — *P1*
 
----
+Discovery already rejects gross mismatches (a film, a different field); on-topic selection rose to
+~4.8/5. The gap left is **adjacent-but-wrong** sources — e.g. a Raft-consensus goal pulling a
+*different* consensus protocol that merely mentions Raft.
 
-## Quiz / feedback depth (P1)
+- Inject the goal's distinguishing terms into the search query (for "Raft consensus", insist on the
+  Raft log-replication protocol specifically).
+- Add a second cheap-LLM check — "is this source *specifically* about X, or only adjacent to X?" —
+  for borderline sources that pass the first relevance gate.
 
-**A15 — Quiz variety:** duplicate/repetitive questions within a session reduced by tracking
-which question stems were used per concept (persisted in `learner_state`). Further improvement:
-generate distractors from error categories (e.g., conceptual swap, off-by-one, negation) rather
-than surface paraphrase.
+## 4. Robust non-English discovery — *P1*
 
-**A16 — Feedback depth:** current explain-why feedback improved from 3.3→3.89. The remaining
-gap is **specificity**: the feedback says "that's correct because X" but rarely ties it to the
-specific evidence chunk the learner should revisit. Action: ground feedback in `evidence_chunk_id`
-and quote the relevant sentence.
+One scenario (a French goal) hit a *transient* "no full-text source" miss — it succeeded on other
+runs, so it's flakiness, not a defect. The English query produced from a non-English goal is good,
+but the source APIs occasionally return nothing for niche topics and there's no fallback.
 
----
+- Retry with a broadened query when the first attempt returns zero results.
+- Guarantee a minimum number of sources via a Wikipedia fallback when the paper APIs come up empty.
 
-## Non-English discovery — retry/robustness (P1)
+## 5. Deeper quiz and feedback quality — *P1*
 
-Scenario 10 (GNN · French) hit a transient discovery miss in the final E2E run (recorded as
-flaky, not a code defect; it succeeded in prior runs). The issue: multilingual query normalization
-produces a good English query, but the OpenAlex/Wikipedia adapters occasionally return 0 full-text
-results for niche non-English-named topics, and there is no retry/backoff logic.
+Both improved (quiz ~3.8, feedback ~3.9) but aren't yet uniformly strong.
 
-Action:
-- Add retry with query variation (broaden the query on 0-results) before failing.
-- Add a `min_sources` guard that triggers at least one Wikipedia fallback if API results are empty.
+- **Quiz:** build wrong-answer options from real error *categories* (concept swap, off-by-one,
+  negation) rather than surface re-wordings; current variety tracking only avoids repeating stems.
+- **Feedback:** tie each explanation to the *specific* evidence sentence the learner should revisit
+  (quote it via its `evidence_chunk_id`), instead of a generic "correct because…".
 
----
+## 6. Finish the autonomous-loop wiring — *P1*
 
-## Semantic Scholar / YouTube adapters (P2)
+Two adaptive behaviours work but aren't yet exercised end-to-end by the automated harness:
 
-Deferred from OW-3:
-- **Semantic Scholar adapter** (`adapters/s2.py`): free SPECTER embeddings + TLDRs + 200M paper
-  index; better recall than OpenAlex for ML/NLP-specific topics.
-- **youtube-transcript-api adapter** (`adapters/youtube.py`): for crash-course / video-first
-  learners (intent = `crash-course`); parse `youtube-transcript-api` output into chunks.
+- **Prerequisite detour:** when a learner fails a concept because an *earlier* concept wasn't mastered,
+  the tutor detours to teach the missing prerequisite first (`nodes/diagnose.py` → `nodes/replan.py`,
+  triggered from the keypoint grader). Add a live smoke test that forces this situation and asserts
+  the detour fires and resolves.
+- **Mid-session goal change:** `repivot_goal()` in `litnav/nodes/goal_elicit.py` re-elicits the goal
+  and re-plans when the learner changes their mind mid-session. Add a learner persona to the
+  inner-loop harness that signals a goal change and asserts the depth ceiling and route re-adjust.
 
-These unlock the full source-type stack from the spec (YouTube for crash-course, S2 for systematic).
+## 7. More source types — *P2*
 
----
+The discovery layer currently queries OpenAlex and Wikipedia
+(`litnav/discover/adapters/openalex.py`, `wikipedia.py`). Two more adapters would widen recall:
 
-## SPECTER rerank (P2)
+- **Semantic Scholar** (`adapters/s2.py`): a 200M-paper index with free SPECTER embeddings and
+  TLDR summaries — better recall than OpenAlex for ML/NLP topics.
+- **YouTube transcripts** (`adapters/youtube.py`): for video-first / crash-course learners.
 
-Currently: BM25 → `text-embedding-3-small` cosine rerank. Upgrading to SPECTER (free from
-Semantic Scholar) would improve scientific paper ranking without extra cost. Deferred pending
-Semantic Scholar adapter (above).
+## 8. SPECTER re-ranking — *P2*
 
----
+Ranking is currently BM25 → `text-embedding-3-small` cosine. SPECTER embeddings (free via Semantic
+Scholar) would improve scientific-paper ranking at no extra cost — but this depends on the Semantic
+Scholar adapter above.
 
-## Escalation telemetry and pedagogical-error-cost re-tuning (deferred)
+## Deferred (recorded, not this sprint)
 
-The escalation gate (cheap → frontier when low-confidence near mastery threshold) is implemented
-but the **escalation rate** is never surfaced in the Glass-box or logged for analysis. Future:
-- Log each escalation decision with reason to `cost_ledger` (`escalation_reason` column).
-- After 100+ real sessions, re-tune the confidence threshold using the predicted-vs-actual
-  `retention_log` data as a proxy for pedagogical-error cost.
-
----
-
-## Learner_goal slug ↔ ID reconciliation (deferred)
-
-`goal_elicit` persists goals using text slugs; the full-resolution path (slug → canonical concept
-ID, then OW-7 live cold-start digest of the concept) is partially done. Full reconciliation
-deferred to when OW-7 resolves live slugs→ids.
-
----
-
-## Multi-session continuity (deferred / post-MVP)
-
-Current `SqliteSaver` checkpoint + `review_queue` give within-session persistence and a FSRS
-queue. Cross-session continuity (logging back in, seeing prior sessions, resuming a paused
-`review_queue`) requires:
-- User identity (currently per-process `session_id` only).
-- Frontend session persistence: see [`FRONTEND-ROADMAP.md`](FRONTEND-ROADMAP.md).
-
----
+- **Escalation telemetry & re-tuning:** the grader already escalates from cheap to frontier when
+  unsure near the mastery threshold, but the escalation *rate* isn't logged. Record each escalation's
+  reason to the cost ledger, then re-tune the confidence threshold once there's real retention data.
+- **Goal-to-concept reconciliation:** goals are stored as text slugs; fully resolving a slug to a
+  canonical concept (and digesting it live) is only partly wired — finish alongside live cold-start.
+- **Across-session continuity:** within-session state persists (checkpoint + review queue), but
+  logging back in to resume a paused session needs user identity and a persistent session registry
+  (see [FRONTEND-ROADMAP](FRONTEND-ROADMAP.md)).
 
 ## Priority summary
 
 | Item | Priority |
-|---|---|
-| OW-7 live cold-start + streamed progress + demo cache | P0 |
-| Multi-source digest for breadth (A4) | P0 |
-| A12/A13 auto-loop wiring + harness test | P1 |
-| A14 source-specificity second pass | P1 |
-| A15/A16 quiz/feedback depth follow-ups | P1 |
-| Non-English discovery retry/backoff | P1 |
+|--|--|
+| Live cold-start + streamed progress + demo pre-warm | P0 |
+| Multi-source digest for breadth | P0 |
+| Sharper discovery (adjacent-but-wrong) | P1 |
+| Robust non-English discovery (retry + fallback) | P1 |
+| Deeper quiz & feedback quality | P1 |
+| Finish autonomous-loop wiring (detour + goal-change in harness) | P1 |
 | Semantic Scholar adapter | P2 |
 | YouTube adapter | P2 |
-| SPECTER rerank | P2 |
+| SPECTER re-ranking | P2 |
 | Escalation telemetry + re-tuning | deferred |
-| Learner_goal slug↔ID reconciliation | deferred |
-| Multi-session continuity | deferred (post-MVP) |
+| Goal-to-concept reconciliation | deferred |
+| Across-session continuity | deferred |

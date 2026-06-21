@@ -208,9 +208,9 @@ live mastery scores, concept-map SVG, cost meter, and a recommend-next card at s
 | **OW-1** · Data model (concept-graph + learner + cache + ledger schema) | ✅ done | schema + repo tests |
 | **OW-2** · digest-corpus (RefD+LLM edges, gpt-4o verify, cache) | ✅ done · live | `verify_digest_live` |
 | **OW-3** · find-sources (OpenAlex+Wikipedia, BM25+rerank, full text) + OW-3.1 (relevance gate, multilingual query) | ✅ done · live | `verify_discover_live` |
-| **OW-4** · TEACH/ASSESS (goal elicitation, Bloom quiz, distractors, IRT, FSRS, retention probe, escalation, A12/A13) | ✅ done · live | `verify_teach_assess_live` |
+| **OW-4** · TEACH/ASSESS (goal elicitation, Bloom quiz, distractors, IRT, FSRS, retention probe, escalation, prereq-detour, mid-session goal-pivot) | ✅ done · live | `verify_teach_assess_live` |
 | **OW-5** · make-artifact (selector → map/notes/slides/worked-example/combination; retrieval prompt + citations) + OW-5.1 persistence | ✅ done · live | `verify_artifact_live` |
-| **OW-6** · recommend-next + unified glass-box+user frontend + quality fixes A8/A9/A11/A14/A15/A16 | ✅ done · live | `verify_openworld_e2e_live` |
+| **OW-6** · recommend-next + unified glass-box+user frontend + quality hardening (multilingual output, source sub-chunking, discovery precision, quiz variety, feedback depth) | ✅ done · live | `verify_openworld_e2e_live` |
 | **OW-7** · live cold-start (streamed real-topic digest→teach) | ⏳ pending (digest path already live) | — |
 
 Full backend detail, live gate results, and test counts: [`docs/BACKEND-COMPLETE.md`](docs/BACKEND-COMPLETE.md).
@@ -236,7 +236,7 @@ End-to-end quality results: [`docs/E2E-REPORT.md`](docs/E2E-REPORT.md).
 |:--|:--|
 | [`docs/RESEARCH-AND-SPEC.md`](docs/RESEARCH-AND-SPEC.md) | Research questions, verified literature/methods table, and full architecture spec (problem, principles, data model, cost spine, all 5 skills, milestones) |
 | [`docs/BACKEND-COMPLETE.md`](docs/BACKEND-COMPLETE.md) | Every shipped backend feature with its skill/code + research method; concrete run walkthrough; SKILL.md files; test counts + live gate results |
-| [`docs/BACKEND-ROADMAP.md`](docs/BACKEND-ROADMAP.md) | Remaining backend work: OW-7 live cold-start, A12/A13 deeper wiring, discovery precision, quiz/feedback depth, non-English retry, new adapters |
+| [`docs/BACKEND-ROADMAP.md`](docs/BACKEND-ROADMAP.md) | Remaining backend work: live cold-start (streamed), multi-source digest, sharper discovery, deeper quiz/feedback, robust non-English, new source adapters |
 | [`docs/FRONTEND-COMPLETE.md`](docs/FRONTEND-COMPLETE.md) | Unified glass-box+user web UI: per-step chips, mastery scores, concept-map SVG, cost meter, recommend-next card, SSE streaming, offline-demo mode |
 | [`docs/FRONTEND-ROADMAP.md`](docs/FRONTEND-ROADMAP.md) | Remaining frontend: session persistence/auth, streamed digest progress, teacher overrides, artifact download, quality scores live, mobile polish, deployment |
 | [`docs/E2E-REPORT.md`](docs/E2E-REPORT.md) | Full 10-scenario live E2E report — actual-quality scores (mean 4.33/5), per-scenario breakdown, before/after quality deltas |
