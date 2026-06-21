@@ -12,7 +12,7 @@ from pathlib import Path
 
 from litnav.eval.scorecard import Scorecard, weighted_headline
 from litnav.eval.history import append
-from litnav.eval.mastery_probe import run_probe
+from litnav.eval.mastery_probe import run_probe, run_retention
 from litnav.eval.golden_offline import objective_quality, quiz_validity
 from litnav.eval.golden_llm import grading_accuracy, prereq_survival
 
@@ -74,6 +74,7 @@ def _run_offline_suite() -> dict:
 def build_scorecard(*, grade_fn=_live_grade, judge_fn=_product_judge,
                     run_suite: bool = False, commit: str = "HEAD", ts: float = 0.0) -> Scorecard:
     probe = run_probe()
+    ret_on, ret_off = run_retention(probes_on=True), run_retention(probes_on=False)
     golden = {
         "grading_acc": grading_accuracy(_load("grading.json"), grade_fn=grade_fn),
         "prereq_survival": prereq_survival(_load("prereq_pairs.json"), judge_fn=judge_fn),
@@ -85,9 +86,9 @@ def build_scorecard(*, grade_fn=_live_grade, judge_fn=_product_judge,
         commit=commit, ts=ts,
         e2e={"mastered_rate": probe["mastered_rate"], "avg_turns": probe["avg_turns"], "usd": probe["usd"]},
         golden=golden,
-        learning_gain={"avg_mastery_delta": probe["avg_mastery_delta"]},
+        learning_gain={"avg_mastery_delta": probe["avg_mastery_delta"], "retention": ret_on},
         offline_suite=suite,
-        notes=f"reteach_recovery={probe['reteach_recovery']}",
+        notes=f"reteach_recovery={probe['reteach_recovery']} retention_gain={round(ret_on - ret_off, 4)}",
     )
 
 

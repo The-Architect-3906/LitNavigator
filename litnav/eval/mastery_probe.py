@@ -151,3 +151,41 @@ def run_probe(*, learner=lost_then_recover) -> dict:
         "reteach_recovery": round(sum(1 for r in recov if r["mastered"]) / len(recov), 3) if recov else 1.0,
         "usd": 0.0,  # offline
     }
+
+
+# Forgetting model for the delayed-retention metric: a concept is "retained" at the final re-quiz iff
+# it was retrieved within _FORGET_WINDOW turns (being taught counts as a retrieval; a review_probe
+# refreshes it). Deterministic + offline — proves the spaced-retrieval mechanism raises retention.
+_FORGET_WINDOW = 2
+
+
+def run_retention(*, probes_on: bool, k: int = 2) -> float:
+    """Teach the fixture concepts in sequence (firing review probes between them when due, if on),
+    then re-quiz each WITHOUT re-teaching. Returns the fraction retained for a forgetting learner."""
+    from litnav.nodes.review_probe import pose_probe
+    conn = sqlite3.connect(":memory:")
+    init_db(conn)
+    _build_fixture(conn)
+    cids = [f["cid"] for f in _FIXTURE]
+    route = [{"step_id": i + 1, "concept_id": c, "status": "pending"} for i, c in enumerate(cids)]
+    concept_last_seen: dict = {}
+    last_retrieval: dict = {}          # cid -> step it was last retrieved (taught or probed)
+    step = 0
+    for idx, cid in enumerate(cids):
+        step += 1
+        route[idx]["status"] = "done"
+        concept_last_seen[cid] = step
+        last_retrieval[cid] = step
+        if probes_on:                 # fire a probe for the most-overdue earlier concept, if any
+            st = {"session_id": "probe", "route": route, "learner_state": {},
+                  "concept_last_seen": concept_last_seen, "step": step, "needs_review": [],
+                  "now": "2026-06-22T00:00:00", "pending_answers": []}
+            posed = pose_probe(st, conn, k=k)
+            item = posed.get("current_quiz_item")
+            if item:
+                pcid = item["concept_id"]
+                concept_last_seen.update(posed["concept_last_seen"])
+                last_retrieval[pcid] = step          # the probe refreshes that concept
+    final = step + 1
+    retained = sum(1 for cid in cids if (final - last_retrieval[cid]) <= _FORGET_WINDOW)
+    return round(retained / len(cids), 4)
