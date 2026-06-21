@@ -63,6 +63,39 @@ learner's language 10/10. ~$0.0182/session, $0.18 total.**
 - **handle_lost → recover** ("I'm lost" → re-explain with a new strategy, no grade → recovers): #4, #10 ✓
 - No infinite loops anywhere (the bloom-ceiling fix holds across all survey/functional goals).
 
+## Actual content quality (frontier `gpt-4o` judge, 1–5, strict)
+**Honest answer: NOT uniformly high quality.** Mechanically all 10 run; on *content*, **6/10 are good
+(overall ≥ 4), 3 mediocre (3), 1 poor (2)** — mean **3.99** across 90 dimension-scores. The judge graded
+the tutor's real outputs against the source evidence.
+
+| # | scenario · persona · lang | src | teach | quiz | fb | re-lost | art | lang | grnd | **OVR** |
+|--|--|--|--|--|--|--|--|--|--|--|
+| 1 | diffusion · mastery · en | 5 | 4 | 5 | 4 | 5 | 4 | 5 | 5 | **4** |
+| 2 | CRISPR · struggle · 中 | 5 | 5 | 4 | 4 | 5 | 5 | 5 | 5 | **5** |
+| 3 | raft · give_up · en | 1 | 2 | 2 | 2 | 5 | 2 | 5 | 3 | **2** |
+| 4 | QEC · lost · en | 4 | 3 | 3 | 3 | 4 | 3 | 5 | 4 | **3** |
+| 5 | black-scholes · mastery · es | 5 | 4 | 4 | 4 | 5 | 4 | 5 | 5 | **4** |
+| 6 | mRNA · struggle · en | 5 | 4 | 3 | 3 | 5 | 4 | 5 | 4 | **4** |
+| 7 | attention · mastery · 中 | 3 | 3 | 4 | 4 | 5 | 3 | 5 | 4 | **3** |
+| 8 | nudges · give_up · en | 5 | 4 | 3 | 2 | 5 | 4 | 5 | 5 | **4** |
+| 9 | rlhf · struggle · en | 2 | 3 | 3 | 3 | 5 | 3 | 5 | 4 | **3** |
+| 10 | GNN · lost · fr | 5 | 4 | 4 | 4 | 5 | 4 | 5 | 5 | **4** |
+| | **mean** | 4.0 | 3.6 | 3.5 | 3.3 | 4.9 | 3.6 | **5.0** | 4.4 | **3.6** |
+
+**Strong dimensions:** language fluency **5.0** (A8 holds across en/中/es/fr), lost-recovery re-explain
+**4.9**, groundedness **4.4** (faithful to source, no hallucination).
+
+**Weak dimensions:** feedback **3.3** (generic — "correctly identifies the purpose", doesn't explain *why*
+or guide), quiz **3.5** (repetitive — single-keypoint concepts get near-identical comprehension questions),
+teaching/artifact **3.6** (acceptable but shallow for mastery-depth goals).
+
+**The biggest quality killer is DISCOVER picking a topically-adjacent-but-WRONG source** — the relevance
+gate (OW-3.1) stops *gross* mismatches (films) but still passes *near-misses*:
+- **#3 raft → a PBFT paper** (overall **2**) — "consensus" passed the gate, but PBFT ≠ Raft, so the whole session is off-goal;
+- **#9 rlhf → a QLoRA/Guanaco paper** (source_relevance **2**) — fine-tuning, but not RLHF;
+- **#7 transformer "数学原理/math" → a vision-transformer attention paper** (src **3**) — related, but no math depth.
+(Note: give_up's low marks on #3 are the *wrong source*, not the persona — #8 give_up still scored overall 4.)
+
 ## Findings
 - **A8 output-language: 10/10** — teaching *and* artifacts are produced in the learner's language across
   **English, 中文, Español, Français**. (Concept *names* follow the source language; the generated prose
@@ -76,4 +109,14 @@ learner's language 10/10. ~$0.0182/session, $0.18 total.**
 - **V2 — mid-session goal pivot not modelled:** `goal_elicit` runs once; an explicit goal change mid-session
   isn't supported (would need a re-elicit/branch). **Recorded as A13.**
 - **Cost:** a full multi-concept tutoring session (discover→digest→teach⇄assess loop→artifact) is
-  **~$0.018**; digest's frontier judges still dominate (A11).
+  **~$0.018**; the full quality run incl. the frontier judge was **$0.269** for all 10.
+
+## Quality-driven actions (recorded)
+- **A14 (P1) — DISCOVER relevance PRECISION.** The gate stops gross off-topic but passes adjacent-but-wrong
+  sources (raft→PBFT, rlhf→QLoRA, transformer-*math*→vision-attention). Add a goal-specificity check
+  (named-algorithm / sub-topic match), not just topical adjacency. This is the dominant quality limiter.
+- **A15 (P2) — quiz variety.** `assess_next` re-poses near-identical questions on single-keypoint concepts;
+  vary stem/angle per Bloom rung, or require ≥N distinct keypoints.
+- **A16 (P2) — feedback depth.** Grading feedback is generic; have `grade_kp` explain *why* and point to the
+  next step (it has the evidence + rubric to do so).
+- (carried) A11 digest cost, A12 prereq-detour on keypoint path, A13 mid-session goal pivot.

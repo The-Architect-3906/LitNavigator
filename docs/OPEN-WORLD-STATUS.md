@@ -135,6 +135,8 @@ Prioritized actions:
 
 **Inner-loop live validation (2026-06-21):** drove the REAL LangGraph tutor turn-by-turn on freshly-digested graphs across all 10 scenarios × learner variants (`litnav/evaluation/inner_loop_scenarios.py`; report [`2026-06-21-inner-loop-evaluation.md`](2026-06-21-inner-loop-evaluation.md)). **10/10 reached `done`; all four branches fire** (advance / reteach→recover / concede / handle_lost→recover); **A8 language 10/10** across en/中/es/fr (teach + artifact); honest concede on give_up. ~$0.018/session. **Found + fixed a release-blocking bug**: survey/functional goals looped forever (Bloom ceiling ignored in `assess_decider`) — now advance (QEC 40→13 turns, all `pending`→`done`). 314 passed. New actions A12 (prereq-detour not on keypoint path), A13 (mid-session goal pivot unmodelled).
 
+**Actual-quality eval (frontier gpt-4o judge, 2026-06-21):** rated the real content of all 10 sessions 1–5. **NOT uniformly high quality: 6/10 good (overall ≥4), 3 mediocre, 1 poor; mean 3.99.** Strong: language 5.0 (A8), lost-recovery 4.9, groundedness 4.4. Weak: feedback 3.3, quiz 3.5 (repetitive), teaching/artifact 3.6. **Dominant limiter = DISCOVER picking topically-adjacent-but-WRONG sources** (raft→PBFT, rlhf→QLoRA, transformer-math→vision-attention). New actions **A14** (discover relevance *precision* — goal-specificity, not just adjacency), **A15** (quiz variety), **A16** (feedback depth). Full run+judge $0.269.
+
 ## Action log (open)
 - **A4** — multi-source digest live validation across many sources (code supports it; one multi-source run done). Candidate for OW-7.
 - **Escalation gate / pedagogical-error-cost routing** — ✅ done in OW-4 (`grade_kp` frontier escalation near the mastery threshold).

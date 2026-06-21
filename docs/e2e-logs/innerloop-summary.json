@@ -5,6 +5,45 @@
     "language": "English",
     "persona": "mastery",
     "errors": [],
+    "quality": {
+      "source_relevance": {
+        "score": 5,
+        "reason": "The source and concepts are directly related to the learner's goal of mastering diffusion models for image generation."
+      },
+      "teaching_quality": {
+        "score": 4,
+        "reason": "The teaching text is clear and covers key concepts, but it is slightly incomplete in explaining cross-attention layers."
+      },
+      "quiz_quality": {
+        "score": 5,
+        "reason": "The quiz questions are relevant and effectively test understanding of the key concepts."
+      },
+      "feedback_quality": {
+        "score": 4,
+        "reason": "Feedback is accurate but lacks depth in explaining why the answers are correct."
+      },
+      "reexplain_quality": {
+        "score": 5,
+        "reason": "No re-explanation was needed as the learner did not get lost."
+      },
+      "artifact_quality": {
+        "score": 4,
+        "reason": "Study notes are well-organized but could be more detailed in some areas."
+      },
+      "language_quality": {
+        "score": 5,
+        "reason": "The language is fluent and appropriate for the learner's level."
+      },
+      "groundedness": {
+        "score": 5,
+        "reason": "All claims are well-grounded in the provided source evidence."
+      },
+      "overall": {
+        "score": 4,
+        "reason": "The session was effective but could improve in depth and completeness of explanations."
+      },
+      "issues": "Slightly incomplete explanation of cross-attention layers."
+    },
     "reached_done": true,
     "turns": 12,
     "fired": {
@@ -34,8 +73,8 @@
       "c2",
       "c3"
     ],
-    "secs": 173.1,
-    "cost_usd": 0.020164,
+    "secs": 158.2,
+    "cost_usd": 0.027517,
     "was_live": true
   },
   {
@@ -44,6 +83,45 @@
     "language": "Chinese",
     "persona": "struggle",
     "errors": [],
+    "quality": {
+      "source_relevance": {
+        "score": 5,
+        "reason": "The source and concepts are directly related to the learner's goal of understanding CRISPR gene editing principles."
+      },
+      "teaching_quality": {
+        "score": 5,
+        "reason": "The teaching text provides a clear and accurate overview of CRISPR/Cas-9, covering all necessary components and mechanisms."
+      },
+      "quiz_quality": {
+        "score": 4,
+        "reason": "The quiz questions are relevant and test understanding, but there is some repetition in the questions."
+      },
+      "feedback_quality": {
+        "score": 4,
+        "reason": "Feedback is mostly accurate but lacks depth in explaining why certain answers were correct or incorrect."
+      },
+      "reexplain_quality": {
+        "score": 5,
+        "reason": "No re-explanation was needed as the learner did not get lost."
+      },
+      "artifact_quality": {
+        "score": 5,
+        "reason": "The study notes are well-organized and effectively summarize the key concepts."
+      },
+      "language_quality": {
+        "score": 5,
+        "reason": "The teaching and notes are fluently in Chinese, with appropriate use of technical terms."
+      },
+      "groundedness": {
+        "score": 5,
+        "reason": "All claims are well-grounded in the provided source evidence."
+      },
+      "overall": {
+        "score": 5,
+        "reason": "The session effectively met the learner's goal with accurate and relevant content."
+      },
+      "issues": "None"
+    },
     "reached_done": true,
     "turns": 16,
     "fired": {
@@ -59,7 +137,7 @@
     "route": [
       "CRISPR/Cas-9 System[done]",
       "Function of sgRNA[done]",
-      "Cas-9 Cleavage Mechanism[done]",
+      "Action of Cas-9 Nuclease[done]",
       "DNA Repair Mechanisms[done]"
     ],
     "concepts_taught": 4,
@@ -71,8 +149,8 @@
       "c1",
       "c2"
     ],
-    "secs": 213.6,
-    "cost_usd": 0.020176,
+    "secs": 180.3,
+    "cost_usd": 0.031317,
     "was_live": true
   },
   {
@@ -81,6 +159,45 @@
     "language": "English",
     "persona": "give_up",
     "errors": [],
+    "quality": {
+      "source_relevance": {
+        "score": 1,
+        "reason": "The source and concepts are about PBFT, not Raft consensus, which is the learner's goal."
+      },
+      "teaching_quality": {
+        "score": 2,
+        "reason": "The teaching text is clear but irrelevant to the learner's goal of Raft consensus."
+      },
+      "quiz_quality": {
+        "score": 2,
+        "reason": "Quiz questions are relevant to PBFT but not to Raft consensus."
+      },
+      "feedback_quality": {
+        "score": 2,
+        "reason": "Feedback is repetitive and does not guide the learner towards their goal of Raft consensus."
+      },
+      "reexplain_quality": {
+        "score": 5,
+        "reason": "No re-explanation was needed as the learner never got lost."
+      },
+      "artifact_quality": {
+        "score": 2,
+        "reason": "Study notes are well-organized but irrelevant to the learner's goal of Raft consensus."
+      },
+      "language_quality": {
+        "score": 5,
+        "reason": "The language is fluent and clear in English."
+      },
+      "groundedness": {
+        "score": 3,
+        "reason": "Claims are grounded in the source evidence, but the source itself is irrelevant to the learner's goal."
+      },
+      "overall": {
+        "score": 2,
+        "reason": "The session is off-topic and does not address the learner's goal of building a Raft consensus implementation."
+      },
+      "issues": "The session focuses on PBFT instead of Raft consensus, which is the learner's goal."
+    },
     "reached_done": true,
     "turns": 12,
     "fired": {
@@ -109,8 +226,8 @@
       "c2",
       "c3"
     ],
-    "secs": 173.2,
-    "cost_usd": 0.018216,
+    "secs": 143.8,
+    "cost_usd": 0.027574,
     "was_live": true
   },
   {
@@ -119,6 +236,45 @@
     "language": "English",
     "persona": "lost_then_recover",
     "errors": [],
+    "quality": {
+      "source_relevance": {
+        "score": 4,
+        "reason": "The source and concepts are relevant to the learner's goal of understanding quantum error correction, but the teaching text lacks depth in explaining the basics."
+      },
+      "teaching_quality": {
+        "score": 3,
+        "reason": "The teaching text covers relevant concepts but lacks clarity and depth in explaining the basics of quantum error correction."
+      },
+      "quiz_quality": {
+        "score": 3,
+        "reason": "The quiz questions are repetitive and focus heavily on two-dimensional topological order, lacking variety."
+      },
+      "feedback_quality": {
+        "score": 3,
+        "reason": "Feedback is generic and does not provide specific guidance for improvement."
+      },
+      "reexplain_quality": {
+        "score": 4,
+        "reason": "The re-explanation uses a relatable analogy but could be more directly tied to quantum error correction."
+      },
+      "artifact_quality": {
+        "score": 3,
+        "reason": "Study notes are organized but lack depth and comprehensive coverage of quantum error correction basics."
+      },
+      "language_quality": {
+        "score": 5,
+        "reason": "The language is fluent and clear, with appropriate use of English."
+      },
+      "groundedness": {
+        "score": 4,
+        "reason": "The content is mostly grounded in the source evidence, but some explanations are vague."
+      },
+      "overall": {
+        "score": 3,
+        "reason": "The session provides a basic overview but lacks depth and specificity in explaining quantum error correction."
+      },
+      "issues": "Lacks depth in explaining quantum error correction basics."
+    },
     "reached_done": true,
     "turns": 16,
     "fired": {
@@ -146,8 +302,8 @@
     "artifact_citations": [
       "c1"
     ],
-    "secs": 185.3,
-    "cost_usd": 0.015002,
+    "secs": 162.6,
+    "cost_usd": 0.02327,
     "was_live": true
   },
   {
@@ -156,25 +312,65 @@
     "language": "Spanish",
     "persona": "mastery",
     "errors": [],
+    "quality": {
+      "source_relevance": {
+        "score": 5,
+        "reason": "The source and concepts are directly related to the learner's goal of understanding the Black-Scholes pricing model."
+      },
+      "teaching_quality": {
+        "score": 4,
+        "reason": "The teaching text covers key aspects of the Black-Scholes model, but could be more detailed in explaining the equation and formula derivation."
+      },
+      "quiz_quality": {
+        "score": 4,
+        "reason": "Quiz questions are relevant and test understanding of key concepts, but could include more application-based questions."
+      },
+      "feedback_quality": {
+        "score": 4,
+        "reason": "Feedback is correct and acknowledges the learner's correct answers, but lacks depth in explanation."
+      },
+      "reexplain_quality": {
+        "score": 5,
+        "reason": "No re-explanation was needed as the learner did not get lost."
+      },
+      "artifact_quality": {
+        "score": 4,
+        "reason": "Study notes are well-organized and cover key concepts, but could be more detailed in explanations."
+      },
+      "language_quality": {
+        "score": 5,
+        "reason": "The teaching and notes are fluently in Spanish, with appropriate use of concept names in English."
+      },
+      "groundedness": {
+        "score": 5,
+        "reason": "All claims are grounded in the provided source evidence."
+      },
+      "overall": {
+        "score": 4,
+        "reason": "Overall, the session was effective but could benefit from more detailed explanations and application-based questions."
+      },
+      "issues": "None"
+    },
     "reached_done": true,
-    "turns": 12,
+    "turns": 15,
     "fired": {
       "teach": true,
       "reteach": false,
-      "graded": 12,
-      "correct": 12,
+      "graded": 15,
+      "correct": 15,
       "mastered": true,
       "conceded": false,
       "handle_lost": false
     },
     "route_version": 1,
     "route": [
+      "Fischer Black and Myron Scholes[done]",
       "Black-Scholes Model[done]",
       "Black-Scholes Equation[done]",
       "European-style Options[done]",
       "Black-Scholes Formula[done]"
     ],
-    "concepts_taught": 4,
+    "concepts_taught": 5,
     "teach_lang": "Spanish",
     "teach_lang_ok": true,
     "artifact_lang": "Spanish",
@@ -182,8 +378,8 @@
     "artifact_citations": [
       "c1"
     ],
-    "secs": 166.8,
-    "cost_usd": 0.020516,
+    "secs": 171.6,
+    "cost_usd": 0.0292,
     "was_live": true
   },
   {
@@ -192,6 +388,45 @@
     "language": "English",
     "persona": "struggle",
     "errors": [],
+    "quality": {
+      "source_relevance": {
+        "score": 5,
+        "reason": "The source and concepts are directly related to the learner's goal of understanding mRNA vaccine design."
+      },
+      "teaching_quality": {
+        "score": 4,
+        "reason": "The teaching text is clear and relevant, but slightly repetitive in explaining the mechanism."
+      },
+      "quiz_quality": {
+        "score": 3,
+        "reason": "Questions are repetitive and could be more varied to cover different aspects of the topic."
+      },
+      "feedback_quality": {
+        "score": 3,
+        "reason": "Feedback is minimal and does not provide detailed guidance for improvement."
+      },
+      "reexplain_quality": {
+        "score": 5,
+        "reason": "No re-explanation was needed as the learner did not get lost."
+      },
+      "artifact_quality": {
+        "score": 4,
+        "reason": "Study notes are well-organized but could be more detailed in some areas."
+      },
+      "language_quality": {
+        "score": 5,
+        "reason": "The language is fluent and appropriate for the learner's goal."
+      },
+      "groundedness": {
+        "score": 4,
+        "reason": "Mostly grounded in evidence, but some claims could be more explicitly tied to the source."
+      },
+      "overall": {
+        "score": 4,
+        "reason": "Overall, the session was effective but could improve in quiz variety and feedback detail."
+      },
+      "issues": "Repetitive quiz questions and minimal feedback."
+    },
     "reached_done": true,
     "turns": 16,
     "fired": {
@@ -218,8 +453,8 @@
     "artifact_citations": [
       "c1"
     ],
-    "secs": 199.6,
-    "cost_usd": 0.016295,
+    "secs": 186.3,
+    "cost_usd": 0.025777,
     "was_live": true
   },
   {
@@ -228,6 +463,45 @@
     "language": "Chinese",
     "persona": "mastery",
     "errors": [],
+    "quality": {
+      "source_relevance": {
+        "score": 3,
+        "reason": "The source and concepts are related to the learner's goal but do not deeply cover the mathematical principles of self-attention in transformers."
+      },
+      "teaching_quality": {
+        "score": 3,
+        "reason": "The teaching text provides a general understanding but lacks depth in mathematical principles."
+      },
+      "quiz_quality": {
+        "score": 4,
+        "reason": "Quiz questions are relevant and test understanding of key concepts, though they could be more challenging."
+      },
+      "feedback_quality": {
+        "score": 4,
+        "reason": "Feedback is positive and acknowledges correct understanding, but lacks depth."
+      },
+      "reexplain_quality": {
+        "score": 5,
+        "reason": "No re-explanation was needed as the learner did not get lost."
+      },
+      "artifact_quality": {
+        "score": 3,
+        "reason": "Study notes summarize key points but are somewhat superficial and lack depth."
+      },
+      "language_quality": {
+        "score": 5,
+        "reason": "The teaching and notes are fluently in Chinese, with appropriate use of technical terms."
+      },
+      "groundedness": {
+        "score": 4,
+        "reason": "Most claims are grounded in the source, but some extrapolations are made without strong evidence."
+      },
+      "overall": {
+        "score": 3,
+        "reason": "The session is generally acceptable but lacks depth in mathematical principles."
+      },
+      "issues": "Lacks depth in mathematical principles of self-attention."
+    },
     "reached_done": true,
     "turns": 15,
     "fired": {
@@ -258,8 +532,8 @@
       "c3",
       "c4"
     ],
-    "secs": 179.5,
-    "cost_usd": 0.017124,
+    "secs": 165.1,
+    "cost_usd": 0.027524,
     "was_live": true
   },
   {
@@ -268,6 +542,45 @@
     "language": "English",
     "persona": "give_up",
     "errors": [],
+    "quality": {
+      "source_relevance": {
+        "score": 5,
+        "reason": "The source and concepts are directly related to the learner's goal of understanding behavioral economics and nudges."
+      },
+      "teaching_quality": {
+        "score": 4,
+        "reason": "The teaching text provides a clear explanation of nudge theory and its application, though it is somewhat repetitive."
+      },
+      "quiz_quality": {
+        "score": 3,
+        "reason": "The quiz questions are repetitive and could be more varied to cover different aspects of nudge theory."
+      },
+      "feedback_quality": {
+        "score": 2,
+        "reason": "Feedback is vague and does not provide specific guidance on how to improve answers."
+      },
+      "reexplain_quality": {
+        "score": 5,
+        "reason": "No re-explanation was needed as the learner did not get lost."
+      },
+      "artifact_quality": {
+        "score": 4,
+        "reason": "Study notes are well-organized and relevant, but could be more detailed."
+      },
+      "language_quality": {
+        "score": 5,
+        "reason": "The language used is fluent and appropriate for the subject matter."
+      },
+      "groundedness": {
+        "score": 5,
+        "reason": "The content is well-grounded in the provided source evidence."
+      },
+      "overall": {
+        "score": 4,
+        "reason": "Overall, the session was effective but could improve in feedback and quiz variety."
+      },
+      "issues": "Feedback lacks specificity and quiz questions are repetitive."
+    },
     "reached_done": true,
     "turns": 12,
     "fired": {
@@ -294,8 +607,8 @@
     "artifact_citations": [
       "c0"
     ],
-    "secs": 160.8,
-    "cost_usd": 0.015809,
+    "secs": 159.6,
+    "cost_usd": 0.02372,
     "was_live": true
   },
   {
@@ -304,6 +617,45 @@
     "language": "English",
     "persona": "struggle",
     "errors": [],
+    "quality": {
+      "source_relevance": {
+        "score": 2,
+        "reason": "The concepts taught are not directly aligned with the learner's goal of applying RLHF to fine-tune an LLM."
+      },
+      "teaching_quality": {
+        "score": 3,
+        "reason": "The teaching text explains QLoRA and related concepts well but lacks direct connection to RLHF."
+      },
+      "quiz_quality": {
+        "score": 3,
+        "reason": "Quiz questions are relevant to the teaching text but do not address RLHF."
+      },
+      "feedback_quality": {
+        "score": 3,
+        "reason": "Feedback is specific to the questions but does not guide towards the learner's goal."
+      },
+      "reexplain_quality": {
+        "score": 5,
+        "reason": "No re-explanation was needed as the learner did not get lost."
+      },
+      "artifact_quality": {
+        "score": 3,
+        "reason": "Study notes summarize the teaching text well but do not connect to RLHF."
+      },
+      "language_quality": {
+        "score": 5,
+        "reason": "The language is fluent and clear in English."
+      },
+      "groundedness": {
+        "score": 4,
+        "reason": "The content is grounded in the source evidence but lacks connection to RLHF."
+      },
+      "overall": {
+        "score": 3,
+        "reason": "The session is well-structured but does not address the learner's specific goal of RLHF."
+      },
+      "issues": "Lacks connection to RLHF, the learner's goal."
+    },
     "reached_done": true,
     "turns": 16,
     "fired": {
@@ -328,12 +680,12 @@
     "artifact_lang": "English",
     "artifact_lang_ok": true,
     "artifact_citations": [
-      "c0",
       "c1",
-      "c2"
+      "c2",
+      "c3"
     ],
-    "secs": 188.3,
-    "cost_usd": 0.019591,
+    "secs": 179.5,
+    "cost_usd": 0.0289,
     "was_live": true
   },
   {
@@ -342,6 +694,45 @@
     "language": "French",
     "persona": "lost_then_recover",
     "errors": [],
+    "quality": {
+      "source_relevance": {
+        "score": 5,
+        "reason": "The source and concepts are directly related to the learner's goal of understanding graph neural networks."
+      },
+      "teaching_quality": {
+        "score": 4,
+        "reason": "The teaching text is clear and covers key concepts, but could be more concise."
+      },
+      "quiz_quality": {
+        "score": 4,
+        "reason": "Quiz questions are relevant and test understanding of key concepts, but some are repetitive."
+      },
+      "feedback_quality": {
+        "score": 4,
+        "reason": "Feedback is generally positive and acknowledges correct understanding, but lacks depth."
+      },
+      "reexplain_quality": {
+        "score": 5,
+        "reason": "Re-explanation was not needed, indicating clarity in initial explanations."
+      },
+      "artifact_quality": {
+        "score": 4,
+        "reason": "Study notes are well-organized and relevant, but could be more detailed."
+      },
+      "language_quality": {
+        "score": 5,
+        "reason": "The teaching and notes are fluently in French, with appropriate use of technical terms."
+      },
+      "groundedness": {
+        "score": 5,
+        "reason": "All claims are well-supported by the source evidence."
+      },
+      "overall": {
+        "score": 4,
+        "reason": "The session is effective and relevant, with minor areas for improvement in depth and conciseness."
+      },
+      "issues": "None"
+    },
     "reached_done": true,
     "turns": 13,
     "fired": {
@@ -371,8 +762,8 @@
       "c4",
       "c3"
     ],
-    "secs": 152.9,
-    "cost_usd": 0.018671,
+    "secs": 139.1,
+    "cost_usd": 0.02464,
     "was_live": true
   }
 ]

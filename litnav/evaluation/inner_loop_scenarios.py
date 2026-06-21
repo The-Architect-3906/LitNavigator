@@ -29,7 +29,7 @@ from litnav.digest.contract import DigestInput, SourceDoc
 from litnav.digest import pipeline
 from litnav.artifact.contract import ArtifactInput
 from litnav.artifact.make_artifact import make_artifact
-from litnav.llm import lang as lang_mod, client as llm_client
+from litnav.llm import lang as lang_mod, client as llm_client, router
 
 _OUT = Path("docs/e2e-logs")
 _BUDGET = 120000
@@ -102,8 +102,62 @@ def run_session(conn, ckpt, sid, topic, target_ids, persona, *, goal_text, log) 
         "handle_lost": any(h.get("event") == "handle_lost" for h in hist),
     }
     teach_text = " ".join(h.get("text", "") for h in hist if h.get("event") in ("teach_kp", "handle_lost"))[:600]
+    # Full content capture for the quality judge
+    teach_texts = [h.get("text", "") for h in hist if h.get("event") == "teach_kp"]
+    lost_texts = [h.get("text", "") for h in hist if h.get("event") == "handle_lost"]
+    quizzes: list[str] = []
+    for h in hist:
+        if h.get("event") == "assess_next" and h.get("question") and h["question"] not in quizzes:
+            quizzes.append(h["question"])
+    feedbacks = [r[0] for r in conn.execute(
+        "SELECT feedback FROM quiz_attempts WHERE session_id=? ORDER BY id", (sid,)).fetchall()]
     return {"trace": tr, "turns": turns, "fired": fired, "teach_text": teach_text,
-            "route_status": statuses, "reached_done": not final.next}
+            "teach_texts": teach_texts, "lost_texts": lost_texts, "quizzes": quizzes,
+            "feedbacks": feedbacks, "route_status": statuses, "reached_done": not final.next}
+
+
+_QDIMS = ["source_relevance", "teaching_quality", "quiz_quality", "feedback_quality",
+          "reexplain_quality", "artifact_quality", "language_quality", "groundedness", "overall"]
+
+
+def _quality_judge(*, goal, language, concepts, source_title, evidence, teach_texts, quizzes,
+                   feedbacks, lost_texts, artifact_body, conn, sid):
+    """Frontier LLM judge: rate the tutor's ACTUAL output quality 1-5 per dimension, grounded in the
+    source evidence. Offline → null scores."""
+    ev = " ".join(evidence)[:1200]
+    teach = "\n".join(t for t in teach_texts if t)[:1600]
+    qs = "\n".join(f"- {q}" for q in quizzes[:8])
+    fb = "\n".join(f"- {f}" for f in feedbacks[:4] if f)
+    lost = ("\n".join(t for t in lost_texts if t)[:600]) or "(learner never got lost)"
+    art = (artifact_body or "")[:1600]
+    prompt = (
+        "You are a STRICT evaluator of an AI research tutor. Below are the learner's goal and the tutor's "
+        "ACTUAL outputs from one session. Rate each dimension 1-5 (5=excellent, 3=acceptable, <=2=poor) with "
+        "a terse reason. Judge real quality, not effort. Penalise off-topic content, vagueness, hallucination "
+        "beyond the evidence, or wrong output language.\n\n"
+        f"LEARNER GOAL ({language}): {goal}\n"
+        f"DIGESTED SOURCE: {source_title}\n"
+        f"CONCEPTS TAUGHT: {', '.join(concepts)}\n\n"
+        f"SOURCE EVIDENCE (ground truth):\n{ev}\n\n"
+        f"TEACHING TEXT:\n{teach}\n\n"
+        f"QUIZ QUESTIONS:\n{qs}\n\n"
+        f"GRADING FEEDBACK:\n{fb}\n\n"
+        f"RE-EXPLANATION WHEN LEARNER WAS LOST:\n{lost}\n\n"
+        f"FINAL STUDY NOTES:\n{art}\n\n"
+        "Dimensions: source_relevance (are source+concepts genuinely about the goal?), teaching_quality, "
+        "quiz_quality, feedback_quality, reexplain_quality (give 5 if no lost-event was needed), "
+        f"artifact_quality, language_quality (is the teaching+notes fluently in {language}? concept NAMES may "
+        "remain in the source language), groundedness (no claims beyond the evidence), overall (holistic). "
+        "Respond JSON only: "
+        '{"source_relevance":{"score":N,"reason":"..."},"teaching_quality":{"score":N,"reason":"..."},'
+        '"quiz_quality":{"score":N,"reason":"..."},"feedback_quality":{"score":N,"reason":"..."},'
+        '"reexplain_quality":{"score":N,"reason":"..."},"artifact_quality":{"score":N,"reason":"..."},'
+        '"language_quality":{"score":N,"reason":"..."},"groundedness":{"score":N,"reason":"..."},'
+        '"overall":{"score":N,"reason":"..."},"issues":"one line, or none"}')
+    fallback = {d: {"score": None, "reason": "offline"} for d in _QDIMS}
+    fallback["issues"] = "offline"
+    return router.complete_json(prompt, tier="frontier", stage="quality_judge", fallback=fallback,
+                               session_id=sid, conn=conn)
 
 
 # ───────────────────────── OFFLINE SMOKE ($0) ─────────────────────────
@@ -180,9 +234,21 @@ def _run_live_one(sc, log) -> dict:
     abody = Path(art.artifact_path).read_text(encoding="utf-8")
     art_lang = lang_mod.detect_language(abody)
     teach_lang = lang_mod.detect_language(r.get("teach_text") or "x")
+    # ── ACTUAL-QUALITY judge (frontier LLM, grounded in the source evidence) ──
+    evidence = [row[0] for row in conn.execute(
+        "SELECT text FROM paper_chunks ORDER BY chunk_index, id").fetchall()][:6]
+    quality = _quality_judge(
+        goal=goal, language=language,
+        concepts=[c["name"] for c in tr["concepts"]],
+        source_title=top.title, evidence=evidence,
+        teach_texts=r.get("teach_texts", []), quizzes=r.get("quizzes", []),
+        feedbacks=r.get("feedbacks", []), lost_texts=r.get("lost_texts", []),
+        artifact_body=abody, conn=conn, sid=sid)
     sp = cost_repo.session_spend(conn, sid)
     summ.update({
+        "quality": quality,
         "reached_done": r["reached_done"], "turns": r["turns"], "fired": r["fired"],
+        "route_version": tr.get("route_version"),   # >1 ⇒ diagnose→replan fired (prereq detour, V1)
         "route": [f"{s['name']}[{s['status']}]" for s in tr["route"]],
         "concepts_taught": sum(1 for c in tr["concepts"] if c["n_observations"]),
         "teach_lang": teach_lang, "teach_lang_ok": (teach_lang == language),
@@ -195,9 +261,13 @@ def _run_live_one(sc, log) -> dict:
     log(f"- teaching language={teach_lang} (want {language}, ok={summ['teach_lang_ok']})")
     log(f"- artifact language={art_lang} (want {language}, ok={summ['artifact_lang_ok']}) citations={art.citations}")
     log(f"- cost usd={sp['usd']} was_live={llm_client.was_live()}")
-    log("\n--- teaching turns (first 3, language check) ---")
-    for tt in tr["tutor_turns"][:3]:
-        log(f"  [{tt['turn_type']}/{tt['strategy']}] {tt['name']}")
+    q = summ.get("quality") or {}
+    qline = " · ".join(f"{d}={ (q.get(d) or {}).get('score') }" for d in _QDIMS)
+    log(f"\n## QUALITY (frontier judge, 1-5)\n- {qline}")
+    log(f"- issues: {q.get('issues')}")
+    for d in _QDIMS:
+        dd = q.get(d) or {}
+        log(f"  · {d}: {dd.get('score')} — {dd.get('reason')}")
     return summ
 
 
@@ -224,7 +294,20 @@ def main() -> int:
         results.append(summ)
     (_OUT / "innerloop-summary.json").write_text(json.dumps(results, ensure_ascii=False, indent=2), encoding="utf-8")
     tot = sum(r.get("cost_usd", 0.0) for r in results)
+    # Aggregate ACTUAL-quality scores across all scenarios
+    def _avg(dim):
+        vals = [(r.get("quality") or {}).get(dim, {}).get("score") for r in results]
+        vals = [v for v in vals if isinstance(v, (int, float))]
+        return round(sum(vals) / len(vals), 2) if vals else None
     print(f"\n=== DONE: {len(results)} inner-loop scenarios; total usd={round(tot,4)} ===")
+    print("=== ACTUAL-QUALITY (frontier judge, mean 1-5) ===")
+    for d in _QDIMS:
+        print(f"   {d:18} {_avg(d)}")
+    lows = [(r["id"], d, (r.get("quality") or {}).get(d, {}).get("score"))
+            for r in results for d in _QDIMS
+            if isinstance((r.get("quality") or {}).get(d, {}).get("score"), (int, float))
+            and (r.get("quality") or {}).get(d, {}).get("score") < 4]
+    print(f"=== dimensions scoring <4 (quality concerns): {lows if lows else 'NONE'} ===")
     return 0
 
 
