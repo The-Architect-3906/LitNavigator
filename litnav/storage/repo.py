@@ -255,9 +255,17 @@ def next_concept_id(conn: sqlite3.Connection) -> int:
     return int(row[0]) + 1
 
 
+# Allowed by the concepts.frontier_flag CHECK constraint. Anything else (e.g. an LLM emitting
+# 'established'/'novel') must be coerced to NULL — otherwise INSERT OR IGNORE silently DROPS the
+# whole concept row on the CHECK violation, leaving the graph empty (the OW-5.1 persistence bug).
+_FRONTIER_FLAGS = {"consensus", "contested", "open"}
+
+
 def create_concept(conn: sqlite3.Connection, concept_id: int, slug: str, name: str,
                    frontier_flag: str | None = None, *, source: str = "curated",
                    domain: str | None = None, slice_key: str | None = None) -> None:
+    if frontier_flag not in _FRONTIER_FLAGS:
+        frontier_flag = None
     conn.execute(
         "INSERT OR IGNORE INTO concepts (id, slug, name, frontier_flag, source, domain, slice_key) "
         "VALUES (?,?,?,?,?,?,?)",

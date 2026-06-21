@@ -70,24 +70,75 @@ def make_artifact(
             })
 
     # ── 4. Gather evidence + citations ────────────────────────────────────────
+    # Evidence comes from THREE linkages, because digested data and hand-seeded fixtures
+    # store the concept→evidence relation differently:
+    #   (a) keypoint name/objective — concept-specific, LLM-grounded teachable statements (digest);
+    #   (b) paper_chunks.concept_id — chunks tagged with the concept (fixtures / curated);
+    #   (c) keypoints.evidence_chunk_id → paper_chunks.text — the digest's real chunk linkage.
+    # A citation is kept only if its chunk id resolves to a real paper_chunks row.
     evidence_by_concept: dict[str, list[str]] = {}
     citations: list[str] = []
     seen_citations: set[str] = set()
+
+    # Source-chunk pool: every digested concept was EXTRACTED from these chunks, so they are
+    # valid grounding when a concept carries no keypoint/concept-tagged evidence of its own
+    # (LLM keypoint extraction is sparse/non-deterministic). Without this, artifacts fall back
+    # to ungrounded LLM generation with no citations — "bluffing" (OW-5.1).
+    source_pool = conn.execute(
+        "SELECT id, text FROM paper_chunks ORDER BY chunk_index, id"
+    ).fetchall()
+    _POOL_FALLBACK_N = 3
+
+    def _add_citation(chunk_id) -> None:
+        if not chunk_id or chunk_id in seen_citations:
+            return
+        if conn.execute("SELECT 1 FROM paper_chunks WHERE id=?", (chunk_id,)).fetchone():
+            citations.append(chunk_id)
+            seen_citations.add(chunk_id)
 
     for cid in ai.concept_ids:
         if cid not in id_to_concept:
             continue
         slug = slug_of[cid]
         evs: list[str] = []
+        seen_ev: set[str] = set()
+
+        def _add_ev(text: str | None) -> None:
+            t = (text or "").strip()
+            if t and t not in seen_ev:
+                evs.append(t)
+                seen_ev.add(t)
+
+        # (a) keypoint objectives/names (concept-specific) + their chunk citations
+        for kp in conn.execute(
+            "SELECT name, objective, evidence_chunk_id FROM keypoints "
+            "WHERE concept_id=? ORDER BY sort_order, id", (cid,),
+        ).fetchall():
+            kp_name, kp_obj, kp_ecid = kp
+            _add_ev(kp_obj or kp_name)
+            _add_citation(kp_ecid)
+        # (c) text of chunks linked via keypoints (digest path)
+        for chunk_row in conn.execute(
+            "SELECT pc.id, pc.text FROM keypoints kp JOIN paper_chunks pc "
+            "ON pc.id = kp.evidence_chunk_id WHERE kp.concept_id=? ORDER BY pc.chunk_index, pc.id",
+            (cid,),
+        ).fetchall():
+            _add_ev(chunk_row[1])
+            _add_citation(chunk_row[0])
+        # (b) chunks tagged directly with the concept (fixture / curated path)
         for chunk_row in conn.execute(
             "SELECT id, text FROM paper_chunks WHERE concept_id=? ORDER BY chunk_index, id",
             (cid,),
         ).fetchall():
-            chunk_id, text = chunk_row
-            evs.append(text)
-            if chunk_id not in seen_citations:
-                citations.append(chunk_id)
-                seen_citations.add(chunk_id)
+            _add_ev(chunk_row[1])
+            _add_citation(chunk_row[0])
+
+        # Fallback: no concept-specific evidence -> ground in the source chunks it came from.
+        if not evs and source_pool:
+            for pool_id, pool_text in source_pool[:_POOL_FALLBACK_N]:
+                _add_ev(pool_text)
+                _add_citation(pool_id)
+
         evidence_by_concept[slug] = evs
 
     # ── 5. Build graph dict for mindmap renderer ──────────────────────────────

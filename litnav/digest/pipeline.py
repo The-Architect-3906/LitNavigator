@@ -20,6 +20,29 @@ def _model_key() -> str:
     return os.getenv("LITNAV_LLM_PROVIDER", "none") + "|" + os.getenv("LITNAV_LLM_MODEL", "gpt-4o-mini")
 
 
+def _norm_chunk_id(raw, valid_ids: list[str]) -> str | None:
+    """Map an LLM-emitted keypoint evidence_chunk_id onto a REAL written chunk id.
+
+    The extractor often returns bare indices ('1', 1, 'c3') that don't match the global
+    'c{idx}' ids we actually write, or hallucinates indices when there are fewer chunks than
+    keypoints. We resolve to a real chunk so evidence/citations link (else artifacts come out
+    empty — the OW-5.1 linkage bug). Unresolvable ids fall back to the first chunk (cite the
+    source) rather than dangling.
+    """
+    if not valid_ids:
+        return None
+    if raw in valid_ids:
+        return raw
+    try:
+        i = int(str(raw).lstrip("cC"))
+    except (TypeError, ValueError):
+        return valid_ids[0]
+    for cand in (f"c{i}", f"c{i - 1}"):   # tolerate 0- vs 1-indexed
+        if cand in valid_ids:
+            return cand
+    return valid_ids[0]
+
+
 def _slice_key(di: DigestInput) -> str:
     return slice_key(di.domain_key, [s.source_id for s in di.sources], di.target_slugs)
 
@@ -54,6 +77,10 @@ def _write_graph(conn: sqlite3.Connection, di: DigestInput, concepts: list[dict]
                  quiz_seeds: list[dict], slice_key: str | None = None) -> dict[str, int]:
     """Write concepts/edges/keypoints/quiz seeds as source='digested'; return {slug: concept_id}."""
     _write_sources(conn, di)
+    # Global chunk ids written by _write_sources: c0..c{total-1}. Used to normalize keypoint
+    # evidence_chunk_id onto real chunks so evidence/citations resolve downstream.
+    total_chunks = sum(len(s.chunks) for s in di.sources)
+    valid_chunk_ids = [f"c{i}" for i in range(total_chunks)]
     ids: dict[str, int] = {}
     for c in concepts:
         existing = repo.get_concept_by_slug(conn, c["slug"])
@@ -77,7 +104,8 @@ def _write_graph(conn: sqlite3.Connection, di: DigestInput, concepts: list[dict]
     for k in keypoints:
         if k["concept_slug"] in ids:
             repo.create_keypoint(conn, k["kp_id"], ids[k["concept_slug"]], k["name"],
-                                 k.get("objective", ""), k.get("evidence_chunk_id"),
+                                 k.get("objective", ""),
+                                 _norm_chunk_id(k.get("evidence_chunk_id"), valid_chunk_ids),
                                  bloom_level=k.get("bloom_level", "recall"))
     for q in quiz_seeds:
         if q["concept_slug"] in ids:

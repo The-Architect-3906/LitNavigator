@@ -48,6 +48,17 @@ def main() -> int:
         assert uv["edge_type"] == "similarity", "FAIL: unverified edge not downgraded"
     print(f"G-digest-live PASS: {len(slugs)} concepts, {len(res.edges)} edges, all grounded")
 
+    # OW-5.1: assert the graph PERSISTED to the DB (the gate previously only checked the in-memory
+    # return; concepts were being silently dropped by INSERT OR IGNORE on a bad LLM frontier_flag,
+    # leaving teach/artifact with nothing). Re-read what downstream stages actually consume.
+    db_concepts = conn.execute("SELECT COUNT(*) FROM concepts").fetchone()[0]
+    assert db_concepts >= 2, f"FAIL: digest returned concepts but only {db_concepts} PERSISTED to DB"
+    unresolved_kp = conn.execute(
+        "SELECT COUNT(*) FROM keypoints kp LEFT JOIN paper_chunks pc ON pc.id = kp.evidence_chunk_id "
+        "WHERE kp.evidence_chunk_id IS NOT NULL AND pc.id IS NULL").fetchone()[0]
+    assert unresolved_kp == 0, f"FAIL: {unresolved_kp} keypoints have unresolved evidence_chunk_id"
+    print(f"G-digest-live PASS: {db_concepts} concepts PERSISTED; all keypoint evidence resolves")
+
     # the verify judge actually ran on the REAL frontier model (gpt-4o), not the cheap model self-judging
     frows = conn.execute(
         "SELECT model, SUM(total_tokens), COUNT(*) FROM cost_ledger "
