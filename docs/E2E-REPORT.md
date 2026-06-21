@@ -1,4 +1,8 @@
-# LitNavigator — Full E2E Test Report (10 scenarios · inner loop · variants · actual-quality)
+# End-to-End Test Report
+
+*The authoritative measured-quality run of the whole pipeline — 10 diverse scenarios, real learner
+personas, frontier-judge scores.* What's being tested: [BACKEND-COMPLETE](BACKEND-COMPLETE.md).
+The residual gaps below are tracked in [BACKEND-ROADMAP](BACKEND-ROADMAP.md).
 
 **Date:** 2026-06-21 · **Branch:** `feat/open-world-digest` · **Provider:** OpenAI live · strict mode · every call metered.
 **Harness:** `litnav/evaluation/inner_loop_scenarios.py` (drives the REAL compiled LangGraph tutor turn-by-turn on
@@ -7,7 +11,8 @@ actual content quality 1–5). Per-scenario logs: [`e2e-logs/innerloop-*.md`](e2
 
 ## Scope
 This is the authoritative end-to-end test of the whole open-world pipeline **including recommend-next** and after the
-quality fixes A11/A14/A15/A16: 10 diverse scenarios (goal · depth · prior knowledge · language · discipline all
+latest quality fixes (cheaper edge judge, sharper discovery, quiz variety, deeper feedback): 10 diverse scenarios
+(goal · depth · prior knowledge · language · discipline all
 distinct) × learner variants (mastery / struggle / give_up / lost-then-recover), each run **discover → digest →
 goal-elicit → teach⇄assess loop → make-artifact → recommend-next**.
 
@@ -18,18 +23,18 @@ goal-elicit → teach⇄assess loop → make-artifact → recommend-next**.
   overall ≥ 4**; the one holdout is raft (overall 3 — a give-up learner on a borderline source).
 - All four interaction branches fire correctly (advance / reteach→recover / concede / handle_lost→recover); teaching
   and artifacts are in the learner's language 9/9; recommend-next produced sensible next-steps for all 9.
-- Total live cost for the run: **$0.21** (A11 removed the earlier ~5× digest spike).
+- Total live cost for the run: **$0.21** (moving the similarity-edge judge to the cheap tier removed the earlier ~5× digest spike).
 
 ## Quality by dimension (frontier judge, mean 1–5)
 | Dimension | Before fixes | **After (this run)** | Driver |
 |--|--|--|--|
-| source_relevance | 4.0 | **4.78** | A14 goal-specific relevance gate |
-| feedback_quality | 3.3 | **3.89** | A16 explain-why feedback |
-| quiz_quality | 3.5 | **3.78** | A15 quiz variety |
+| source_relevance | 4.0 | **4.78** | goal-specific relevance gate |
+| feedback_quality | 3.3 | **3.89** | explain-why feedback |
+| quiz_quality | 3.5 | **3.78** | quiz variety |
 | teaching_quality | 3.6 | 3.89 | — |
 | artifact_quality | 3.6 | 3.89 | — |
 | groundedness | 4.4 | 4.78 | — |
-| language_quality | 5.0 | **5.0** | A8 (en/中/es/fr) |
+| language_quality | 5.0 | **5.0** | output in the learner's language (en/中/es/fr) |
 | reexplain_quality | 4.9 | **5.0** | handle_lost |
 | **overall** | 3.99 | **4.33** | — |
 
@@ -48,7 +53,7 @@ goal-elicit → teach⇄assess loop → make-artifact → recommend-next**.
 | 10 | GNN · lost · fr | ✗ | **transient discover miss** | — | — | — | — | — |
 
 ## What's strong
-- **Discovery precision (A14):** off-topic/adjacent-but-wrong sources are now mostly rejected — source_relevance 4.78,
+- **Discovery precision:** off-topic/adjacent-but-wrong sources are now mostly rejected — source_relevance 4.78,
   no gross mismatches; the earlier raft→"Megalopolis (film)" / rlhf→QLoRA / transformer→vision class is fixed (raft now
   finds a real Raft source; rlhf/transformer score 5).
 - **Multilingual:** teaching + artifacts in the learner's language for English / 中文 / Español / Français (5.0).
