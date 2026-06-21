@@ -1,0 +1,18 @@
+[
+  {"question": "What does ReAct interleave?", "answer_key": "reasoning and acting", "learner_answer": "it alternates thinking and taking actions", "correct": true},
+  {"question": "What do stabilizer codes protect?", "answer_key": "quantum information from errors", "learner_answer": "they guard qubits against noise", "correct": true},
+  {"question": "What does attention compute?", "answer_key": "weighted relevance over tokens", "learner_answer": "how much each token matters to the others", "correct": true},
+  {"question": "What does backpropagation minimize?", "answer_key": "the loss function", "learner_answer": "the error or cost", "correct": true},
+  {"question": "What does RAG reduce?", "answer_key": "hallucination by grounding in documents", "learner_answer": "made-up answers, by retrieving real sources", "correct": true},
+  {"question": "When does mastery learning advance?", "answer_key": "after reaching a mastery threshold", "learner_answer": "once you pass a certain mastery level", "correct": true},
+  {"question": "What is a prerequisite edge?", "answer_key": "a concept you must learn before another", "learner_answer": "a dependency that has to come first", "correct": true},
+  {"question": "What does spaced repetition improve?", "answer_key": "long-term retention", "learner_answer": "remembering things for longer", "correct": true},
+  {"question": "What does ReAct interleave?", "answer_key": "reasoning and acting", "learner_answer": "it caches results to disk", "correct": false},
+  {"question": "What do stabilizer codes protect?", "answer_key": "quantum information from errors", "learner_answer": "they speed up training", "correct": false},
+  {"question": "What does attention compute?", "answer_key": "weighted relevance over tokens", "learner_answer": "the learning rate", "correct": false},
+  {"question": "What does backpropagation minimize?", "answer_key": "the loss function", "learner_answer": "the number of layers", "correct": false},
+  {"question": "What does RAG reduce?", "answer_key": "hallucination by grounding in documents", "learner_answer": "the GPU memory usage", "correct": false},
+  {"question": "When does mastery learning advance?", "answer_key": "after reaching a mastery threshold", "learner_answer": "after a fixed number of days", "correct": false},
+  {"question": "What is a prerequisite edge?", "answer_key": "a concept you must learn before another", "learner_answer": "two concepts that are merely similar", "correct": false},
+  {"question": "What does spaced repetition improve?", "answer_key": "long-term retention", "learner_answer": "stuff", "correct": false}
+]

@@ -1,0 +1,14 @@
+[
+  {"prereq": "Qubits and superposition", "target": "Quantum error correction", "is_prereq": true},
+  {"prereq": "Linear algebra", "target": "Attention mechanism", "is_prereq": true},
+  {"prereq": "Attention mechanism", "target": "Transformer architecture", "is_prereq": true},
+  {"prereq": "Gradient descent", "target": "Backpropagation", "is_prereq": true},
+  {"prereq": "Markov decision processes", "target": "Reinforcement learning", "is_prereq": true},
+  {"prereq": "ReAct reasoning-acting loop", "target": "Multi-agent orchestration", "is_prereq": true},
+  {"prereq": "Transformer architecture", "target": "Linear algebra", "is_prereq": false},
+  {"prereq": "Quantum error correction", "target": "Qubits and superposition", "is_prereq": false},
+  {"prereq": "Behavioral economics", "target": "Backpropagation", "is_prereq": false},
+  {"prereq": "Reinforcement learning", "target": "Markov decision processes", "is_prereq": false},
+  {"prereq": "Graph neural networks", "target": "mRNA vaccines", "is_prereq": false},
+  {"prereq": "Multi-agent orchestration", "target": "ReAct reasoning-acting loop", "is_prereq": false}
+]

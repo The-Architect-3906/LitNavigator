@@ -1,0 +1,18 @@
+[
+  {"text": "Explain how ReAct interleaves reasoning and acting so the agent grounds each decision in fresh observations.", "good": true},
+  {"text": "Describe why retrieval-augmented generation reduces hallucination by grounding answers in external documents.", "good": true},
+  {"text": "Show how stabilizer codes protect quantum information by detecting errors without measuring the data qubits.", "good": true},
+  {"text": "Explain how backpropagation updates the weights to minimize the loss across many training examples.", "good": true},
+  {"text": "Describe how attention assigns weights to tokens so the model focuses on the relevant context.", "good": true},
+  {"text": "Explain why mastery learning advances only after a threshold rather than after a fixed amount of time.", "good": true},
+  {"text": "Show how prerequisite edges order a curriculum so foundational concepts come before dependent ones.", "good": true},
+  {"text": "Describe how spaced repetition schedules reviews to strengthen long-term retention of facts.", "good": true},
+  {"text": "explain ReAct", "good": false},
+  {"text": "attention mechanism", "good": false},
+  {"text": "Define backpropagation.", "good": false},
+  {"text": "Quantum error correction basics.", "good": false},
+  {"text": "Understand transformers.", "good": false},
+  {"text": "Cover the topic of reinforcement learning.", "good": false},
+  {"text": "List several important machine learning algorithms used widely today everywhere.", "good": false},
+  {"text": "This concept is very important and interesting for all curious learners everywhere.", "good": false}
+]

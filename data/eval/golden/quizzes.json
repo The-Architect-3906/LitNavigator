@@ -1,0 +1,18 @@
+[
+  {"quiz": {"question": "What does ReAct interleave?", "options": ["Reasoning and acting", "Only reasoning", "Only acting", "Neither"], "answer": "Reasoning and acting"}, "valid": true},
+  {"quiz": {"question": "What do stabilizer codes protect?", "options": ["Quantum information", "Classical bits only", "Network packets", "Disk sectors"], "answer": "Quantum information"}, "valid": true},
+  {"quiz": {"question": "What does attention assign to tokens?", "options": ["Weights", "Colors", "Indices only", "Nothing"], "answer": "Weights"}, "valid": true},
+  {"quiz": {"question": "What does backpropagation minimize?", "options": ["The loss", "The dataset", "The model size", "The vocabulary"], "answer": "The loss"}, "valid": true},
+  {"quiz": {"question": "What does RAG reduce?", "options": ["Hallucination", "Latency only", "Token cost only", "Accuracy"], "answer": "Hallucination"}, "valid": true},
+  {"quiz": {"question": "When does mastery learning advance?", "options": ["After a threshold", "After fixed time", "Randomly", "Never"], "answer": "After a threshold"}, "valid": true},
+  {"quiz": {"question": "What do prerequisite edges order?", "options": ["A curriculum", "A database", "A network", "A queue"], "answer": "A curriculum"}, "valid": true},
+  {"quiz": {"question": "What does spaced repetition strengthen?", "options": ["Long-term retention", "Short-term only", "Typing speed", "Nothing"], "answer": "Long-term retention"}, "valid": true},
+  {"quiz": {"question": "", "options": ["a", "b", "c"], "answer": "a"}, "valid": false},
+  {"quiz": {"question": "Too few options?", "options": ["only one"], "answer": "only one"}, "valid": false},
+  {"quiz": {"question": "Answer not in options?", "options": ["a", "b", "c"], "answer": "z"}, "valid": false},
+  {"quiz": {"question": "No options at all?", "options": [], "answer": "a"}, "valid": false},
+  {"quiz": {"question": "Two options only?", "options": ["yes", "no"], "answer": "yes"}, "valid": false},
+  {"quiz": {"question": "   ", "options": ["a", "b", "c"], "answer": "a"}, "valid": false},
+  {"quiz": {"question": "Empty answer field?", "options": ["a", "b", "c"], "answer": ""}, "valid": false},
+  {"quiz": {"question": "Null answer?", "options": ["a", "b", "c"], "answer": null}, "valid": false}
+]
