@@ -179,9 +179,10 @@ each must run offline-deterministically when `provider=none` (return a fixture o
 - **In:** `{goal_text, intent ∈ {crash-course, systematic, applied, reference, cutting-edge},
   budget}`
 - **Out:** `{sources: [{source_type, id, url, title, authority_score, why}], intent_used}`
-- **How:** intent classifier → source-type stack → tool calls (OpenAlex/S2/arXiv/Wikipedia/
-  youtube-transcript) → BM25 prefilter → SPECTER rerank → dedup → authority score. 2–3 iterative
-  rounds for systematic/deep intents.
+- **How:** **query normalization (any-language goal → English search query)** → intent classifier →
+  source-type stack → tool calls (OpenAlex/S2/arXiv/Wikipedia/youtube-transcript) → BM25 prefilter →
+  SPECTER rerank → dedup → authority score → **relevance gate (cheap LLM drops off-topic sources)**.
+  2–3 iterative rounds for systematic/deep intents.
 - **Cost:** metadata-only first; full-text fetch only top-k. Semantic query cache.
 
 > **Impl note (2026-06-20):** BM25 keyword prefilter and the semantic query cache are now
@@ -191,8 +192,19 @@ each must run offline-deterministically when `provider=none` (return a fixture o
 > OpenAlex ids). arXiv is currently reached through OpenAlex ids; there is no standalone arXiv
 > *search* adapter.
 >
+> **Impl note (2026-06-21, OW-3.1):** Two cheap-LLM seams were added after a 10-scenario live e2e
+> found source relevance ~44% and non-English discovery 0/4. (1) `discover/query.py::to_search_query`
+> normalizes any-language goals to an English search query for the English-biased adapters + cosine
+> rerank; (2) `discover/relevance.py::relevance_gate` drops sources not actually about the topic
+> (a film/different-field page) AFTER ranking, BEFORE full-text fetch, never starving digest (keeps
+> ≥ min_keep by rank). Both pass through deterministically at `provider=none`. The user's original
+> `goal_text` is preserved for intent + downstream teaching language; **output-language localization of
+> teaching/artifacts (A8) remains a recorded follow-up.**
+>
 > **Deferred (recorded):** Semantic Scholar + youtube-transcript adapters; a standalone arXiv
-> search adapter; 2–3 iterative rounds for systematic intent (recorded in OW-3 plan as A-iter).
+> search adapter; 2–3 iterative rounds for systematic intent (recorded in OW-3 plan as A-iter);
+> multi-source digest (A7 is closed for prereq survival via the evidence-fed judge, but top-k digest
+> for breadth is still recorded); output-language localization (A8).
 
 ### 6.2 `digest-corpus` (DIGEST)
 - **In:** `{sources, domain_key}`
