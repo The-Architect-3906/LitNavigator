@@ -13,30 +13,40 @@ from typing import List, Optional
 from litnav.conversation import dispatch, _looks_learn_request
 from litnav.graph.builder import build_graph, make_initial_state
 from litnav.nodes.retrieve import retrieve_node
+from litnav.recommend.recommend_next import recommend_next
 from litnav.storage import repo
 from litnav.ui.cost import session_cost
+from litnav.ui.flow_meta import meta_for
 from litnav.ui.graph_svg import to_svg
 from litnav.ui.trace import concept_graph
+# Open-world cold-start (live mode): discover real sources → digest into a graph → teach.
+from litnav.discover import find_sources
+from litnav.discover.contract import DiscoverInput
+from litnav.digest import pipeline
+from litnav.digest.contract import DigestInput, SourceDoc
 
 
 class TutorSession:
     _TERMINAL_ROUTE_STATUSES = {"done", "conceded", "lectured"}
 
     def __init__(self, domain_conn: sqlite3.Connection, checkpoint_conn: sqlite3.Connection,
-                 session_id: str):
+                 session_id: str, out_dir: str = "artifacts"):
         self.conn = domain_conn
         self.sid = session_id
         self.app = build_graph(domain_conn, checkpoint_conn,
                                interrupt_after=["check", "assess_next"])
         self.config = {"configurable": {"thread_id": session_id}, "recursion_limit": 200}
+        self.out_dir = out_dir
+        self.artifact_path: str | None = None
+        self._artifact_made = False
 
     def start(self, topic: str, target_concept_ids: Optional[List[int]] = None,
               intent: Optional[str] = None, pending_induction: Optional[dict] = None,
-              mastery_threshold: float = 0.8) -> dict:
+              mastery_threshold: float = 0.8, goal_text: Optional[str] = None) -> dict:
         state = make_initial_state(
             self.sid, topic, target_concept_ids or [],
             intent=intent, pending_induction=pending_induction,
-            mastery_threshold=mastery_threshold,
+            mastery_threshold=mastery_threshold, goal_text=goal_text,
         )
         self.app.invoke(state, self.config)
         return self.current()
@@ -86,8 +96,52 @@ class TutorSession:
                 detail += f" · {qr['detected_misconception']}"
         elif node == "induce":
             detail = "source=induced"
+        meta = meta_for(node)
         return {"type": "step", "node": node,
-                "label": self._STEP_LABELS.get(node, node), "detail": detail}
+                "label": self._STEP_LABELS.get(node, node), "detail": detail,
+                "skill": meta["skill"], "method": meta["method"], "paper": meta["paper"]}
+
+    def _recommend(self) -> list[dict]:
+        """Call recommend_next and return a serialisable list; empty on any error."""
+        try:
+            recs = recommend_next(self.conn, self.sid)
+            return [
+                {"concept_id": r.concept_id, "name": r.name,
+                 "reason": r.reason, "eligible": r.eligible, "score": r.score}
+                for r in recs
+            ]
+        except Exception:
+            return []
+
+    def _artifact_event(self) -> Optional[dict]:
+        """Generate the take-away once, when the route is complete. Returns an artifact event
+        (with a download URL + preview) or None. Idempotent via self._artifact_made."""
+        cur = self.current()
+        if not cur.get("done") or self._artifact_made:
+            return None
+        tids = [st["concept_id"] for st in cur["route"] if st.get("concept_id") is not None]
+        if not tids:
+            return None
+        from litnav.artifact.contract import ArtifactInput
+        from litnav.artifact.make_artifact import make_artifact
+        from litnav.llm import lang as lang_mod
+        teach_blob = " ".join(cur.get("teach_messages") or []) or "x"
+        language = lang_mod.detect_language(teach_blob)
+        try:
+            res = make_artifact(ArtifactInput(tids, {}, language=language),
+                                conn=self.conn, session_id=self.sid, out_dir=f"{self.out_dir}/{self.sid}")
+        except Exception:
+            return None
+        self._artifact_made = True
+        self.artifact_path = res.artifact_path
+        body = ""
+        try:
+            from pathlib import Path as _P
+            body = _P(res.artifact_path).read_text(encoding="utf-8")
+        except Exception:
+            pass
+        return {"type": "artifact", "format": res.format, "url": f"/tutor/{self.sid}/artifact",
+                "citations": res.citations, "preview": body[:600]}
 
     def _terminal_events(self) -> list[dict]:
         cur = self.current()
@@ -102,10 +156,14 @@ class TutorSession:
              "learner": cur["learner"], "cited": cur["cited"], "decision": cur["decision"],
              "rationale": cur["rationale"], "induced": cur["induced"], "intent": cur.get("intent"),
              "graph": to_svg(concept_graph(self.conn, self.sid)),
-             "cost": session_cost(self.conn, self.sid)},
-            {"type": "done", "done": cur["done"], "mastery": cur.get("mastery"),
-             "confidence": cur.get("confidence")},
+             "cost": session_cost(self.conn, self.sid),
+             "recommend": self._recommend()},
         ])
+        art = self._artifact_event()
+        if art:
+            events.append(art)
+        events.append({"type": "done", "done": cur["done"], "mastery": cur.get("mastery"),
+                       "confidence": cur.get("confidence")})
         return events
 
     @staticmethod
@@ -239,15 +297,29 @@ class AgentSession:
     TutorSession; handle(message) dispatches each turn and yields UI events. The teaching
     graph is never modified — set_goal/answer go through TutorSession unchanged."""
 
-    def __init__(self, domain_conn, checkpoint_conn, session_id: str, fixture_data: dict):
+    _BUDGET = 120000
+
+    def __init__(self, domain_conn, checkpoint_conn, session_id: str, fixture_data: dict | None = None,
+                 *, open_world_goal: str | None = None, live: bool = False, out_dir: str = "artifacts"):
         self.conn = domain_conn
         self.ckpt = checkpoint_conn
         self.sid = session_id
-        self.data = fixture_data
-        self.concepts = fixture_data["concepts"]
-        self.off = fixture_data["induction"]["off_skeleton"]
-        self.topic = fixture_data.get("topic", "agents")
+        self.out_dir = out_dir
+        # Open-world (live) mode: no fixture — build this learner's own graph from real sources.
+        self.open_world = bool(open_world_goal and live)
+        self.goal = (open_world_goal or "").strip()
+        self.built = False
         self.tutor: TutorSession | None = None
+        if fixture_data:
+            self.data = fixture_data
+            self.concepts = fixture_data["concepts"]
+            self.off = fixture_data["induction"]["off_skeleton"]
+            self.topic = fixture_data.get("topic", "agents")
+        else:
+            self.data = None
+            self.concepts = []
+            self.off = None
+            self.topic = self.goal or "agents"
 
     def _cur(self) -> dict:
         return self.tutor.current() if self.tutor else {}
@@ -258,6 +330,14 @@ class AgentSession:
 
     def current(self) -> dict:
         """Snapshot for the initial page render (empty 'conversing' state before teaching)."""
+        if self.open_world and not self.built:
+            # "Building your course" placeholder — the page auto-streams the cold start on load.
+            return {"done": False, "building": True, "goal": self.goal, "concept_name": None,
+                    "teach": None, "teach_messages": [], "question": None, "route": [],
+                    "route_version": 1, "learner": [], "cited": [], "evidence": [],
+                    "decision": None, "rationale": None, "induced": [], "intent": None,
+                    "mastery": None, "confidence": None,
+                    "graph": to_svg(concept_graph(self.conn, None))}
         if self.tutor:
             return self.tutor.current()
         return {"done": False, "concept_name": None, "teach": None, "teach_messages": [], "question": None,
@@ -268,15 +348,66 @@ class AgentSession:
                 "graph": to_svg(concept_graph(self.conn, None))}
 
     def current_events(self):
+        if self.open_world and not self.built:
+            return self._build_open_world()
         if self.tutor:
             return self.tutor._terminal_events()
         return [{"type": "reply",
                  "text": "Hi! Tell me what you'd like to learn from the agent papers."},
                 {"type": "done", "done": False}]
 
+    def _build_open_world(self):
+        """Cold start (live): discover real sources → digest into a per-session concept graph →
+        teach from it. Yields coarse 'build' stage events, then the teach terminal events."""
+        yield {"type": "build", "stage": "discover", "label": f"Finding real sources for: {self.goal}",
+               "skill": "find-sources", "method": "BM25 + embedding rerank + relevance gate",
+               "paper": "Robertson; Cohan 2020"}
+        try:
+            res = find_sources.find(DiscoverInput(self.goal, k=6), conn=self.conn,
+                                    session_id=self.sid, budget=self._BUDGET)
+        except Exception as e:
+            yield {"type": "reply", "kind": "boundary", "text": f"Source search failed: {e}"}
+            yield {"type": "done", "done": False}
+            return
+        withft = [s for s in res.sources if s.chunks and sum(len(x) for x in s.chunks) > 200]
+        if not withft:
+            yield {"type": "reply", "kind": "boundary",
+                   "text": f"I couldn't find an open, full-text source for “{self.goal}”. "
+                           "Try rephrasing, or a more specific topic."}
+            yield {"type": "done", "done": False}
+            return
+        top = withft[0]
+        yield {"type": "build", "stage": "discover_done", "label": f"Source: {top.title[:80]}"}
+        yield {"type": "build", "stage": "digest", "label": "Reading it and building your concept map…",
+               "skill": "digest-corpus", "method": "concept extraction + RefD prereqs + gpt-4o verify",
+               "paper": "Liang 2015"}
+        di = DigestInput(self.goal,
+                         [SourceDoc(top.source_type, top.source_id, top.title, top.url, top.chunks)],
+                         target_slugs=[])
+        pipeline.digest(di, conn=self.conn,
+                        candidate={"concepts": [], "keypoints": [], "prereq_edges": [],
+                                   "similarity_edges": [], "quiz_seeds": [], "judge_labels": {}},
+                        session_id=self.sid, budget=self._BUDGET)
+        tids = [r[0] for r in self.conn.execute("SELECT id FROM concepts ORDER BY id").fetchall()][:4]
+        if not tids:
+            yield {"type": "reply", "kind": "boundary",
+                   "text": "I read the source but couldn't extract teachable concepts. Try another topic."}
+            yield {"type": "done", "done": False}
+            return
+        # Repopulate concepts from the freshly-built graph so dispatch works during teaching.
+        self.concepts = [{"id": r[0], "slug": r[1], "name": r[2]} for r in
+                         self.conn.execute("SELECT id, slug, name FROM concepts ORDER BY id").fetchall()]
+        yield {"type": "build", "stage": "map", "label": f"Concept map ready — {len(tids)} concepts",
+               "graph": to_svg(concept_graph(self.conn, self.sid))}
+        self.tutor = TutorSession(self.conn, self.ckpt, self.sid, out_dir=self.out_dir)
+        self.tutor.start(self.goal, target_concept_ids=tids, goal_text=self.goal, mastery_threshold=0.75)
+        self.built = True
+        for ev in self.tutor._terminal_events():
+            yield ev
+
     def _start_teaching(self, slug: str):
         slug_to_id = {c["slug"]: c["id"] for c in self.concepts}
-        self.tutor = TutorSession(self.conn, self.ckpt, self.sid)
+        self.tutor = TutorSession(self.conn, self.ckpt, self.sid, out_dir=self.out_dir)
         if self.off and slug == self.off["slug"]:
             self.tutor.start(self.topic, target_concept_ids=[],
                              pending_induction=self.data["induction"], mastery_threshold=0.75)
@@ -324,6 +455,10 @@ class AgentSession:
         return llm_client.complete_text(prompt, fallback=fallback, max_tokens=120)
 
     def handle(self, message: str):
+        if self.open_world and not self.built:
+            # First turn in live open-world mode: run the cold-start build (goal already known).
+            yield from self._build_open_world()
+            return
         cur = self._cur()
         pending = self._quiz_pending()
         question = cur.get("question") if pending else None

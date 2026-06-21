@@ -261,6 +261,15 @@ def _run_live_one(sc, log) -> dict:
     log(f"- teaching language={teach_lang} (want {language}, ok={summ['teach_lang_ok']})")
     log(f"- artifact language={art_lang} (want {language}, ok={summ['artifact_lang_ok']}) citations={art.citations}")
     log(f"- cost usd={sp['usd']} was_live={llm_client.was_live()}")
+    # recommend-next (OW-6): what to learn next from this session's graph + mastery
+    try:
+        from litnav.recommend.recommend_next import recommend_next
+        recs = recommend_next(conn, sid, k=5)
+        summ["recommend"] = [{"name": r.name, "eligible": r.eligible, "reason": r.reason} for r in recs]
+        log("- recommend-next: " + ("; ".join(
+            f"{r.name}[{'ready' if r.eligible else 'blocked'}]" for r in recs) or "(none)"))
+    except Exception as e:
+        summ["recommend"] = []; summ["errors"].append(f"recommend: {e}")
     q = summ.get("quality") or {}
     qline = " · ".join(f"{d}={ (q.get(d) or {}).get('score') }" for d in _QDIMS)
     log(f"\n## QUALITY (frontier judge, 1-5)\n- {qline}")
@@ -280,16 +289,29 @@ def main() -> int:
         try: _st.reconfigure(encoding="utf-8", errors="replace")
         except Exception: pass
     _OUT.mkdir(parents=True, exist_ok=True)
+    import threading
+    _PER_SCENARIO_TIMEOUT = 360   # a stuck LLM call must not block the whole matrix (Chinese transformer hung 2x)
     results = []
     for sc in _MATRIX:
         lines: list[str] = []
         def log(m, _l=lines): _l.append(m); print(m, flush=True)
         print(f"\n===== INNER-LOOP {sc[0]}/{len(_MATRIX)} : {sc[1]} ({sc[4]}) =====", flush=True)
-        try:
-            summ = _run_live_one(sc, log)
-        except Exception as e:
-            summ = {"id": sc[0], "slug": sc[1], "errors": [f"FATAL: {e}"]}
-            log("```\n" + traceback.format_exc() + "\n```")
+        box: dict = {}
+        def _worker(_sc=sc, _log=log, _box=box):
+            try:
+                _box["summ"] = _run_live_one(_sc, _log)
+            except Exception as e:
+                _box["summ"] = {"id": _sc[0], "slug": _sc[1], "errors": [f"FATAL: {e}"]}
+                _log("```\n" + traceback.format_exc() + "\n```")
+        th = threading.Thread(target=_worker, daemon=True)
+        th.start(); th.join(timeout=_PER_SCENARIO_TIMEOUT)
+        if th.is_alive():
+            # Abandon the hung scenario (daemon thread is left to die at process exit) and move on.
+            summ = {"id": sc[0], "slug": sc[1], "language": sc[2], "persona": sc[4],
+                    "errors": [f"TIMEOUT >{_PER_SCENARIO_TIMEOUT}s — scenario abandoned (stuck LLM call)"]}
+            log(f"\n**TIMEOUT >{_PER_SCENARIO_TIMEOUT}s — abandoned, continuing**")
+        else:
+            summ = box.get("summ") or {"id": sc[0], "slug": sc[1], "errors": ["no result"]}
         (_OUT / f"innerloop-{sc[0]:02d}-{sc[1]}.md").write_text("\n".join(lines), encoding="utf-8")
         results.append(summ)
     (_OUT / "innerloop-summary.json").write_text(json.dumps(results, ensure_ascii=False, indent=2), encoding="utf-8")

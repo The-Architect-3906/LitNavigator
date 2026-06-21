@@ -11,6 +11,15 @@
  .toggle button{background:transparent;color:#cdd5e0;border:0;padding:.35rem .8rem;font-size:.85rem;cursor:pointer}
  .toggle button.on{background:var(--accent);color:#fff}
  .mut{color:#7a8699;font-size:.8rem}
+
+ /* ── Research-detail toggle ── */
+ .detail-toggle{display:flex;align-items:center;gap:.4rem;font-size:.8rem;color:#cdd5e0;margin-left:.6rem}
+ .detail-toggle input{accent-color:var(--accent);cursor:pointer}
+ .research-chip{font-size:.72rem;color:#5b7494;border-left:2px solid #c5d4e8;padding-left:.45rem;margin:.18rem 0 0 1.6rem;line-height:1.45}
+ .research-chip .chip-skill{font-weight:600;color:var(--accent)}
+ .research-chip .chip-sep{color:#c5ccd8;margin:0 .25rem}
+ /* Hide chips when the toggle is off */
+ body:not(.show-detail) .research-chip{display:none}
  .cols{display:flex;gap:1rem;max-width:64rem;margin:1.2rem auto;padding:0 1rem;align-items:flex-start}
  .card{background:#fff;border:1px solid #e2e6ee;border-radius:10px;padding:1rem;margin-bottom:1rem}
 
@@ -72,6 +81,12 @@
  .learner-name{font-size:.85rem;font-weight:500;margin-top:.35rem}
  .misconception{font-size:.76rem;color:var(--warn);margin-top:.1rem}
 
+ /* ── Recommend-next card ── */
+ .rec-item{display:flex;align-items:baseline;gap:.45rem;padding:.22rem 0;font-size:.84rem}
+ .rec-icon{flex-shrink:0;width:1.1rem;text-align:center}
+ .rec-name{font-weight:500}
+ .rec-reason{color:#5b7494;font-size:.78rem}
+
  /* Mode switching */
  body.mode-chat #glass{display:none}
  body.mode-glass #chat{display:none}
@@ -80,7 +95,7 @@
    body.mode-glass #chat,body.mode-chat #glass{display:block}
  }
 </style></head>
-<body class="mode-chat" data-sid="{{ sid }}">
+<body class="mode-chat show-detail" data-sid="{{ sid }}">
 <header>
   <b>LitNavigator</b>
   <span>{{ concept_name or "tutor" }}</span>
@@ -89,11 +104,22 @@
     <button id="t-chat" class="on" onclick="setMode('chat')">Chat</button>
     <button id="t-glass" onclick="setMode('glass')">Glass box</button>
   </span>
+  <label class="detail-toggle" title="Show the research method/paper behind each agent step">
+    <input type="checkbox" id="detail-chk" checked onchange="toggleDetail(this.checked)">
+    Show research detail
+  </label>
 </header>
 
 <div class="cols">
   <!-- ── Chat ── -->
   <div id="chat">
+    {% if building %}
+    <div class="card"><b>Open-world session</b>
+      <div class="mut">Building your course from real sources for: <b>{{ goal }}</b></div>
+    </div>
+    <script>window.__BUILDING__=true;</script>
+    {% endif %}
+    {% if not building %}
     <div class="card storyband">
       <div class="storygrid">
         <div class="storycell">
@@ -120,6 +146,7 @@
         </div>
       </div>
     </div>
+    {% endif %}
     <div id="thread">
       <div class="bubble me">{{ concept_name or "Teach me" }}</div>
       {% for msg in teach_messages or ([] if not teach else [teach]) %}
@@ -129,8 +156,11 @@
     </div>
     <div class="working" id="working" style="display:none">● agent working…</div>
     {% if done %}
-    <div class="card"><b>Session complete.</b> <a href="/sessions/{{ sid }}">full trace →</a> · <a href="/tutor">new chat</a></div>
+    <div class="card"><b>Session complete.</b>
+      {% if artifact_url %}<a href="{{ artifact_url }}" download>download take-away ↓</a> · {% endif %}
+      <a href="/sessions/{{ sid }}">full trace →</a> · <a href="/tutor">new chat</a></div>
     {% endif %}
+    <div id="artifact-card" class="card" style="display:none"></div>
     <form class="answer" id="answer-form" onsubmit="return submitAnswer(event)">
       <input id="answer-input" autocomplete="off" autofocus placeholder="ask anything, or answer the question…">
       <button type="submit">Send</button>
@@ -199,6 +229,12 @@
         </div>
         {% endfor %}
       </div>
+    </div>
+
+    <!-- Recommend next -->
+    <div class="card" id="recommend" style="display:none">
+      <b>What to learn next</b>
+      <div id="recommend-list"><span class="mut">–</span></div>
     </div>
 
     <!-- Decision rationale -->
@@ -295,10 +331,38 @@ function setFlow(steps){
     const d=document.createElement('div');
     d.className='step '+s.state;
     const ic=s.state==='done'?'✓':(s.state==='active'?'▶':'○');
-    d.innerHTML='<span class="ic">'+ic+'</span><span>'+esc(s.label)+(s.detail?' <span class="mut">· '+esc(s.detail)+'</span>':'')+'</span>';
+    // Main step line
+    let html='<span class="ic">'+ic+'</span><span>'+esc(s.label)+(s.detail?' <span class="mut">· '+esc(s.detail)+'</span>':'')+'</span>';
+    // Research provenance chip (hidden when show-detail is off)
+    if(s.skill||s.method||s.paper){
+      const skill=s.skill&&s.skill!=='—'?'<span class="chip-skill">'+esc(s.skill)+'</span>':'';
+      const method=s.method&&s.method!=='—'?esc(s.method):'';
+      const paper=s.paper&&s.paper!=='—'?'<em>'+esc(s.paper)+'</em>':'';
+      const parts=[skill,method,paper].filter(Boolean);
+      if(parts.length){
+        html+='<div class="research-chip">'+parts.join('<span class="chip-sep">·</span>')+'</div>';
+      }
+    }
+    d.innerHTML=html;
     f.appendChild(d);
   });
 }
+
+function toggleDetail(on){
+  document.body.classList.toggle('show-detail',on);
+  try{localStorage.setItem('litnav-detail',on?'1':'0')}catch(e){}
+}
+// Restore detail preference
+(function(){
+  try{
+    const v=localStorage.getItem('litnav-detail');
+    if(v==='0'){
+      document.body.classList.remove('show-detail');
+      const chk=document.getElementById('detail-chk');
+      if(chk)chk.checked=false;
+    }
+  }catch(e){}
+})();
 
 // Track previous route_version to detect changes
 let _prevRouteV = null;
@@ -381,6 +445,22 @@ function updateGlass(e){
   if(e.cost){
     document.getElementById('cost').textContent=e.cost.tokens+' tok ≈ $'+e.cost.usd;
   }
+
+  // ── Recommend-next panel ──
+  const recPanel=document.getElementById('recommend');
+  const recList=document.getElementById('recommend-list');
+  const recs=e.recommend||[];
+  if(recs.length){
+    recPanel.style.display='';
+    recList.innerHTML=recs.map(r=>{
+      const icon=r.eligible?'✓':'🔒';
+      return '<div class="rec-item">'
+        +'<span class="rec-icon">'+icon+'</span>'
+        +'<span><span class="rec-name">'+esc(r.name)+'</span>'
+        +' <span class="rec-reason">'+esc(r.reason)+'</span></span>'
+        +'</div>';
+    }).join('');
+  }
 }
 
 function handleEvent(e, steps, inp){
@@ -393,7 +473,8 @@ function handleEvent(e, steps, inp){
     if(e.text)addBubble(e.kind==='boundary'?'ai boundary':'ai',e.text,true);
   } else if(e.type==='step'){
     steps.forEach(s=>s.state='done');
-    steps.push({label:e.label,detail:e.detail,state:'active'});
+    steps.push({label:e.label,detail:e.detail,state:'active',
+                skill:e.skill,method:e.method,paper:e.paper});
     setFlow(steps);
   } else if(e.type==='teach'){
     steps.forEach(s=>s.state='done');setFlow(steps);
@@ -410,18 +491,33 @@ function handleEvent(e, steps, inp){
       inp.disabled=false;
       inp.focus();
     }
+  } else if(e.type==='build'){
+    steps.forEach(s=>s.state='done');
+    steps.push({label:e.label,detail:'',state:'active',skill:e.skill,method:e.method,paper:e.paper});
+    setFlow(steps);
+    if(e.stage==='discover')addBubble('ai','🔎 '+e.label,false);
+    else if(e.stage==='discover_done')addBubble('ai','📄 '+e.label,false);
+    else if(e.stage==='map'){addBubble('ai','🗺️ '+e.label,false);
+      if(e.graph)document.getElementById('cmap').innerHTML=e.graph;}
+  } else if(e.type==='artifact'){
+    renderArtifact(e);
   } else if(e.type==='error'){
     location.href='/tutor/'+SID;
   }
 }
 
-async function submitAnswer(ev){
-  ev.preventDefault();
+function renderArtifact(e){
+  const host=document.getElementById('artifact-card');
+  if(!host)return;
+  host.style.display='';
+  host.innerHTML='<b>📄 Take-away ('+esc(e.format||'notes')+')</b>'
+    +' <a href="'+e.url+'" download style="margin-left:.4rem">Download .md</a>'
+    +'<pre style="white-space:pre-wrap;font-size:.8rem;margin:.4rem 0 0;max-height:11rem;overflow:auto">'
+    +esc((e.preview||'').slice(0,500))+'…</pre>';
+}
+
+async function streamEvents(body){
   const inp=document.getElementById('answer-input');
-  const text=inp.value.trim();
-  if(!text)return false;
-  addBubble('me',text,false);
-  inp.value='';
   inp.disabled=true;
   document.getElementById('working').style.display='block';
   const steps=[];
@@ -429,7 +525,7 @@ async function submitAnswer(ev){
     const resp=await fetch('/tutor/'+SID+'/events',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({answer:text})
+      body:JSON.stringify(body||{})
     });
     const reader=resp.body.getReader();
     const dec=new TextDecoder();
@@ -449,7 +545,23 @@ async function submitAnswer(ev){
   }catch(err){
     location.href='/tutor/'+SID;
   }
+}
+
+async function submitAnswer(ev){
+  ev.preventDefault();
+  const inp=document.getElementById('answer-input');
+  const text=inp.value.trim();
+  if(!text)return false;
+  addBubble('me',text,false);
+  inp.value='';
+  await streamEvents({answer:text});
   return false;
+}
+
+// Open-world cold start: the page loads in a "building" state and streams discover→digest→teach.
+if(window.__BUILDING__){
+  addBubble('ai','Building your course from real sources… this can take ~30–90s.',false);
+  streamEvents({});
 }
 
 // Apply markdown to server-rendered AI bubbles on initial page load

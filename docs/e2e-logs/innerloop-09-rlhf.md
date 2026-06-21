@@ -1,23 +1,24 @@
 # Inner-loop scenario 9 — rlhf  (persona=struggle, English)
 - goal: How to apply RLHF to fine-tune an LLM.
 
-- digested top source: 'QLoRA: Efficient Finetuning of Quantized LLMs' → 4 target concepts, 7 keypoints, 7 quiz items
+- digested top source: 'Reinforcement learning from human feedback' → 4 target concepts, 6 keypoints, 6 quiz items
 
 ## RESULT  reached_done=True turns=16 fired={'teach': True, 'reteach': True, 'graded': 16, 'correct': 12, 'mastered': True, 'conceded': False, 'handle_lost': False}
-- route: ['4-bit NormalFloat (NF4)[done]', 'Double Quantization[done]', 'QLoRA[done]', 'Guanaco Model Family[done]']
+- route: ['Human Preferences[done]', 'Reward Model[done]', 'Reinforcement Learning from Human Feedback[done]', 'Training Process[done]']
 - teaching language=English (want English, ok=True)
-- artifact language=English (want English, ok=True) citations=['c1', 'c2', 'c3']
-- cost usd=0.0289 was_live=True
+- artifact language=English (want English, ok=True) citations=['c0']
+- cost usd=0.023372 was_live=True
+- recommend-next: Alignment of Intelligent Agents[ready]; Reinforcement Learning[ready]
 
 ## QUALITY (frontier judge, 1-5)
-- source_relevance=2 · teaching_quality=3 · quiz_quality=3 · feedback_quality=3 · reexplain_quality=5 · artifact_quality=3 · language_quality=5 · groundedness=4 · overall=3
-- issues: Lacks connection to RLHF, the learner's goal.
-  · source_relevance: 2 — The concepts taught are not directly aligned with the learner's goal of applying RLHF to fine-tune an LLM.
-  · teaching_quality: 3 — The teaching text explains QLoRA and related concepts well but lacks direct connection to RLHF.
-  · quiz_quality: 3 — Quiz questions are relevant to the teaching text but do not address RLHF.
-  · feedback_quality: 3 — Feedback is specific to the questions but does not guide towards the learner's goal.
+- source_relevance=5 · teaching_quality=4 · quiz_quality=4 · feedback_quality=4 · reexplain_quality=5 · artifact_quality=4 · language_quality=5 · groundedness=5 · overall=4
+- issues: none
+  · source_relevance: 5 — The source and concepts are directly related to the learner's goal of applying RLHF to fine-tune an LLM.
+  · teaching_quality: 4 — The teaching text effectively explains RLHF and its components, though it could be more concise.
+  · quiz_quality: 4 — Quiz questions are relevant and cover key aspects of RLHF, but some are repetitive.
+  · feedback_quality: 4 — Feedback is mostly accurate and helpful, though it could be more specific in some areas.
   · reexplain_quality: 5 — No re-explanation was needed as the learner did not get lost.
-  · artifact_quality: 3 — Study notes summarize the teaching text well but do not connect to RLHF.
-  · language_quality: 5 — The language is fluent and clear in English.
-  · groundedness: 4 — The content is grounded in the source evidence but lacks connection to RLHF.
-  · overall: 3 — The session is well-structured but does not address the learner's specific goal of RLHF.
+  · artifact_quality: 4 — Study notes are well-organized and cover key concepts, but could be more detailed.
+  · language_quality: 5 — The language used is fluent and appropriate for the subject matter.
+  · groundedness: 5 — All claims are well-grounded in the provided evidence.
+  · overall: 4 — The session was effective and relevant, with minor areas for improvement in quiz and feedback quality.

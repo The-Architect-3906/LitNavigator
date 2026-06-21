@@ -4,7 +4,7 @@
 
 ### Give it any learning goal. It finds the most suitable real sources, digests them into a teachable concept map, and tutors *you* through it — adaptively, grounded in the literature, under strict cost control.
 
-![Status](https://img.shields.io/badge/open--world-OW--0..5%20complete%20(live)-brightgreen)
+![Status](https://img.shields.io/badge/open--world-OW--0..7%20complete%20·%20live%20cold--start%20UI%20·%20e2e%20mean%204.33%2F5-brightgreen)
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
 ![Agent](https://img.shields.io/badge/agent-LangGraph%20%2B%20ReAct-black)
 ![Live](https://img.shields.io/badge/validation-live--first-orange)
@@ -147,7 +147,7 @@ flowchart TD
 | **digest-corpus** (DIGEST) | ✅ live | sources → distinct concepts → prerequisite (RefD **+** LLM) and similarity edges → `gpt-4o` verify → grounded, cited graph |
 | **teach / assess** (inner loop) | ✅ live | per-keypoint adaptive teaching; goal-elicited Bloom ceiling; metered grade with frontier escalation near the mastery threshold; MCQ distractors + flaw gate + IRT difficulty; FSRS spacing + retention probe; mastery from answers (BKT/Rasch), never LLM self-judgment |
 | **make-artifact** (ARTIFACT) | ✅ live | scenario → format selector → mind-map / Cornell notes / Marp slides / worked-example / combination; every artifact carries a retrieval prompt + resolving citations |
-| **recommend-next** | ⏳ OW-6 | hard-prereq filter + soft mastery-gain ranker |
+| **recommend-next** | ✅ live | hard-prereq filter + soft mastery-gain ranker; prereq-aware ready-now vs blocked |
 
 ---
 
@@ -176,7 +176,7 @@ python -m litnav.evaluation.verify_discover  # find-sources parsing/rank/dedup/i
 python -m litnav.evaluation.verify_teach_assess  # goal/Bloom/flaw-gate/FSRS/strategy determinism
 python -m litnav.evaluation.verify_artifact  # format selector + mind-map/combination + citations
 python -m litnav.evaluation.verify_m0        # legacy closed-world gates (still green)
-pytest -q                                    # full suite — 268 passed
+pytest -q                                    # full suite — 353 passed
 
 # LIVE gates (real provider; set LITNAV_LLM_PROVIDER=openai + LITNAV_LLM_API_KEY in .env)
 python -m litnav.evaluation.verify_liveness      # a real call is distinguishable from a fallback
@@ -187,13 +187,15 @@ python -m litnav.evaluation.verify_teach_assess_live # real goal elicit + distra
 python -m litnav.evaluation.verify_artifact_live # real notes/slides/worked-example, citations resolve, metered
 ```
 
-> Offline is the deterministic floor; the LIVE gates are the proof the capability works. See
-> [`docs/2026-06-20-live-gate-execution-contract.md`](docs/2026-06-20-live-gate-execution-contract.md) for how they run (provider, budget cap, liveness, outage policy).
+> Offline is the deterministic floor; the LIVE gates are the proof the capability works.
 
-### Interactive agent UI (closed-world tutor)
+### Unified web UI (open-world tutor + glass-box)
 ```bash
 python -m litnav.ui.server     # http://127.0.0.1:8000/tutor — Chat + Glass-box views
 ```
+
+The `/tutor/{sid}` page shows the full agent session: per-step skill/method/paper chips,
+live mastery scores, concept-map SVG, cost meter, and a recommend-next card at session end.
 
 ---
 
@@ -205,13 +207,15 @@ python -m litnav.ui.server     # http://127.0.0.1:8000/tutor — Chat + Glass-bo
 | **OW-0** · Cost spine (registry · metered router · budget cap · result cache) | ✅ done · live | `verify_cost_live` |
 | **OW-1** · Data model (concept-graph + learner + cache + ledger schema) | ✅ done | schema + repo tests |
 | **OW-2** · digest-corpus (RefD+LLM edges, gpt-4o verify, cache) | ✅ done · live | `verify_digest_live` |
-| **OW-3** · find-sources (OpenAlex+Wikipedia, BM25+rerank, full text) | ✅ done · live | `verify_discover_live` |
-| **OW-4** · TEACH/ASSESS (goal elicitation, Bloom quiz, distractors, IRT, FSRS, retention probe, escalation) | ✅ done · live | `verify_teach_assess_live` |
-| **OW-5** · make-artifact (selector → map/notes/slides/worked-example/combination; retrieval prompt + citations on each) | ✅ done · live | `verify_artifact_live` |
-| **OW-6** · recommend-next + dual frontend (Glass-box on `cost_ledger`, teacher override) | ⏳ next | — |
-| **OW-7** · live cold-start (streamed real-topic digest→teach) | ⏳ pending (digest path already live) | — |
+| **OW-3** · find-sources (OpenAlex+Wikipedia, BM25+rerank, full text) + OW-3.1 (relevance gate, multilingual query) | ✅ done · live | `verify_discover_live` |
+| **OW-4** · TEACH/ASSESS (goal elicitation, Bloom quiz, distractors, IRT, FSRS, retention probe, escalation, prereq-detour, mid-session goal-pivot) | ✅ done · live | `verify_teach_assess_live` |
+| **OW-5** · make-artifact (selector → map/notes/slides/worked-example/combination; retrieval prompt + citations) + OW-5.1 persistence | ✅ done · live | `verify_artifact_live` |
+| **OW-6** · recommend-next + unified glass-box+user frontend + quality hardening (multilingual output, source sub-chunking, discovery precision, quiz variety, feedback depth) | ✅ done · live | `verify_openworld_e2e_live` |
+| **OW-7** · live cold-start in the UI (streamed real-topic discover→digest→teach) + downloadable artifact | ✅ done · live | `tests/test_ui_openworld.py` + live smoke |
 
-Full per-module detail, live results, costs, and the deferred/flagged items: **[`docs/OPEN-WORLD-STATUS.md`](docs/OPEN-WORLD-STATUS.md)**.
+Full backend detail, live gate results, and test counts: [`docs/BACKEND-COMPLETE.md`](docs/BACKEND-COMPLETE.md).
+Frontend detail: [`docs/FRONTEND-COMPLETE.md`](docs/FRONTEND-COMPLETE.md).
+End-to-end quality results: [`docs/E2E-REPORT.md`](docs/E2E-REPORT.md).
 
 ---
 
@@ -230,12 +234,13 @@ Full per-module detail, live results, costs, and the deferred/flagged items: **[
 ## Documentation
 | Doc | Role |
 |:--|:--|
-| [`docs/2026-06-20-open-world-research-brief.md`](docs/2026-06-20-open-world-research-brief.md) | research questions + rationale |
-| [`docs/2026-06-20-open-world-literature-review.md`](docs/2026-06-20-open-world-literature-review.md) | verified literature + evidence grades + risks |
-| [`docs/2026-06-20-open-world-architecture-spec.md`](docs/2026-06-20-open-world-architecture-spec.md) | **full architecture spec (source of truth)** |
-| [`docs/OPEN-WORLD-STATUS.md`](docs/OPEN-WORLD-STATUS.md) | **per-module status / done / live results** |
-| `docs/superpowers/plans/` | per-milestone implementation plans |
-| `docs/archive/` | per-cycle eval log, audits, re-audit; `closed-world/` = legacy M0–M4 docs |
+| [`docs/RESEARCH-AND-SPEC.md`](docs/RESEARCH-AND-SPEC.md) | Research questions, verified literature/methods table, and full architecture spec (problem, principles, data model, cost spine, all 5 skills, milestones) |
+| [`docs/BACKEND-COMPLETE.md`](docs/BACKEND-COMPLETE.md) | Every shipped backend feature with its skill/code + research method; concrete run walkthrough; SKILL.md files; test counts + live gate results |
+| [`docs/BACKEND-ROADMAP.md`](docs/BACKEND-ROADMAP.md) | Remaining backend work: live cold-start (streamed), multi-source digest, sharper discovery, deeper quiz/feedback, robust non-English, new source adapters |
+| [`docs/FRONTEND-COMPLETE.md`](docs/FRONTEND-COMPLETE.md) | Unified glass-box+user web UI: two modes (offline curated demo / live open-world cold start), per-step chips, mastery scores, concept-map SVG, ledger cost meter, recommend-next card, downloadable artifact, SSE streaming |
+| [`docs/FRONTEND-ROADMAP.md`](docs/FRONTEND-ROADMAP.md) | Remaining frontend: session persistence/auth, slides→PPTX export, teacher overrides, live quality scores, token-by-token streaming, incremental map render, mobile polish, deployment |
+| [`docs/E2E-REPORT.md`](docs/E2E-REPORT.md) | Full 10-scenario live E2E report — actual-quality scores (mean 4.33/5), per-scenario breakdown, before/after quality deltas |
+| `docs/archive/` | Superseded: per-milestone plans, audits, research brief, literature review, architecture spec, storyboard, status; `closed-world/` = legacy M0–M4 docs |
 
 ---
 

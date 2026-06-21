@@ -48,12 +48,19 @@ def _get_or_generate(
         "application":   "Application: give a concrete scenario and ask whether/how this concept applies. Short answer.",
     }.get(bloom, "Short answer quiz question.")
 
+    # A15 — quiz variety: avoid re-posing near-identical questions on the same keypoint.
+    prior_qs = [r[0] for r in conn.execute(
+        "SELECT question FROM quiz_items WHERE keypoint_id=?", (keypoint_id,)).fetchall() if r[0]]
+    variety = ("Pick ONE distinct lens (different from any earlier question): definition · "
+               "mechanism/why · contrast with a common misconception · a concrete application scenario.")
+    avoid = (f"\nDo NOT repeat or paraphrase these already-asked questions: {prior_qs}" if prior_qs else "")
     result = router.complete_json(
         f"Generate ONE quiz question STRICTLY grounded in the evidence below. "
         f"Do not add facts not in the evidence. JSON only:\n"
         f'{{"question": "<question text>", "answer_key": "<key phrase>", '
         f'"rubric": "<grading rubric>", "expected_keypoints": ["keyword1", "keyword2"]}}\n'
         f"Bloom level: {bloom} — {spec}\n"
+        f"{variety}{avoid}\n"
         f"Key point: {kp_meta['name']}\n"
         f"Objective: {kp_meta['objective']}\n"
         f"Evidence: {evidence}",

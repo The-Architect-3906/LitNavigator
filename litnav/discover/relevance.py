@@ -1,8 +1,9 @@
 """Source-relevance gate: drop off-topic sources after ranking, before full-text fetch.
 
-Uses a cheap LLM call to filter sources that are about a different field, a film, or an
-unrelated subject. Never starves digest -- always keeps at least min_keep sources.
-Falls back to passthrough when offline (provider=none/offline).
+A14 — *precision*, not just topical adjacency: a cheap LLM scores each source 0-3 for how well it
+matches the learner's SPECIFIC goal, and a source in the same broad area but about a DIFFERENT
+method/sub-topic (e.g. PBFT when the goal is Raft; QLoRA when the goal is RLHF) is rejected, not just
+films/other fields. Never starves digest (keeps >= min_keep, best-scored first). Offline = passthrough.
 """
 from __future__ import annotations
 import os
@@ -11,9 +12,11 @@ import sqlite3
 from litnav.discover.contract import Source
 from litnav.llm import router
 
+_KEEP_MIN_SCORE = 2   # 3=directly on-goal, 2=substantially, 1=same-area-different (reject), 0=unrelated
+
 
 def relevance_gate(
-    search_query: str,
+    goal: str,
     sources: list[Source],
     *,
     conn: sqlite3.Connection | None = None,
@@ -21,53 +24,56 @@ def relevance_gate(
     budget: int | None = None,
     min_keep: int = 2,
 ) -> list[Source]:
-    """Filter sources to those genuinely on-topic for search_query.
+    """Keep only sources that match the SPECIFIC goal, best-scored first.
 
-    Returns:
-        A list of Source objects in the same rank order as the input, with off-topic
-        sources removed. If fewer than min_keep remain, falls back to the top min_keep
-        by original rank order. Empty input is returned unchanged. Offline/none provider
-        returns sources unchanged (deterministic passthrough).
+    Returns sources scoring >= 2 (ordered by score desc, then original rank). If fewer than
+    min_keep clear the bar, falls back to the top min_keep by score (never starves digest).
+    Empty input / offline / malformed response → returned unchanged (safe passthrough).
     """
     if not sources:
         return sources
-
     if os.environ.get("LITNAV_LLM_PROVIDER", "").lower() in ("none", "offline"):
         return sources
 
-    listing = "\n".join(
-        f"{i}: {s.title} — {s.abstract[:300]}" for i, s in enumerate(sources)
-    )
-
+    listing = "\n".join(f"{i}: {s.title} — {s.abstract[:300]}" for i, s in enumerate(sources))
     prompt = (
-        "Which of these sources are genuinely about the topic below? "
-        "A source about a different field, a film, or an unrelated subject is NOT relevant. "
-        f"Topic: {search_query}\n\n"
+        "A learner wants to study this SPECIFIC goal. Score how well EACH source matches THAT goal.\n"
+        f"GOAL: {goal}\n\n"
+        "Scoring (be strict about specificity):\n"
+        "  3 = directly and specifically about the goal\n"
+        "  2 = substantially about the goal\n"
+        "  1 = same broad area but a DIFFERENT method / sub-topic than asked (e.g. a different "
+        "algorithm in the same family, or a related-but-not-asked subject) — NOT what the learner wants\n"
+        "  0 = unrelated (different field, a film, an off-topic page)\n\n"
         f"Sources:\n{listing}\n\n"
-        'Respond JSON only: {"relevant_indices": [<indices that are on-topic>]}'
+        'Respond JSON only: {"scores": [{"i": <index>, "score": <0-3>}]}'
     )
+    fallback = {"scores": [{"i": i, "score": 2} for i in range(len(sources))]}
+    res = router.complete_json(prompt, tier="cheap", stage="discover", fallback=fallback,
+                              session_id=session_id, conn=conn, budget=budget)
 
-    fallback = {"relevant_indices": list(range(len(sources)))}
-    res = router.complete_json(
-        prompt,
-        tier="cheap",
-        stage="discover",
-        fallback=fallback,
-        session_id=session_id,
-        conn=conn,
-        budget=budget,
-    )
+    # Parse: support the A14 scored format AND the legacy {"relevant_indices": [...]} format.
+    score_by_i: dict[int, float] = {i: 0.0 for i in range(len(sources))}
+    parsed = False
+    if isinstance(res, dict) and isinstance(res.get("scores"), list):
+        parsed = True
+        for e in res["scores"]:
+            if isinstance(e, dict) and isinstance(e.get("i"), int) and 0 <= e["i"] < len(sources):
+                try:
+                    score_by_i[e["i"]] = float(e.get("score", 0))
+                except (TypeError, ValueError):
+                    pass
+    elif isinstance(res, dict) and isinstance(res.get("relevant_indices"), list):
+        parsed = True
+        for i in res["relevant_indices"]:
+            if isinstance(i, int) and 0 <= i < len(sources):
+                score_by_i[i] = 2.0
+    if not parsed:
+        return sources   # malformed → don't filter
 
-    raw_idxs = res.get("relevant_indices") if isinstance(res, dict) else None
-    if not isinstance(raw_idxs, list):
-        raw_idxs = list(range(len(sources)))
-
-    # Keep only valid integer indices in range; preserve INPUT rank order by iterating sources
-    valid_idx_set = {i for i in raw_idxs if isinstance(i, int) and 0 <= i < len(sources)}
-    kept = [s for i, s in enumerate(sources) if i in valid_idx_set]
-
-    if len(kept) < min_keep:
-        # Never starve digest -- fall back to top min_keep by original rank
-        return sources[:min_keep]
-
-    return kept
+    kept_idx = sorted((i for i, sc in score_by_i.items() if sc >= _KEEP_MIN_SCORE),
+                      key=lambda i: (-score_by_i[i], i))
+    if len(kept_idx) < min_keep:
+        # Never starve digest — keep the top min_keep by score (then rank).
+        kept_idx = sorted(range(len(sources)), key=lambda i: (-score_by_i[i], i))[:min_keep]
+    return [sources[i] for i in kept_idx]

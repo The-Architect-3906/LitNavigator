@@ -16,11 +16,13 @@ import uuid
 from pathlib import Path
 
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, StreamingResponse
+from fastapi.responses import (FileResponse, HTMLResponse, JSONResponse, RedirectResponse,
+                               StreamingResponse)
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from litnav.config import DEMO_DB_PATH
 from litnav.goal import resolve_goal
+from litnav.storage import repo
 from litnav.storage.schema import init_db
 from litnav.storage.seed import seed_demo_data
 from litnav.ui.cost import session_cost
@@ -30,6 +32,9 @@ from litnav.ui.trace import build_trace
 # In-memory live tutor sessions (single-process demo). Keyed by session id.
 _TUTORS: dict[str, TutorSession] = {}
 _AGENTS: dict[str, AgentSession] = {}
+
+# Where session take-away artifacts are written (one subdir per session).
+_ARTIFACT_DIR = "artifacts"
 
 app = FastAPI(title="LitNavigator trace panel")
 
@@ -156,14 +161,25 @@ def _start_agent(goal: str, intent: str | None) -> str:
     base.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(str(base / f"tutor-{sid}.sqlite"), check_same_thread=False)
     init_db(conn)
-    seed_demo_data(conn, _TUTOR_FIXTURE)
     ckpt = sqlite3.connect(str(base / f"tutor-{sid}-ckpt.sqlite"), check_same_thread=False)
-    ag = AgentSession(conn, ckpt, sid, _fixture_data())
+
+    live = os.getenv("LITNAV_LLM_PROVIDER", "none") != "none"
+    if live and goal.strip() and not intent:
+        # OPEN-WORLD: build this learner's own concept graph from real sources. No fixture.
+        # The page auto-streams the cold start (discover → digest → teach) on first /events.
+        repo.create_session(conn, sid, topic=goal.strip())
+        _AGENTS[sid] = AgentSession(conn, ckpt, sid, fixture_data=None,
+                                    open_world_goal=goal.strip(), live=True, out_dir=_ARTIFACT_DIR)
+        return sid
+
+    # CURATED offline pack (deterministic, $0) — unchanged behaviour.
+    seed_demo_data(conn, _TUTOR_FIXTURE)
+    ag = AgentSession(conn, ckpt, sid, _fixture_data(), out_dir=_ARTIFACT_DIR)
     _AGENTS[sid] = ag
     # An intent (researcher/journalist) starts teaching immediately; an explicit teachable
     # goal also starts teaching; anything else stays in conversation until the user says more.
     if intent:
-        ag.tutor = TutorSession(conn, ckpt, sid)
+        ag.tutor = TutorSession(conn, ckpt, sid, out_dir=_ARTIFACT_DIR)
         ag.tutor.start(ag.topic, target_concept_ids=[], intent=intent, mastery_threshold=0.75)
     else:
         plan = resolve_goal(goal, ag.concepts, ag.off)
@@ -192,8 +208,10 @@ def tutor_page(sid: str):
     if ag is None:
         return RedirectResponse("/tutor", status_code=303)
     data = _fixture_data()
+    artifact_url = (f"/tutor/{sid}/artifact"
+                    if getattr(getattr(ag, "tutor", None), "artifact_path", None) else None)
     return _TEMPLATES.get_template("agent.html").render(
-        sid=sid, n_papers=_n_papers(data),
+        sid=sid, n_papers=_n_papers(data), artifact_url=artifact_url,
         cost=session_cost(ag.conn, sid), **_story_context(data), **ag.current())
 
 
@@ -223,6 +241,18 @@ async def tutor_events(sid: str, request: Request):
             yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
 
     return StreamingResponse(gen(), media_type="text/event-stream")
+
+
+@app.get("/tutor/{sid}/artifact")
+def tutor_artifact(sid: str):
+    """Download the session's take-away artifact (Markdown). Generated at session end."""
+    ag = _AGENTS.get(sid)
+    path = getattr(getattr(ag, "tutor", None), "artifact_path", None) if ag else None
+    if not path or not Path(path).exists():
+        return JSONResponse({"error": "no artifact yet — finish the session first"}, status_code=404)
+    fname = f"litnavigator-{sid[:8]}-{Path(path).stem}.md"
+    return FileResponse(path, media_type="text/markdown",
+                        headers={"Content-Disposition": f'attachment; filename="{fname}"'})
 
 
 def main() -> None:  # pragma: no cover - manual launch helper

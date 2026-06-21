@@ -178,6 +178,7 @@ def build_graph(
         "assess_next": "assess_next",   # correct → bloom upgrade; or hold → next question
         "reteach_kp": "reteach_kp",    # wrong + reteach_count < 2
         "advance_kp": "advance_kp",    # mastery+confidence met, OR reteach exhausted (concede)
+        "diagnose": "diagnose",         # A12: prereq-detour on keypoint path
     })
     workflow.add_edge("reteach_kp", "assess_next")
     workflow.add_edge("advance_kp", "select_next")
