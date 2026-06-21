@@ -1,6 +1,6 @@
 # Open-World LitNavigator — Status & Progress
 
-**Branch:** `feat/open-world-digest` · **Updated:** 2026-06-21 · **Tests:** 272 passed
+**Branch:** `feat/open-world-digest` · **Updated:** 2026-06-21 · **Tests:** 286 passed
 
 This is the single source of truth for *where the open-world build is*. It is organized by the
 architecture spec's milestones (§9). Detailed execution records, the live-first re-audit, the
@@ -34,7 +34,7 @@ silent fallback** (a dead provider raises, never silently returns a fixture).
 | **OW-0** — Cost spine | ✅ done | ✅ `verify_cost_live` | metered router, registry, per-session budget cap (fires on real spend), result cache, 80% alert |
 | **OW-1** — Data model | ✅ done | ✅ (via digest) | concept-graph + learner + cache + ledger schema; repo writers |
 | **OW-2** — digest-corpus | ✅ done | ✅ `verify_digest_live` | sources → 8 concepts → RefD+LLM edges → gpt-4o judge → digested graph; deterministic; ~$0.003/run |
-| **OW-3** — find-sources | ✅ done | ✅ `verify_discover_live` | intent → OpenAlex+Wikipedia → BM25+rerank+dedup+authority → top-k full text; ~$0.0001/run |
+| **OW-3** — find-sources | ✅ done (+OW-3.1) | ✅ `verify_discover_live` | intent → OpenAlex+Wikipedia → BM25+rerank+dedup+authority → top-k full text. **OW-3.1**: multilingual→English query + cheap-LLM relevance gate → source relevance 44%→**100%**, non-English 0/4→**4/4** |
 | **OW-4** — TEACH/ASSESS | ✅ done | ✅ `verify_teach_assess_live` | goal elicit → Bloom ceiling; metered grade with frontier **escalation**; MCQ distractors + flaw gate + weaker-simulator IRT; FSRS spacing + retention probe; teach-strategy policy + metacognitive reteach |
 | **OW-5** — make-artifact | ✅ done | ✅ `verify_artifact_live` | scenario → format selector → mind-map / Cornell notes / Marp slides / worked-example / combination; every artifact carries a retrieval prompt + resolving citations; ~$0.0004/multi-format run |
 | **OW-6** — recommend-next + dual frontend | ⏳ next | — | next-step ranker; Glass-box wired to `cost_ledger`; teacher override; progress streaming |
@@ -119,8 +119,8 @@ end-to-end; 1 aborted at discovery. **Detail:** [`2026-06-21-ow0-5-e2e-evaluatio
 Headline: the teaching machine (OW-2 persistence, OW-4, OW-5) is solid on good input and held up across
 every language; **topical correctness is gated by DISCOVER source relevance (~44%; 0/4 non-English).**
 Prioritized actions:
-- **A5 (P0, OPEN → OW-3.1) — source-relevance gate:** relevance-filter the top source before digest; demote bare Wikipedia title hits (Raft→"Megalopolis", diffusion→physics).
-- **A6 (P0, OPEN → OW-3.1) — non-English discovery:** normalize query to English for indices, teach in the user's language (es=0 sources, 中文=1 generic, fr=off-domain).
+- **A5 (P0, ✅ CLOSED by OW-3.1) — source-relevance gate:** cheap-LLM gate drops off-topic sources. Source relevance **44% → 100%** (10/10) on the post-OW-3.1 re-run (Raft→VSSB-Raft not "Megalopolis", diffusion→"Palette" not physics).
+- **A6 (P0, ✅ CLOSED by OW-3.1) — non-English discovery:** any-language goal → English search query. Non-English **0/4 → 4/4** return real on-topic sources (Spanish Black-Scholes no longer aborts; 中文 CRISPR→real CRISPR-Cas; fr GNN→"Graph convolutional networks").
 - **A7 (P1, ✅ CLOSED by PR #6)** — evidence-fed prereq judge: prereq survival 1/9 → **9/9** on the post-merge re-run.
 - **A8 (P1, OPEN) — output-language control:** thread goal language into renderer/teach prompts (cues default to English on non-English concepts).
 - **A9 (P2, OPEN) — sub-chunk full text:** citations still collapse to a single `c0`.
@@ -128,6 +128,8 @@ Prioritized actions:
 - **A11 (P1, OPEN, NEW) — digest cost ~5×** ($0.0034→$0.0169/run) from `digest_sim_judge` on frontier `gpt-4o`; evaluate moving the *similarity* judge to the cheap tier (keep the *prerequisite* judge on frontier).
 
 **Post PR-#6 merge re-run (2026-06-21):** 9/10 full; **prereq 9/9, keypoints 9/9** (A7+A10 closed); concepts/artifacts grounded held; **A5/A6 unchanged → OW-3.1 next**; cost $0.0169/scenario (A11). Detail in the e2e evaluation doc.
+
+**Post-OW-3.1 re-run (2026-06-21):** **10/10 full pipeline · source relevance 100% (10/10) · non-English 4/4** — A5 + A6 CLOSED. Prereq survive 9/10; cost $0.0154/scenario (relevance gate + query normalization add negligible cheap-tier cost). Open: A8 (output-language), A9 (sub-chunk), A11 (digest cost ~5× from frontier sim-judge). Gates: `verify_discover` (offline) + `verify_discover_live` (A5/A6 live proof) + `verify_openworld_e2e_live` all green.
 
 ## Action log (open)
 - **A4** — multi-source digest live validation across many sources (code supports it; one multi-source run done). Candidate for OW-7.

@@ -8,26 +8,26 @@
     "errors": [],
     "discover": {
       "intent": "cutting-edge",
-      "n_sources": 6,
-      "n_fulltext": 3,
-      "secs": 7.6,
+      "n_sources": 5,
+      "n_fulltext": 2,
+      "secs": 8.6,
       "top_source": {
-        "title": "Anomalous diffusion models and their properties: non-stationarity, non-ergodicity, and age",
+        "title": "Palette: Image-to-Image Diffusion Models",
         "type": "web",
-        "authority": 0.88
+        "authority": 0.86
       }
     },
     "digest": {
-      "source": "Anomalous diffusion models and their properties: non-stationarity, non-ergodicit",
-      "chars": 1692,
+      "source": "Palette: Image-to-Image Diffusion Models",
+      "chars": 1303,
       "db_concepts": 8,
       "db_keypoints": 8,
       "db_quiz": 8,
       "edges": 7,
-      "prereq": 4,
+      "prereq": 5,
       "edge_accuracy": 1.0,
       "kp_evidence_resolves": true,
-      "secs": 35.4
+      "secs": 33.7
     },
     "teach": {
       "goal_type": "mastery",
@@ -35,7 +35,7 @@
       "depth_match": true,
       "expertise": "expert",
       "strategy": "concise",
-      "quiz_q": "What is anomalous diffusion?",
+      "quiz_q": "What is image-to-image translation?",
       "n_distractors": 3,
       "flaw_gate_ok": true,
       "grade_score": 1.0
@@ -45,7 +45,7 @@
       "rendered": [
         {
           "format": "notes",
-          "len": 1283,
+          "len": 1741,
           "citations": [
             "c0"
           ],
@@ -54,7 +54,7 @@
         },
         {
           "format": "mindmap",
-          "len": 484,
+          "len": 607,
           "citations": [
             "c0"
           ],
@@ -62,11 +62,11 @@
           "nonempty": true
         }
       ],
-      "secs": 3.7
+      "secs": 4.9
     },
     "cost": {
-      "tokens": 11584,
-      "usd": 0.014304,
+      "tokens": 11372,
+      "usd": 0.01563,
       "was_live": true
     }
   },
@@ -79,26 +79,26 @@
     "errors": [],
     "discover": {
       "intent": "crash-course",
-      "n_sources": 1,
-      "n_fulltext": 1,
-      "secs": 3.7,
+      "n_sources": 6,
+      "n_fulltext": 3,
+      "secs": 7.2,
       "top_source": {
-        "title": "颠覆性技术研究（一）——理论起源、概念界定与五维分析框架",
+        "title": "Mechanism and Applications of CRISPR/Cas-9-Mediated Genome Editing",
         "type": "web",
-        "authority": 0.0
+        "authority": 0.71
       }
     },
     "digest": {
-      "source": "颠覆性技术研究（一）——理论起源、概念界定与五维分析框架",
-      "chars": 281,
-      "db_concepts": 8,
-      "db_keypoints": 8,
-      "db_quiz": 8,
-      "edges": 11,
-      "prereq": 7,
+      "source": "Mechanism and Applications of CRISPR/Cas-9-Mediated Genome Editing",
+      "chars": 1764,
+      "db_concepts": 7,
+      "db_keypoints": 7,
+      "db_quiz": 7,
+      "edges": 7,
+      "prereq": 4,
       "edge_accuracy": 1.0,
       "kp_evidence_resolves": true,
-      "secs": 40.9
+      "secs": 35.9
     },
     "teach": {
       "goal_type": "survey",
@@ -106,7 +106,7 @@
       "depth_match": true,
       "expertise": "novice",
       "strategy": "overview",
-      "quiz_q": "What is a defining characteristic of disruptive technology?",
+      "quiz_q": "What is the primary function of the CRISPR/Cas-9 system?",
       "n_distractors": 3,
       "flaw_gate_ok": true,
       "grade_score": 1.0
@@ -116,7 +116,7 @@
       "rendered": [
         {
           "format": "notes",
-          "len": 1327,
+          "len": 1443,
           "citations": [
             "c0"
           ],
@@ -125,7 +125,7 @@
         },
         {
           "format": "mindmap",
-          "len": 556,
+          "len": 481,
           "citations": [
             "c0"
           ],
@@ -133,11 +133,11 @@
           "nonempty": true
         }
       ],
-      "secs": 5.1
+      "secs": 6.1
     },
     "cost": {
-      "tokens": 9766,
-      "usd": 0.022887,
+      "tokens": 12406,
+      "usd": 0.017488,
       "was_live": true
     }
   },
@@ -150,26 +150,26 @@
     "errors": [],
     "discover": {
       "intent": "applied",
-      "n_sources": 3,
-      "n_fulltext": 3,
-      "secs": 4.6,
+      "n_sources": 2,
+      "n_fulltext": 2,
+      "secs": 7.8,
       "top_source": {
-        "title": "Megalopolis (film)",
-        "type": "wikipedia",
-        "authority": 0.5
+        "title": "VSSB-Raft: A Secure and Efficient Zero Trust Consensus Algorithm for Blockchain",
+        "type": "web",
+        "authority": 0.4
       }
     },
     "digest": {
-      "source": "Megalopolis (film)",
-      "chars": 849,
-      "db_concepts": 6,
-      "db_keypoints": 6,
-      "db_quiz": 6,
-      "edges": 7,
-      "prereq": 2,
-      "edge_accuracy": 0.5,
+      "source": "VSSB-Raft: A Secure and Efficient Zero Trust Consensus Algorithm for Blockchain",
+      "chars": 1133,
+      "db_concepts": 8,
+      "db_keypoints": 8,
+      "db_quiz": 8,
+      "edges": 12,
+      "prereq": 7,
+      "edge_accuracy": 1.0,
       "kp_evidence_resolves": true,
-      "secs": 38.8
+      "secs": 47.5
     },
     "teach": {
       "goal_type": "functional",
@@ -177,7 +177,7 @@
       "depth_match": true,
       "expertise": "intermediate",
       "strategy": "worked_example",
-      "quiz_q": "What is visionary architecture?",
+      "quiz_q": "What does the Raft Consensus Algorithm aim to achieve in distributed systems?",
       "n_distractors": 3,
       "flaw_gate_ok": true,
       "grade_score": 1.0
@@ -187,78 +187,7 @@
       "rendered": [
         {
           "format": "notes",
-          "len": 1353,
-          "citations": [
-            "c0"
-          ],
-          "citations_resolve": true,
-          "nonempty": true
-        },
-        {
-          "format": "mindmap",
-          "len": 658,
-          "citations": [
-            "c0"
-          ],
-          "citations_resolve": true,
-          "nonempty": true
-        }
-      ],
-      "secs": 4.8
-    },
-    "cost": {
-      "tokens": 7723,
-      "usd": 0.015038,
-      "was_live": true
-    }
-  },
-  {
-    "id": 4,
-    "slug": "quantum-error-correction",
-    "language": "English",
-    "domain": "Physics / quantum computing",
-    "intended_depth": "survey",
-    "errors": [],
-    "discover": {
-      "intent": "crash-course",
-      "n_sources": 6,
-      "n_fulltext": 3,
-      "secs": 4.3,
-      "top_source": {
-        "title": "Quantum Error Correction For Dummies",
-        "type": "web",
-        "authority": 0.13
-      }
-    },
-    "digest": {
-      "source": "Quantum Error Correction For Dummies",
-      "chars": 1422,
-      "db_concepts": 8,
-      "db_keypoints": 8,
-      "db_quiz": 8,
-      "edges": 10,
-      "prereq": 7,
-      "edge_accuracy": 1.0,
-      "kp_evidence_resolves": true,
-      "secs": 43.1
-    },
-    "teach": {
-      "goal_type": "survey",
-      "intended": "survey",
-      "depth_match": true,
-      "expertise": "novice",
-      "strategy": "overview",
-      "quiz_q": "What are qubit errors?",
-      "n_distractors": 3,
-      "flaw_gate_ok": true,
-      "grade_score": 1.0
-    },
-    "artifact": {
-      "selector_format": "mindmap",
-      "rendered": [
-        {
-          "format": "notes",
-          "len": 1118,
+          "len": 1106,
           "citations": [
             "c0"
           ],
@@ -275,11 +204,82 @@
           "nonempty": true
         }
       ],
-      "secs": 4.4
+      "secs": 4.3
     },
     "cost": {
-      "tokens": 12645,
-      "usd": 0.021706,
+      "tokens": 13831,
+      "usd": 0.024997,
+      "was_live": true
+    }
+  },
+  {
+    "id": 4,
+    "slug": "quantum-error-correction",
+    "language": "English",
+    "domain": "Physics / quantum computing",
+    "intended_depth": "survey",
+    "errors": [],
+    "discover": {
+      "intent": "crash-course",
+      "n_sources": 3,
+      "n_fulltext": 3,
+      "secs": 6.7,
+      "top_source": {
+        "title": "Quantum Error Correction Via Noise Guessing Decoding",
+        "type": "web",
+        "authority": 0.35
+      }
+    },
+    "digest": {
+      "source": "Quantum Error Correction Via Noise Guessing Decoding",
+      "chars": 1615,
+      "db_concepts": 8,
+      "db_keypoints": 8,
+      "db_quiz": 8,
+      "edges": 9,
+      "prereq": 5,
+      "edge_accuracy": 0.8333,
+      "kp_evidence_resolves": true,
+      "secs": 36.7
+    },
+    "teach": {
+      "goal_type": "survey",
+      "intended": "survey",
+      "depth_match": true,
+      "expertise": "novice",
+      "strategy": "overview",
+      "quiz_q": "What is the primary purpose of Quantum Error Correction Codes (QECCs)?",
+      "n_distractors": 3,
+      "flaw_gate_ok": true,
+      "grade_score": 1.0
+    },
+    "artifact": {
+      "selector_format": "mindmap",
+      "rendered": [
+        {
+          "format": "notes",
+          "len": 1345,
+          "citations": [
+            "c0"
+          ],
+          "citations_resolve": true,
+          "nonempty": true
+        },
+        {
+          "format": "mindmap",
+          "len": 505,
+          "citations": [
+            "c0"
+          ],
+          "citations_resolve": true,
+          "nonempty": true
+        }
+      ],
+      "secs": 3.9
+    },
+    "cost": {
+      "tokens": 12702,
+      "usd": 0.019109,
       "was_live": true
     }
   },
@@ -289,14 +289,69 @@
     "language": "Spanish",
     "domain": "Finance / quantitative",
     "intended_depth": "mastery",
-    "errors": [
-      "DISCOVER: no source with full text"
-    ],
+    "errors": [],
     "discover": {
       "intent": "systematic",
-      "n_sources": 0,
-      "n_fulltext": 0,
-      "secs": 4.0
+      "n_sources": 6,
+      "n_fulltext": 3,
+      "secs": 7.6,
+      "top_source": {
+        "title": "Option Pricing when the Variance Changes Randomly: Theory, Estimation, and an Application",
+        "type": "web",
+        "authority": 0.81
+      }
+    },
+    "digest": {
+      "source": "Option Pricing when the Variance Changes Randomly: Theory, Estimation, and an Ap",
+      "chars": 1075,
+      "db_concepts": 6,
+      "db_keypoints": 6,
+      "db_quiz": 6,
+      "edges": 6,
+      "prereq": 3,
+      "edge_accuracy": 1.0,
+      "kp_evidence_resolves": true,
+      "secs": 29.6
+    },
+    "teach": {
+      "goal_type": "mastery",
+      "intended": "mastery",
+      "depth_match": true,
+      "expertise": "expert",
+      "strategy": "concise",
+      "quiz_q": "What is a European call option?",
+      "n_distractors": 3,
+      "flaw_gate_ok": true,
+      "grade_score": 1.0
+    },
+    "artifact": {
+      "selector_format": "combination",
+      "rendered": [
+        {
+          "format": "notes",
+          "len": 1269,
+          "citations": [
+            "c0"
+          ],
+          "citations_resolve": true,
+          "nonempty": true
+        },
+        {
+          "format": "mindmap",
+          "len": 546,
+          "citations": [
+            "c0"
+          ],
+          "citations_resolve": true,
+          "nonempty": true
+        }
+      ],
+      "secs": 4.5
+    },
+    "cost": {
+      "tokens": 15905,
+      "usd": 0.013263,
+      "was_live": true
     }
   },
   {
@@ -308,26 +363,26 @@
     "errors": [],
     "discover": {
       "intent": "systematic",
-      "n_sources": 6,
+      "n_sources": 5,
       "n_fulltext": 1,
-      "secs": 5.7,
+      "secs": 9.0,
       "top_source": {
-        "title": "mRNA vaccines in disease prevention and treatment",
+        "title": "Advances in mRNA Vaccines for Infectious Diseases",
         "type": "web",
-        "authority": 0.63
+        "authority": 0.77
       }
     },
     "digest": {
-      "source": "mRNA vaccines in disease prevention and treatment",
-      "chars": 1523,
+      "source": "Advances in mRNA Vaccines for Infectious Diseases",
+      "chars": 533,
       "db_concepts": 7,
       "db_keypoints": 7,
       "db_quiz": 7,
-      "edges": 7,
-      "prereq": 3,
-      "edge_accuracy": 0.75,
+      "edges": 8,
+      "prereq": 0,
+      "edge_accuracy": 0.0,
       "kp_evidence_resolves": true,
-      "secs": 38.3
+      "secs": 34.4
     },
     "teach": {
       "goal_type": "functional",
@@ -335,7 +390,7 @@
       "depth_match": true,
       "expertise": "intermediate",
       "strategy": "worked_example",
-      "quiz_q": "What is the primary purpose of mRNA vaccine design?",
+      "quiz_q": "What are RNA-based technologies primarily used for?",
       "n_distractors": 3,
       "flaw_gate_ok": true,
       "grade_score": 1.0
@@ -345,7 +400,7 @@
       "rendered": [
         {
           "format": "notes",
-          "len": 1212,
+          "len": 1216,
           "citations": [
             "c0"
           ],
@@ -362,11 +417,11 @@
           "nonempty": true
         }
       ],
-      "secs": 4.2
+      "secs": 3.7
     },
     "cost": {
-      "tokens": 10598,
-      "usd": 0.014231,
+      "tokens": 8490,
+      "usd": 0.012779,
       "was_live": true
     }
   },
@@ -379,26 +434,26 @@
     "errors": [],
     "discover": {
       "intent": "systematic",
-      "n_sources": 3,
+      "n_sources": 4,
       "n_fulltext": 3,
-      "secs": 4.2,
+      "secs": 8.7,
       "top_source": {
-        "title": "颠覆性技术研究（一）——理论起源、概念界定与五维分析框架",
-        "type": "web",
-        "authority": 0.0
+        "title": "Transformer (deep learning)",
+        "type": "wikipedia",
+        "authority": 0.5
       }
     },
     "digest": {
-      "source": "颠覆性技术研究（一）——理论起源、概念界定与五维分析框架",
-      "chars": 281,
-      "db_concepts": 8,
-      "db_keypoints": 8,
-      "db_quiz": 8,
-      "edges": 9,
-      "prereq": 6,
-      "edge_accuracy": 1.0,
+      "source": "Transformer (deep learning)",
+      "chars": 755,
+      "db_concepts": 6,
+      "db_keypoints": 6,
+      "db_quiz": 6,
+      "edges": 7,
+      "prereq": 3,
+      "edge_accuracy": 0.75,
       "kp_evidence_resolves": true,
-      "secs": 44.1
+      "secs": 31.8
     },
     "teach": {
       "goal_type": "mastery",
@@ -406,7 +461,7 @@
       "depth_match": true,
       "expertise": "expert",
       "strategy": "concise",
-      "quiz_q": "What is a key characteristic of disruptive technology?",
+      "quiz_q": "What is the purpose of the Multi-Head Attention Mechanism in Transformers?",
       "n_distractors": 3,
       "flaw_gate_ok": true,
       "grade_score": 1.0
@@ -416,7 +471,7 @@
       "rendered": [
         {
           "format": "notes",
-          "len": 1080,
+          "len": 1197,
           "citations": [
             "c0"
           ],
@@ -425,7 +480,7 @@
         },
         {
           "format": "mindmap",
-          "len": 511,
+          "len": 610,
           "citations": [
             "c0"
           ],
@@ -433,11 +488,11 @@
           "nonempty": true
         }
       ],
-      "secs": 3.9
+      "secs": 4.6
     },
     "cost": {
-      "tokens": 9697,
-      "usd": 0.019152,
+      "tokens": 10320,
+      "usd": 0.013326,
       "was_live": true
     }
   },
@@ -450,26 +505,26 @@
     "errors": [],
     "discover": {
       "intent": "crash-course",
-      "n_sources": 6,
+      "n_sources": 5,
       "n_fulltext": 2,
-      "secs": 5.8,
+      "secs": 7.6,
       "top_source": {
-        "title": "Nudging in education",
-        "type": "web",
-        "authority": 0.67
+        "title": "Nudge theory",
+        "type": "wikipedia",
+        "authority": 0.5
       }
     },
     "digest": {
-      "source": "Nudging in education",
-      "chars": 1011,
+      "source": "Nudge theory",
+      "chars": 399,
       "db_concepts": 6,
       "db_keypoints": 6,
       "db_quiz": 6,
       "edges": 7,
-      "prereq": 3,
+      "prereq": 4,
       "edge_accuracy": 1.0,
       "kp_evidence_resolves": true,
-      "secs": 35.5
+      "secs": 29.8
     },
     "teach": {
       "goal_type": "survey",
@@ -477,7 +532,7 @@
       "depth_match": true,
       "expertise": "novice",
       "strategy": "overview",
-      "quiz_q": "What is a nudging intervention?",
+      "quiz_q": "What is Nudge Theory?",
       "n_distractors": 3,
       "flaw_gate_ok": true,
       "grade_score": 1.0
@@ -487,7 +542,7 @@
       "rendered": [
         {
           "format": "notes",
-          "len": 1161,
+          "len": 1147,
           "citations": [
             "c0"
           ],
@@ -496,7 +551,7 @@
         },
         {
           "format": "mindmap",
-          "len": 578,
+          "len": 528,
           "citations": [
             "c0"
           ],
@@ -504,11 +559,11 @@
           "nonempty": true
         }
       ],
-      "secs": 3.6
+      "secs": 4.0
     },
     "cost": {
-      "tokens": 9757,
-      "usd": 0.013899,
+      "tokens": 8010,
+      "usd": 0.009948,
       "was_live": true
     }
   },
@@ -521,9 +576,9 @@
     "errors": [],
     "discover": {
       "intent": "applied",
-      "n_sources": 3,
+      "n_sources": 4,
       "n_fulltext": 3,
-      "secs": 3.4,
+      "secs": 6.7,
       "top_source": {
         "title": "Reinforcement learning from human feedback",
         "type": "wikipedia",
@@ -540,7 +595,7 @@
       "prereq": 4,
       "edge_accuracy": 1.0,
       "kp_evidence_resolves": true,
-      "secs": 33.4
+      "secs": 28.4
     },
     "teach": {
       "goal_type": "functional",
@@ -558,7 +613,7 @@
       "rendered": [
         {
           "format": "notes",
-          "len": 1071,
+          "len": 1054,
           "citations": [
             "c0"
           ],
@@ -578,8 +633,8 @@
       "secs": 3.6
     },
     "cost": {
-      "tokens": 4982,
-      "usd": 0.008394,
+      "tokens": 8503,
+      "usd": 0.008516,
       "was_live": true
     }
   },
@@ -592,26 +647,26 @@
     "errors": [],
     "discover": {
       "intent": "crash-course",
-      "n_sources": 6,
-      "n_fulltext": 3,
-      "secs": 5.0,
+      "n_sources": 5,
+      "n_fulltext": 1,
+      "secs": 7.2,
       "top_source": {
-        "title": "PRESENCE D’UNE PRÉDISPOSITION : PREMIER ÉPISODE D’UNE SÉRIE DE HUIT ÉPISODES SUR LE CERVEA",
+        "title": "Graph convolutional networks: a comprehensive review",
         "type": "web",
-        "authority": 0.4
+        "authority": 0.88
       }
     },
     "digest": {
-      "source": "PRESENCE D’UNE PRÉDISPOSITION : PREMIER ÉPISODE D’UNE SÉRIE DE HUIT ÉPISODES SUR",
-      "chars": 1783,
-      "db_concepts": 8,
-      "db_keypoints": 8,
-      "db_quiz": 8,
-      "edges": 10,
-      "prereq": 5,
-      "edge_accuracy": 0.8333,
+      "source": "Graph convolutional networks: a comprehensive review",
+      "chars": 1809,
+      "db_concepts": 7,
+      "db_keypoints": 7,
+      "db_quiz": 7,
+      "edges": 9,
+      "prereq": 6,
+      "edge_accuracy": 1.0,
       "kp_evidence_resolves": true,
-      "secs": 50.0
+      "secs": 32.4
     },
     "teach": {
       "goal_type": "survey",
@@ -619,7 +674,7 @@
       "depth_match": true,
       "expertise": "novice",
       "strategy": "overview",
-      "quiz_q": "What is the purpose of the PRESENCE model?",
+      "quiz_q": "What are the basic components of graph structures?",
       "n_distractors": 3,
       "flaw_gate_ok": true,
       "grade_score": 1.0
@@ -629,7 +684,7 @@
       "rendered": [
         {
           "format": "notes",
-          "len": 1271,
+          "len": 1355,
           "citations": [
             "c0"
           ],
@@ -638,7 +693,7 @@
         },
         {
           "format": "mindmap",
-          "len": 549,
+          "len": 559,
           "citations": [
             "c0"
           ],
@@ -646,11 +701,11 @@
           "nonempty": true
         }
       ],
-      "secs": 4.7
+      "secs": 3.5
     },
     "cost": {
-      "tokens": 15700,
-      "usd": 0.022911,
+      "tokens": 12128,
+      "usd": 0.018526,
       "was_live": true
     }
   }

@@ -2,58 +2,55 @@
 - **goal** (English): Explain the basics of quantum error correction for a beginner.
 - **intended depth**: survey  ·  **prior**: physics undergraduate  ·  **domain**: Physics / quantum computing
 
-## OW-3 DISCOVER  (4.3s)
-- intent classified: `crash-course`  ·  6 sources  ·  3 with full text
-  - [web auth=0.13] Quantum Error Correction For Dummies
+## OW-3 DISCOVER  (6.7s)
+- intent classified: `crash-course`  ·  3 sources  ·  3 with full text
   - [web auth=0.35] Quantum Error Correction Via Noise Guessing Decoding
-  - [web auth=0.54] Quantum Computing: Fundamentals, Implementations and Applications
+  - [web auth=0.32] Mitigation of Decoherence-Induced Quantum-Bit Errors and Quantum-Gate Errors Using Steane’
   - [web auth=0.60] Decoding across the quantum low-density parity-check code landscape
-  - [web auth=0.46] Teaching Quantum Computing to High-School-Aged Youth: A Hands-On Approach
-  - [web auth=0.45] Quantum computing: A taxonomy, systematic review and future directions
 
-- digesting top-ranked source: _Quantum Error Correction For Dummies_ (auth=0.13)
+- digesting top-ranked source: _Quantum Error Correction Via Noise Guessing Decoding_ (auth=0.35)
 
-## OW-2 DIGEST  (43.1s)
-- source: _Quantum Error Correction For Dummies_ (1422 chars full text)
+## OW-2 DIGEST  (36.7s)
+- source: _Quantum Error Correction Via Noise Guessing Decoding_ (1615 chars full text)
 - **persisted**: 8 concepts · 8 keypoints · 8 quiz items
-- edges: 10 (7 prereq survived) · edge_accuracy=1.0 · kp_evidence_resolves=True
-  - `qubit_errors` — Qubit Errors
-  - `quantum_error_correction` — Quantum Error Correction (QEC)
-  - `error_detection` — Error Detection
-  - `error_decoding` — Error Decoding
-  - `error_correction` — Error Correction
-  - `quantum_error_correction_codes` — Quantum Error Correction Codes (QECC)
-  - `nisq_challenges` — Challenges in NISQ Era
-  - `implementation_practicality` — Implementation Practicality of QECC
+- edges: 9 (5 prereq survived) · edge_accuracy=0.8333 · kp_evidence_resolves=True
+  - `quantum_error_correction_codes` — Quantum Error Correction Codes (QECCs)
+  - `stabilizer_codes` — Stabilizer Codes
+  - `finite_blocklength_regime` — Finite Blocklength Regime
+  - `grand_decoding` — GRAND Decoding
+  - `quantum_random_linear_codes` — Quantum Random Linear Codes (QRLCs)
+  - `quantum_grand_algorithm` — Quantum-GRAND Algorithm
+  - `syndrome_decoding` — Syndrome Decoding
+  - `adaptive_code_membership_test` — Adaptive Code Membership Test
 
-## OW-4 TEACH / ASSESS  (1.3s)
+## OW-4 TEACH / ASSESS  (0.9s)
 - goal_elicit → `survey`  (intended `survey` → match=True)
 - strategy policy (expertise=novice) → `overview`
-- seed quiz: _What are qubit errors?_
+- seed quiz: _What is the primary purpose of Quantum Error Correction Codes (QECCs)?_
 - distractors (live): 3 · flaw_gate=True (clean)
 - grade (answer=key): score=1.0 mastery→0.55
 
-## OW-5 ARTIFACT `notes`  len=1118 citations=['c0'] resolve=True
+## OW-5 ARTIFACT `notes`  len=1345 citations=['c0'] resolve=True
 ```markdown
 # Study notes
 
-## Qubit Errors
+## Quantum Error Correction Codes (QECCs)
 
 **Cues:**
-- What types of errors affect qubits?
-- How do errors impact quantum computation?
-- What is the significance of the NISQ era?
+- What is the role of QECCs in quantum communications?
+- How do QECCs maintain quantum information integrity?
+- What is the significance of code length and rate in QECCs?
 
-**Summary:** Qubits face various errors in NISQ, affecting computation.
+**Summary:** QECCs ensure quantum information integrity in communications and computation.
 
 > Recall prompt: without looking, answer each cue above from memory.
 
-## Quantum Error Correction (QEC)
+## Stabilizer Codes
 
 **Cues:**
-- What is the purpose of QEC?
-- What are the steps involved in QEC?
+- How are stabilizer codes structured for specific uses?
+- What are the limitations of stabilizer codes regarding code lengths and rates?
 ```
-## OW-5 ARTIFACT `mindmap`  len=516 citations=['c0'] resolve=True
+## OW-5 ARTIFACT `mindmap`  len=505 citations=['c0'] resolve=True
 
-## COST  tokens=12645 usd=0.021706 was_live=True
+## COST  tokens=12702 usd=0.019109 was_live=True

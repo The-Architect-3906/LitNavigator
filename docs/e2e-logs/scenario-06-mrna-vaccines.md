@@ -2,57 +2,56 @@
 - **goal** (English): I need a working understanding of how mRNA vaccines are designed.
 - **intended depth**: functional  ·  **prior**: interested layperson  ·  **domain**: Biochemistry
 
-## OW-3 DISCOVER  (5.7s)
-- intent classified: `systematic`  ·  6 sources  ·  1 with full text
+## OW-3 DISCOVER  (9.0s)
+- intent classified: `systematic`  ·  5 sources  ·  1 with full text
+  - [web auth=0.99] mRNA vaccines — a new era in vaccinology
   - [web auth=0.86] mRNA vaccines for infectious diseases: principles, delivery and clinical translation
-  - [web auth=0.72] Innate immune mechanisms of mRNA vaccines
-  - [web auth=0.63] mRNA vaccines in disease prevention and treatment
-  - [web auth=0.62] The Storage and In-Use Stability of mRNA Vaccines and Therapeutics: Not A Cold Case
-  - [web auth=0.65] Next‐Generation Vaccines: Nanoparticle‐Mediated DNA and mRNA Delivery
-  - [web auth=0.60] mRNA vaccines for cancer immunotherapy
+  - [web auth=0.77] Advances in mRNA Vaccines for Infectious Diseases
+  - [web auth=0.80] mRNA vaccine for cancer immunotherapy
+  - [web auth=0.75] Advances in COVID-19 mRNA vaccine development
 
-- digesting top-ranked source: _mRNA vaccines in disease prevention and treatment_ (auth=0.63)
+- digesting top-ranked source: _Advances in mRNA Vaccines for Infectious Diseases_ (auth=0.77)
 
-## OW-2 DIGEST  (38.3s)
-- source: _mRNA vaccines in disease prevention and treatment_ (1523 chars full text)
+## OW-2 DIGEST  (34.4s)
+- source: _Advances in mRNA Vaccines for Infectious Diseases_ (533 chars full text)
 - **persisted**: 7 concepts · 7 keypoints · 7 quiz items
-- edges: 7 (3 prereq survived) · edge_accuracy=0.75 · kp_evidence_resolves=True
-  - `mrna_vaccine_design` — mRNA Vaccine Design
-  - `mrna_synthesis` — mRNA Synthesis
-  - `vaccine_delivery` — Vaccine Delivery Mechanisms
-  - `adjuvant_technologies` — Adjuvant Technologies
-  - `disease_application` — Disease Applications of mRNA Vaccines
-  - `challenges_in_design` — Challenges in mRNA Vaccine Design
-  - `future_prospects` — Future Prospects of mRNA Vaccines
+- edges: 8 (0 prereq survived) · edge_accuracy=0.0 · kp_evidence_resolves=True
+  - `rna_based_technologies` — RNA-based Technologies
+  - `mRNA_vaccine_safety` — mRNA Vaccine Safety
+  - `immune_response_duration` — Duration of Immune Response
+  - `quick_manufacturing` — Quick Manufacturing of Vaccines
+  - `applications_of_mRNA_vaccines` — Applications of mRNA Vaccines
+  - `clinical_trials` — Clinical Trials of mRNA Vaccines
+  - `prophylactic_and_therapeutic_vaccines` — Prophylactic and Therapeutic Vaccines
 
-## OW-4 TEACH / ASSESS  (1.3s)
+## OW-4 TEACH / ASSESS  (1.0s)
 - goal_elicit → `functional`  (intended `functional` → match=True)
 - strategy policy (expertise=intermediate) → `worked_example`
-- seed quiz: _What is the primary purpose of mRNA vaccine design?_
+- seed quiz: _What are RNA-based technologies primarily used for?_
 - distractors (live): 3 · flaw_gate=True (clean)
 - grade (answer=key): score=1.0 mastery→0.55
 
-## OW-5 ARTIFACT `notes`  len=1212 citations=['c0'] resolve=True
+## OW-5 ARTIFACT `notes`  len=1216 citations=['c0'] resolve=True
 ```markdown
 # Study notes
 
-## mRNA Vaccine Design
+## RNA-based Vaccine Development
 
 **Cues:**
-- How are mRNA vaccines designed to trigger immune responses?
-- What diseases can mRNA vaccines target?
+- What advancements have been made in RNA vaccine technology?
+- How have mRNA vaccines evolved over the last two decades?
 
-**Summary:** mRNA vaccines are tailored to provoke specific immune responses.
+**Summary:** Significant progress in RNA vaccine design.
 
 > Recall prompt: without looking, answer each cue above from memory.
 
-## mRNA Synthesis
+## mRNA Vaccine Safety
 
 **Cues:**
-- What techniques are used to synthesize mRNA for vaccines?
-- How does mRNA synthesis contribute to vaccine effectiveness?
+- What does research say about the safety of mRNA vaccines?
+- How do preclinical and clinical trials assess mRNA vaccine safety?
 
 ```
 ## OW-5 ARTIFACT `mindmap`  len=496 citations=['c0'] resolve=True
 
-## COST  tokens=10598 usd=0.014231 was_live=True
+## COST  tokens=8490 usd=0.012779 was_live=True

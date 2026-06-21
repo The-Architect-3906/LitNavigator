@@ -2,53 +2,57 @@
 - **goal** (Chinese): 给我一个关于 CRISPR 基因编辑原理的快速概览。
 - **intended depth**: survey  ·  **prior**: undergraduate biology background  ·  **domain**: Biology / gene editing
 
-## OW-3 DISCOVER  (3.7s)
-- intent classified: `crash-course`  ·  1 sources  ·  1 with full text
-  - [web auth=0.00] 颠覆性技术研究（一）——理论起源、概念界定与五维分析框架
+## OW-3 DISCOVER  (7.2s)
+- intent classified: `crash-course`  ·  6 sources  ·  3 with full text
+  - [web auth=0.71] Mechanism and Applications of CRISPR/Cas-9-Mediated Genome Editing
+  - [web auth=0.86] CRISPR/Cas Genome Editing and Precision Plant Breeding in Agriculture
+  - [web auth=0.61] Spatiotemporal control of CRISPR/Cas9 gene editing
+  - [web auth=0.63] Principles, Applications, and Biosafety of Plant Genome Editing Using CRISPR-Cas9
+  - [web auth=0.71] Genome-Editing Technologies: Principles and Applications
+  - [web auth=0.62] Precision genome editing in the CRISPR era
 
-- digesting top-ranked source: _颠覆性技术研究（一）——理论起源、概念界定与五维分析框架_ (auth=0.00)
+- digesting top-ranked source: _Mechanism and Applications of CRISPR/Cas-9-Mediated Genome Editing_ (auth=0.71)
 
-## OW-2 DIGEST  (40.9s)
-- source: _颠覆性技术研究（一）——理论起源、概念界定与五维分析框架_ (281 chars full text)
-- **persisted**: 8 concepts · 8 keypoints · 8 quiz items
-- edges: 11 (7 prereq survived) · edge_accuracy=1.0 · kp_evidence_resolves=True
-  - `disruptive_technology` — Disruptive Technology
-  - `geopolitical_integration` — Geopolitical Integration
-  - `strategic_value` — Strategic Value of Technologies
-  - `five_dimensional_framework` — Five-Dimensional Analysis Framework
-  - `market_disruption` — Market Disruption
-  - `technological_governance` — Technological Governance
-  - `national_competition` — National Competition
-  - `emerging_technologies` — Emerging Technologies
+## OW-2 DIGEST  (35.9s)
+- source: _Mechanism and Applications of CRISPR/Cas-9-Mediated Genome Editing_ (1764 chars full text)
+- **persisted**: 7 concepts · 7 keypoints · 7 quiz items
+- edges: 7 (4 prereq survived) · edge_accuracy=1.0 · kp_evidence_resolves=True
+  - `crispr_cas9_system` — CRISPR/Cas-9 System
+  - `guide_rna_function` — Function of Guide RNA (gRNA)
+  - `cas9_nuclease_mechanism` — Mechanism of Cas-9 Nuclease
+  - `genome_editing_steps` — Steps of Genome Editing
+  - `repair_mechanisms` — DNA Repair Mechanisms
+  - `applications_of_crispr` — Applications of CRISPR/Cas-9
+  - `challenges_in_crispr` — Challenges in CRISPR Technology
 
-## OW-4 TEACH / ASSESS  (1.0s)
+## OW-4 TEACH / ASSESS  (0.8s)
 - goal_elicit → `survey`  (intended `survey` → match=True)
 - strategy policy (expertise=novice) → `overview`
-- seed quiz: _What is a defining characteristic of disruptive technology?_
+- seed quiz: _What is the primary function of the CRISPR/Cas-9 system?_
 - distractors (live): 3 · flaw_gate=True (clean)
 - grade (answer=key): score=1.0 mastery→0.55
 
-## OW-5 ARTIFACT `notes`  len=1327 citations=['c0'] resolve=True
+## OW-5 ARTIFACT `notes`  len=1443 citations=['c0'] resolve=True
 ```markdown
 # Study notes
 
-## Disruptive Technology
+## CRISPR/Cas-9 System Overview
 
 **Cues:**
-- How do disruptive technologies reshape industries?
-- What is the strategic value of disruptive technologies?
+- What are the main components of the CRISPR/Cas-9 system?
+- What are the applications of CRISPR/Cas-9?
 
-**Summary:** Disruptive technologies redefine industries and national strategies.
+**Summary:** Key genome editing tool with diverse applications.
 
 > Recall prompt: without looking, answer each cue above from memory.
 
-## Geopolitical Integration
+## Function of Guide RNA (gRNA)
 
 **Cues:**
-- How are geopolitical factors evaluated in emerging technologies?
-- What is the role of geopolitics in technology assessment?
+- How does gRNA recognize target DNA sequences?
+- What role does gRNA play in genome editing?
 
 ```
-## OW-5 ARTIFACT `mindmap`  len=556 citations=['c0'] resolve=True
+## OW-5 ARTIFACT `mindmap`  len=481 citations=['c0'] resolve=True
 
-## COST  tokens=9766 usd=0.022887 was_live=True
+## COST  tokens=12406 usd=0.017488 was_live=True

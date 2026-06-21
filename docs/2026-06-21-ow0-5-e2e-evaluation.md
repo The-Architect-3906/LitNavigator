@@ -50,6 +50,26 @@ coercion + objective prompt) on top of our OW-5.1 fixes, the **digest quality la
 - **A5 (source relevance) and A6 (non-English) → UNCHANGED** — PR #6 touched no discover code. Top sources still wrong for #1 (physics diffusion), #2/#7 (disruptive-tech for Chinese), #3 (Megalopolis film), #10 (French neuroscience); Spanish still 0 sources. **This is OW-3.1's target.**
 - **New: A11 (cost) — digest cost ~5× ($0.0034→$0.0169/run)** from the `digest_sim_judge` running on frontier `gpt-4o`. Recorded action: evaluate moving the *similarity* judge to the cheap tier (prerequisite judging can stay frontier).
 
+## Update 2 — post OW-3.1 re-run (relevance gate + multilingual query)
+After OW-3.1 (multilingual goal→English query + cheap-LLM source-relevance gate) the **discovery
+bottleneck is closed**:
+
+| Metric | Pre-merge | Post PR-#6 | **Post OW-3.1** |
+|--|--|--|--|
+| Full pipeline | 9/10 | 9/10 | **10/10** |
+| Source relevance (top source on-topic) | 4/9 (44%) | 4/9 (44%) | **10/10 (100%)** |
+| Non-English goals returning sources | 0/4 | 0/4 | **4/4** |
+| Prereq edges survive | 1/9 | 9/9 | 9/10 |
+| Cost / full scenario | $0.0034 | $0.0169 | $0.0154 |
+
+Every off-topic disaster is fixed (new top source per scenario): diffusion→"Palette: Image-to-Image
+Diffusion Models"; CRISPR(中)→"Mechanism and Applications of CRISPR/Cas-9"; Raft→"VSSB-Raft … Zero
+Trust Consensus"; Black-Scholes(es, was 0 sources)→"Option Pricing when the Variance Changes
+Randomly"; transformer(中)→"Transformer (deep learning)"; nudges→"Nudge theory"; GNN(fr)→"Graph
+convolutional networks: a comprehensive review". **A5 + A6 CLOSED.** Relevance gate + query
+normalization add negligible cheap-tier cost; the dominant cost remains the frontier digest judges (A11).
+Remaining open: A8 (output-language localization), A9 (sub-chunking), A11 (digest cost ~5×).
+
 ## Per-stage performance
 
 ### OW-0 Cost spine — ✅ flawless
