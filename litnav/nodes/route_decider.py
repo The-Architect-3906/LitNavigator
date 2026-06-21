@@ -88,6 +88,8 @@ def advance_kp_node(state: NavState, conn: sqlite3.Connection) -> dict:
         "route": route,
         "concept_progress": None,   # clear so next concept starts fresh (P2 fix)
         "current_quiz_item": None,  # no active question after concept advance
+        # spaced retrieval: record that this concept was just seen (at the current step)
+        "concept_last_seen": {**(state.get("concept_last_seen") or {}), concept_id: state.get("step", 0)},
         "decision": decision,
         "rationale": rationale,
         "history": [{"event": decision, "concept_id": concept_id, "mastery": m, "confidence": c}],

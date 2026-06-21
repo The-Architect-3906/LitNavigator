@@ -13,7 +13,8 @@ def select_next_node(state: NavState) -> dict:
     # into this one's first teach. Only the new-concept path passes through here; reteach loops
     # straight back to teach (reteach -> teach), so an in-progress reteach keeps its strategy.
     return {"current_concept_id": pending[0]["concept_id"],
-            "current_strategy": None, "current_cited_chunks": []}
+            "current_strategy": None, "current_cited_chunks": [],
+            "step": state.get("step", 0) + 1}
 
 
 def route_after_select(state: NavState) -> str:

@@ -28,6 +28,7 @@ from litnav.nodes.goal_elicit import goal_elicit_node
 from litnav.nodes.orient_tour import orient_tour_node
 from litnav.nodes.route_decider import advance_kp_node
 from litnav.nodes.select_next import route_after_select, select_next_node
+from litnav.nodes.review_probe import grade_probe, pick_due_concept, pose_probe
 from litnav.nodes.teach import teach_node
 from litnav.nodes.teach_kp import init_concept_progress, route_after_teach_kp, teach_kp_node
 from litnav.state import NavState
@@ -46,6 +47,13 @@ def _file_checkpoint_conn() -> sqlite3.Connection:
 def _make_checkpointer(checkpoint_conn: sqlite3.Connection):
     from langgraph.checkpoint.sqlite import SqliteSaver
     return SqliteSaver(checkpoint_conn)
+
+
+def _route_after_select_with_probe(state: NavState, conn) -> str:
+    """select_next → review_probe (a mastered concept is due for retrieval) | retrieve | __end__."""
+    if state.get("current_concept_id") is None:
+        return "__end__"
+    return "review_probe" if pick_due_concept(state, conn) is not None else "retrieve"
 
 
 def build_graph(
@@ -86,6 +94,8 @@ def build_graph(
     def _grade_kp(s: NavState) -> dict:         return grade_kp_node(s, domain_conn)
     def _reteach_kp(s: NavState) -> dict:       return reteach_kp_node(s, domain_conn)
     def _advance_kp(s: NavState) -> dict:       return advance_kp_node(s, domain_conn)
+    def _review_probe(s: NavState) -> dict:     return pose_probe(s, domain_conn)
+    def _grade_probe(s: NavState) -> dict:      return grade_probe(s, domain_conn)
 
     def _induce(s: NavState) -> dict:
         updates = induce_scaffold_node(s, domain_conn)   # reads s["pending_induction"]
@@ -127,6 +137,8 @@ def build_graph(
     workflow.add_node("grade_kp", _grade_kp)
     workflow.add_node("reteach_kp", _reteach_kp)
     workflow.add_node("advance_kp", _advance_kp)
+    workflow.add_node("review_probe", _review_probe)
+    workflow.add_node("grade_probe", _grade_probe)
     workflow.add_node("handle_lost", _handle_lost)
 
     # goal_elicit runs once at the start of every session (idempotent on re-entry)
@@ -137,8 +149,12 @@ def build_graph(
                                     "select_next": "select_next"})
     workflow.add_edge("induce", "select_next")
     workflow.add_edge("orient_tour", "select_next")
-    workflow.add_conditional_edges("select_next", route_after_select,
-                                   {"retrieve": "retrieve", "__end__": END})
+    workflow.add_conditional_edges("select_next",
+                                   lambda s: _route_after_select_with_probe(s, domain_conn),
+                                   {"review_probe": "review_probe", "retrieve": "retrieve", "__end__": END})
+    # review_probe poses a recap quiz (interrupt_after collects the answer), grade_probe scores it low-stakes
+    workflow.add_edge("review_probe", "grade_probe")
+    workflow.add_edge("grade_probe", "retrieve")
 
     def _init_kp(s: NavState) -> dict:
         """Initialize ConceptProgress when entering the TEACH phase."""
@@ -246,6 +262,9 @@ def make_initial_state(
         "used_quiz_ids": {},
         "user_answer": None,
         "pending_answers": pending_answers or [],
+        "step": 0,
+        "concept_last_seen": {},
+        "needs_review": [],
         "quiz_result": None,
         "diagnosis": None,
         "decision": None,

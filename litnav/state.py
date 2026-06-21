@@ -128,6 +128,11 @@ class NavState(TypedDict):
     # "lost" → handle_lost node; None → normal flow
     user_intent: Optional[str]
 
+    # Spaced retrieval (in-session): turn counter, per-concept last-seen step, slip flags
+    step: int
+    concept_last_seen: dict
+    needs_review: list
+
     # Append-only audit history (LangGraph merges with operator.add)
     history: Annotated[List[dict], operator.add]
 

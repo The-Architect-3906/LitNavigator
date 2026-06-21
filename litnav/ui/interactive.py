@@ -34,7 +34,7 @@ class TutorSession:
         self.conn = domain_conn
         self.sid = session_id
         self.app = build_graph(domain_conn, checkpoint_conn,
-                               interrupt_after=["check", "assess_next"])
+                               interrupt_after=["check", "assess_next", "review_probe"])
         self.config = {"configurable": {"thread_id": session_id}, "recursion_limit": 200}
         self.out_dir = out_dir
         self.artifact_path: str | None = None
