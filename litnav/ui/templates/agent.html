@@ -113,6 +113,13 @@
 <div class="cols">
   <!-- ── Chat ── -->
   <div id="chat">
+    {% if building %}
+    <div class="card"><b>Open-world session</b>
+      <div class="mut">Building your course from real sources for: <b>{{ goal }}</b></div>
+    </div>
+    <script>window.__BUILDING__=true;</script>
+    {% endif %}
+    {% if not building %}
     <div class="card storyband">
       <div class="storygrid">
         <div class="storycell">
@@ -139,6 +146,7 @@
         </div>
       </div>
     </div>
+    {% endif %}
     <div id="thread">
       <div class="bubble me">{{ concept_name or "Teach me" }}</div>
       {% for msg in teach_messages or ([] if not teach else [teach]) %}
@@ -148,8 +156,11 @@
     </div>
     <div class="working" id="working" style="display:none">● agent working…</div>
     {% if done %}
-    <div class="card"><b>Session complete.</b> <a href="/sessions/{{ sid }}">full trace →</a> · <a href="/tutor">new chat</a></div>
+    <div class="card"><b>Session complete.</b>
+      {% if artifact_url %}<a href="{{ artifact_url }}" download>download take-away ↓</a> · {% endif %}
+      <a href="/sessions/{{ sid }}">full trace →</a> · <a href="/tutor">new chat</a></div>
     {% endif %}
+    <div id="artifact-card" class="card" style="display:none"></div>
     <form class="answer" id="answer-form" onsubmit="return submitAnswer(event)">
       <input id="answer-input" autocomplete="off" autofocus placeholder="ask anything, or answer the question…">
       <button type="submit">Send</button>
@@ -480,18 +491,33 @@ function handleEvent(e, steps, inp){
       inp.disabled=false;
       inp.focus();
     }
+  } else if(e.type==='build'){
+    steps.forEach(s=>s.state='done');
+    steps.push({label:e.label,detail:'',state:'active',skill:e.skill,method:e.method,paper:e.paper});
+    setFlow(steps);
+    if(e.stage==='discover')addBubble('ai','🔎 '+e.label,false);
+    else if(e.stage==='discover_done')addBubble('ai','📄 '+e.label,false);
+    else if(e.stage==='map'){addBubble('ai','🗺️ '+e.label,false);
+      if(e.graph)document.getElementById('cmap').innerHTML=e.graph;}
+  } else if(e.type==='artifact'){
+    renderArtifact(e);
   } else if(e.type==='error'){
     location.href='/tutor/'+SID;
   }
 }
 
-async function submitAnswer(ev){
-  ev.preventDefault();
+function renderArtifact(e){
+  const host=document.getElementById('artifact-card');
+  if(!host)return;
+  host.style.display='';
+  host.innerHTML='<b>📄 Take-away ('+esc(e.format||'notes')+')</b>'
+    +' <a href="'+e.url+'" download style="margin-left:.4rem">Download .md</a>'
+    +'<pre style="white-space:pre-wrap;font-size:.8rem;margin:.4rem 0 0;max-height:11rem;overflow:auto">'
+    +esc((e.preview||'').slice(0,500))+'…</pre>';
+}
+
+async function streamEvents(body){
   const inp=document.getElementById('answer-input');
-  const text=inp.value.trim();
-  if(!text)return false;
-  addBubble('me',text,false);
-  inp.value='';
   inp.disabled=true;
   document.getElementById('working').style.display='block';
   const steps=[];
@@ -499,7 +525,7 @@ async function submitAnswer(ev){
     const resp=await fetch('/tutor/'+SID+'/events',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({answer:text})
+      body:JSON.stringify(body||{})
     });
     const reader=resp.body.getReader();
     const dec=new TextDecoder();
@@ -519,7 +545,23 @@ async function submitAnswer(ev){
   }catch(err){
     location.href='/tutor/'+SID;
   }
+}
+
+async function submitAnswer(ev){
+  ev.preventDefault();
+  const inp=document.getElementById('answer-input');
+  const text=inp.value.trim();
+  if(!text)return false;
+  addBubble('me',text,false);
+  inp.value='';
+  await streamEvents({answer:text});
   return false;
+}
+
+// Open-world cold start: the page loads in a "building" state and streams discover→digest→teach.
+if(window.__BUILDING__){
+  addBubble('ai','Building your course from real sources… this can take ~30–90s.',false);
+  streamEvents({});
 }
 
 // Apply markdown to server-rendered AI bubbles on initial page load
