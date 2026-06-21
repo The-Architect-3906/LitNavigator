@@ -1,7 +1,42 @@
 """Fetch full text for the top-k sources. arXiv -> real PDF extract (reuse ingest.corpus_expand);
-others -> the abstract as a single chunk."""
+others -> the abstract split into sub-chunks so citations are granular."""
 from __future__ import annotations
+import re
 from litnav.discover.contract import Source
+
+
+def _chunk_text(text: str, *, target_chars: int = 500, max_chunks: int = 6) -> list[str]:
+    """Split text into sentence-packed chunks of ~target_chars each, capped at max_chunks."""
+    if len(text) <= target_chars:
+        return [text]
+
+    # Split on sentence-ending punctuation followed by whitespace
+    sentences = re.split(r'(?<=[.!?。！？])\s+', text)
+    sentences = [s for s in sentences if s.strip()]
+
+    chunks: list[str] = []
+    current_parts: list[str] = []
+    current_len = 0
+
+    for sentence in sentences:
+        # If adding this sentence would overflow and we already have content, flush
+        if current_len + len(sentence) > target_chars and current_parts:
+            chunks.append(" ".join(current_parts))
+            current_parts = []
+            current_len = 0
+        current_parts.append(sentence)
+        current_len += len(sentence)
+
+    # Flush remaining
+    if current_parts:
+        chunks.append(" ".join(current_parts))
+
+    # Cap at max_chunks: merge overflow into last chunk so no text is lost
+    if len(chunks) > max_chunks:
+        overflow = chunks[max_chunks - 1:]
+        chunks = chunks[:max_chunks - 1] + [" ".join(overflow)]
+
+    return [c for c in chunks if c.strip()]
 
 
 def fetch_fulltext(source: Source, *, max_chunks: int = 6) -> list[str]:
@@ -13,7 +48,7 @@ def fetch_fulltext(source: Source, *, max_chunks: int = 6) -> list[str]:
                 return paper["chunks"][:max_chunks]
         except Exception:
             pass
-    return [source.abstract] if source.abstract else []
+    return _chunk_text(source.abstract, max_chunks=max_chunks) if source.abstract else []
 
 
 def attach_fulltext(sources: list[Source], *, top_k: int) -> None:
