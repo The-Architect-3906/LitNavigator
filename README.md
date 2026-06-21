@@ -176,7 +176,7 @@ python -m litnav.evaluation.verify_discover  # find-sources parsing/rank/dedup/i
 python -m litnav.evaluation.verify_teach_assess  # goal/Bloom/flaw-gate/FSRS/strategy determinism
 python -m litnav.evaluation.verify_artifact  # format selector + mind-map/combination + citations
 python -m litnav.evaluation.verify_m0        # legacy closed-world gates (still green)
-pytest -q                                    # full suite — 353 passed
+pytest -q                                    # full suite — 366 passed
 
 # LIVE gates (real provider; set LITNAV_LLM_PROVIDER=openai + LITNAV_LLM_API_KEY in .env)
 python -m litnav.evaluation.verify_liveness      # a real call is distinguishable from a fallback
@@ -229,15 +229,15 @@ End-to-end quality results: [`docs/E2E-REPORT.md`](docs/E2E-REPORT.md).
 ---
 
 ## Tech stack
-`LangGraph` (inner loop) · ReAct outer loop · `SQLite` (concept graph · learner model · cost ledger · caches) · OpenAI `gpt-4o-mini` (cheap) + `gpt-4o` (frontier judge) + `text-embedding-3-small` — provider-agnostic, offline-capable · OpenAlex / Wikipedia / arXiv (live discovery) · RefD (Liang 2015) prerequisite signal · `pytest`
+`LangGraph` (inner loop) · ReAct outer loop · `SQLite` (concept graph · learner model · cost ledger · caches) · **LiteLLM** gateway — provider-agnostic (OpenAI / Anthropic / Gemini / DeepSeek / Groq / Ollama / any OpenAI-compatible), default tiers `gpt-4o-mini` (cheap) + `gpt-4o` (frontier) + `text-embedding-3-small`, offline-capable ($0) · OpenAlex / Wikipedia / arXiv (live discovery) · RefD (Liang 2015) prerequisite signal · `pytest`
 
 ## Documentation
 | Doc | Role |
 |:--|:--|
 | [`docs/RESEARCH-AND-SPEC.md`](docs/RESEARCH-AND-SPEC.md) | Research questions, verified literature/methods table, and full architecture spec (problem, principles, data model, cost spine, all 5 skills, milestones) |
-| [`docs/BACKEND-COMPLETE.md`](docs/BACKEND-COMPLETE.md) | Every shipped backend feature with its skill/code + research method; concrete run walkthrough; SKILL.md files; test counts + live gate results |
+| [`docs/BACKEND-COMPLETE.md`](docs/BACKEND-COMPLETE.md) | Complete backend reference: ASCII architecture, real-run storyboard, module index, the 5 stage skills (code + research + gate), graph node reference, data model, provider-agnostic LLM/cost spine, verification |
 | [`docs/BACKEND-ROADMAP.md`](docs/BACKEND-ROADMAP.md) | Remaining backend work: live cold-start (streamed), multi-source digest, sharper discovery, deeper quiz/feedback, robust non-English, new source adapters |
-| [`docs/FRONTEND-COMPLETE.md`](docs/FRONTEND-COMPLETE.md) | Unified glass-box+user web UI: two modes (offline curated demo / live open-world cold start), per-step chips, mastery scores, concept-map SVG, ledger cost meter, recommend-next card, downloadable artifact, SSE streaming |
+| [`docs/FRONTEND-COMPLETE.md`](docs/FRONTEND-COMPLETE.md) | Complete frontend reference: two modes (offline demo / live open-world), ASCII architecture, route index, template + JS + Python module reference, SSE event schema, CSS tokens, fixture flow, verification |
 | [`docs/FRONTEND-ROADMAP.md`](docs/FRONTEND-ROADMAP.md) | Remaining frontend: session persistence/auth, slides→PPTX export, teacher overrides, live quality scores, token-by-token streaming, incremental map render, mobile polish, deployment |
 | [`docs/E2E-REPORT.md`](docs/E2E-REPORT.md) | Full 10-scenario live E2E report — actual-quality scores (mean 4.33/5), per-scenario breakdown, before/after quality deltas |
 | `docs/archive/` | Superseded: per-milestone plans, audits, research brief, literature review, architecture spec, storyboard, status; `closed-world/` = legacy M0–M4 docs |
