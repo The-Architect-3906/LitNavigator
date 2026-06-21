@@ -33,6 +33,23 @@ technology*; "Raft consensus" as the film *Megalopolis*). The open-world plumbin
 metering, persistence, grounding, format selection, goal classification — held up across every domain
 and language. The bottleneck is **source discovery quality**, not the teaching machine.
 
+## Update — post PR-#6 merge re-run (same 10 scenarios)
+After merging PR #6 (jing-yen: evidence-fed prereq judge, edges LLM similarity judge, extract kp_id
+coercion + objective prompt) on top of our OW-5.1 fixes, the **digest quality layer jumped**:
+
+| Metric | Pre-merge | Post-merge (PR #6 + OW-5.1) |
+|--|--|--|
+| prereq edges survive (>0) | **1/9** | **9/9** ✅ |
+| edge_accuracy | ≈0.0 | 0.5–1.0 |
+| keypoints present (>0) | 3/9 | **9/9** ✅ |
+| concepts persisted · artifacts grounded+cited | 9/9 | 9/9 (held) |
+| goal→depth match | 9/9 | 9/9 (held) |
+| cost / full scenario | ~$0.0034 | **$0.0169 (~5×)** · total $0.15 |
+
+- **A7 (prereq survival) and A10 (keypoint yield) → CLOSED** by the merge. The evidence-fed judge + kp_id coercion did it.
+- **A5 (source relevance) and A6 (non-English) → UNCHANGED** — PR #6 touched no discover code. Top sources still wrong for #1 (physics diffusion), #2/#7 (disruptive-tech for Chinese), #3 (Megalopolis film), #10 (French neuroscience); Spanish still 0 sources. **This is OW-3.1's target.**
+- **New: A11 (cost) — digest cost ~5× ($0.0034→$0.0169/run)** from the `digest_sim_judge` running on frontier `gpt-4o`. Recorded action: evaluate moving the *similarity* judge to the cheap tier (prerequisite judging can stay frontier).
+
 ## Per-stage performance
 
 ### OW-0 Cost spine — ✅ flawless

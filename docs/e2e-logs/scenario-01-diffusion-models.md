@@ -13,47 +13,47 @@
 
 - digesting top-ranked source: _Anomalous diffusion models and their properties: non-stationarity, non-ergodicit_ (auth=0.88)
 
-## OW-2 DIGEST  (37.8s)
+## OW-2 DIGEST  (35.4s)
 - source: _Anomalous diffusion models and their properties: non-stationarity, non-ergodicit_ (1692 chars full text)
-- **persisted**: 8 concepts · 0 keypoints · 8 quiz items
-- edges: 5 (0 prereq survived) · edge_accuracy=0.0 · kp_evidence_resolves=True
+- **persisted**: 8 concepts · 8 keypoints · 8 quiz items
+- edges: 7 (4 prereq survived) · edge_accuracy=1.0 · kp_evidence_resolves=True
   - `anomalous_diffusion` — Anomalous Diffusion
   - `single_particle_tracking` — Single Particle Tracking
   - `mean_squared_displacement` — Mean Squared Displacement
   - `ergodicity_breaking` — Ergodicity Breaking
-  - `time_average_vs_ensemble_average` — Time Average vs Ensemble Average
+  - `time_averaged_vs_ensemble_averaged` — Time Averaged vs Ensemble Averaged
   - `data_analysis_methods` — Data Analysis Methods
   - `physical_origins_of_diffusion` — Physical Origins of Diffusion
   - `observables_in_diffusion` — Observables in Diffusion
 
-## OW-4 TEACH / ASSESS  (1.1s)
+## OW-4 TEACH / ASSESS  (1.2s)
 - goal_elicit → `mastery`  (intended `mastery` → match=True)
 - strategy policy (expertise=expert) → `concise`
 - seed quiz: _What is anomalous diffusion?_
 - distractors (live): 3 · flaw_gate=True (clean)
 - grade (answer=key): score=1.0 mastery→0.55
 
-## OW-5 ARTIFACT `notes`  len=1348 citations=['c0'] resolve=True
+## OW-5 ARTIFACT `notes`  len=1283 citations=['c0'] resolve=True
 ```markdown
 # Study notes
 
 ## Anomalous Diffusion
 
 **Cues:**
-- What are the deviations from Brownian motion?
-- What methods identify physical origins of anomalous diffusion?
-- How do time averages differ from ensemble averages?
+- How does anomalous diffusion differ from Brownian motion?
+- What are the implications of these deviations in various systems?
 
-**Summary:** Deviations from Brownian motion in various systems.
+**Summary:** Deviation from Brownian motion in diverse systems.
 
 > Recall prompt: without looking, answer each cue above from memory.
 
 ## Single Particle Tracking
 
 **Cues:**
-- What does single particle tracking reveal?
-- How does it help quantify system dynamics?
-```
-## OW-5 ARTIFACT `mindmap`  len=496 citations=['c0'] resolve=True
+- What does single particle tracking reveal about particle trajectories?
+- How does it help in evaluating system dynamics?
 
-## COST  tokens=9084 usd=0.003666 was_live=True
+```
+## OW-5 ARTIFACT `mindmap`  len=484 citations=['c0'] resolve=True
+
+## COST  tokens=11584 usd=0.014304 was_live=True

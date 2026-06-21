@@ -21,13 +21,13 @@
       "source": "Anomalous diffusion models and their properties: non-stationarity, non-ergodicit",
       "chars": 1692,
       "db_concepts": 8,
-      "db_keypoints": 0,
+      "db_keypoints": 8,
       "db_quiz": 8,
-      "edges": 5,
-      "prereq": 0,
-      "edge_accuracy": 0.0,
+      "edges": 7,
+      "prereq": 4,
+      "edge_accuracy": 1.0,
       "kp_evidence_resolves": true,
-      "secs": 37.8
+      "secs": 35.4
     },
     "teach": {
       "goal_type": "mastery",
@@ -45,7 +45,7 @@
       "rendered": [
         {
           "format": "notes",
-          "len": 1348,
+          "len": 1283,
           "citations": [
             "c0"
           ],
@@ -54,7 +54,7 @@
         },
         {
           "format": "mindmap",
-          "len": 496,
+          "len": 484,
           "citations": [
             "c0"
           ],
@@ -62,11 +62,11 @@
           "nonempty": true
         }
       ],
-      "secs": 4.4
+      "secs": 3.7
     },
     "cost": {
-      "tokens": 9084,
-      "usd": 0.003666,
+      "tokens": 11584,
+      "usd": 0.014304,
       "was_live": true
     }
   },
@@ -81,7 +81,7 @@
       "intent": "crash-course",
       "n_sources": 1,
       "n_fulltext": 1,
-      "secs": 3.5,
+      "secs": 3.7,
       "top_source": {
         "title": "颠覆性技术研究（一）——理论起源、概念界定与五维分析框架",
         "type": "web",
@@ -94,11 +94,11 @@
       "db_concepts": 8,
       "db_keypoints": 8,
       "db_quiz": 8,
-      "edges": 6,
-      "prereq": 0,
-      "edge_accuracy": 0.0,
+      "edges": 11,
+      "prereq": 7,
+      "edge_accuracy": 1.0,
       "kp_evidence_resolves": true,
-      "secs": 38.1
+      "secs": 40.9
     },
     "teach": {
       "goal_type": "survey",
@@ -116,7 +116,7 @@
       "rendered": [
         {
           "format": "notes",
-          "len": 1125,
+          "len": 1327,
           "citations": [
             "c0"
           ],
@@ -125,7 +125,7 @@
         },
         {
           "format": "mindmap",
-          "len": 433,
+          "len": 556,
           "citations": [
             "c0"
           ],
@@ -133,11 +133,11 @@
           "nonempty": true
         }
       ],
-      "secs": 4.1
+      "secs": 5.1
     },
     "cost": {
-      "tokens": 5654,
-      "usd": 0.003682,
+      "tokens": 9766,
+      "usd": 0.022887,
       "was_live": true
     }
   },
@@ -152,7 +152,7 @@
       "intent": "applied",
       "n_sources": 3,
       "n_fulltext": 3,
-      "secs": 3.9,
+      "secs": 4.6,
       "top_source": {
         "title": "Megalopolis (film)",
         "type": "wikipedia",
@@ -162,14 +162,14 @@
     "digest": {
       "source": "Megalopolis (film)",
       "chars": 849,
-      "db_concepts": 8,
-      "db_keypoints": 8,
-      "db_quiz": 8,
-      "edges": 3,
-      "prereq": 0,
-      "edge_accuracy": 0.0,
+      "db_concepts": 6,
+      "db_keypoints": 6,
+      "db_quiz": 6,
+      "edges": 7,
+      "prereq": 2,
+      "edge_accuracy": 0.5,
       "kp_evidence_resolves": true,
-      "secs": 37.5
+      "secs": 38.8
     },
     "teach": {
       "goal_type": "functional",
@@ -187,7 +187,7 @@
       "rendered": [
         {
           "format": "notes",
-          "len": 1164,
+          "len": 1353,
           "citations": [
             "c0"
           ],
@@ -196,7 +196,7 @@
         },
         {
           "format": "mindmap",
-          "len": 438,
+          "len": 658,
           "citations": [
             "c0"
           ],
@@ -204,11 +204,11 @@
           "nonempty": true
         }
       ],
-      "secs": 3.9
+      "secs": 4.8
     },
     "cost": {
-      "tokens": 5208,
-      "usd": 0.002757,
+      "tokens": 7723,
+      "usd": 0.015038,
       "was_live": true
     }
   },
@@ -223,7 +223,7 @@
       "intent": "crash-course",
       "n_sources": 6,
       "n_fulltext": 3,
-      "secs": 4.6,
+      "secs": 4.3,
       "top_source": {
         "title": "Quantum Error Correction For Dummies",
         "type": "web",
@@ -234,13 +234,13 @@
       "source": "Quantum Error Correction For Dummies",
       "chars": 1422,
       "db_concepts": 8,
-      "db_keypoints": 0,
+      "db_keypoints": 8,
       "db_quiz": 8,
-      "edges": 8,
-      "prereq": 2,
-      "edge_accuracy": 0.2857,
+      "edges": 10,
+      "prereq": 7,
+      "edge_accuracy": 1.0,
       "kp_evidence_resolves": true,
-      "secs": 43.6
+      "secs": 43.1
     },
     "teach": {
       "goal_type": "survey",
@@ -258,7 +258,7 @@
       "rendered": [
         {
           "format": "notes",
-          "len": 1443,
+          "len": 1118,
           "citations": [
             "c0"
           ],
@@ -267,7 +267,7 @@
         },
         {
           "format": "mindmap",
-          "len": 478,
+          "len": 516,
           "citations": [
             "c0"
           ],
@@ -275,11 +275,11 @@
           "nonempty": true
         }
       ],
-      "secs": 4.6
+      "secs": 4.4
     },
     "cost": {
-      "tokens": 8694,
-      "usd": 0.004208,
+      "tokens": 12645,
+      "usd": 0.021706,
       "was_live": true
     }
   },
@@ -296,7 +296,7 @@
       "intent": "systematic",
       "n_sources": 0,
       "n_fulltext": 0,
-      "secs": 2.6
+      "secs": 4.0
     }
   },
   {
@@ -323,11 +323,11 @@
       "db_concepts": 7,
       "db_keypoints": 7,
       "db_quiz": 7,
-      "edges": 4,
-      "prereq": 0,
-      "edge_accuracy": 0.0,
+      "edges": 7,
+      "prereq": 3,
+      "edge_accuracy": 0.75,
       "kp_evidence_resolves": true,
-      "secs": 29.8
+      "secs": 38.3
     },
     "teach": {
       "goal_type": "functional",
@@ -335,7 +335,7 @@
       "depth_match": true,
       "expertise": "intermediate",
       "strategy": "worked_example",
-      "quiz_q": "What is the primary purpose of mRNA design in vaccine development?",
+      "quiz_q": "What is the primary purpose of mRNA vaccine design?",
       "n_distractors": 3,
       "flaw_gate_ok": true,
       "grade_score": 1.0
@@ -345,7 +345,7 @@
       "rendered": [
         {
           "format": "notes",
-          "len": 1121,
+          "len": 1212,
           "citations": [
             "c0"
           ],
@@ -354,7 +354,7 @@
         },
         {
           "format": "mindmap",
-          "len": 456,
+          "len": 496,
           "citations": [
             "c0"
           ],
@@ -365,8 +365,8 @@
       "secs": 4.2
     },
     "cost": {
-      "tokens": 8004,
-      "usd": 0.003086,
+      "tokens": 10598,
+      "usd": 0.014231,
       "was_live": true
     }
   },
@@ -381,7 +381,7 @@
       "intent": "systematic",
       "n_sources": 3,
       "n_fulltext": 3,
-      "secs": 4.5,
+      "secs": 4.2,
       "top_source": {
         "title": "颠覆性技术研究（一）——理论起源、概念界定与五维分析框架",
         "type": "web",
@@ -392,13 +392,13 @@
       "source": "颠覆性技术研究（一）——理论起源、概念界定与五维分析框架",
       "chars": 281,
       "db_concepts": 8,
-      "db_keypoints": 0,
+      "db_keypoints": 8,
       "db_quiz": 8,
-      "edges": 6,
-      "prereq": 0,
-      "edge_accuracy": 0.0,
+      "edges": 9,
+      "prereq": 6,
+      "edge_accuracy": 1.0,
       "kp_evidence_resolves": true,
-      "secs": 38.2
+      "secs": 44.1
     },
     "teach": {
       "goal_type": "mastery",
@@ -406,7 +406,7 @@
       "depth_match": true,
       "expertise": "expert",
       "strategy": "concise",
-      "quiz_q": "What is a defining characteristic of disruptive technology?",
+      "quiz_q": "What is a key characteristic of disruptive technology?",
       "n_distractors": 3,
       "flaw_gate_ok": true,
       "grade_score": 1.0
@@ -416,7 +416,7 @@
       "rendered": [
         {
           "format": "notes",
-          "len": 1271,
+          "len": 1080,
           "citations": [
             "c0"
           ],
@@ -425,7 +425,7 @@
         },
         {
           "format": "mindmap",
-          "len": 479,
+          "len": 511,
           "citations": [
             "c0"
           ],
@@ -433,11 +433,11 @@
           "nonempty": true
         }
       ],
-      "secs": 3.5
+      "secs": 3.9
     },
     "cost": {
-      "tokens": 6180,
-      "usd": 0.003615,
+      "tokens": 9697,
+      "usd": 0.019152,
       "was_live": true
     }
   },
@@ -452,7 +452,7 @@
       "intent": "crash-course",
       "n_sources": 6,
       "n_fulltext": 2,
-      "secs": 5.6,
+      "secs": 5.8,
       "top_source": {
         "title": "Nudging in education",
         "type": "web",
@@ -462,14 +462,14 @@
     "digest": {
       "source": "Nudging in education",
       "chars": 1011,
-      "db_concepts": 7,
-      "db_keypoints": 0,
-      "db_quiz": 7,
-      "edges": 5,
-      "prereq": 0,
-      "edge_accuracy": 0.0,
+      "db_concepts": 6,
+      "db_keypoints": 6,
+      "db_quiz": 6,
+      "edges": 7,
+      "prereq": 3,
+      "edge_accuracy": 1.0,
       "kp_evidence_resolves": true,
-      "secs": 33.8
+      "secs": 35.5
     },
     "teach": {
       "goal_type": "survey",
@@ -487,7 +487,7 @@
       "rendered": [
         {
           "format": "notes",
-          "len": 1473,
+          "len": 1161,
           "citations": [
             "c0"
           ],
@@ -496,7 +496,7 @@
         },
         {
           "format": "mindmap",
-          "len": 474,
+          "len": 578,
           "citations": [
             "c0"
           ],
@@ -504,11 +504,11 @@
           "nonempty": true
         }
       ],
-      "secs": 4.2
+      "secs": 3.6
     },
     "cost": {
-      "tokens": 7388,
-      "usd": 0.002931,
+      "tokens": 9757,
+      "usd": 0.013899,
       "was_live": true
     }
   },
@@ -523,7 +523,7 @@
       "intent": "applied",
       "n_sources": 3,
       "n_fulltext": 3,
-      "secs": 4.8,
+      "secs": 3.4,
       "top_source": {
         "title": "Reinforcement learning from human feedback",
         "type": "wikipedia",
@@ -533,14 +533,14 @@
     "digest": {
       "source": "Reinforcement learning from human feedback",
       "chars": 278,
-      "db_concepts": 6,
-      "db_keypoints": 0,
-      "db_quiz": 6,
-      "edges": 5,
-      "prereq": 0,
-      "edge_accuracy": 0.0,
+      "db_concepts": 5,
+      "db_keypoints": 5,
+      "db_quiz": 5,
+      "edges": 6,
+      "prereq": 4,
+      "edge_accuracy": 1.0,
       "kp_evidence_resolves": true,
-      "secs": 33.9
+      "secs": 33.4
     },
     "teach": {
       "goal_type": "functional",
@@ -558,7 +558,7 @@
       "rendered": [
         {
           "format": "notes",
-          "len": 1056,
+          "len": 1071,
           "citations": [
             "c0"
           ],
@@ -567,7 +567,7 @@
         },
         {
           "format": "mindmap",
-          "len": 422,
+          "len": 486,
           "citations": [
             "c0"
           ],
@@ -575,11 +575,11 @@
           "nonempty": true
         }
       ],
-      "secs": 3.7
+      "secs": 3.6
     },
     "cost": {
-      "tokens": 3568,
-      "usd": 0.002576,
+      "tokens": 4982,
+      "usd": 0.008394,
       "was_live": true
     }
   },
@@ -594,7 +594,7 @@
       "intent": "crash-course",
       "n_sources": 6,
       "n_fulltext": 3,
-      "secs": 5.3,
+      "secs": 5.0,
       "top_source": {
         "title": "PRESENCE D’UNE PRÉDISPOSITION : PREMIER ÉPISODE D’UNE SÉRIE DE HUIT ÉPISODES SUR LE CERVEA",
         "type": "web",
@@ -605,13 +605,13 @@
       "source": "PRESENCE D’UNE PRÉDISPOSITION : PREMIER ÉPISODE D’UNE SÉRIE DE HUIT ÉPISODES SUR",
       "chars": 1783,
       "db_concepts": 8,
-      "db_keypoints": 0,
+      "db_keypoints": 8,
       "db_quiz": 8,
-      "edges": 6,
-      "prereq": 0,
-      "edge_accuracy": 0.0,
+      "edges": 10,
+      "prereq": 5,
+      "edge_accuracy": 0.8333,
       "kp_evidence_resolves": true,
-      "secs": 36.8
+      "secs": 50.0
     },
     "teach": {
       "goal_type": "survey",
@@ -619,7 +619,7 @@
       "depth_match": true,
       "expertise": "novice",
       "strategy": "overview",
-      "quiz_q": "What is genetic and epigenetic predisposition?",
+      "quiz_q": "What is the purpose of the PRESENCE model?",
       "n_distractors": 3,
       "flaw_gate_ok": true,
       "grade_score": 1.0
@@ -629,7 +629,7 @@
       "rendered": [
         {
           "format": "notes",
-          "len": 1813,
+          "len": 1271,
           "citations": [
             "c0"
           ],
@@ -638,7 +638,7 @@
         },
         {
           "format": "mindmap",
-          "len": 447,
+          "len": 549,
           "citations": [
             "c0"
           ],
@@ -646,11 +646,11 @@
           "nonempty": true
         }
       ],
-      "secs": 6.5
+      "secs": 4.7
     },
     "cost": {
-      "tokens": 11578,
-      "usd": 0.004011,
+      "tokens": 15700,
+      "usd": 0.022911,
       "was_live": true
     }
   }

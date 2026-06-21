@@ -118,13 +118,16 @@ Full OW-0→5 live run over 10 diverse scenarios (goal/depth/prior/language/doma
 end-to-end; 1 aborted at discovery. **Detail:** [`2026-06-21-ow0-5-e2e-evaluation.md`](2026-06-21-ow0-5-e2e-evaluation.md).
 Headline: the teaching machine (OW-2 persistence, OW-4, OW-5) is solid on good input and held up across
 every language; **topical correctness is gated by DISCOVER source relevance (~44%; 0/4 non-English).**
-New prioritized actions (recorded, no new model needed):
-- **A5 (P0) — OW-3.1 source-relevance gate:** relevance-filter the top source before digest; weight relevance ≫ authority; demote bare Wikipedia title hits (Raft→"Megalopolis", diffusion→physics).
-- **A6 (P0) — non-English discovery:** translate/normalize query to English for indices, teach in the user's language (es=0 sources, 中文=1 generic, fr=off-domain).
-- **A7 (P1) — multi-source digest:** digest top-k (not top-1) to recover prerequisite structure (single-source edge_accuracy≈0).
-- **A8 (P1) — output-language control:** thread goal language into renderer/teach prompts (cues default to English on non-English concepts).
-- **A9 (P2) — sub-chunk full text:** citations currently collapse to a single `c0`.
-- **A10 (P2) — deterministic keypoint floor:** extraction yields 0 keypoints in 6/9 runs.
+Prioritized actions:
+- **A5 (P0, OPEN → OW-3.1) — source-relevance gate:** relevance-filter the top source before digest; demote bare Wikipedia title hits (Raft→"Megalopolis", diffusion→physics).
+- **A6 (P0, OPEN → OW-3.1) — non-English discovery:** normalize query to English for indices, teach in the user's language (es=0 sources, 中文=1 generic, fr=off-domain).
+- **A7 (P1, ✅ CLOSED by PR #6)** — evidence-fed prereq judge: prereq survival 1/9 → **9/9** on the post-merge re-run.
+- **A8 (P1, OPEN) — output-language control:** thread goal language into renderer/teach prompts (cues default to English on non-English concepts).
+- **A9 (P2, OPEN) — sub-chunk full text:** citations still collapse to a single `c0`.
+- **A10 (P2, ✅ CLOSED by PR #6)** — kp_id coercion + objective prompt: keypoints present 3/9 → **9/9**.
+- **A11 (P1, OPEN, NEW) — digest cost ~5×** ($0.0034→$0.0169/run) from `digest_sim_judge` on frontier `gpt-4o`; evaluate moving the *similarity* judge to the cheap tier (keep the *prerequisite* judge on frontier).
+
+**Post PR-#6 merge re-run (2026-06-21):** 9/10 full; **prereq 9/9, keypoints 9/9** (A7+A10 closed); concepts/artifacts grounded held; **A5/A6 unchanged → OW-3.1 next**; cost $0.0169/scenario (A11). Detail in the e2e evaluation doc.
 
 ## Action log (open)
 - **A4** — multi-source digest live validation across many sources (code supports it; one multi-source run done). Candidate for OW-7.
