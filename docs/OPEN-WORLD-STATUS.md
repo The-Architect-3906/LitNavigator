@@ -1,6 +1,6 @@
 # Open-World LitNavigator — Status & Progress
 
-**Branch:** `feat/open-world-digest` · **Updated:** 2026-06-20 · **Tests:** 252 passed
+**Branch:** `feat/open-world-digest` · **Updated:** 2026-06-21 · **Tests:** 268 passed
 
 This is the single source of truth for *where the open-world build is*. It is organized by the
 architecture spec's milestones (§9). Detailed execution records, the live-first re-audit, the
@@ -35,8 +35,8 @@ silent fallback** (a dead provider raises, never silently returns a fixture).
 | **OW-2** — digest-corpus | ✅ done | ✅ `verify_digest_live` | sources → 8 concepts → RefD+LLM edges → gpt-4o judge → digested graph; deterministic; ~$0.003/run |
 | **OW-3** — find-sources | ✅ done | ✅ `verify_discover_live` | intent → OpenAlex+Wikipedia → BM25+rerank+dedup+authority → top-k full text; ~$0.0001/run |
 | **OW-4** — TEACH/ASSESS | ✅ done | ✅ `verify_teach_assess_live` | goal elicit → Bloom ceiling; metered grade with frontier **escalation**; MCQ distractors + flaw gate + weaker-simulator IRT; FSRS spacing + retention probe; teach-strategy policy + metacognitive reteach |
-| **OW-5** — make-artifact | ⏳ next | — | mind-map / notes / slides / worked-example, scenario-selected format |
-| **OW-6** — recommend-next + dual frontend | ⏳ pending | — | next-step ranker; Glass-box wired to `cost_ledger`; teacher override; progress streaming |
+| **OW-5** — make-artifact | ✅ done | ✅ `verify_artifact_live` | scenario → format selector → mind-map / Cornell notes / Marp slides / worked-example / combination; every artifact carries a retrieval prompt + resolving citations; ~$0.0004/multi-format run |
+| **OW-6** — recommend-next + dual frontend | ⏳ next | — | next-step ranker; Glass-box wired to `cost_ledger`; teacher override; progress streaming |
 | **OW-7** — live cold-start | ⏳ pending | partial | end-to-end real-topic digest→teach (digest path already live); streamed progress + demo cache pre-fill |
 
 ---
@@ -78,11 +78,19 @@ silent fallback** (a dead provider raises, never silently returns a fixture).
 - **Live result:** ALL PASS — goal classified live (`mastery`), 3 distractors pass the flaw gate, grade metered. Cost = goal-elicit $0.000043 + grade $0.000068 + quizgen $0.000039 = **$0.00015**. (No escalation fired — the answer was confidently correct + mastery below the band; escalation is selective by design.)
 - **Deferred:** none new (escalation gate, deferred from OW-0, is now implemented here).
 
+### OW-5 — make-artifact ✅ (spec §6.4)
+- **Code:** `litnav/artifact/` — `contract.py` (`ArtifactInput`/`ArtifactResult`/`FORMATS`), `selector.py` (`select_format` §6.4 matrix: override→slides→worked_example→combination→mindmap→notes), `renderers/` (`mindmap.py` deterministic Mermaid from the concept graph; `notes.py` Cornell cues+summary, anti-verbatim; `slides.py` cheap-LLM JSON outline → deterministic Marp emitter; `worked_example.py` worked steps + one practice item), `make_artifact.py` (select → gather concepts/edges/evidence/citations from SQLite → render → write `<format>.md` → `ArtifactResult`; `combination` concatenates map+notes+worked into one file), `SKILL.md`.
+- **Cross-cutting:** every renderer appends a **retrieval prompt** per segment + a **Citations** section; citations are real `paper_chunks.id` for the concepts (resolve 1:1).
+- **Gate:** `verify_artifact` (offline unit: selector matrix, deterministic mind-map + combination, cross-cutting invariant) + `verify_artifact_live` (LIVE capability: notes/slides/worked rendered on real provider, citations resolve to real chunks, metered `stage='artifact'`).
+- **Live result:** ALL PASS. Selector picks the right format for all 5 scenarios; notes are distilled (not verbatim), slides are valid Marp (front-matter + `---` + Citations slide), worked-example has grounded steps + practice Q&A. 4 cheap calls (notes 1 + slides outline 1 + worked 2 concepts) = **~$0.0004 / multi-format run** on `gpt-4o-mini`. Mind-map + combination run at **$0** (deterministic).
+- **Live-surfaced fix:** `gpt-4o-mini` sometimes pre-numbers worked-example steps ("1. …", "Step 2 — …") → the deterministic emitter double-numbered ("1. 1. …"); now strips a leading enumerator before re-numbering (regression test added). *(This is exactly the kind of defect only a live run exposes — offline templates never pre-number.)*
+- **Deferred (recorded):** Marp→`.pptx` is an external `marp-cli` post-step (we emit the `.md`), not a model; UI surfacing of artifacts → OW-6.
+
 ---
 
 ## Consolidated verification
 
-**Offline gates (deterministic, $0):** `verify_m0` `verify_m1` `verify_m2` `verify_m3` `verify_cost` `verify_digest` `verify_discover` `verify_teach_assess` — all green. `pytest -q` = **252 passed**.
+**Offline gates (deterministic, $0):** `verify_m0` `verify_m1` `verify_m2` `verify_m3` `verify_cost` `verify_digest` `verify_discover` `verify_teach_assess` `verify_artifact` — all green. `pytest -q` = **268 passed**.
 
 **LIVE gates (real provider, metered):**
 | gate | result | cost |
@@ -92,6 +100,7 @@ silent fallback** (a dead provider raises, never silently returns a fixture).
 | `verify_digest_live` | ALL PASS (gpt-4o judge fires) | ~$0.0014 |
 | `verify_discover_live` | ALL PASS (6 sources) | ~$0.0021 |
 | `verify_teach_assess_live` | ALL PASS (goal/distractors/metered grade) | ~$0.00015 |
+| `verify_artifact_live` | ALL PASS (notes/slides/worked live; citations resolve; metered stage=artifact) | ~$0.0004 |
 
 **Spec compliance:** OW-0..OW-3 fully aligned (research↔spec↔plan↔code↔tests); 7 prior deviations (RefD, query cache, papers.source_id, result cache, BM25, 80% alert, qwen bypass) all fixed; deferred items flagged inline in the spec. (Audit detail in `archive/`.)
 
@@ -100,4 +109,4 @@ silent fallback** (a dead provider raises, never silently returns a fixture).
 - **Escalation gate / pedagogical-error-cost routing** — ✅ done in OW-4 (`grade_kp` frontier escalation near the mastery threshold).
 - **Glass-box meter → cost_ledger; teacher override; progress streaming** — OW-6.
 - **learner_goal slug↔ID reconciliation** — partially addressed by goal_elicit (OW-4); full reconciliation when the live cold-start path (OW-7) resolves slugs→ids.
-- No model need recorded — `gpt-4o-mini` (extract/propose) + `gpt-4o` (judge) + RefD are adequate; bottlenecks were code/prompt, not model tier.
+- No model need recorded — `gpt-4o-mini` (extract/propose/**artifacts**) + `gpt-4o` (judge) + RefD are adequate; bottlenecks were code/prompt, not model tier. OW-5 confirms `gpt-4o-mini` produces well-grounded, concise, correctly-formatted notes/slides/worked-examples at ~$0.0004/run — no frontier tier needed for artifact generation.
