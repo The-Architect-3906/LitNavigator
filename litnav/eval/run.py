@@ -39,21 +39,21 @@ def _live_grade(question: str, answer_key: str, learner_answer: str) -> bool:
     return bool(verdict.get("correct"))
 
 
-def _live_judge(prereq: str, target: str) -> bool:
-    """Offline-safe prereq judge: real LLM under a live provider; keep-by-default fallback offline."""
-    from litnav.llm import router
-    c = sqlite3.connect(":memory:")
+def _product_judge(prereq: str, target: str) -> bool:
+    """Prereq judge wired to the PRODUCT (`digest.verify._judge`), so improving the real judge moves
+    this metric. Offline degrades to verify's keep-by-default fallback (stable 0.5 on the balanced set)."""
     from litnav.storage.schema import init_db
+    from litnav.digest import verify
+    c = sqlite3.connect(":memory:")
     init_db(c)
-    verdict = router.complete_json(
-        "Is the first concept a genuine prerequisite for understanding the second? Return JSON only.\n"
-        f"First: {prereq}\nSecond: {target}\n"
-        '{"is_prereq": true or false}',
-        tier="frontier", stage="eval_prereq",
-        fallback={"is_prereq": True},
-        session_id="eval", conn=c,
-    )
-    return bool(verdict.get("is_prereq"))
+    edge = {
+        "prereq_slug": prereq.lower().replace(" ", "_"),
+        "target_slug": target.lower().replace(" ", "_"),
+        "prereq_desc": prereq,
+        "target_desc": target,
+        "evidence_text": [],
+    }
+    return bool(verify._judge(edge, {}, session_id="eval", conn=c, budget=None))
 
 
 def _load(name: str) -> list[dict]:
@@ -71,7 +71,7 @@ def _run_offline_suite() -> dict:
     return {"passed": passed, "total": passed + failed}
 
 
-def build_scorecard(*, grade_fn=_live_grade, judge_fn=_live_judge,
+def build_scorecard(*, grade_fn=_live_grade, judge_fn=_product_judge,
                     run_suite: bool = False, commit: str = "HEAD", ts: float = 0.0) -> Scorecard:
     probe = run_probe()
     golden = {

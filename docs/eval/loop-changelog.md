@@ -58,3 +58,21 @@ error** (judge accepts `RL → MDP`, the reversed dependency) and one debatable 
 This is a REAL product lever — but the golden currently calls a proxy judge (`run._live_judge`), not the
 product's `digest/verify` judge. The honest next iteration: **wire the golden to the product prereq judge,
 add an explicit directionality check to that judge's prompt, then keep/revert on `prereq_survival`.**
+
+### Harness-correctness fix — wire prereq_survival to the PRODUCT judge · KEPT
+- `run.py`: the prereq golden now calls **`digest.verify._judge`** (the real product judge, with
+  descriptions + the strict "necessary, not merely helpful" rule) instead of a weak proxy prompt.
+- **`prereq_survival` 0.833 (proxy) → 0.917 (product), live.** The proxy's directionality error
+  (`RL → MDP` accepted) is **correctly rejected by the product judge** — i.e. the product was already
+  strong; the earlier 0.833 was a measurement artifact. 337 tests green.
+- The one remaining miss (`ReAct → multi-agent`) is a **debatable** pair; by the product's strict
+  standard `False` is defensible, so the golden label was left as-is (NOT tuned to 1.0).
+
+## Loop conclusion
+Final live scorecard: `headline=0.8313` — grading_acc **1.0**, prereq_survival **0.917**,
+objective/quiz **1.0**, mastered_rate **1.0**, avg_mastery_delta 0.518. With the eval now measuring the
+**product** honestly, the system is at/near ceiling on every axis the harness can see. **No further
+autonomous keep/revert gains are available** without either (a) quality-graded goldens (distractor/answer
+quality beyond structural+binary) or (b) building the deferred product features (R3 spaced-retrieval
+delivery, R5 LLM flaw-gate) whose benefit a structural eval cannot detect. The honest loop result is:
+the measurable surfaces are strong; remaining work is feature-building, not parameter-tuning.
