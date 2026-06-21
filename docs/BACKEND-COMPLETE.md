@@ -260,8 +260,12 @@ idempotently by `litnav/storage/schema.py`.
 - **client** — routes through **LiteLLM**, so any provider works: OpenAI, Anthropic, Gemini, DeepSeek,
   Groq, Mistral, Cohere, Together, OpenRouter, Bedrock, Azure, Ollama / vLLM / any OpenAI-compatible
   server. `LITNAV_LLM_PROVIDER=none` (default) is fully offline ($0); a key flips it live. A guard still
-  refuses an in-code model that isn't a configured tier (catches typos). Embeddings need an
-  embedding-capable provider; others degrade gracefully (BM25-only, no semantic cache).
+  refuses an in-code model that isn't a configured tier (catches typos).
+- **Mixed setup** — embeddings (source re-ranking) can run on a *separate* provider via
+  `LITNAV_EMBED_PROVIDER` / `LITNAV_EMBED_API_KEY` / `LITNAV_EMBED_BASE_URL` (each falls back to its
+  `LITNAV_LLM_*` counterpart). So a chat-only provider (e.g. Anthropic, no embeddings API) pairs with
+  an embedding-capable one (e.g. OpenAI) instead of degrading to keyword-only ranking. If embeddings
+  are unavailable they still degrade gracefully (BM25-only, no semantic cache).
 
 Honesty invariant: the client returns content + structured fields only — **mastery, confidence, and
 routing are rule-computed**, never emitted by the model. Every caller passes a deterministic fallback.

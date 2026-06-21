@@ -74,3 +74,51 @@ def test_made_up_model_still_refused(monkeypatch):
     monkeypatch.setenv("LITNAV_LLM_STRICT", "")
     with pytest.raises(ValueError):
         c.complete_text("p", fallback="fb", model="totally-made-up")
+
+
+# ── Mixed setup: chat on one provider, embeddings on another ──────────────────────────────────────
+class _EmbResp:
+    def __init__(self):
+        self.data = [{"embedding": [0.1, 0.2]}]
+        self.usage = type("U", (), {"total_tokens": 3})()
+
+
+def test_embed_inherits_chat_provider_when_unset(monkeypatch):
+    monkeypatch.setenv("LITNAV_LLM_PROVIDER", "openai")
+    monkeypatch.setenv("LITNAV_LLM_API_KEY", "sk-chat")
+    monkeypatch.delenv("LITNAV_EMBED_PROVIDER", raising=False)
+    monkeypatch.delenv("LITNAV_EMBED_API_KEY", raising=False)
+    assert c._embed_provider() == "openai"
+    assert c._embed_api_key() == "sk-chat"
+
+
+def test_mixed_embed_provider_routing(monkeypatch):
+    # Chat on Anthropic (no embeddings API); embeddings routed to OpenAI with a separate key.
+    monkeypatch.setenv("LITNAV_LLM_PROVIDER", "anthropic")
+    monkeypatch.setenv("LITNAV_LLM_API_KEY", "sk-ant-chat")
+    monkeypatch.setenv("LITNAV_EMBED_PROVIDER", "openai")
+    monkeypatch.setenv("LITNAV_EMBED_API_KEY", "sk-openai-embed")
+    monkeypatch.setenv("LITNAV_EMBED_MODEL", "text-embedding-3-small")
+    captured = {}
+
+    def _fake_embedding(**kw):
+        captured.update(kw)
+        return _EmbResp()
+
+    monkeypatch.setattr(c, "_embedding", _fake_embedding)
+    out = c.embed_texts(["hello"])
+    assert out == [[0.1, 0.2]]
+    assert captured["model"] == "text-embedding-3-small"   # openai → no provider prefix
+    assert captured["api_key"] == "sk-openai-embed"        # the EMBED key, not the chat key
+
+
+def test_mixed_embed_prefixes_nonopenai_provider(monkeypatch):
+    monkeypatch.setenv("LITNAV_EMBED_PROVIDER", "gemini")
+    monkeypatch.setenv("LITNAV_EMBED_MODEL", "text-embedding-004")
+    assert c._litellm_embed_model("text-embedding-004") == "gemini/text-embedding-004"
+
+
+def test_embed_offline_when_provider_none(monkeypatch):
+    monkeypatch.setenv("LITNAV_LLM_PROVIDER", "none")
+    monkeypatch.delenv("LITNAV_EMBED_PROVIDER", raising=False)
+    assert c.embed_texts(["x"]) is None
