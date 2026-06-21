@@ -1,0 +1,657 @@
+[
+  {
+    "id": 1,
+    "slug": "diffusion-models",
+    "language": "English",
+    "domain": "ML / generative models",
+    "intended_depth": "mastery",
+    "errors": [],
+    "discover": {
+      "intent": "cutting-edge",
+      "n_sources": 6,
+      "n_fulltext": 3,
+      "secs": 7.6,
+      "top_source": {
+        "title": "Anomalous diffusion models and their properties: non-stationarity, non-ergodicity, and age",
+        "type": "web",
+        "authority": 0.88
+      }
+    },
+    "digest": {
+      "source": "Anomalous diffusion models and their properties: non-stationarity, non-ergodicit",
+      "chars": 1692,
+      "db_concepts": 8,
+      "db_keypoints": 0,
+      "db_quiz": 8,
+      "edges": 5,
+      "prereq": 0,
+      "edge_accuracy": 0.0,
+      "kp_evidence_resolves": true,
+      "secs": 37.8
+    },
+    "teach": {
+      "goal_type": "mastery",
+      "intended": "mastery",
+      "depth_match": true,
+      "expertise": "expert",
+      "strategy": "concise",
+      "quiz_q": "What is anomalous diffusion?",
+      "n_distractors": 3,
+      "flaw_gate_ok": true,
+      "grade_score": 1.0
+    },
+    "artifact": {
+      "selector_format": "combination",
+      "rendered": [
+        {
+          "format": "notes",
+          "len": 1348,
+          "citations": [
+            "c0"
+          ],
+          "citations_resolve": true,
+          "nonempty": true
+        },
+        {
+          "format": "mindmap",
+          "len": 496,
+          "citations": [
+            "c0"
+          ],
+          "citations_resolve": true,
+          "nonempty": true
+        }
+      ],
+      "secs": 4.4
+    },
+    "cost": {
+      "tokens": 9084,
+      "usd": 0.003666,
+      "was_live": true
+    }
+  },
+  {
+    "id": 2,
+    "slug": "crispr",
+    "language": "Chinese",
+    "domain": "Biology / gene editing",
+    "intended_depth": "survey",
+    "errors": [],
+    "discover": {
+      "intent": "crash-course",
+      "n_sources": 1,
+      "n_fulltext": 1,
+      "secs": 3.5,
+      "top_source": {
+        "title": "颠覆性技术研究（一）——理论起源、概念界定与五维分析框架",
+        "type": "web",
+        "authority": 0.0
+      }
+    },
+    "digest": {
+      "source": "颠覆性技术研究（一）——理论起源、概念界定与五维分析框架",
+      "chars": 281,
+      "db_concepts": 8,
+      "db_keypoints": 8,
+      "db_quiz": 8,
+      "edges": 6,
+      "prereq": 0,
+      "edge_accuracy": 0.0,
+      "kp_evidence_resolves": true,
+      "secs": 38.1
+    },
+    "teach": {
+      "goal_type": "survey",
+      "intended": "survey",
+      "depth_match": true,
+      "expertise": "novice",
+      "strategy": "overview",
+      "quiz_q": "What is a defining characteristic of disruptive technology?",
+      "n_distractors": 3,
+      "flaw_gate_ok": true,
+      "grade_score": 1.0
+    },
+    "artifact": {
+      "selector_format": "mindmap",
+      "rendered": [
+        {
+          "format": "notes",
+          "len": 1125,
+          "citations": [
+            "c0"
+          ],
+          "citations_resolve": true,
+          "nonempty": true
+        },
+        {
+          "format": "mindmap",
+          "len": 433,
+          "citations": [
+            "c0"
+          ],
+          "citations_resolve": true,
+          "nonempty": true
+        }
+      ],
+      "secs": 4.1
+    },
+    "cost": {
+      "tokens": 5654,
+      "usd": 0.003682,
+      "was_live": true
+    }
+  },
+  {
+    "id": 3,
+    "slug": "raft-consensus",
+    "language": "English",
+    "domain": "Distributed systems",
+    "intended_depth": "functional",
+    "errors": [],
+    "discover": {
+      "intent": "applied",
+      "n_sources": 3,
+      "n_fulltext": 3,
+      "secs": 3.9,
+      "top_source": {
+        "title": "Megalopolis (film)",
+        "type": "wikipedia",
+        "authority": 0.5
+      }
+    },
+    "digest": {
+      "source": "Megalopolis (film)",
+      "chars": 849,
+      "db_concepts": 8,
+      "db_keypoints": 8,
+      "db_quiz": 8,
+      "edges": 3,
+      "prereq": 0,
+      "edge_accuracy": 0.0,
+      "kp_evidence_resolves": true,
+      "secs": 37.5
+    },
+    "teach": {
+      "goal_type": "functional",
+      "intended": "functional",
+      "depth_match": true,
+      "expertise": "intermediate",
+      "strategy": "worked_example",
+      "quiz_q": "What is visionary architecture?",
+      "n_distractors": 3,
+      "flaw_gate_ok": true,
+      "grade_score": 1.0
+    },
+    "artifact": {
+      "selector_format": "worked_example",
+      "rendered": [
+        {
+          "format": "notes",
+          "len": 1164,
+          "citations": [
+            "c0"
+          ],
+          "citations_resolve": true,
+          "nonempty": true
+        },
+        {
+          "format": "mindmap",
+          "len": 438,
+          "citations": [
+            "c0"
+          ],
+          "citations_resolve": true,
+          "nonempty": true
+        }
+      ],
+      "secs": 3.9
+    },
+    "cost": {
+      "tokens": 5208,
+      "usd": 0.002757,
+      "was_live": true
+    }
+  },
+  {
+    "id": 4,
+    "slug": "quantum-error-correction",
+    "language": "English",
+    "domain": "Physics / quantum computing",
+    "intended_depth": "survey",
+    "errors": [],
+    "discover": {
+      "intent": "crash-course",
+      "n_sources": 6,
+      "n_fulltext": 3,
+      "secs": 4.6,
+      "top_source": {
+        "title": "Quantum Error Correction For Dummies",
+        "type": "web",
+        "authority": 0.13
+      }
+    },
+    "digest": {
+      "source": "Quantum Error Correction For Dummies",
+      "chars": 1422,
+      "db_concepts": 8,
+      "db_keypoints": 0,
+      "db_quiz": 8,
+      "edges": 8,
+      "prereq": 2,
+      "edge_accuracy": 0.2857,
+      "kp_evidence_resolves": true,
+      "secs": 43.6
+    },
+    "teach": {
+      "goal_type": "survey",
+      "intended": "survey",
+      "depth_match": true,
+      "expertise": "novice",
+      "strategy": "overview",
+      "quiz_q": "What are qubit errors?",
+      "n_distractors": 3,
+      "flaw_gate_ok": true,
+      "grade_score": 1.0
+    },
+    "artifact": {
+      "selector_format": "mindmap",
+      "rendered": [
+        {
+          "format": "notes",
+          "len": 1443,
+          "citations": [
+            "c0"
+          ],
+          "citations_resolve": true,
+          "nonempty": true
+        },
+        {
+          "format": "mindmap",
+          "len": 478,
+          "citations": [
+            "c0"
+          ],
+          "citations_resolve": true,
+          "nonempty": true
+        }
+      ],
+      "secs": 4.6
+    },
+    "cost": {
+      "tokens": 8694,
+      "usd": 0.004208,
+      "was_live": true
+    }
+  },
+  {
+    "id": 5,
+    "slug": "black-scholes",
+    "language": "Spanish",
+    "domain": "Finance / quantitative",
+    "intended_depth": "mastery",
+    "errors": [
+      "DISCOVER: no source with full text"
+    ],
+    "discover": {
+      "intent": "systematic",
+      "n_sources": 0,
+      "n_fulltext": 0,
+      "secs": 2.6
+    }
+  },
+  {
+    "id": 6,
+    "slug": "mrna-vaccines",
+    "language": "English",
+    "domain": "Biochemistry",
+    "intended_depth": "functional",
+    "errors": [],
+    "discover": {
+      "intent": "systematic",
+      "n_sources": 6,
+      "n_fulltext": 1,
+      "secs": 5.7,
+      "top_source": {
+        "title": "mRNA vaccines in disease prevention and treatment",
+        "type": "web",
+        "authority": 0.63
+      }
+    },
+    "digest": {
+      "source": "mRNA vaccines in disease prevention and treatment",
+      "chars": 1523,
+      "db_concepts": 7,
+      "db_keypoints": 7,
+      "db_quiz": 7,
+      "edges": 4,
+      "prereq": 0,
+      "edge_accuracy": 0.0,
+      "kp_evidence_resolves": true,
+      "secs": 29.8
+    },
+    "teach": {
+      "goal_type": "functional",
+      "intended": "functional",
+      "depth_match": true,
+      "expertise": "intermediate",
+      "strategy": "worked_example",
+      "quiz_q": "What is the primary purpose of mRNA design in vaccine development?",
+      "n_distractors": 3,
+      "flaw_gate_ok": true,
+      "grade_score": 1.0
+    },
+    "artifact": {
+      "selector_format": "worked_example",
+      "rendered": [
+        {
+          "format": "notes",
+          "len": 1121,
+          "citations": [
+            "c0"
+          ],
+          "citations_resolve": true,
+          "nonempty": true
+        },
+        {
+          "format": "mindmap",
+          "len": 456,
+          "citations": [
+            "c0"
+          ],
+          "citations_resolve": true,
+          "nonempty": true
+        }
+      ],
+      "secs": 4.2
+    },
+    "cost": {
+      "tokens": 8004,
+      "usd": 0.003086,
+      "was_live": true
+    }
+  },
+  {
+    "id": 7,
+    "slug": "transformer-attention",
+    "language": "Chinese",
+    "domain": "NLP / deep learning",
+    "intended_depth": "mastery",
+    "errors": [],
+    "discover": {
+      "intent": "systematic",
+      "n_sources": 3,
+      "n_fulltext": 3,
+      "secs": 4.5,
+      "top_source": {
+        "title": "颠覆性技术研究（一）——理论起源、概念界定与五维分析框架",
+        "type": "web",
+        "authority": 0.0
+      }
+    },
+    "digest": {
+      "source": "颠覆性技术研究（一）——理论起源、概念界定与五维分析框架",
+      "chars": 281,
+      "db_concepts": 8,
+      "db_keypoints": 0,
+      "db_quiz": 8,
+      "edges": 6,
+      "prereq": 0,
+      "edge_accuracy": 0.0,
+      "kp_evidence_resolves": true,
+      "secs": 38.2
+    },
+    "teach": {
+      "goal_type": "mastery",
+      "intended": "mastery",
+      "depth_match": true,
+      "expertise": "expert",
+      "strategy": "concise",
+      "quiz_q": "What is a defining characteristic of disruptive technology?",
+      "n_distractors": 3,
+      "flaw_gate_ok": true,
+      "grade_score": 1.0
+    },
+    "artifact": {
+      "selector_format": "combination",
+      "rendered": [
+        {
+          "format": "notes",
+          "len": 1271,
+          "citations": [
+            "c0"
+          ],
+          "citations_resolve": true,
+          "nonempty": true
+        },
+        {
+          "format": "mindmap",
+          "len": 479,
+          "citations": [
+            "c0"
+          ],
+          "citations_resolve": true,
+          "nonempty": true
+        }
+      ],
+      "secs": 3.5
+    },
+    "cost": {
+      "tokens": 6180,
+      "usd": 0.003615,
+      "was_live": true
+    }
+  },
+  {
+    "id": 8,
+    "slug": "behavioral-economics",
+    "language": "English",
+    "domain": "Economics",
+    "intended_depth": "survey",
+    "errors": [],
+    "discover": {
+      "intent": "crash-course",
+      "n_sources": 6,
+      "n_fulltext": 2,
+      "secs": 5.6,
+      "top_source": {
+        "title": "Nudging in education",
+        "type": "web",
+        "authority": 0.67
+      }
+    },
+    "digest": {
+      "source": "Nudging in education",
+      "chars": 1011,
+      "db_concepts": 7,
+      "db_keypoints": 0,
+      "db_quiz": 7,
+      "edges": 5,
+      "prereq": 0,
+      "edge_accuracy": 0.0,
+      "kp_evidence_resolves": true,
+      "secs": 33.8
+    },
+    "teach": {
+      "goal_type": "survey",
+      "intended": "survey",
+      "depth_match": true,
+      "expertise": "novice",
+      "strategy": "overview",
+      "quiz_q": "What is a nudging intervention?",
+      "n_distractors": 3,
+      "flaw_gate_ok": true,
+      "grade_score": 1.0
+    },
+    "artifact": {
+      "selector_format": "mindmap",
+      "rendered": [
+        {
+          "format": "notes",
+          "len": 1473,
+          "citations": [
+            "c0"
+          ],
+          "citations_resolve": true,
+          "nonempty": true
+        },
+        {
+          "format": "mindmap",
+          "len": 474,
+          "citations": [
+            "c0"
+          ],
+          "citations_resolve": true,
+          "nonempty": true
+        }
+      ],
+      "secs": 4.2
+    },
+    "cost": {
+      "tokens": 7388,
+      "usd": 0.002931,
+      "was_live": true
+    }
+  },
+  {
+    "id": 9,
+    "slug": "rlhf",
+    "language": "English",
+    "domain": "ML / alignment",
+    "intended_depth": "functional",
+    "errors": [],
+    "discover": {
+      "intent": "applied",
+      "n_sources": 3,
+      "n_fulltext": 3,
+      "secs": 4.8,
+      "top_source": {
+        "title": "Reinforcement learning from human feedback",
+        "type": "wikipedia",
+        "authority": 0.5
+      }
+    },
+    "digest": {
+      "source": "Reinforcement learning from human feedback",
+      "chars": 278,
+      "db_concepts": 6,
+      "db_keypoints": 0,
+      "db_quiz": 6,
+      "edges": 5,
+      "prereq": 0,
+      "edge_accuracy": 0.0,
+      "kp_evidence_resolves": true,
+      "secs": 33.9
+    },
+    "teach": {
+      "goal_type": "functional",
+      "intended": "functional",
+      "depth_match": true,
+      "expertise": "intermediate",
+      "strategy": "worked_example",
+      "quiz_q": "What does RLHF stand for?",
+      "n_distractors": 3,
+      "flaw_gate_ok": true,
+      "grade_score": 1.0
+    },
+    "artifact": {
+      "selector_format": "worked_example",
+      "rendered": [
+        {
+          "format": "notes",
+          "len": 1056,
+          "citations": [
+            "c0"
+          ],
+          "citations_resolve": true,
+          "nonempty": true
+        },
+        {
+          "format": "mindmap",
+          "len": 422,
+          "citations": [
+            "c0"
+          ],
+          "citations_resolve": true,
+          "nonempty": true
+        }
+      ],
+      "secs": 3.7
+    },
+    "cost": {
+      "tokens": 3568,
+      "usd": 0.002576,
+      "was_live": true
+    }
+  },
+  {
+    "id": 10,
+    "slug": "graph-neural-nets",
+    "language": "French",
+    "domain": "Graph machine learning",
+    "intended_depth": "survey",
+    "errors": [],
+    "discover": {
+      "intent": "crash-course",
+      "n_sources": 6,
+      "n_fulltext": 3,
+      "secs": 5.3,
+      "top_source": {
+        "title": "PRESENCE D’UNE PRÉDISPOSITION : PREMIER ÉPISODE D’UNE SÉRIE DE HUIT ÉPISODES SUR LE CERVEA",
+        "type": "web",
+        "authority": 0.4
+      }
+    },
+    "digest": {
+      "source": "PRESENCE D’UNE PRÉDISPOSITION : PREMIER ÉPISODE D’UNE SÉRIE DE HUIT ÉPISODES SUR",
+      "chars": 1783,
+      "db_concepts": 8,
+      "db_keypoints": 0,
+      "db_quiz": 8,
+      "edges": 6,
+      "prereq": 0,
+      "edge_accuracy": 0.0,
+      "kp_evidence_resolves": true,
+      "secs": 36.8
+    },
+    "teach": {
+      "goal_type": "survey",
+      "intended": "survey",
+      "depth_match": true,
+      "expertise": "novice",
+      "strategy": "overview",
+      "quiz_q": "What is genetic and epigenetic predisposition?",
+      "n_distractors": 3,
+      "flaw_gate_ok": true,
+      "grade_score": 1.0
+    },
+    "artifact": {
+      "selector_format": "mindmap",
+      "rendered": [
+        {
+          "format": "notes",
+          "len": 1813,
+          "citations": [
+            "c0"
+          ],
+          "citations_resolve": true,
+          "nonempty": true
+        },
+        {
+          "format": "mindmap",
+          "len": 447,
+          "citations": [
+            "c0"
+          ],
+          "citations_resolve": true,
+          "nonempty": true
+        }
+      ],
+      "secs": 6.5
+    },
+    "cost": {
+      "tokens": 11578,
+      "usd": 0.004011,
+      "was_live": true
+    }
+  }
+]

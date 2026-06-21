@@ -13,6 +13,7 @@ spec-compliance audit, and the per-cycle eval log are archived under `docs/archi
 | `2026-06-20-open-world-literature-review.md` | Verified literature + evidence grades + risk flags |
 | `2026-06-20-open-world-architecture-spec.md` | **Full architecture spec — source of truth** (impl-notes + deferred flags inline) |
 | `2026-06-20-live-gate-execution-contract.md` | How LIVE gates run (provider, budget, liveness, outage) |
+| `2026-06-21-ow0-5-e2e-evaluation.md` | **10-scenario live e2e evaluation** (real performance + ranked bugs); raw logs in `e2e-logs/` |
 | **this file** | Per-module status / done / not-done / live results |
 | `archive/` | Per-milestone plans, audits, re-audit, per-cycle eval log |
 
@@ -111,6 +112,19 @@ A fresh random topic (`diffusion models`, outside every fixture) run end-to-end 
 | `verify_openworld_e2e_live` | ALL PASS (fresh topic discover→digest→teach→artifact; persisted graph; grounded cited artifacts) | ~$0.003 |
 
 **Spec compliance:** OW-0..OW-3 fully aligned (research↔spec↔plan↔code↔tests); 7 prior deviations (RefD, query cache, papers.source_id, result cache, BM25, 80% alert, qwen bypass) all fixed; deferred items flagged inline in the spec. (Audit detail in `archive/`.)
+
+## 10-scenario e2e evaluation (2026-06-21)
+Full OW-0→5 live run over 10 diverse scenarios (goal/depth/prior/language/domain all varied). 9/10 ran
+end-to-end; 1 aborted at discovery. **Detail:** [`2026-06-21-ow0-5-e2e-evaluation.md`](2026-06-21-ow0-5-e2e-evaluation.md).
+Headline: the teaching machine (OW-2 persistence, OW-4, OW-5) is solid on good input and held up across
+every language; **topical correctness is gated by DISCOVER source relevance (~44%; 0/4 non-English).**
+New prioritized actions (recorded, no new model needed):
+- **A5 (P0) — OW-3.1 source-relevance gate:** relevance-filter the top source before digest; weight relevance ≫ authority; demote bare Wikipedia title hits (Raft→"Megalopolis", diffusion→physics).
+- **A6 (P0) — non-English discovery:** translate/normalize query to English for indices, teach in the user's language (es=0 sources, 中文=1 generic, fr=off-domain).
+- **A7 (P1) — multi-source digest:** digest top-k (not top-1) to recover prerequisite structure (single-source edge_accuracy≈0).
+- **A8 (P1) — output-language control:** thread goal language into renderer/teach prompts (cues default to English on non-English concepts).
+- **A9 (P2) — sub-chunk full text:** citations currently collapse to a single `c0`.
+- **A10 (P2) — deterministic keypoint floor:** extraction yields 0 keypoints in 6/9 runs.
 
 ## Action log (open)
 - **A4** — multi-source digest live validation across many sources (code supports it; one multi-source run done). Candidate for OW-7.
