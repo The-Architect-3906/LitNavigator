@@ -99,7 +99,13 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--label", default="")
     ap.add_argument("--no-suite", action="store_true")
+    ap.add_argument("--live", action="store_true",
+                    help="load .env so grading/prereq golden run against the real provider")
     args = ap.parse_args()
+
+    if args.live:
+        from litnav.config import load_dotenv
+        load_dotenv()  # project loader: picks up LITNAV_LLM_* / OPENAI_API_KEY from .env
 
     commit = (subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=str(_ROOT),
                              capture_output=True, text=True).stdout.strip() or "HEAD")
