@@ -41,13 +41,15 @@ flowchart TD
     G([🎯 Your learning goal])
 
     %% ===================== OPEN-WORLD: build the graph on demand =====================
-    subgraph DISC [find-sources · DISCOVER · OW-3]
+    subgraph DISC [find-sources · DISCOVER · OW-3 / 3.1]
       direction TB
+      FS0[normalize query\nany-language goal → English search query]
       FS1[intent classify\ngoal → survey · applied · cutting-edge]
       FS2[OpenAlex + Wikipedia adapters\nmetadata + authority]
       FS3[BM25 prefilter → embedding-cosine rerank\n+ authority + dedup]
-      FS4[top-k arXiv full text]
-      FS1 --> FS2 --> FS3 --> FS4
+      FSG[relevance gate\ncheap LLM drops off-topic sources]
+      FS4[top-k full text → sub-chunked c0..cN]
+      FS0 --> FS1 --> FS2 --> FS3 --> FSG --> FS4
     end
     subgraph DIG [digest-corpus · DIGEST · OW-2]
       direction TB
@@ -57,7 +59,7 @@ flowchart TD
       DG4[persist concepts · edges · keypoints · quiz · chunks\nsource=digested · slice cache]
       DG1 --> DG2 --> DG3 --> DG4
     end
-    G --> FS1
+    G --> FS0
     FS4 --> DG1
     DG4 --> CG[(Concept graph · SQLite\nconcepts · edges · keypoints · quiz · chunks\nprereq solid · similarity dashed · digested)]
 
@@ -101,7 +103,7 @@ flowchart TD
 
     %% ===================== ARTIFACTS + NEXT =====================
     SN -->|all concepts done| ART
-    ART[make-artifact · ARTIFACT · OW-5\nselect format → mind-map · notes · slides ·\nworked-example · combination\nretrieval prompt + resolving citations]
+    ART[make-artifact · ARTIFACT · OW-5\nselect format → mind-map · notes · slides ·\nworked-example · combination\nretrieval prompt + citations · in learner's language]
     ART --> RN[recommend-next · OW-6\nhard-prereq filter + mastery-gain ranker]
     RN --> DONE([✅ session done])
     CG -.on demand · deck · notes · map.-> ART
@@ -125,7 +127,7 @@ flowchart TD
     classDef store fill:#eaf3ff,stroke:#2d5d8f,color:#0f1b2b;
     classDef pending fill:#eee,stroke:#999,color:#555,stroke-dasharray:4 3;
     class G disc;
-    class FS1,FS2,FS3,FS4 disc;
+    class FS0,FS1,FS2,FS3,FSG,FS4 disc;
     class DG1,DG2,DG3,DG4 dig; class CG store;
     class GE,PL,IND,OT,SN,RT,IK,AN,HL,GK,RK,AK,LT,CK,LEC,GR,RE,DI teach;
     class ART art; class RN pending; class DONE store; class RTR spine;
