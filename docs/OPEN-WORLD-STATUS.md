@@ -1,6 +1,6 @@
 # Open-World LitNavigator — Status & Progress
 
-**Branch:** `feat/open-world-digest` · **Updated:** 2026-06-21 · **Tests:** 286 passed
+**Branch:** `feat/open-world-digest` · **Updated:** 2026-06-21 · **Tests:** 314 passed
 
 This is the single source of truth for *where the open-world build is*. It is organized by the
 architecture spec's milestones (§9). Detailed execution records, the live-first re-audit, the
@@ -130,6 +130,10 @@ Prioritized actions:
 **Post PR-#6 merge re-run (2026-06-21):** 9/10 full; **prereq 9/9, keypoints 9/9** (A7+A10 closed); concepts/artifacts grounded held; **A5/A6 unchanged → OW-3.1 next**; cost $0.0169/scenario (A11). Detail in the e2e evaluation doc.
 
 **Post-OW-3.1 re-run (2026-06-21):** **10/10 full pipeline · source relevance 100% (10/10) · non-English 4/4** — A5 + A6 CLOSED. Prereq survive 9/10; cost $0.0154/scenario (relevance gate + query normalization add negligible cheap-tier cost). Open: A8 (output-language), A9 (sub-chunk), A11 (digest cost ~5× from frontier sim-judge). Gates: `verify_discover` (offline) + `verify_discover_live` (A5/A6 live proof) + `verify_openworld_e2e_live` all green.
+
+**A8 + A9 done (2026-06-21):** output-language localization (goal language → renderers + teach/grade/reteach prompts) and full-text sub-chunking (`c0..cN` granular citations). 309 passed.
+
+**Inner-loop live validation (2026-06-21):** drove the REAL LangGraph tutor turn-by-turn on freshly-digested graphs across all 10 scenarios × learner variants (`litnav/evaluation/inner_loop_scenarios.py`; report [`2026-06-21-inner-loop-evaluation.md`](2026-06-21-inner-loop-evaluation.md)). **10/10 reached `done`; all four branches fire** (advance / reteach→recover / concede / handle_lost→recover); **A8 language 10/10** across en/中/es/fr (teach + artifact); honest concede on give_up. ~$0.018/session. **Found + fixed a release-blocking bug**: survey/functional goals looped forever (Bloom ceiling ignored in `assess_decider`) — now advance (QEC 40→13 turns, all `pending`→`done`). 314 passed. New actions A12 (prereq-detour not on keypoint path), A13 (mid-session goal pivot unmodelled).
 
 ## Action log (open)
 - **A4** — multi-source digest live validation across many sources (code supports it; one multi-source run done). Candidate for OW-7.

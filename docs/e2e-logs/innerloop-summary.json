@@ -1,0 +1,378 @@
+[
+  {
+    "id": 1,
+    "slug": "diffusion-models",
+    "language": "English",
+    "persona": "mastery",
+    "errors": [],
+    "reached_done": true,
+    "turns": 12,
+    "fired": {
+      "teach": true,
+      "reteach": false,
+      "graded": 12,
+      "correct": 12,
+      "mastered": true,
+      "conceded": false,
+      "handle_lost": false
+    },
+    "route_version": 1,
+    "route": [
+      "Denoising Autoencoders[done]",
+      "Latent Space Training[done]",
+      "Cross-Attention Layers[done]",
+      "Image Inpainting[done]"
+    ],
+    "concepts_taught": 4,
+    "teach_lang": "English",
+    "teach_lang_ok": true,
+    "artifact_lang": "English",
+    "artifact_lang_ok": true,
+    "artifact_citations": [
+      "c0",
+      "c1",
+      "c2",
+      "c3"
+    ],
+    "secs": 173.1,
+    "cost_usd": 0.020164,
+    "was_live": true
+  },
+  {
+    "id": 2,
+    "slug": "crispr",
+    "language": "Chinese",
+    "persona": "struggle",
+    "errors": [],
+    "reached_done": true,
+    "turns": 16,
+    "fired": {
+      "teach": true,
+      "reteach": true,
+      "graded": 16,
+      "correct": 12,
+      "mastered": true,
+      "conceded": false,
+      "handle_lost": false
+    },
+    "route_version": 1,
+    "route": [
+      "CRISPR/Cas-9 System[done]",
+      "Function of sgRNA[done]",
+      "Cas-9 Cleavage Mechanism[done]",
+      "DNA Repair Mechanisms[done]"
+    ],
+    "concepts_taught": 4,
+    "teach_lang": "Chinese",
+    "teach_lang_ok": true,
+    "artifact_lang": "Chinese",
+    "artifact_lang_ok": true,
+    "artifact_citations": [
+      "c1",
+      "c2"
+    ],
+    "secs": 213.6,
+    "cost_usd": 0.020176,
+    "was_live": true
+  },
+  {
+    "id": 3,
+    "slug": "raft-consensus",
+    "language": "English",
+    "persona": "give_up",
+    "errors": [],
+    "reached_done": true,
+    "turns": 12,
+    "fired": {
+      "teach": true,
+      "reteach": true,
+      "graded": 12,
+      "correct": 0,
+      "mastered": false,
+      "conceded": true,
+      "handle_lost": false
+    },
+    "route_version": 1,
+    "route": [
+      "Practical Byzantine Fault Tolerance (PBFT) Mechanism[conceded]",
+      "Scalability Challenges in PBFT[conceded]",
+      "Double-Layer PBFT Consensus[conceded]",
+      "Communication Complexity in Consensus Mechanisms[conceded]"
+    ],
+    "concepts_taught": 0,
+    "teach_lang": "English",
+    "teach_lang_ok": true,
+    "artifact_lang": "English",
+    "artifact_lang_ok": true,
+    "artifact_citations": [
+      "c1",
+      "c2",
+      "c3"
+    ],
+    "secs": 173.2,
+    "cost_usd": 0.018216,
+    "was_live": true
+  },
+  {
+    "id": 4,
+    "slug": "quantum-error-correction",
+    "language": "English",
+    "persona": "lost_then_recover",
+    "errors": [],
+    "reached_done": true,
+    "turns": 16,
+    "fired": {
+      "teach": true,
+      "reteach": false,
+      "graded": 15,
+      "correct": 15,
+      "mastered": true,
+      "conceded": false,
+      "handle_lost": true
+    },
+    "route_version": 1,
+    "route": [
+      "Entangled Quantum States[done]",
+      "Decoherence[done]",
+      "Nonlocal Degrees of Freedom[done]",
+      "Measurements on Qubits[done]",
+      "Quantum Error Correction Process[done]"
+    ],
+    "concepts_taught": 5,
+    "teach_lang": "English",
+    "teach_lang_ok": true,
+    "artifact_lang": "English",
+    "artifact_lang_ok": true,
+    "artifact_citations": [
+      "c1"
+    ],
+    "secs": 185.3,
+    "cost_usd": 0.015002,
+    "was_live": true
+  },
+  {
+    "id": 5,
+    "slug": "black-scholes",
+    "language": "Spanish",
+    "persona": "mastery",
+    "errors": [],
+    "reached_done": true,
+    "turns": 12,
+    "fired": {
+      "teach": true,
+      "reteach": false,
+      "graded": 12,
+      "correct": 12,
+      "mastered": true,
+      "conceded": false,
+      "handle_lost": false
+    },
+    "route_version": 1,
+    "route": [
+      "Black-Scholes Model[done]",
+      "Black-Scholes Equation[done]",
+      "European-style Options[done]",
+      "Black-Scholes Formula[done]"
+    ],
+    "concepts_taught": 4,
+    "teach_lang": "Spanish",
+    "teach_lang_ok": true,
+    "artifact_lang": "Spanish",
+    "artifact_lang_ok": true,
+    "artifact_citations": [
+      "c1"
+    ],
+    "secs": 166.8,
+    "cost_usd": 0.020516,
+    "was_live": true
+  },
+  {
+    "id": 6,
+    "slug": "mrna-vaccines",
+    "language": "English",
+    "persona": "struggle",
+    "errors": [],
+    "reached_done": true,
+    "turns": 16,
+    "fired": {
+      "teach": true,
+      "reteach": true,
+      "graded": 16,
+      "correct": 12,
+      "mastered": true,
+      "conceded": false,
+      "handle_lost": false
+    },
+    "route_version": 1,
+    "route": [
+      "RNA-based Technologies[done]",
+      "mRNA Vaccine Mechanism[done]",
+      "Immune Response[done]",
+      "Vaccine Manufacturing[done]"
+    ],
+    "concepts_taught": 4,
+    "teach_lang": "English",
+    "teach_lang_ok": true,
+    "artifact_lang": "English",
+    "artifact_lang_ok": true,
+    "artifact_citations": [
+      "c1"
+    ],
+    "secs": 199.6,
+    "cost_usd": 0.016295,
+    "was_live": true
+  },
+  {
+    "id": 7,
+    "slug": "transformer-attention",
+    "language": "Chinese",
+    "persona": "mastery",
+    "errors": [],
+    "reached_done": true,
+    "turns": 15,
+    "fired": {
+      "teach": true,
+      "reteach": false,
+      "graded": 15,
+      "correct": 15,
+      "mastered": true,
+      "conceded": false,
+      "handle_lost": false
+    },
+    "route_version": 1,
+    "route": [
+      "Attention Mechanisms in Vision Transformers[done]",
+      "Similarity Grouping Effects[done]",
+      "Human Visual Attention Mechanisms[done]",
+      "Feed-Forward Architecture of Vision Transformers[done]",
+      "Perceptual Organization Based on Feature Similarity[done]"
+    ],
+    "concepts_taught": 5,
+    "teach_lang": "Chinese",
+    "teach_lang_ok": true,
+    "artifact_lang": "Chinese",
+    "artifact_lang_ok": true,
+    "artifact_citations": [
+      "c1",
+      "c2",
+      "c3",
+      "c4"
+    ],
+    "secs": 179.5,
+    "cost_usd": 0.017124,
+    "was_live": true
+  },
+  {
+    "id": 8,
+    "slug": "behavioral-economics",
+    "language": "English",
+    "persona": "give_up",
+    "errors": [],
+    "reached_done": true,
+    "turns": 12,
+    "fired": {
+      "teach": true,
+      "reteach": true,
+      "graded": 12,
+      "correct": 0,
+      "mastered": false,
+      "conceded": true,
+      "handle_lost": false
+    },
+    "route_version": 1,
+    "route": [
+      "Nudge Theory[conceded]",
+      "Decision Environment[conceded]",
+      "Behavioral Influence[conceded]",
+      "Compliance Methods[conceded]"
+    ],
+    "concepts_taught": 0,
+    "teach_lang": "English",
+    "teach_lang_ok": true,
+    "artifact_lang": "English",
+    "artifact_lang_ok": true,
+    "artifact_citations": [
+      "c0"
+    ],
+    "secs": 160.8,
+    "cost_usd": 0.015809,
+    "was_live": true
+  },
+  {
+    "id": 9,
+    "slug": "rlhf",
+    "language": "English",
+    "persona": "struggle",
+    "errors": [],
+    "reached_done": true,
+    "turns": 16,
+    "fired": {
+      "teach": true,
+      "reteach": true,
+      "graded": 16,
+      "correct": 12,
+      "mastered": true,
+      "conceded": false,
+      "handle_lost": false
+    },
+    "route_version": 1,
+    "route": [
+      "4-bit NormalFloat (NF4)[done]",
+      "Double Quantization[done]",
+      "QLoRA[done]",
+      "Guanaco Model Family[done]"
+    ],
+    "concepts_taught": 4,
+    "teach_lang": "English",
+    "teach_lang_ok": true,
+    "artifact_lang": "English",
+    "artifact_lang_ok": true,
+    "artifact_citations": [
+      "c0",
+      "c1",
+      "c2"
+    ],
+    "secs": 188.3,
+    "cost_usd": 0.019591,
+    "was_live": true
+  },
+  {
+    "id": 10,
+    "slug": "graph-neural-nets",
+    "language": "French",
+    "persona": "lost_then_recover",
+    "errors": [],
+    "reached_done": true,
+    "turns": 13,
+    "fired": {
+      "teach": true,
+      "reteach": false,
+      "graded": 12,
+      "correct": 12,
+      "mastered": true,
+      "conceded": false,
+      "handle_lost": true
+    },
+    "route_version": 1,
+    "route": [
+      "Graph Structures[done]",
+      "Representation Learning[done]",
+      "Shallow Learning Mechanisms[done]",
+      "Graph Convolutional Networks[done]"
+    ],
+    "concepts_taught": 4,
+    "teach_lang": "French",
+    "teach_lang_ok": true,
+    "artifact_lang": "French",
+    "artifact_lang_ok": true,
+    "artifact_citations": [
+      "c1",
+      "c2",
+      "c4",
+      "c3"
+    ],
+    "secs": 152.9,
+    "cost_usd": 0.018671,
+    "was_live": true
+  }
+]
