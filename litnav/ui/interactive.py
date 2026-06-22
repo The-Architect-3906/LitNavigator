@@ -465,7 +465,12 @@ class AgentSession:
             yield {"type": "done", "done": False}
             return
         top = withft[0]
-        yield {"type": "build", "stage": "discover_done", "label": f"Source: {top.title[:80]}"}
+        # B: report HOW MANY + WHICH sources, streamed one-by-one (not just the top title).
+        yield {"type": "build", "stage": "discover_done",
+               "label": f"Found {len(withft)} sources", "count": f"{len(withft)} sources"}
+        for s in withft:
+            yield {"type": "build", "stage": "source", "label": s.title[:90],
+                   "source_type": s.source_type}
         yield {"type": "build", "stage": "digest", "label": "Reading it and building your concept map…",
                "skill": "digest-corpus", "method": "concept extraction + RefD prereqs + gpt-4o verify",
                "paper": "Liang 2015"}
@@ -485,7 +490,11 @@ class AgentSession:
         # Repopulate concepts from the freshly-built graph so dispatch works during teaching.
         self.concepts = [{"id": r[0], "slug": r[1], "name": r[2]} for r in
                          self.conn.execute("SELECT id, slug, name FROM concepts ORDER BY id").fetchall()]
-        yield {"type": "build", "stage": "map", "label": f"Concept map ready — {len(tids)} concepts",
+        # C: reveal the extracted concepts one-by-one before the final map render.
+        for c in self.concepts:
+            yield {"type": "build", "stage": "concept", "label": c["name"]}
+        yield {"type": "build", "stage": "map",
+               "label": f"Concept map ready — {len(self.concepts)} concepts", "count": f"{len(self.concepts)} concepts",
                "graph": to_svg(concept_graph(self.conn, self.sid))}
         self.tutor = TutorSession(self.conn, self.ckpt, self.sid, out_dir=self.out_dir)
         self.tutor.start(self.goal, target_concept_ids=tids, goal_text=self.goal, mastery_threshold=0.75)
