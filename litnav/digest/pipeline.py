@@ -116,10 +116,26 @@ def _write_graph(conn: sqlite3.Connection, di: DigestInput, concepts: list[dict]
     return ids
 
 
+# Map free-form / non-ladder bloom labels onto the assess ladder (litnav.state.BLOOM_LADDER).
+_BLOOM_ALIAS = {
+    "remember": "recall", "knowledge": "recall", "recall": "recall",
+    "understand": "comprehension", "comprehension": "comprehension",
+    "apply": "application", "application": "application", "analyze": "application",
+}
+
+
 def _propose_quiz_seeds(concepts: list[dict], by_chunk: dict, candidate: dict, *,
+                        keypoints: list[dict] | None = None,
                         session_id: str | None, conn: sqlite3.Connection | None,
                         budget: int | None) -> list[dict]:
-    """LLM proposes one seed question per concept (live); offline returns candidate quiz_seeds."""
+    """LLM proposes one seed question per concept (live); offline returns candidate quiz_seeds.
+
+    A1/B1: a single recall seed per concept caps the learner at ONE correct observation
+    (kp_confidence(1)=0.30 < KP_CONF_THRESHOLD), so digested concepts always conceded. We
+    normalize bloom labels to the assess ladder and guarantee each keypoint carries BOTH a
+    recall and a comprehension seed, attached to that keypoint, so the bloom-climb has a real
+    second question to pose offline → ≥2 correct observations → mastery is reachable.
+    """
     slug_lines = "\n".join(f"- {c['slug']}: {c.get('name', c['slug'])}" for c in concepts)
     prompt = (
         "For each concept below, write ONE short recall-level seed question and its answer, "
@@ -134,7 +150,48 @@ def _propose_quiz_seeds(concepts: list[dict], by_chunk: dict, candidate: dict, *
     if not isinstance(seeds, list):
         seeds = candidate.get("quiz_seeds", [])
     slugs = {c["slug"] for c in concepts}
-    return [s for s in seeds if isinstance(s, dict) and s.get("concept_slug") in slugs]
+    seeds = [dict(s) for s in seeds if isinstance(s, dict) and s.get("concept_slug") in slugs]
+
+    # Normalize bloom labels onto the assess ladder so cached seeds are reachable by the climb.
+    for s in seeds:
+        s["bloom_level"] = _BLOOM_ALIAS.get(str(s.get("bloom_level", "recall")).lower(), "recall")
+
+    # Attach each seed to its concept's first keypoint when the LLM/candidate left it unbound,
+    # then ensure every keypoint has BOTH a recall and a comprehension seed.
+    kps = keypoints or []
+    first_kp_for_slug: dict[str, str] = {}
+    for k in kps:
+        first_kp_for_slug.setdefault(k.get("concept_slug"), k.get("kp_id"))
+    for s in seeds:
+        if not s.get("keypoint_id"):
+            s["keypoint_id"] = first_kp_for_slug.get(s.get("concept_slug"))
+
+    # Index existing (keypoint_id, bloom) coverage; fill recall + comprehension gaps per keypoint.
+    have: set[tuple[str | None, str]] = {(s.get("keypoint_id"), s["bloom_level"]) for s in seeds}
+    by_kp: dict[str, dict] = {}
+    for s in seeds:
+        if s.get("keypoint_id"):
+            by_kp.setdefault(s["keypoint_id"], s)
+    for k in kps:
+        kp_id, slug = k.get("kp_id"), k.get("concept_slug")
+        if not kp_id:
+            continue
+        base = by_kp.get(kp_id)
+        for rung in ("recall", "comprehension"):
+            if (kp_id, rung) in have:
+                continue
+            if base is None:
+                continue   # no seed text to derive from; assess_next will LLM-generate live
+            seeds.append({
+                "concept_slug": slug,
+                "keypoint_id": kp_id,
+                "question": base["question"],
+                "answer_key": base["answer_key"],
+                "bloom_level": rung,
+            })
+            have.add((kp_id, rung))
+
+    return seeds
 
 
 def digest(di: DigestInput, *, conn: sqlite3.Connection, candidate: dict,
@@ -169,8 +226,8 @@ def digest(di: DigestInput, *, conn: sqlite3.Connection, candidate: dict,
     refd_scores = refd_mod.refd_scores(concepts, _by_chunk)
     accuracy, (verified, unverified) = verify_mod.verify_pass(
         scored, judge_labels=labels, session_id=session_id, conn=conn, budget=budget, refd=refd_scores)
-    quiz_seeds = _propose_quiz_seeds(concepts, {}, candidate, session_id=session_id,
-                                     conn=conn, budget=budget)
+    quiz_seeds = _propose_quiz_seeds(concepts, {}, candidate, keypoints=keypoints,
+                                     session_id=session_id, conn=conn, budget=budget)
 
     if write:
         _write_graph(conn, di, concepts, verified, keypoints, quiz_seeds, slice_key=key)
