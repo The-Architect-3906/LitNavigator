@@ -5,7 +5,7 @@ default_on, intent_affinity) plus a `search` callable so callers never need
 to import adapter modules directly.
 """
 from __future__ import annotations
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Callable
 
 from litnav.discover.contract import Source
