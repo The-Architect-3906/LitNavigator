@@ -103,12 +103,44 @@ def _write_graph(conn: sqlite3.Connection, di: DigestInput, concepts: list[dict]
                              edge_type=e["edge_type"], source="digested",
                              confidence=e["confidence"], evidence_chunks=e["evidence"],
                              slice_key=slice_key)
+    # Build a mapping: concept_db_id -> set of resolved chunk ids, so we can tag
+    # each written chunk with the concept that owns it after writing keypoints.
+    # This is what makes retrieve_node (which filters paper_chunks by concept_id)
+    # return evidence instead of 0 chunks (B18).
+    concept_chunk_ids: dict[int, set[str]] = {cid: set() for cid in ids.values()}
     for k in keypoints:
         if k["concept_slug"] in ids:
+            resolved = _norm_chunk_id(k.get("evidence_chunk_id"), valid_chunk_ids)
             repo.create_keypoint(conn, k["kp_id"], ids[k["concept_slug"]], k["name"],
                                  k.get("objective", ""),
-                                 _norm_chunk_id(k.get("evidence_chunk_id"), valid_chunk_ids),
+                                 resolved,
                                  bloom_level=k.get("bloom_level", "recall"))
+            if resolved:
+                concept_chunk_ids[ids[k["concept_slug"]]].add(resolved)
+
+    # Fallback: concepts that ended up with no evidence chunks linked (e.g. no
+    # keypoints, or all keypoints had unresolvable ids that all collapsed to c0)
+    # get their own chunk via round-robin over the source chunks not yet claimed.
+    # This ensures every concept has at least one distinct, dedicated chunk so
+    # retrieve_node always returns evidence (and the lesson doesn't cite another
+    # concept's boilerplate text).
+    if valid_chunk_ids:
+        unclaimed = [cid for cid in valid_chunk_ids
+                     if not any(cid in s for s in concept_chunk_ids.values())]
+        concept_ids_without_chunks = [cid for cid, s in concept_chunk_ids.items() if not s]
+        for i, concept_db_id in enumerate(concept_ids_without_chunks):
+            if unclaimed:
+                chunk_id = unclaimed.pop(0)
+            else:
+                # All chunks already claimed; assign round-robin from valid_chunk_ids
+                chunk_id = valid_chunk_ids[i % len(valid_chunk_ids)]
+            concept_chunk_ids[concept_db_id].add(chunk_id)
+
+    # Tag each chunk with its owning concept so retrieve_node can filter by concept_id.
+    for concept_db_id, chunk_ids in concept_chunk_ids.items():
+        for chunk_id in chunk_ids:
+            repo.assign_chunk_concept(conn, chunk_id, concept_db_id)
+
     for q in quiz_seeds:
         if q["concept_slug"] in ids:
             repo.create_quiz_item(conn, ids[q["concept_slug"]], q["question"], q["answer_key"],
