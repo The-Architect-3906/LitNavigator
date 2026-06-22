@@ -206,6 +206,24 @@ class TutorSession:
         collected.reverse()
         return collected
 
+    @staticmethod
+    def _feedback_event(node: str, delta: dict) -> dict | None:
+        """Return a learner-facing feedback event when a grade node runs, else None.
+        Reuses the already-computed quiz_result (feedback text + correctness + misconception).
+        """
+        if node not in ("grade", "grade_kp"):
+            return None
+        qr = delta.get("quiz_result") or {}
+        score = qr.get("score")
+        if score is None:
+            return None
+        correct = score == 1.0
+        text = qr.get("feedback") or ("Correct!" if correct else "Not quite.")
+        misconception = qr.get("detected_misconception")
+        if not correct and misconception:
+            text = f"{text} (misconception detected: {misconception})"
+        return {"type": "feedback", "correct": correct, "text": text}
+
     def stream_answer(self, text: str):
         """Inject the answer and resume, yielding one event per executed node, then the
         terminal teach/question/state/done events. Used by the SSE endpoint."""
@@ -216,6 +234,9 @@ class TutorSession:
                 if node.startswith("__"):   # skip LangGraph control keys (e.g. __interrupt__)
                     continue
                 yield self._step_event(node, delta or {})
+                fb = self._feedback_event(node, delta or {})
+                if fb:
+                    yield fb
         for ev in self._terminal_events():
             yield ev
 

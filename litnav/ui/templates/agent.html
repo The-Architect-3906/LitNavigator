@@ -65,6 +65,13 @@
  .ai p{margin:.3rem 0}.ai p:first-child{margin-top:0}.ai p:last-child{margin-bottom:0}
  .ai ul,.ai ol{margin:.3rem 0;padding-left:1.3rem}.ai li{margin:.15rem 0}
  .qa{font-weight:500;border-left:3px solid var(--accent);padding-left:.5rem}
+ /* ── Feedback bubble (B2/B3) ── */
+ .feedback{border-left:3px solid var(--ok);background:color-mix(in srgb,var(--ok) 8%,var(--s1));padding:.5rem .75rem;border-radius:8px;font-size:.9rem;display:flex;align-items:flex-start;gap:.45rem;margin:.4rem 0}
+ .feedback.wrong{border-left-color:var(--warn);background:color-mix(in srgb,var(--warn) 8%,var(--s1))}
+ .feedback-mark{flex-shrink:0;font-weight:700;font-size:1rem;line-height:1.4}
+ .feedback-mark.ok{color:var(--ok)}
+ .feedback-mark.warn{color:var(--warn)}
+ .feedback-text{color:var(--tx-primary);line-height:1.45}
  .working{color:var(--accent);font-size:.85rem;margin:.3rem 0;font-family:var(--mono)}
  .answer{display:flex;gap:.5rem;margin-top:.6rem}
  .answer input{
@@ -530,6 +537,19 @@ function handleEvent(e, steps, inp){
     steps.push({label:e.label,detail:e.detail,state:'active',
                 skill:e.skill,method:e.method,paper:e.paper});
     setFlow(steps);
+  } else if(e.type==='feedback'){
+    const t=document.getElementById('thread');
+    const d=document.createElement('div');
+    d.className='feedback'+(e.correct?'':' wrong');
+    const mark=document.createElement('span');
+    mark.className='feedback-mark '+(e.correct?'ok':'warn');
+    mark.textContent=e.correct?'✓':'✗';
+    const txt=document.createElement('span');
+    txt.className='feedback-text';
+    txt.textContent=e.text||'';
+    d.appendChild(mark);d.appendChild(txt);
+    t.appendChild(d);
+    t.scrollTop=t.scrollHeight;
   } else if(e.type==='teach'){
     steps.forEach(s=>s.state='done');setFlow(steps);
     if(e.text)addBubble('ai',e.text,true);
