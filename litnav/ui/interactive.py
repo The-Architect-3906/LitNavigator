@@ -410,7 +410,7 @@ class AgentSession:
         """Snapshot for the initial page render (empty 'conversing' state before teaching).
         Includes cost + recommend so Jinja first-paint matches the SSE updateGlass payload."""
         _empty_cost = session_cost(self.conn, self.sid)
-        _empty_rec = self._recommend() if self.tutor else []
+        _empty_rec = self.tutor._recommend() if self.tutor else []
         if self.open_world and not self.built:
             # "Building your course" placeholder — the page auto-streams the cold start on load.
             return {"done": False, "building": True, "goal": self.goal, "concept_name": None,
