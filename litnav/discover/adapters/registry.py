@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from typing import Callable
 
 from litnav.discover.contract import Source
-from litnav.discover.adapters import openalex, wikipedia, semantic_scholar, arxiv
+from litnav.discover.adapters import openalex, wikipedia, semantic_scholar, arxiv, stack_exchange
 
 
 @dataclass
@@ -54,6 +54,14 @@ _REGISTRY: list[AdapterDescriptor] = [
         default_on=True,
         intent_affinity=["cutting-edge", "systematic"],
         search=arxiv.search,
+    ),
+    AdapterDescriptor(
+        id="stack_exchange",
+        name="Stack Overflow",
+        description="Q&A for building/implementing — code-level guidance.",
+        default_on=False,
+        intent_affinity=["applied"],
+        search=stack_exchange.search,
     ),
 ]
 
