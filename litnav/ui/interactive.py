@@ -16,7 +16,7 @@ from litnav.nodes.retrieve import retrieve_node
 from litnav.recommend.recommend_next import recommend_next
 from litnav.storage import repo
 from litnav.ui.cost import session_cost
-from litnav.ui.flow_meta import meta_for
+from litnav.ui.flow_meta import meta_for, mastery_tier, why_sentence
 from litnav.ui.graph_svg import to_svg
 from litnav.ui.trace import concept_graph
 # Open-world cold-start (live mode): discover real sources → digest into a graph → teach.
@@ -81,6 +81,12 @@ class TutorSession:
         # ORIENT + LOST
         "orient_tour": "Walking the concept roadmap",
         "handle_lost": "Re-explaining from a different angle",
+        # Spaced-retrieval / probe nodes
+        "review_probe": "Quick recall — revisiting an earlier concept",
+        "grade_probe": "Grading recall answer",
+        # Open-world build stages (used as pseudo-node labels in build events)
+        "discover": "Finding real sources",
+        "digest": "Reading and building concept map",
     }
 
     def _step_event(self, node: str, delta: dict) -> dict:
@@ -185,7 +191,8 @@ class TutorSession:
         events.extend([
             {"type": "state", "route": cur["route"], "route_version": cur["route_version"],
              "learner": cur["learner"], "cited": cur["cited"], "decision": cur["decision"],
-             "rationale": cur["rationale"], "induced": cur["induced"], "intent": cur.get("intent"),
+             "rationale": cur["rationale"], "why_sentence": why_sentence(cur.get("decision")),
+             "induced": cur["induced"], "intent": cur.get("intent"),
              "graph": to_svg(concept_graph(self.conn, self.sid)),
              "cost": session_cost(self.conn, self.sid),
              "recommend": self._recommend()},
@@ -293,6 +300,34 @@ class TutorSession:
 
         cs = (vals.get("learner_state") or {}).get(focus_id, {}) if focus_id is not None else {}
 
+        # Build learner list including ALL route concepts (pre-quiz ones show as not-yet-assessed).
+        learner_state = vals.get("learner_state") or {}
+        route_cids = [st.get("concept_id") for st in route if st.get("concept_id") is not None]
+        # Union of route concept ids + observed concept ids (preserves order: route first)
+        seen_cids: list[int] = []
+        for cid in route_cids:
+            if cid not in seen_cids:
+                seen_cids.append(cid)
+        for cid in learner_state:
+            if cid not in seen_cids:
+                seen_cids.append(cid)
+        learner_list = []
+        for cid in seen_cids:
+            cname = (self.conn.execute("SELECT name FROM concepts WHERE id=?", (cid,)).fetchone() or [None])[0]
+            cstate = learner_state.get(cid, {})
+            m = round(cstate.get("mastery", 0.0), 3)
+            c = round(cstate.get("confidence", 0.0), 3)
+            assessed = bool(cstate.get("n_observations"))
+            learner_list.append({
+                "name": cname,
+                "mastery": m,
+                "confidence": c,
+                "tier": mastery_tier(m) if assessed else None,
+                "held": cstate.get("held_misconceptions", []),
+                "assessed": assessed,
+            })
+
+        decision = vals.get("decision")
         return {
             "session_id": self.sid,
             "done": done,
@@ -316,16 +351,10 @@ class TutorSession:
             ],
             "evidence": vals.get("current_evidence") or [],
             "cited": self._resolve_cited(vals.get("current_cited_chunks") or []),
-            "decision": vals.get("decision"),
+            "decision": decision,
             "rationale": vals.get("rationale"),
-            "learner": [
-                {"name": (self.conn.execute("SELECT name FROM concepts WHERE id=?", (cid,)).fetchone() or [None])[0],
-                 "mastery": round(cs.get("mastery", 0.0), 3),
-                 "confidence": round(cs.get("confidence", 0.0), 3),
-                 "held": cs.get("held_misconceptions", [])}
-                for cid, cs in (vals.get("learner_state") or {}).items()
-                if cs.get("n_observations")
-            ],
+            "why_sentence": why_sentence(decision),
+            "learner": learner_list,
             "induced": [
                 {"prereq": (self.conn.execute("SELECT name FROM concepts WHERE id=?", (e["prereq_concept"],)).fetchone() or [None])[0],
                  "target": (self.conn.execute("SELECT name FROM concepts WHERE id=?", (e["target_concept"],)).fetchone() or [None])[0],
@@ -335,6 +364,8 @@ class TutorSession:
             "intent": vals.get("intent"),
             "teach_depth": vals.get("teach_depth"),
             "mastery_threshold": vals.get("mastery_threshold"),
+            "cost": session_cost(self.conn, self.sid),
+            "recommend": self._recommend(),
             "graph": to_svg(concept_graph(self.conn, self.sid)),
         }
 
@@ -376,21 +407,28 @@ class AgentSession:
         return bool(self.tutor and not cur.get("done") and cur.get("question"))
 
     def current(self) -> dict:
-        """Snapshot for the initial page render (empty 'conversing' state before teaching)."""
+        """Snapshot for the initial page render (empty 'conversing' state before teaching).
+        Includes cost + recommend so Jinja first-paint matches the SSE updateGlass payload."""
+        _empty_cost = session_cost(self.conn, self.sid)
+        _empty_rec = self.tutor._recommend() if self.tutor else []
         if self.open_world and not self.built:
             # "Building your course" placeholder — the page auto-streams the cold start on load.
             return {"done": False, "building": True, "goal": self.goal, "concept_name": None,
                     "teach": None, "teach_messages": [], "question": None, "route": [],
                     "route_version": 1, "learner": [], "cited": [], "evidence": [],
-                    "decision": None, "rationale": None, "induced": [], "intent": None,
+                    "decision": None, "rationale": None, "why_sentence": None,
+                    "induced": [], "intent": None,
                     "mastery": None, "confidence": None,
+                    "cost": _empty_cost, "recommend": _empty_rec,
                     "graph": to_svg(concept_graph(self.conn, None))}
         if self.tutor:
             return self.tutor.current()
         return {"done": False, "concept_name": None, "teach": None, "teach_messages": [], "question": None,
                 "route": [], "route_version": 1, "learner": [], "cited": [], "evidence": [],
-                "decision": None, "rationale": None, "induced": [], "intent": None,
+                "decision": None, "rationale": None, "why_sentence": None,
+                "induced": [], "intent": None,
                 "mastery": None, "confidence": None,
+                "cost": _empty_cost, "recommend": _empty_rec,
                 # Base concept map (no session state yet) — orients the learner before teaching.
                 "graph": to_svg(concept_graph(self.conn, None))}
 
