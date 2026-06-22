@@ -232,13 +232,47 @@ def _propose_quiz_seeds(concepts: list[dict], by_chunk: dict, candidate: dict, *
             seeds.append({
                 "concept_slug": slug,
                 "keypoint_id": kp_id,
-                "question": base["question"],
+                # RC#2/B3: derive a DISTINCT question for the missing rung — never a verbatim copy of
+                # the base (which made the bloom-climb re-pose identical words). Live: LLM-generated;
+                # offline: a deterministic reframe (the router fallback). Same answer_key/fact.
+                "question": _derive_rung_question(base["question"], base["answer_key"], rung,
+                                                  session_id=session_id, conn=conn, budget=budget),
                 "answer_key": base["answer_key"],
                 "bloom_level": rung,
             })
             have.add((kp_id, rung))
 
     return seeds
+
+
+def _reframe_question(base_q: str, rung: str) -> str:
+    """Deterministic, offline-safe reframe so a derived rung is never verbatim-identical to the base."""
+    stem = base_q.rstrip(" ?").strip()
+    if rung == "comprehension":
+        return f"In your own words, explain why or how this holds: {stem}."
+    if rung == "application":
+        return f"Give a concrete example where this applies: {stem}."
+    return f"Briefly, what is the key idea here? (re: {stem})"  # recall
+
+
+def _derive_rung_question(base_q: str, answer_key: str, rung: str, *,
+                          session_id, conn, budget) -> str:
+    """A distinct question for `rung` grounded in the same fact. Live → LLM; offline → reframe fallback."""
+    fallback = {"question": _reframe_question(base_q, rung)}
+    spec = {"comprehension": "ask the learner to explain WHY/HOW or contrast with a misconception",
+            "application": "give a concrete scenario and ask whether/how it applies",
+            "recall": "ask directly what the key idea IS"}.get(rung, "ask a short-answer question")
+    out = router.complete_json(
+        f"Write ONE {rung}-level quiz question for the SAME fact, but clearly DIFFERENT wording from "
+        f"the existing question. {spec}. JSON only.\n"
+        f"Existing question: {base_q}\nKey idea / answer: {answer_key}\n"
+        '{"question": "<distinct question text>"}',
+        tier="cheap", stage="digest", fallback=fallback,
+        session_id=session_id, conn=conn, budget=budget, cache=True,
+    )
+    q = (out.get("question") if isinstance(out, dict) else None) or fallback["question"]
+    # guard: if the model echoed the base verbatim, fall back to the reframe
+    return _reframe_question(base_q, rung) if q.strip() == base_q.strip() else q
 
 
 def _seed_misconceptions(concepts: list[dict], candidate: dict, *,
