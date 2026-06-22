@@ -65,10 +65,17 @@ def handle_lost_node(state: NavState, conn: sqlite3.Connection) -> dict:
         new_kp_state = {**cp["keypoint_state"], kp_id: kp_s}
         updated_cp = {**cp, "keypoint_state": new_kp_state}
 
+        rationale_a = f"LOST: re-explaining '{kp_id}' at bloom={bloom} with strategy='{strategy}'"
+        # B15: record a decisions row so the glass-box timeline shows the lost event.
+        repo.record_decision(
+            conn, state["session_id"], state.get("route_version", 1),
+            "handle_lost", "lost", rationale_a,
+            state_snapshot={"keypoint_id": kp_id, "bloom": bloom, "strategy": strategy},
+        )
         return {
             "concept_progress": updated_cp,
             "user_intent": None,
-            "rationale": f"LOST: re-explaining '{kp_id}' at bloom={bloom} with strategy='{strategy}'",
+            "rationale": rationale_a,
             "history": [{
                 "event": "handle_lost",
                 "keypoint_id": kp_id,
@@ -101,10 +108,16 @@ def handle_lost_node(state: NavState, conn: sqlite3.Connection) -> dict:
             max_tokens=220,
         )
         text = ack + explanation
-
+        rationale_b = f"LOST: re-explaining concept '{name}' with analogy strategy"
+        # B15: record a decisions row for the legacy path too.
+        repo.record_decision(
+            conn, state["session_id"], state.get("route_version", 1),
+            "handle_lost", "lost", rationale_b,
+            state_snapshot={"concept_id": concept_id, "strategy": strategy},
+        )
         return {
             "user_intent": None,
-            "rationale": f"LOST: re-explaining concept '{name}' with analogy strategy",
+            "rationale": rationale_b,
             "history": [{
                 "event": "handle_lost",
                 "concept_id": concept_id,

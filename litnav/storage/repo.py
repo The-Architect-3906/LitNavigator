@@ -13,6 +13,15 @@ def create_session(conn: sqlite3.Connection, session_id: str, topic: str, user_i
     conn.commit()
 
 
+def complete_session(conn: sqlite3.Connection, session_id: str) -> None:
+    """B18: Mark the session as done once the full route is complete. Idempotent."""
+    conn.execute(
+        "UPDATE sessions SET status='done' WHERE id=? AND status='active'",
+        (session_id,),
+    )
+    conn.commit()
+
+
 def upsert_learner_state(
     conn: sqlite3.Connection,
     session_id: str,

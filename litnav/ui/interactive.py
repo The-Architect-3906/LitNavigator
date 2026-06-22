@@ -145,13 +145,28 @@ class TutorSession:
 
     def _terminal_events(self) -> list[dict]:
         cur = self.current()
+        # B18: mark session done in DB when the route is fully complete (idempotent).
+        if cur.get("done"):
+            repo.complete_session(self.conn, self.sid)
         events = [
             {"type": "teach", "text": text, "cited": cur.get("cited") or []}
             for text in (cur.get("teach_messages") or [])
             if text
         ]
+        # B16: when the route is complete, emit a short completion message instead of the empty
+        # question bubble (text='', bloom_level=None) that previously appeared alongside the artifact.
+        if cur.get("done"):
+            route = cur.get("route") or []
+            n_done = sum(1 for s in route if s.get("status") == "done")
+            n_total = len(route)
+            events.append({"type": "completion",
+                           "text": (f"Route complete — {n_done} of {n_total} concept(s) mastered. "
+                                    "Here's your study artifact below."),
+                           "bloom_level": None})
+        elif cur.get("question"):
+            events.append({"type": "question", "text": cur["question"],
+                           "bloom_level": cur.get("bloom")})
         events.extend([
-            {"type": "question", "text": cur.get("question") or "", "bloom_level": cur.get("bloom")},
             {"type": "state", "route": cur["route"], "route_version": cur["route_version"],
              "learner": cur["learner"], "cited": cur["cited"], "decision": cur["decision"],
              "rationale": cur["rationale"], "induced": cur["induced"], "intent": cur.get("intent"),
