@@ -10,7 +10,6 @@ Escalation gate (spec §6.3 / §5):
 """
 from __future__ import annotations
 
-import re
 import sqlite3
 
 from litnav.llm import router
@@ -20,33 +19,10 @@ from litnav.storage import repo
 # Escalation constants
 CONF_MIN = 0.6                                       # confidence below this triggers re-grade check
 _BAND = (KP_MASTERY_THRESHOLD - 0.30, KP_MASTERY_THRESHOLD + 0.05)  # near-threshold mastery band
-
-# A6 answer-relevance guard: words too generic to signal topical overlap.
-_STOPWORDS = frozenset(
-    "the a an and or but of to in on at for with from by is are was were be been being it its this "
-    "that these those as into about over under then than so if not no yes do does did will would can "
-    "could should may might you your i we they he she them his her our their what which who how why "
-    "when where one two three step steps loop process method work works".split()
-)
-_WORD = re.compile(r"[a-z0-9]+")
-
-
-def _content_words(text: str) -> set[str]:
-    return {w for w in _WORD.findall(text.lower()) if len(w) > 2 and w not in _STOPWORDS}
-
-
-def _answer_is_off_topic(answer: str, question: str, answer_key: str, evidence: str) -> bool:
-    """A6: True if a non-trivial answer shares essentially NO content words with the question's
-    topic (question + expected key idea + evidence). Catches a confidently-stated but off-topic
-    answer (e.g. a carbonara recipe for a ReAct question) that a loose LLM grader might pass.
-    Deterministic and offline-safe; only ever forces a 'wrong', never a 'correct'."""
-    ans = _content_words(answer)
-    if len(ans) < 2:
-        return False   # too short to judge as off-topic; let the grader/fallback decide
-    topic = _content_words(f"{question} {answer_key} {evidence}")
-    if not topic:
-        return False   # no topic signal to compare against
-    return ans.isdisjoint(topic)
+# NOTE: the A6 word-overlap "answer-relevance guard" was removed — it was English/Latin-only and
+# force-failed CORRECT non-English answers (French/Spanish scored 0.0 vs English 1.0; live-test B7).
+# Catching a rare off-topic answer was not worth systematically failing every non-English learner;
+# the LLM grader handles genuine off-topic answers. (Off-topic SOURCE matching stays in discover.)
 
 
 def grade_kp_node(state: NavState, conn: sqlite3.Connection) -> dict:
@@ -129,14 +105,6 @@ def grade_kp_node(state: NavState, conn: sqlite3.Connection) -> dict:
 
     correct = bool(verdict.get("correct"))
     feedback = verdict.get("feedback") or ("Correct." if correct else "Try again.")
-
-    # A6 answer-relevance guard: an answer with no topical overlap with the question can't be
-    # correct, no matter how confident the grader was. Overrides a loose live grader to 'wrong'.
-    if correct and _answer_is_off_topic(answer, quiz.get("question", ""),
-                                        quiz.get("answer_key", ""), evidence or ""):
-        correct = False
-        feedback = ("That answer doesn't seem to be about this question. "
-                    f"Expected key idea: {quiz.get('answer_key', '')}")
 
     s["mastery"] = kp_bump(old_mastery, bloom, correct)
     s["last_result"] = "correct" if correct else "wrong"

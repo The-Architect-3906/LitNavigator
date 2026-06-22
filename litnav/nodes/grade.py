@@ -57,14 +57,8 @@ def grade_node(state: NavState, conn: sqlite3.Connection) -> dict:
             feedback = grade_result.get("feedback") or "Correct."
             correct = True
 
-    # A6 answer-relevance guard: a clearly off-topic answer can't be correct, even if the LLM
-    # grader was loose enough to accept it. Deterministic + offline-safe (only forces 'wrong').
-    from litnav.nodes.grade_kp import _answer_is_off_topic
-    if correct and _answer_is_off_topic(answer, quiz_item["question"], quiz_item["answer_key"], ""):
-        correct = False
-        score = 0.0
-        feedback = ("That answer doesn't seem to be about this question. "
-                    f"Expected key idea: {quiz_item['answer_key']}")
+    # (A6 word-overlap answer-relevance guard removed — English-only, force-failed correct
+    # non-English answers; live-test B7. The LLM grader handles genuine off-topic answers.)
 
     # ── Misconception detection (only meaningful on a wrong answer) ──────────────
     detected_id = None
