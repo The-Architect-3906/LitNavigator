@@ -74,8 +74,10 @@ def _write_sources(conn: sqlite3.Connection, di: DigestInput) -> None:
 
 def _write_graph(conn: sqlite3.Connection, di: DigestInput, concepts: list[dict],
                  scored_edges: list[dict], keypoints: list[dict],
-                 quiz_seeds: list[dict], slice_key: str | None = None) -> dict[str, int]:
-    """Write concepts/edges/keypoints/quiz seeds as source='digested'; return {slug: concept_id}."""
+                 quiz_seeds: list[dict], misconceptions: list[dict],
+                 slice_key: str | None = None) -> dict[str, int]:
+    """Write concepts/edges/keypoints/quiz seeds/misconceptions as source='digested';
+    return {slug: concept_id}."""
     _write_sources(conn, di)
     # Global chunk ids written by _write_sources: c0..c{total-1}. Used to normalize keypoint
     # evidence_chunk_id onto real chunks so evidence/citations resolve downstream.
@@ -113,6 +115,19 @@ def _write_graph(conn: sqlite3.Connection, di: DigestInput, concepts: list[dict]
                                   qtype=q.get("qtype", "explain"),
                                   keypoint_id=q.get("keypoint_id"),
                                   bloom_level=q.get("bloom_level", "recall"))
+    for m in misconceptions:
+        if m.get("concept_slug") in ids:
+            repo.record_induced_misconception(
+                conn,
+                mid=m["id"],
+                concept_id=ids[m["concept_slug"]],
+                wrong_model=m["wrong_model"],
+                correct_model=m["correct_model"],
+                confidence=m.get("confidence", 0.6),
+                evidence_chunk_id=_norm_chunk_id(m.get("evidence_chunk_id"), valid_chunk_ids),
+                detect_hint=m.get("detect_hint"),
+                reteach_strategy=m.get("reteach_strategy", "analogy"),
+            )
     return ids
 
 
@@ -194,6 +209,71 @@ def _propose_quiz_seeds(concepts: list[dict], by_chunk: dict, candidate: dict, *
     return seeds
 
 
+def _seed_misconceptions(concepts: list[dict], candidate: dict, *,
+                         session_id: str | None, conn: sqlite3.Connection | None,
+                         budget: int | None) -> list[dict]:
+    """LLM proposes one misconception per concept (live); offline returns candidate misconceptions.
+
+    A4/B6: Without at least one seeded misconception per concept, _detect_misconception has an
+    empty bank → detection never fires on digested concepts. Each misconception must carry a
+    detect_hint regex so the keyword-match in grade.py / grade_kp.py can fire offline too.
+
+    Each returned dict keys: id, concept_slug, wrong_model, correct_model, detect_hint,
+    reteach_strategy, confidence, evidence_chunk_id.
+    Confidence is ALWAYS rule-computed here (fixed 0.6 for digested); the LLM never sets it.
+    """
+    slug_lines = "\n".join(f"- {c['slug']}: {c.get('name', c['slug'])}" for c in concepts)
+    prompt = (
+        "For each concept below, identify ONE common misconception a learner holds when first "
+        "encountering it. Provide: the wrong belief (wrong_model), the correct replacement "
+        "(correct_model), and a detect_hint — a short regex (2-4 alternated keywords, e.g. "
+        "'keyword1|keyword2') that would match a learner's answer that voices that wrong belief.\n"
+        f"Concepts:\n{slug_lines}\n\n"
+        'Respond JSON: {"misconceptions": [{"concept_slug", "wrong_model", "correct_model", '
+        '"detect_hint", "reteach_strategy": "analogy"}]}'
+    )
+    fallback = {"misconceptions": candidate.get("misconceptions", [])}
+    result = router.complete_json(prompt, tier="cheap", stage="digest", fallback=fallback,
+                                  session_id=session_id, conn=conn, budget=budget, cache=True)
+    raw = result.get("misconceptions") if isinstance(result, dict) else None
+    if not isinstance(raw, list):
+        raw = candidate.get("misconceptions", [])
+
+    slugs = {c["slug"] for c in concepts}
+    items = [dict(m) for m in raw
+             if isinstance(m, dict) and m.get("concept_slug") in slugs
+             and m.get("wrong_model") and m.get("correct_model")]
+
+    # Fall back to the candidate when the LLM returned nothing usable.
+    if not items:
+        items = [dict(m) for m in candidate.get("misconceptions", [])
+                 if isinstance(m, dict) and m.get("concept_slug") in slugs]
+
+    # Guarantee ≥1 entry per concept: synthesise a stub for any that are still missing.
+    covered = {m["concept_slug"] for m in items}
+    for c in concepts:
+        if c["slug"] not in covered:
+            items.append({
+                "concept_slug": c["slug"],
+                "wrong_model": f"Learners often confuse or over-generalise {c.get('name', c['slug'])}.",
+                "correct_model": (
+                    f"A precise understanding of {c.get('name', c['slug'])} requires "
+                    "attending to the specific mechanism described in the source."
+                ),
+                "detect_hint": c["slug"].replace("_", "|"),
+                "reteach_strategy": "analogy",
+            })
+
+    # Assign stable ids and fixed confidence; strip LLM-emitted confidence if any.
+    for i, m in enumerate(items):
+        m["id"] = f"dg_{m['concept_slug']}_{i}"
+        m["confidence"] = 0.6          # rule-computed, not LLM-emitted
+        m.setdefault("evidence_chunk_id", None)
+        m.setdefault("reteach_strategy", "analogy")
+
+    return items
+
+
 def digest(di: DigestInput, *, conn: sqlite3.Connection, candidate: dict,
            session_id: str | None = None, budget: int | None = None,
            write: bool = True, model_key: str | None = None) -> DigestResult:
@@ -228,9 +308,12 @@ def digest(di: DigestInput, *, conn: sqlite3.Connection, candidate: dict,
         scored, judge_labels=labels, session_id=session_id, conn=conn, budget=budget, refd=refd_scores)
     quiz_seeds = _propose_quiz_seeds(concepts, {}, candidate, keypoints=keypoints,
                                      session_id=session_id, conn=conn, budget=budget)
+    misconceptions = _seed_misconceptions(concepts, candidate,
+                                          session_id=session_id, conn=conn, budget=budget)
 
     if write:
-        _write_graph(conn, di, concepts, verified, keypoints, quiz_seeds, slice_key=key)
+        _write_graph(conn, di, concepts, verified, keypoints, quiz_seeds, misconceptions,
+                     slice_key=key)
         openworld_repo.cache_put(conn, key, model_key=mk)
 
     return DigestResult(
