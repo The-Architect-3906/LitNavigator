@@ -228,3 +228,43 @@ def test_agent_html_b8_no_blind_reload_on_error():
     assert "showError" in html, "B8: showError function missing"
     # Confirm _lastStreamBody is stored (enables retry)
     assert "_lastStreamBody" in html, "B8: _lastStreamBody tracking missing"
+
+
+# ── B9: a11y + quick wins ────────────────────────────────────────────────────
+
+def test_agent_home_has_viewport_meta():
+    from pathlib import Path
+    html = Path("litnav/ui/templates/agent_home.html").read_text(encoding="utf-8")
+    assert 'name="viewport"' in html, "B9: viewport meta missing from agent_home.html"
+    assert "width=device-width" in html
+
+
+def test_agent_home_has_h1():
+    from pathlib import Path
+    html = Path("litnav/ui/templates/agent_home.html").read_text(encoding="utf-8")
+    assert "<h1" in html, "B9: <h1> missing from agent_home.html"
+
+
+def test_agent_home_has_label_for_goal():
+    from pathlib import Path
+    html = Path("litnav/ui/templates/agent_home.html").read_text(encoding="utf-8")
+    assert 'for="goal"' in html or 'aria-label' in html, "B9: label/aria-label missing from goal input"
+
+
+def test_agent_html_thread_has_aria_live():
+    from pathlib import Path
+    html = Path("litnav/ui/templates/agent.html").read_text(encoding="utf-8")
+    # thread div must have aria-live
+    assert 'id="thread"' in html and 'aria-live' in html
+    # Quick check: the aria-live appears near the thread div (both on same line or within 5 chars)
+    idx = html.index('id="thread"')
+    assert 'aria-live' in html[idx:idx+60], "B9: aria-live not on #thread div"
+
+
+def test_agent_html_progressbar_role_on_tier_meter():
+    from pathlib import Path
+    html = Path("litnav/ui/templates/agent.html").read_text(encoding="utf-8")
+    assert 'role="progressbar"' in html, "B9: role=progressbar missing from tier meter"
+    assert 'aria-valuenow' in html, "B9: aria-valuenow missing"
+    assert 'aria-valuemin' in html
+    assert 'aria-valuemax' in html
