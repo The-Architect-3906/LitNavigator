@@ -25,6 +25,20 @@ from litnav.discover.contract import DiscoverInput
 from litnav.digest import pipeline
 from litnav.digest.contract import DigestInput, SourceDoc
 
+_DIGEST_TOPN = 3   # Fix A.4: digest the top-N full-text sources, not just one
+
+
+def _pick_digest_sources(withft: list, n: int = _DIGEST_TOPN) -> list:
+    """Choose up to n full-text sources for digest, general-concepts backbone first.
+
+    A survey/review or a Wikipedia article gives field-general concepts (the antidote to one paper's
+    proprietary jargon), so it leads; primary papers follow for depth. Stable within each group.
+    """
+    def _is_backbone(s) -> bool:
+        return getattr(s, "is_review", False) or s.source_type == "wikipedia"
+    ordered = sorted(withft, key=lambda s: not _is_backbone(s))   # backbone first, else input order
+    return ordered[:n]
+
 
 class TutorSession:
     _TERMINAL_ROUTE_STATUSES = {"done", "conceded", "lectured"}
@@ -474,8 +488,10 @@ class AgentSession:
         yield {"type": "build", "stage": "digest", "label": "Reading it and building your concept map…",
                "skill": "digest-corpus", "method": "concept extraction + RefD prereqs + gpt-4o verify",
                "paper": "Liang 2015"}
+        # Fix A.4: digest the top-3 sources (general-concepts backbone first), not just the top one.
+        picks = _pick_digest_sources(withft)
         di = DigestInput(self.goal,
-                         [SourceDoc(top.source_type, top.source_id, top.title, top.url, top.chunks)],
+                         [SourceDoc(s.source_type, s.source_id, s.title, s.url, s.chunks) for s in picks],
                          target_slugs=[])
         pipeline.digest(di, conn=self.conn,
                         candidate={"concepts": [], "keypoints": [], "prereq_edges": [],
