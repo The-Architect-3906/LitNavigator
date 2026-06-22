@@ -15,7 +15,7 @@ import sqlite3
 import uuid
 from pathlib import Path
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Query, Request
 from fastapi.responses import (FileResponse, HTMLResponse, JSONResponse, RedirectResponse,
                                StreamingResponse)
 from jinja2 import Environment, FileSystemLoader, select_autoescape
@@ -154,7 +154,7 @@ def _story_context(data: dict) -> dict:
     }
 
 
-def _start_agent(goal: str, intent: str | None) -> str:
+def _start_agent(goal: str, intent: str | None, selected_adapters: list[str] | None = None) -> str:
     sid = str(uuid.uuid4())
     base = Path(DEMO_DB_PATH).parent
     base.mkdir(parents=True, exist_ok=True)
@@ -168,7 +168,8 @@ def _start_agent(goal: str, intent: str | None) -> str:
         # The page auto-streams the cold start (discover → digest → teach) on first /events.
         repo.create_session(conn, sid, topic=goal.strip())
         _AGENTS[sid] = AgentSession(conn, ckpt, sid, fixture_data=None,
-                                    open_world_goal=goal.strip(), live=True, out_dir=_ARTIFACT_DIR)
+                                    open_world_goal=goal.strip(), live=True, out_dir=_ARTIFACT_DIR,
+                                    selected_adapters=selected_adapters)
         return sid
 
     # CURATED offline pack (deterministic, $0) — unchanged behaviour.
@@ -189,15 +190,16 @@ def _start_agent(goal: str, intent: str | None) -> str:
 
 @app.get("/tutor", response_class=HTMLResponse)
 def tutor_home(message: str = ""):
+    from litnav.discover.adapters import available_adapters
     data = _fixture_data()
     return _TEMPLATES.get_template("agent_home.html").render(
-        message=message, n_papers=_n_papers(data), **_story_context(data))
+        message=message, n_papers=_n_papers(data), adapters=available_adapters(), **_story_context(data))
 
 
 @app.get("/tutor/start")
-def tutor_start(goal: str = "", intent: str = ""):
+def tutor_start(goal: str = "", intent: str = "", adapters: list[str] = Query(default=[])):
     from litnav.intent import INTENTS
-    sid = _start_agent(goal, intent if intent in INTENTS else None)
+    sid = _start_agent(goal, intent if intent in INTENTS else None, selected_adapters=adapters or None)
     return RedirectResponse(f"/tutor/{sid}", status_code=303)
 
 

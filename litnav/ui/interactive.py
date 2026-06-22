@@ -379,7 +379,8 @@ class AgentSession:
     _BUDGET = 120000
 
     def __init__(self, domain_conn, checkpoint_conn, session_id: str, fixture_data: dict | None = None,
-                 *, open_world_goal: str | None = None, live: bool = False, out_dir: str = "artifacts"):
+                 *, open_world_goal: str | None = None, live: bool = False, out_dir: str = "artifacts",
+                 selected_adapters: list[str] | None = None):
         self.conn = domain_conn
         self.ckpt = checkpoint_conn
         self.sid = session_id
@@ -387,6 +388,7 @@ class AgentSession:
         # Open-world (live) mode: no fixture — build this learner's own graph from real sources.
         self.open_world = bool(open_world_goal and live)
         self.goal = (open_world_goal or "").strip()
+        self.selected_adapters = selected_adapters or None  # which DISCOVER sources (None = registry defaults)
         self.built = False
         self.tutor: TutorSession | None = None
         if fixture_data:
@@ -449,8 +451,8 @@ class AgentSession:
                "skill": "find-sources", "method": "BM25 + embedding rerank + relevance gate",
                "paper": "Robertson; Cohan 2020"}
         try:
-            res = find_sources.find(DiscoverInput(self.goal, k=6), conn=self.conn,
-                                    session_id=self.sid, budget=self._BUDGET)
+            res = find_sources.find(DiscoverInput(self.goal, k=6, selected_adapters=self.selected_adapters),
+                                    conn=self.conn, session_id=self.sid, budget=self._BUDGET)
         except Exception as e:
             yield {"type": "reply", "kind": "boundary", "text": f"Source search failed: {e}"}
             yield {"type": "done", "done": False}
