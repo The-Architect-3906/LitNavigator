@@ -101,6 +101,7 @@ def reteach_kp_node(state: NavState, conn: sqlite3.Connection) -> dict:
 
     return {
         "concept_progress": updated_cp,
+        "current_cited_chunks": [kp_meta["evidence_chunk_id"]] if kp_meta.get("evidence_chunk_id") else [],
         "rationale": rationale,
         "history": [{
             "event": "reteach_kp",
