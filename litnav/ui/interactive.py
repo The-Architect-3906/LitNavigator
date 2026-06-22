@@ -101,6 +101,22 @@ class TutorSession:
                 "label": self._STEP_LABELS.get(node, node), "detail": detail,
                 "skill": meta["skill"], "method": meta["method"], "paper": meta["paper"]}
 
+    def _resolve_cited(self, chunk_ids: list) -> list[dict]:
+        """Resolve chunk IDs to dicts with chunk_id, text, paper_id, and paper_title."""
+        result = []
+        for cid in chunk_ids:
+            row = self.conn.execute(
+                "SELECT pc.text, pc.paper_id, p.title "
+                "FROM paper_chunks pc LEFT JOIN papers p ON p.id = pc.paper_id "
+                "WHERE pc.id=?", (cid,)
+            ).fetchone()
+            if row:
+                result.append({"chunk_id": cid, "text": row[0] or "",
+                                "paper_id": row[1], "paper_title": row[2]})
+            else:
+                result.append({"chunk_id": cid, "text": "", "paper_id": None, "paper_title": None})
+        return result
+
     def _recommend(self) -> list[dict]:
         """Call recommend_next and return a serialisable list; empty on any error."""
         try:
@@ -299,12 +315,7 @@ class TutorSession:
                 for st in route
             ],
             "evidence": vals.get("current_evidence") or [],
-            "cited": [
-                {"chunk_id": cid,
-                 "text": (self.conn.execute("SELECT text FROM paper_chunks WHERE id=?", (cid,)).fetchone() or [""])[0],
-                 "paper_id": (self.conn.execute("SELECT paper_id FROM paper_chunks WHERE id=?", (cid,)).fetchone() or [None])[0]}
-                for cid in (vals.get("current_cited_chunks") or [])
-            ],
+            "cited": self._resolve_cited(vals.get("current_cited_chunks") or []),
             "decision": vals.get("decision"),
             "rationale": vals.get("rationale"),
             "learner": [

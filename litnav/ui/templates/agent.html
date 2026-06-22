@@ -155,6 +155,27 @@
    .cols{flex-direction:column}
    body.mode-glass #chat,body.mode-chat #glass{display:block}
  }
+
+ /* ── Citation chips ── */
+ .cite-chip{
+   display:inline-block;vertical-align:super;font-size:.65em;line-height:1;
+   font-family:var(--mono);font-variant-numeric:tabular-nums;
+   background:var(--s3);color:var(--accent);border:1px solid var(--border);
+   border-radius:4px;padding:.05em .3em;margin-left:.15em;
+   cursor:pointer;text-decoration:none;transition:background .15s
+ }
+ .cite-chip:hover{background:color-mix(in srgb,var(--accent) 18%,var(--s3))}
+ .cite-chip.active{background:color-mix(in srgb,var(--accent) 25%,var(--s3));border-color:var(--accent)}
+
+ /* ── Evidence cards ── */
+ .ev-card{
+   background:var(--s2);border:1px solid var(--border);border-radius:8px;
+   padding:.55rem .7rem;margin:.4rem 0;transition:border-color .2s
+ }
+ .ev-card.highlight{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,var(--s2))}
+ .ev-source{font-size:.75rem;font-weight:600;color:var(--accent);margin-bottom:.2rem;
+   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .ev-text{font-size:.82rem;color:var(--tx-secondary);line-height:1.45}
 </style></head>
 <body class="mode-chat show-detail" data-sid="{{ sid }}">
 <header>
@@ -234,7 +255,7 @@
     <!-- Concept map -->
     <div class="card"><b>Concept map</b>
       <div id="cmap" class="cmap">{{ graph|safe }}</div>
-      <div class="mut maplegend">current · <span style="color:var(--ok)">mastered</span> · lectured · <span style="color:#cf4f24">conceded</span> · dashed = induced</div>
+      <div class="mut maplegend">current · <span style="color:var(--ok)">mastered</span> · lectured · <span style="color:var(--warn)">conceded</span> · dashed = induced</div>
     </div>
 
     <!-- Agent flow -->
@@ -263,7 +284,12 @@
     <div class="card"><b>Cited evidence</b>
       <div id="evidence">
         {% for e in cited %}
-        <div class="ev">{{ e.chunk_id }}: {{ e.text[:140] }}…</div>
+        <div class="ev-card" data-chunk="{{ e.chunk_id }}">
+          <div class="ev-source">{{ e.paper_title or ('Source ' ~ e.paper_id) if e.paper_id else e.chunk_id }}</div>
+          <div class="ev-text">{{ e.text[:160] }}{% if e.text|length > 160 %}…{% endif %}</div>
+        </div>
+        {% else %}
+        <span class="mut">–</span>
         {% endfor %}
       </div>
     </div>
@@ -332,13 +358,34 @@ function esc(s){
 }
 
 function setMode(m){
-  document.body.className='mode-'+m;
+  // Preserve non-mode classes (e.g. show-detail) when switching views.
+  const keep = [...document.body.classList].filter(c=>!c.startsWith('mode-'));
+  document.body.className = [...keep, 'mode-'+m].join(' ');
   document.getElementById('t-chat').classList.toggle('on',m==='chat');
   document.getElementById('t-glass').classList.toggle('on',m==='glass');
   try{localStorage.setItem('litnav-mode',m)}catch(e){}
 }
 // Always start in chat mode so the learner sees teaching content first.
 // Glass box is opt-in per-session (button top-right); we don't persist across sessions.
+
+// Activate the Cited Evidence panel and highlight the card for a given chunk_id.
+// Switches to glass view if in chat mode, scrolls the card into view.
+function activateEvidence(chunkId){
+  // Switch to glass mode so the evidence panel is visible
+  setMode('glass');
+  // Remove previous highlights and mark active chip
+  document.querySelectorAll('.ev-card.highlight').forEach(c=>c.classList.remove('highlight'));
+  document.querySelectorAll('.cite-chip.active').forEach(c=>c.classList.remove('active'));
+  // Highlight the matching evidence card
+  const card = document.querySelector('.ev-card[data-chunk="'+CSS.escape(chunkId)+'"]');
+  if(card){
+    card.classList.add('highlight');
+    card.scrollIntoView({behavior:'smooth',block:'nearest'});
+  }
+  // Mark matching chips active
+  document.querySelectorAll('.cite-chip[data-chunk="'+CSS.escape(chunkId)+'"]')
+    .forEach(c=>c.classList.add('active'));
+}
 
 // Lightweight markdown → HTML (bold, italic, lists, paragraphs).
 // Input text must NOT already contain HTML — we escape first then add tags.
@@ -462,9 +509,18 @@ function updateGlass(e){
   }
 
   // ── Evidence ──
-  document.getElementById('evidence').innerHTML=(e.cited||[]).map(c=>
-    '<div class="ev">'+esc(c.chunk_id)+': '+esc((c.text||'').slice(0,140))+'…</div>'
-  ).join('') || '<span class="mut">–</span>';
+  const cited = e.cited || [];
+  document.getElementById('evidence').innerHTML = cited.length
+    ? cited.map(c => {
+        const src = c.paper_title || (c.paper_id != null ? 'Source ' + esc(String(c.paper_id)) : esc(c.chunk_id));
+        const txt = (c.text || '');
+        const snippet = txt.length > 160 ? esc(txt.slice(0, 160)) + '…' : esc(txt);
+        return '<div class="ev-card" data-chunk="'+esc(c.chunk_id)+'">'
+          + '<div class="ev-source">'+esc(src)+'</div>'
+          + '<div class="ev-text">'+snippet+'</div>'
+          + '</div>';
+      }).join('')
+    : '<span class="mut">–</span>';
 
   // ── Learner model with visual bars ──
   document.getElementById('learner').innerHTML=(e.learner||[]).map(c=>{
@@ -552,7 +608,25 @@ function handleEvent(e, steps, inp){
     t.scrollTop=t.scrollHeight;
   } else if(e.type==='teach'){
     steps.forEach(s=>s.state='done');setFlow(steps);
-    if(e.text)addBubble('ai',e.text,true);
+    if(e.text){
+      const bubble = addBubble('ai',e.text,true);
+      // Append inline citation chips for each cited chunk (e.cited[])
+      const cites = e.cited || [];
+      if(cites.length){
+        const chipRow = document.createElement('div');
+        chipRow.style.cssText='margin-top:.4rem;display:flex;flex-wrap:wrap;gap:.3rem;align-items:center';
+        cites.forEach((c,i)=>{
+          const chip = document.createElement('button');
+          chip.className='cite-chip';
+          chip.dataset.chunk=c.chunk_id;
+          chip.textContent='['+(i+1)+']';
+          chip.title=(c.paper_title||(c.paper_id!=null?'Source '+c.paper_id:c.chunk_id));
+          chip.addEventListener('click',()=>activateEvidence(c.chunk_id));
+          chipRow.appendChild(chip);
+        });
+        bubble.appendChild(chipRow);
+      }
+    }
   } else if(e.type==='question'){
     if(e.text)addBubble('ai qa',e.text,false);
   } else if(e.type==='state'){
