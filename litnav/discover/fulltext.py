@@ -48,6 +48,11 @@ def fetch_fulltext(source: Source, *, max_chunks: int = 6) -> list[str]:
                 return paper["chunks"][:max_chunks]
         except Exception:
             pass
+    if source.source_type == "wikipedia":            # Fix A.3: full article, not the 1-sentence summary
+        from litnav.discover.adapters import wikipedia
+        art = wikipedia.fetch_article(source.title)
+        if art:
+            return _chunk_text(art, max_chunks=max_chunks)
     return _chunk_text(source.abstract, max_chunks=max_chunks) if source.abstract else []
 
 
