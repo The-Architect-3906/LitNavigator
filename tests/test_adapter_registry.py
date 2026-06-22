@@ -46,3 +46,14 @@ def test_resolve_multiple_ids():
     result = registry.resolve(["openalex", "wikipedia"])
     result_ids = {ad.id for ad in result}
     assert result_ids == {"openalex", "wikipedia"}
+
+
+from litnav.discover.contract import DiscoverInput
+
+
+def test_discover_input_has_selected_adapters_field():
+    di = DiscoverInput(goal_text="test")
+    assert di.selected_adapters is None   # default
+
+    di2 = DiscoverInput(goal_text="test", selected_adapters=["arxiv"])
+    assert di2.selected_adapters == ["arxiv"]

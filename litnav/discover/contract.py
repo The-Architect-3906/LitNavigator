@@ -11,6 +11,7 @@ class DiscoverInput:
     intent: str | None = None
     budget: int | None = None
     k: int = 6
+    selected_adapters: list[str] | None = None
 
 
 @dataclass

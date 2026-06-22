@@ -11,10 +11,11 @@ from litnav.discover.contract import DiscoverInput, DiscoverResult, Source
 from litnav.discover import intent as intent_mod, rank as rank_mod, fulltext as fulltext_mod
 from litnav.discover import relevance as relevance_mod
 from litnav.discover import query as query_mod
-from litnav.discover.adapters import openalex, wikipedia
+from litnav.discover.adapters import registry as adapter_registry
 from litnav.storage import openworld_repo
 
 _FULLTEXT_TOPK = 3
+_WIKIPEDIA_K = 3   # Wikipedia always fetches a smaller set
 
 
 def _query_key(di: DiscoverInput) -> str:
@@ -34,10 +35,13 @@ def find(di: DiscoverInput, *, conn: sqlite3.Connection, session_id: str | None 
     sq = query_mod.to_search_query(di.goal_text, conn=conn, session_id=session_id, budget=budget)
     intent = intent_mod.classify(di.goal_text, conn=conn, session_id=session_id,
                                  explicit=di.intent, budget=budget)
+    adapters = adapter_registry.resolve(di.selected_adapters)
     sources = []
-    for adapter, n in ((openalex, di.k * 2), (wikipedia, 3)):
+    for ad in adapters:
+        # Wikipedia historically gets a smaller k to avoid flooding results
+        n = _WIKIPEDIA_K if ad.id == "wikipedia" else di.k * 2
         try:
-            sources.extend(adapter.search(sq, k=n))
+            sources.extend(ad.search(sq, k=n))
         except Exception:
             pass                                   # an adapter outage is non-fatal
     ranked = rank_mod.rank_sources(sq, sources, conn=conn, session_id=session_id,
