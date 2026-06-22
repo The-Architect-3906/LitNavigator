@@ -191,9 +191,12 @@ def _start_agent(goal: str, intent: str | None, selected_adapters: list[str] | N
 @app.get("/tutor", response_class=HTMLResponse)
 def tutor_home(message: str = ""):
     from litnav.discover.adapters import available_adapters
+    from litnav.evaluation.e2e_scenarios import SCENARIOS
     data = _fixture_data()
+    live = os.getenv("LITNAV_LLM_PROVIDER", "none") != "none"
     return _TEMPLATES.get_template("agent_home.html").render(
-        message=message, n_papers=_n_papers(data), adapters=available_adapters(), **_story_context(data))
+        message=message, n_papers=_n_papers(data), adapters=available_adapters(),
+        live=live, scenarios=SCENARIOS, **_story_context(data))
 
 
 @app.get("/tutor/start")

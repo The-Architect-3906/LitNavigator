@@ -34,6 +34,19 @@
  .src input{accent-color:var(--accent);cursor:pointer}
  .src-name{font-weight:600;color:var(--tx-primary)}
  .src-desc{color:var(--tx-secondary);font-size:.8rem}
+ .scenario-row{display:flex;flex-wrap:wrap;gap:.4rem;margin:.3rem 0 .6rem}
+ .scenario-btn{display:inline-flex;align-items:center;gap:.4rem;padding:.32rem .6rem;border-radius:999px;
+   font-size:.8rem;text-decoration:none;color:var(--tx-primary);border:1px solid var(--border);
+   background:var(--s2);transition:filter .15s}
+ .scenario-btn:hover{filter:brightness(1.25)}
+ .scenario-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+ .scenario-btn .sc-id{font-family:var(--mono);font-size:.72rem;opacity:.7}
+ .scenario-btn .sc-lang{font-family:var(--mono);font-size:.66rem;padding:.05rem .3rem;border-radius:4px;
+   background:rgba(255,255,255,.08);color:var(--tx-secondary)}
+ .scenario-btn.sc0{border-left:3px solid #E0A33C} .scenario-btn.sc1{border-left:3px solid #2da65c}
+ .scenario-btn.sc2{border-left:3px solid #4a9ed8} .scenario-btn.sc3{border-left:3px solid #c77dde}
+ .scenario-btn.sc4{border-left:3px solid #e06c75} .scenario-btn.sc5{border-left:3px solid #56b6c2}
+ .scenario-btn.sc6{border-left:3px solid #d19a66} .scenario-btn.sc7{border-left:3px solid #98c379}
  input::placeholder{color:var(--tx-secondary)}
  input:focus{outline:2px solid var(--accent);outline-offset:0}
  button{
@@ -99,14 +112,32 @@
        &nbsp;<i>(short route, leads with the live controversy, lower bar)</i></li>
  </ul>
  <p class="scope">Built from {{ n_papers }} LLM-agent papers. Ask within this scope; out-of-scope goals get an honest decline.</p>
+ {% if scenarios %}
+ <p style="margin:.8rem 0 .3rem"><b>Test scenarios</b> <span class="scope">— one-click live runs across domains &amp; languages</span></p>
+ <div class="scenario-row">
+   {% for s in scenarios %}
+   <a class="scenario-btn sc{{ s.id % 8 }}" href="/tutor/start?goal={{ s.goal_text | urlencode }}"
+      title="{{ s.goal_text }} ({{ s.language }} · {{ s.intended_depth }})">
+     <span class="sc-id">{{ s.id }}</span>{{ s.slug }}
+     <span class="sc-lang">{{ s.language[:2]|upper }}</span>
+   </a>
+   {% endfor %}
+ </div>
+ {% endif %}
  </div>
  <div class="hero">
-  <div class="k">Offline Discover + Digest</div>
+  <div class="k">{{ "Live Discover + Digest" if live else "Offline Discover + Digest" }}</div>
   <h2 style="margin:.25rem 0 .5rem">From a research area to a teachable concept map</h2>
+  {% if live %}
+  <p style="margin:.2rem 0 .8rem">Type a goal and the agent <b>discovers real sources live</b>
+     (OpenAlex · Wikipedia · Semantic Scholar · arXiv), <b>digests</b> them into a cited concept map,
+     then teaches, quizzes, and adapts in real time. The panels below show a sample offline pack.</p>
+  {% else %}
   <p style="margin:.2rem 0 .8rem">This demo starts from the field <b>{{ story_domain }}</b>, uses an offline
      corpus of <b>{{ story_paper_count }} papers</b>, distills them into <b>{{ story_concept_count }} concepts</b>
      and <b>{{ story_edge_count }} prerequisite links</b>, then switches to a live tutor that teaches,
      quizzes, and adapts in real time.</p>
+  {% endif %}
   <div class="paper-grid">
     {% for paper in story_representative_papers %}
     <div class="paper">{{ paper.title }} <span>· {{ paper.year }}</span></div>
