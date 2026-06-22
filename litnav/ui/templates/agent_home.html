@@ -1,24 +1,56 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><title>LitNavigator</title>
 <style>
- body{font-family:system-ui,sans-serif;margin:0;background:#f6f7fb;color:#1c2430}
- header{background:#1c2430;color:#fff;padding:.8rem 1.2rem}header b{color:#7fd1a6}
+ /* ── Direction-B dark design system (mirrors agent.html :root) ─────────── */
+ :root{
+   --s0:#0e1117;--s1:#181d27;--s2:#1f2636;--s3:#28334a;
+   --border:#2d3848;
+   --accent:#E0A33C;
+   --ok:#2da65c;--warn:#b3700d;--idle:#4a5568;
+   --tx-primary:#e2e8f0;--tx-secondary:#8899aa;
+   --mono:'Geist Mono','Berkeley Mono',ui-monospace,'SF Mono',monospace;
+ }
+ *{box-sizing:border-box}
+ body{
+   font-family:'Geist','Geist Sans',ui-sans-serif,system-ui,sans-serif;
+   font-size:1rem;line-height:1.55;
+   margin:0;background:var(--s0);color:var(--tx-primary)
+ }
+ header{
+   background:var(--s1);color:var(--tx-primary);
+   padding:.8rem 1.2rem;border-bottom:1px solid var(--border)
+ }
+ header b{color:var(--ok)}
  .wrap{max-width:60rem;margin:2rem auto;padding:0 1rem}
  form{display:flex;gap:.5rem;margin:1rem 0}
- input{flex:1;padding:.7rem;font-size:1rem;border:1px solid #c5ccd8;border-radius:8px}
- button{padding:.7rem 1.2rem;border:0;border-radius:8px;background:#5b49c4;color:#fff;font-size:1rem;cursor:pointer}
- .note{color:#b3700d;background:#fff6e5;padding:.6rem .8rem;border-radius:6px}
- .scope{color:#7a8699;font-size:.85rem}
- ul{color:#444}a{color:#5b49c4}
- .hero,.card{background:#fff;border:1px solid #e2e6ee;border-radius:14px;padding:1rem 1.1rem;margin:1rem 0}
- .hero{background:linear-gradient(135deg,#fff 0%,#f3f0ff 100%)}
+ input{
+   flex:1;padding:.7rem;font-size:1rem;
+   border:1px solid var(--border);border-radius:8px;
+   background:var(--s2);color:var(--tx-primary);font-family:inherit
+ }
+ input::placeholder{color:var(--tx-secondary)}
+ input:focus{outline:2px solid var(--accent);outline-offset:0}
+ button{
+   padding:.7rem 1.2rem;border:0;border-radius:8px;
+   background:var(--accent);color:#0e1117;
+   font-size:1rem;font-weight:600;cursor:pointer;font-family:inherit
+ }
+ button:focus-visible{outline:2px solid var(--tx-primary);outline-offset:2px}
+ .note{color:var(--warn);background:var(--s2);border:1px solid var(--warn);padding:.6rem .8rem;border-radius:6px}
+ .scope{color:var(--tx-secondary);font-size:.85rem}
+ ul{color:var(--tx-primary)}
+ a{color:var(--accent)}
+ a:hover{color:var(--tx-primary)}
+ .hero,.card{background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:1rem 1.1rem;margin:1rem 0}
+ /* Hero: dark surface, no gradient */
+ .hero{background:var(--s2);border-color:var(--border)}
  .pipeline{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.8rem;margin-top:1rem}
- .stage{background:#f8f9fd;border:1px solid #e2e6ee;border-radius:12px;padding:.9rem}
- .k{font-size:.78rem;letter-spacing:.04em;color:#7a8699;text-transform:uppercase}
- .stage b{display:block;margin:.25rem 0 .45rem}
+ .stage{background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:.9rem}
+ .k{font-size:.78rem;letter-spacing:.04em;color:var(--tx-secondary);text-transform:uppercase;font-family:var(--mono)}
+ .stage b{display:block;margin:.25rem 0 .45rem;color:var(--tx-primary)}
  .paper-grid,.chip-row{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.65rem}
- .paper,.chip{background:#fff;border:1px solid #dbe0ea;border-radius:999px;padding:.38rem .7rem;font-size:.86rem}
- .paper span,.chip span{color:#7a8699}
+ .paper,.chip{background:var(--s3);border:1px solid var(--border);border-radius:999px;padding:.38rem .7rem;font-size:.86rem;color:var(--tx-primary)}
+ .paper span,.chip span{color:var(--tx-secondary)}
 </style></head>
 <body>
 <header><b>LitNavigator</b> &nbsp; interactive tutor</header>
