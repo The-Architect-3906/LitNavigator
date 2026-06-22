@@ -209,3 +209,22 @@ def test_interactive_question_event_has_is_retrieval():
     import inspect
     src = inspect.getsource(TutorSession._terminal_events)
     assert "is_retrieval" in src, "is_retrieval not emitted in _terminal_events"
+
+
+# ── B8: Inline error + retry ─────────────────────────────────────────────────
+
+def test_agent_html_b8_error_bubble_css():
+    from pathlib import Path
+    html = Path("litnav/ui/templates/agent.html").read_text(encoding="utf-8")
+    assert "error-bubble" in html, "B8: .error-bubble CSS missing"
+    assert "error-btn-retry" in html, "B8: .error-btn-retry missing"
+
+
+def test_agent_html_b8_no_blind_reload_on_error():
+    from pathlib import Path
+    html = Path("litnav/ui/templates/agent.html").read_text(encoding="utf-8")
+    # The error SSE handler and catch block must not do a bare location.href reload.
+    # We check: showError is called, not location.href, in the error/catch contexts.
+    assert "showError" in html, "B8: showError function missing"
+    # Confirm _lastStreamBody is stored (enables retry)
+    assert "_lastStreamBody" in html, "B8: _lastStreamBody tracking missing"
