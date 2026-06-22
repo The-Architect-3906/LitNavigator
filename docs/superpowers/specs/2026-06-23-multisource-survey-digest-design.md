@@ -28,9 +28,11 @@ complaints reduced. Offline suite stays green.
   famous ones exist. Ranking is relevance×citation-authority only.
 
 ## 3. Decisions (from brainstorming)
-- Digest the **top 3** full-text sources (survey backbone + up to 2 primary).
+- Digest the **top 3** full-text sources (general-concepts backbone + up to 2 primary).
 - **Soft, intent-aware survey boost** (never a hard filter; niche topics may have no survey).
-- **Keep 3-page / 6-chunk extraction** unchanged (minimal-first; multi-source supplies breadth).
+- **Keep arXiv 3-page / 6-chunk extraction** unchanged (minimal-first; multi-source supplies breadth).
+- **Upgrade Wikipedia to full-article** (44KB vs 103 chars) and use it as the general-concepts backbone
+  for survey/crash-course/beginner goals (§4.4).
 
 ## 4. Components
 
@@ -54,7 +56,22 @@ complaints reduced. Offline suite stays green.
   `withft[:3]`. `digest()` already ingests a list. The B/C streaming already shows N sources +
   concepts, so the richer build lights up for free. Route still teaches the first N concepts.
 
-### 4.4 Extraction nudge (`litnav/digest/extract.py`)
+### 4.4 Wikipedia full-article backbone (`litnav/discover/adapters/wikipedia.py` + `fulltext.py`)
+The Wikipedia adapter currently stores only the REST **summary** (`extract`) — for "Graph neural
+network" that is **103 chars** (one sentence), so it contributes ~nothing to digest. Verified live: the
+MediaWiki **extracts** endpoint (`action=query&prop=extracts&explaintext`, with the adapter's existing
+User-Agent header) returns the **full article ≈ 44,701 chars** — a learner-altitude, jargon-free,
+field-general overview whose sections ARE a concept map.
+- Add full-article fetch to the Wikipedia source's full-text path (reuse the existing UA; non-fatal on
+  failure, fall back to the summary). Chunk it with the existing `_chunk_text` (respect a per-source cap
+  so the digest prompt stays bounded — e.g. the same `max_chunks` budget applied to the article body).
+- **Prefer a Wikipedia article as the general-concepts BACKBONE for survey / crash-course / beginner
+  goals** (alongside or ahead of a survey paper); for functional/mastery/cutting-edge goals it stays a
+  normal candidate. This is the cleanest fix for the one-paper-jargon problem on beginner goals.
+- Honest note: the 403 seen during research was a missing User-Agent in an ad-hoc test script, NOT an
+  app bug — the adapter already sends a UA. Keep sending it.
+
+### 4.5 Extraction nudge (`litnav/digest/extract.py`)
 - One added line in the decompose prompt: prefer **general, field-level concepts a learner would
   recognize**, NOT one system's proprietary names/acronyms — so even a primary paper yields general
   concepts (the TME→TMT/TRIM failure mode).
