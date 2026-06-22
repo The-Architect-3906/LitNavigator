@@ -352,7 +352,7 @@
           <div class="ev-text">{{ e.text[:160] }}{% if e.text|length > 160 %}…{% endif %}</div>
         </div>
         {% else %}
-        <span class="mut">–</span>
+        <span class="mut">Citations appear as I teach each keypoint</span>
         {% endfor %}
       </div>
     </div>
@@ -366,6 +366,7 @@
         {% set tier_cls = tier|lower %}
         <div>
           <div class="learner-name">{{ c.name }}</div>
+          {% if c.assessed %}
           <div class="tier-row">
             <span class="tier-chip tier-{{ tier_cls }}">{{ tier }}</span>
             <div class="tier-meter">
@@ -381,6 +382,9 @@
             <div class="bar-bg"><div class="bar-fill bar-c" style="width:{{ (c.confidence * 100)|round|int }}%"></div></div>
             <span>{{ (c.confidence * 100)|round|int }}%</span>
           </div>
+          {% else %}
+          <div class="mut" style="font-size:.78rem">Not yet assessed</div>
+          {% endif %}
           {% if c.held %}
           <div class="misconception">misconception: {{ c.held|join(', ') }}</div>
           {% endif %}
@@ -418,8 +422,11 @@
     <!-- Cost -->
     <div class="card costp">
       <b>Cost so far</b>
+      {% if cost and cost.tokens %}
       <span id="cost">{{ cost.tokens }} tok ≈ ${{ cost.usd }}</span>
-      <span class="mut">(offline = $0)</span>
+      {% else %}
+      <span id="cost">Offline run — $0</span>
+      {% endif %}
     </div>
 
   </div><!-- /glass -->
@@ -597,26 +604,30 @@ function updateGlass(e){
       }).join('')
     : '<span class="mut">–</span>';
 
-  // ── Learner model with tier meter ──
+  // ── Learner model with tier meter (includes pre-quiz "not yet assessed" concepts) ──
   const learnerItems = e.learner || [];
   document.getElementById('learner').innerHTML = learnerItems.length
     ? learnerItems.map(c=>{
         const mp = Math.round((c.mastery||0)*100);
         const cp = Math.round((c.confidence||0)*100);
         const held = (c.held||[]);
-        const tier = c.tier || 'Seen';
-        const tierCls = tier.toLowerCase();
+        const assessed = c.assessed !== false; // default true for backwards compat
+        const tier = c.tier || (assessed ? 'Seen' : null);
+        const tierCls = tier ? tier.toLowerCase() : '';
         const seg = (th) => '<div class="tier-seg" style="background:'+(mp>=th?'var(--'+(th>=78?'ok':th>=55?'ok':th>=30?'accent':'idle')+')':'var(--s3)')+'"></div>';
+        const tierHtml = assessed
+          ? '<div class="tier-row">'
+            + '<span class="tier-chip tier-'+tierCls+'">'+esc(tier)+'</span>'
+            + '<div class="tier-meter">'+seg(1)+seg(30)+seg(55)+seg(78)+'</div>'
+            + '<span class="tier-pct">'+mp+'%</span>'
+            + '</div>'
+            + '<div class="bar-row"><span class="bar-label">confid.</span>'
+            +   '<div class="bar-bg"><div class="bar-fill bar-c" style="width:'+cp+'%"></div></div>'
+            +   '<span>'+cp+'%</span></div>'
+          : '<div class="mut" style="font-size:.78rem">Not yet assessed</div>';
         return '<div>'
           + '<div class="learner-name">'+esc(c.name)+'</div>'
-          + '<div class="tier-row">'
-          + '<span class="tier-chip tier-'+tierCls+'">'+esc(tier)+'</span>'
-          + '<div class="tier-meter">'+seg(1)+seg(30)+seg(55)+seg(78)+'</div>'
-          + '<span class="tier-pct">'+mp+'%</span>'
-          + '</div>'
-          + '<div class="bar-row"><span class="bar-label">confid.</span>'
-          +   '<div class="bar-bg"><div class="bar-fill bar-c" style="width:'+cp+'%"></div></div>'
-          +   '<span>'+cp+'%</span></div>'
+          + tierHtml
           + (held.length ? '<div class="misconception">misconception: '+held.map(esc).join(', ')+'</div>' : '')
           + '</div>';
       }).join('')
@@ -652,7 +663,12 @@ function updateGlass(e){
 
   // ── Cost ──
   if(e.cost){
-    document.getElementById('cost').textContent=e.cost.tokens+' tok ≈ $'+e.cost.usd;
+    const costEl = document.getElementById('cost');
+    if(costEl){
+      costEl.textContent = e.cost.tokens
+        ? e.cost.tokens+' tok ≈ $'+e.cost.usd
+        : 'Offline run — $0';
+    }
   }
 
   // ── Recommend-next panel ──

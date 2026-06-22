@@ -25,7 +25,6 @@ from litnav.goal import resolve_goal
 from litnav.storage import repo
 from litnav.storage.schema import init_db
 from litnav.storage.seed import seed_demo_data
-from litnav.ui.cost import session_cost
 from litnav.ui.interactive import AgentSession, TutorSession
 from litnav.ui.trace import build_trace
 
@@ -210,9 +209,10 @@ def tutor_page(sid: str):
     data = _fixture_data()
     artifact_url = (f"/tutor/{sid}/artifact"
                     if getattr(getattr(ag, "tutor", None), "artifact_path", None) else None)
+    # cost is now included in ag.current() (B6: symmetric first paint)
     return _TEMPLATES.get_template("agent.html").render(
         sid=sid, n_papers=_n_papers(data), artifact_url=artifact_url,
-        cost=session_cost(ag.conn, sid), **_story_context(data), **ag.current())
+        **_story_context(data), **ag.current())
 
 
 @app.post("/tutor/{sid}/events")
