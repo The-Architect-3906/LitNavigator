@@ -19,7 +19,8 @@ _WIKIPEDIA_K = 3   # Wikipedia always fetches a smaller set
 
 
 def _query_key(di: DiscoverInput) -> str:
-    raw = f"{di.goal_text}|{di.k}"
+    adapter_key = ",".join(sorted(di.selected_adapters)) if di.selected_adapters else ""
+    raw = f"{di.goal_text}|{di.k}|{adapter_key}"
     return "discover:" + hashlib.sha1(raw.encode()).hexdigest()[:16]
 
 
