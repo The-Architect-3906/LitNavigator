@@ -8,9 +8,10 @@ import urllib.parse
 import urllib.request
 
 from litnav.discover.contract import Source
+from litnav.discover.adapters._review import looks_like_review
 
 _API = "https://api.semanticscholar.org/graph/v1/paper/search"
-_FIELDS = "title,abstract,tldr,citationCount,externalIds,openAccessPdf,year"
+_FIELDS = "title,abstract,tldr,citationCount,externalIds,openAccessPdf,year,publicationTypes"
 _AUTH_SAT = math.log(5000.0)   # same saturation as openalex._authority
 
 
@@ -48,5 +49,6 @@ def search(query: str, k: int = 10, *, fetch=None) -> list[Source]:
             authority_score=_authority(int(p.get("citationCount") or 0)),
             abstract=abstract,
             arxiv_id=arxiv_id,
+            is_review=("Review" in (p.get("publicationTypes") or [])) or looks_like_review(p.get("title") or ""),
         ))
     return out

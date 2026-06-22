@@ -9,6 +9,7 @@ import urllib.parse
 import urllib.request
 
 from litnav.discover.contract import Source
+from litnav.discover.adapters._review import looks_like_review
 
 _API = "https://api.stackexchange.com/2.3/search/advanced"
 _HTML_TAG_RE = re.compile(r"<[^>]+>")
@@ -55,5 +56,6 @@ def search(query: str, k: int = 10, *, fetch=None) -> list[Source]:
             authority_score=_authority(score),
             abstract=abstract,
             arxiv_id=None,
+            is_review=looks_like_review(item.get("title") or ""),
         ))
     return out

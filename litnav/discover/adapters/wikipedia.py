@@ -5,6 +5,7 @@ import urllib.parse
 import urllib.request
 
 from litnav.discover.contract import Source
+from litnav.discover.adapters._review import looks_like_review
 
 _SEARCH = "https://en.wikipedia.org/w/api.php?action=query&list=search&format=json&srlimit={k}&srsearch={q}"
 _SUMMARY = "https://en.wikipedia.org/api/rest_v1/page/summary/{title}"
@@ -30,5 +31,6 @@ def search(query: str, k: int = 5, *, fetch=None) -> list[Source]:
             source_type="wikipedia", source_id=title.replace(" ", "_"), url=url,
             title=summ.get("title") or title, authority_score=_WIKI_AUTHORITY,
             abstract=summ.get("extract") or "",
+            is_review=looks_like_review(summ.get("title") or title),
         ))
     return out

@@ -8,6 +8,7 @@ import urllib.request
 import xml.etree.ElementTree as ET
 
 from litnav.discover.contract import Source
+from litnav.discover.adapters._review import looks_like_review
 
 _API = "http://export.arxiv.org/api/query"
 _NS = "http://www.w3.org/2005/Atom"
@@ -56,5 +57,6 @@ def search(query: str, k: int = 10, *, fetch=None) -> list[Source]:
             authority_score=_AUTHORITY,
             abstract=abstract,
             arxiv_id=arxiv_id,
+            is_review=looks_like_review(title or ""),
         ))
     return out
