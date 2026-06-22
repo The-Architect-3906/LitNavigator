@@ -186,8 +186,9 @@ class TutorSession:
                                     "Here's your study artifact below."),
                            "bloom_level": None})
         elif cur.get("question"):
+            is_retrieval = cur.get("decision") == "review_probe"
             events.append({"type": "question", "text": cur["question"],
-                           "bloom_level": cur.get("bloom")})
+                           "bloom_level": cur.get("bloom"), "is_retrieval": is_retrieval})
         events.extend([
             {"type": "state", "route": cur["route"], "route_version": cur["route_version"],
              "learner": cur["learner"], "cited": cur["cited"], "decision": cur["decision"],
@@ -572,17 +573,17 @@ class AgentSession:
             else:
                 yield {"type": "reply", "text": self._grounded_aside(message, aside_slug)}
             if question:
-                yield {"type": "question", "text": question, "bloom_level": cur.get("bloom")}
+                yield {"type": "question", "text": question, "bloom_level": cur.get("bloom"), "is_retrieval": False}
             yield {"type": "done", "done": False}
         elif d["action"] == "out_of_scope" and _looks_learn_request(message):
             # The learner wants to learn something we don't have — decline honestly and name it,
             # rather than a flat "I can teach: …" list. (Greetings/chit-chat fall through to chat.)
             yield {"type": "reply", "text": self._boundary_reply(message), "kind": "boundary"}
             if question:
-                yield {"type": "question", "text": question, "bloom_level": cur.get("bloom")}
+                yield {"type": "question", "text": question, "bloom_level": cur.get("bloom"), "is_retrieval": False}
             yield {"type": "done", "done": bool(cur.get("done"))}
         else:  # chat, or out_of_scope that isn't a learn request (e.g. a greeting)
             yield {"type": "reply", "text": d["reply"] or "What would you like to learn?"}
             if question:
-                yield {"type": "question", "text": question, "bloom_level": cur.get("bloom")}
+                yield {"type": "question", "text": question, "bloom_level": cur.get("bloom"), "is_retrieval": False}
             yield {"type": "done", "done": bool(cur.get("done"))}

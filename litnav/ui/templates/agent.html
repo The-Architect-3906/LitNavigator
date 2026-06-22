@@ -64,7 +64,30 @@
  .ai.boundary::before{content:"outside my literature pack";display:block;font-size:.7rem;font-weight:600;letter-spacing:.02em;text-transform:uppercase;color:var(--warn);margin-bottom:.25rem}
  .ai p{margin:.3rem 0}.ai p:first-child{margin-top:0}.ai p:last-child{margin-bottom:0}
  .ai ul,.ai ol{margin:.3rem 0;padding-left:1.3rem}.ai li{margin:.15rem 0}
- .qa{font-weight:500;border-left:3px solid var(--accent);padding-left:.5rem}
+ /* ── B7: Quiz "Knowledge Check · Bloom" card ── */
+ .qa-header{
+   display:flex;align-items:center;gap:.5rem;margin-bottom:.4rem
+ }
+ .bloom-chip{
+   font-family:var(--mono);font-size:.68rem;font-weight:700;letter-spacing:.06em;
+   text-transform:uppercase;color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--s2));
+   border:1px solid color-mix(in srgb,var(--accent) 35%,var(--border));
+   border-radius:4px;padding:.1rem .4rem;line-height:1.3;flex-shrink:0
+ }
+ /* quiz bubble gets a stronger left-accent and slightly different bg */
+ .ai.qa{
+   border-left:3px solid var(--accent);
+   background:color-mix(in srgb,var(--accent) 5%,var(--s2));
+   padding-left:.7rem;font-weight:normal
+ }
+ /* ── B7: Spaced-retrieval recap badge ── */
+ .recap-badge{
+   display:inline-flex;align-items:center;gap:.35rem;
+   background:color-mix(in srgb,var(--idle) 15%,var(--s2));
+   border:1px solid color-mix(in srgb,var(--idle) 40%,var(--border));
+   border-radius:5px;padding:.18rem .5rem;font-size:.72rem;font-weight:600;
+   color:var(--tx-secondary);margin-bottom:.35rem
+ }
  /* ── Feedback bubble (B2/B3) ── */
  .feedback{border-left:3px solid var(--ok);background:color-mix(in srgb,var(--ok) 8%,var(--s1));padding:.5rem .75rem;border-radius:8px;font-size:.9rem;display:flex;align-items:flex-start;gap:.45rem;margin:.4rem 0}
  .feedback.wrong{border-left-color:var(--warn);background:color-mix(in srgb,var(--warn) 8%,var(--s1))}
@@ -215,6 +238,7 @@
  .ev-source{font-size:.75rem;font-weight:600;color:var(--accent);margin-bottom:.2rem;
    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
  .ev-text{font-size:.82rem;color:var(--tx-secondary);line-height:1.45}
+ .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 </style></head>
 <body class="mode-chat show-detail" data-sid="{{ sid }}">
 <header>
@@ -307,7 +331,10 @@
     {% endif %}
     <div id="artifact-card" class="card" style="display:none"></div>
     <form class="answer" id="answer-form" onsubmit="return submitAnswer(event)">
-      <input id="answer-input" autocomplete="off" autofocus placeholder="ask anything, or answer the question…">
+      <label id="answer-label" for="answer-input" class="sr-only">Your message</label>
+      <input id="answer-input" autocomplete="off" autofocus
+             placeholder="ask anything, or answer the question…"
+             aria-label="Your message">
       <button type="submit">Send</button>
     </form>
   </div>
@@ -796,7 +823,35 @@ function handleEvent(e, steps, inp){
       }
     }
   } else if(e.type==='question'){
-    if(e.text)addBubble('ai qa',e.text,false);
+    if(e.text){
+      const qBubble = addBubble('ai qa','',false);
+      // Build header: recap badge OR bloom chip
+      const hdr = document.createElement('div');
+      hdr.className='qa-header';
+      if(e.is_retrieval){
+        const badge = document.createElement('span');
+        badge.className='recap-badge';
+        badge.textContent='🔁 Recap — revisiting an earlier concept';
+        hdr.appendChild(badge);
+      } else if(e.bloom_level){
+        const chip = document.createElement('span');
+        chip.className='bloom-chip';
+        chip.textContent='QUESTION · '+String(e.bloom_level).toUpperCase();
+        hdr.appendChild(chip);
+      }
+      if(hdr.children.length) qBubble.prepend(hdr);
+      // Add question text (markdown rendered)
+      const p = document.createElement('div');
+      p.innerHTML = md(e.text);
+      qBubble.appendChild(p);
+      // Update input caption and placeholder
+      const inp2 = document.getElementById('answer-input');
+      if(inp2){
+        inp2.placeholder = 'Type your answer…';
+        const lbl = document.getElementById('answer-label');
+        if(lbl) lbl.textContent = 'Your answer';
+      }
+    }
   } else if(e.type==='state'){
     updateGlass(e);
   } else if(e.type==='done'){
