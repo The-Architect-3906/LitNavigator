@@ -141,6 +141,25 @@
  .bar-row span:last-child{font-family:var(--mono);font-variant-numeric:tabular-nums}
  .learner-name{font-size:.85rem;font-weight:500;margin-top:.35rem}
  .misconception{font-size:.76rem;color:var(--warn);margin-top:.1rem}
+ /* ── Mastery tier chip + segmented meter ── */
+ .tier-row{display:flex;align-items:center;gap:.45rem;margin:.18rem 0}
+ .tier-chip{font-size:.7rem;font-weight:600;letter-spacing:.03em;text-transform:uppercase;
+   padding:.15rem .45rem;border-radius:4px;font-family:var(--mono);line-height:1.3}
+ .tier-seen{background:color-mix(in srgb,var(--idle) 20%,transparent);color:var(--idle)}
+ .tier-familiar{background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent)}
+ .tier-solid{background:color-mix(in srgb,var(--ok) 15%,transparent);color:var(--ok)}
+ .tier-mastered{background:color-mix(in srgb,var(--ok) 25%,transparent);color:var(--ok)}
+ .tier-pct{font-size:.72rem;color:var(--tx-secondary);font-family:var(--mono);font-variant-numeric:tabular-nums}
+ /* 4-segment tier meter */
+ .tier-meter{display:flex;height:.35rem;gap:.06rem;flex:1;border-radius:2px;overflow:hidden}
+ .tier-seg{flex:1;background:var(--s3);border-radius:1px;transition:background .4s}
+ /* ── Why-this-next chip ── */
+ .why-chip{display:inline-flex;align-items:center;gap:.35rem;
+   background:color-mix(in srgb,var(--accent) 10%,var(--s2));
+   border:1px solid color-mix(in srgb,var(--accent) 30%,var(--border));
+   border-radius:6px;padding:.28rem .6rem;font-size:.82rem;color:var(--tx-primary);margin:.3rem 0}
+ .why-chip-icon{color:var(--accent);font-size:.9rem}
+ .why-token{font-size:.72rem;color:var(--tx-secondary);font-family:var(--mono);margin-left:.3rem}
 
  /* ── Recommend-next card ── */
  .rec-item{display:flex;align-items:baseline;gap:.45rem;padding:.22rem 0;font-size:.84rem}
@@ -298,12 +317,20 @@
     <div class="card"><b>Learner model</b>
       <div id="learner">
         {% for c in learner %}
+        {% set mp = (c.mastery * 100)|round|int %}
+        {% set tier = c.tier or 'Seen' %}
+        {% set tier_cls = tier|lower %}
         <div>
           <div class="learner-name">{{ c.name }}</div>
-          <div class="bar-row">
-            <span class="bar-label">mastery</span>
-            <div class="bar-bg"><div class="bar-fill bar-m" style="width:{{ (c.mastery * 100)|round|int }}%"></div></div>
-            <span>{{ (c.mastery * 100)|round|int }}%</span>
+          <div class="tier-row">
+            <span class="tier-chip tier-{{ tier_cls }}">{{ tier }}</span>
+            <div class="tier-meter">
+              <div class="tier-seg" style="background:{% if mp >= 1 %}var(--idle){% else %}var(--s3){% endif %}"></div>
+              <div class="tier-seg" style="background:{% if mp >= 30 %}var(--accent){% else %}var(--s3){% endif %}"></div>
+              <div class="tier-seg" style="background:{% if mp >= 55 %}var(--ok){% else %}var(--s3){% endif %}"></div>
+              <div class="tier-seg" style="background:{% if mp >= 78 %}var(--ok){% else %}var(--s3){% endif %}"></div>
+            </div>
+            <span class="tier-pct">{{ mp }}%</span>
           </div>
           <div class="bar-row">
             <span class="bar-label">confid.</span>
@@ -315,6 +342,9 @@
           {% endif %}
         </div>
         {% endfor %}
+        {% if not learner %}
+        <span class="mut">Mastery builds after your first answer</span>
+        {% endif %}
       </div>
     </div>
 
@@ -327,6 +357,7 @@
     <!-- Decision rationale -->
     <div class="card" id="why" {% if not rationale %}style="display:none"{% endif %}>
       <b>Why this step</b>
+      <div id="why-human">{% if decision %}<span class="why-chip"><span class="why-chip-icon">→</span>{{ decision }}</span>{% endif %}</div>
       <div class="mut" id="why-text">{{ decision or '' }}{% if decision %} — {% endif %}{{ rationale }}</div>
     </div>
 
@@ -522,27 +553,44 @@ function updateGlass(e){
       }).join('')
     : '<span class="mut">–</span>';
 
-  // ── Learner model with visual bars ──
-  document.getElementById('learner').innerHTML=(e.learner||[]).map(c=>{
-    const mp = Math.round((c.mastery||0)*100);
-    const cp = Math.round((c.confidence||0)*100);
-    const held = (c.held||[]);
-    return '<div>'
-      + '<div class="learner-name">'+esc(c.name)+'</div>'
-      + '<div class="bar-row"><span class="bar-label">mastery</span>'
-      +   '<div class="bar-bg"><div class="bar-fill bar-m" style="width:'+mp+'%"></div></div>'
-      +   '<span>'+mp+'%</span></div>'
-      + '<div class="bar-row"><span class="bar-label">confid.</span>'
-      +   '<div class="bar-bg"><div class="bar-fill bar-c" style="width:'+cp+'%"></div></div>'
-      +   '<span>'+cp+'%</span></div>'
-      + (held.length ? '<div class="misconception">misconception: '+held.map(esc).join(', ')+'</div>' : '')
-      + '</div>';
-  }).join('') || '<span class="mut">–</span>';
+  // ── Learner model with tier meter ──
+  const learnerItems = e.learner || [];
+  document.getElementById('learner').innerHTML = learnerItems.length
+    ? learnerItems.map(c=>{
+        const mp = Math.round((c.mastery||0)*100);
+        const cp = Math.round((c.confidence||0)*100);
+        const held = (c.held||[]);
+        const tier = c.tier || 'Seen';
+        const tierCls = tier.toLowerCase();
+        const seg = (th) => '<div class="tier-seg" style="background:'+(mp>=th?'var(--'+(th>=78?'ok':th>=55?'ok':th>=30?'accent':'idle')+')':'var(--s3)')+'"></div>';
+        return '<div>'
+          + '<div class="learner-name">'+esc(c.name)+'</div>'
+          + '<div class="tier-row">'
+          + '<span class="tier-chip tier-'+tierCls+'">'+esc(tier)+'</span>'
+          + '<div class="tier-meter">'+seg(1)+seg(30)+seg(55)+seg(78)+'</div>'
+          + '<span class="tier-pct">'+mp+'%</span>'
+          + '</div>'
+          + '<div class="bar-row"><span class="bar-label">confid.</span>'
+          +   '<div class="bar-bg"><div class="bar-fill bar-c" style="width:'+cp+'%"></div></div>'
+          +   '<span>'+cp+'%</span></div>'
+          + (held.length ? '<div class="misconception">misconception: '+held.map(esc).join(', ')+'</div>' : '')
+          + '</div>';
+      }).join('')
+    : '<span class="mut">Mastery builds after your first answer</span>';
 
-  // ── Decision rationale ──
+  // ── Decision rationale + why-sentence chip ──
   if(e.rationale){
     document.getElementById('why').style.display='';
     document.getElementById('why-text').textContent=(e.decision||'')+' — '+e.rationale;
+    // Plain-language "why" chip — shows the human sentence; raw token stays above
+    const whySentence = e.why_sentence || null;
+    const whyHuman = document.getElementById('why-human');
+    if(whyHuman){
+      whyHuman.innerHTML = whySentence
+        ? '<span class="why-chip"><span class="why-chip-icon">→</span>'+esc(whySentence)
+          +(e.decision ? '<span class="why-token">'+esc(e.decision)+'</span>' : '')+'</span>'
+        : (e.decision ? '<span class="why-chip"><span class="why-chip-icon">→</span>'+esc(e.decision)+'</span>' : '');
+    }
   }
 
   // ── Induced panel (SSE update) ──

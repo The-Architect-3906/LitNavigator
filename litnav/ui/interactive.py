@@ -16,7 +16,7 @@ from litnav.nodes.retrieve import retrieve_node
 from litnav.recommend.recommend_next import recommend_next
 from litnav.storage import repo
 from litnav.ui.cost import session_cost
-from litnav.ui.flow_meta import meta_for
+from litnav.ui.flow_meta import meta_for, mastery_tier, why_sentence
 from litnav.ui.graph_svg import to_svg
 from litnav.ui.trace import concept_graph
 # Open-world cold-start (live mode): discover real sources → digest into a graph → teach.
@@ -185,7 +185,8 @@ class TutorSession:
         events.extend([
             {"type": "state", "route": cur["route"], "route_version": cur["route_version"],
              "learner": cur["learner"], "cited": cur["cited"], "decision": cur["decision"],
-             "rationale": cur["rationale"], "induced": cur["induced"], "intent": cur.get("intent"),
+             "rationale": cur["rationale"], "why_sentence": why_sentence(cur.get("decision")),
+             "induced": cur["induced"], "intent": cur.get("intent"),
              "graph": to_svg(concept_graph(self.conn, self.sid)),
              "cost": session_cost(self.conn, self.sid),
              "recommend": self._recommend()},
@@ -322,6 +323,7 @@ class TutorSession:
                 {"name": (self.conn.execute("SELECT name FROM concepts WHERE id=?", (cid,)).fetchone() or [None])[0],
                  "mastery": round(cs.get("mastery", 0.0), 3),
                  "confidence": round(cs.get("confidence", 0.0), 3),
+                 "tier": mastery_tier(round(cs.get("mastery", 0.0), 3)),
                  "held": cs.get("held_misconceptions", [])}
                 for cid, cs in (vals.get("learner_state") or {}).items()
                 if cs.get("n_observations")
