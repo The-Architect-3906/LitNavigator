@@ -46,7 +46,7 @@ def find(di: DiscoverInput, *, conn: sqlite3.Connection, session_id: str | None 
         except Exception:
             pass                                   # an adapter outage is non-fatal
     ranked = rank_mod.rank_sources(sq, sources, conn=conn, session_id=session_id,
-                                   k=di.k, budget=budget)
+                                   k=di.k, budget=budget, intent=intent)
     # A14: gate on the ORIGINAL goal (full specificity — e.g. "Raft" not just "consensus") so
     # same-family-but-different sources (PBFT, QLoRA, vision-attention) are rejected, not just films.
     ranked = relevance_mod.relevance_gate(di.goal_text, ranked, conn=conn, session_id=session_id,
