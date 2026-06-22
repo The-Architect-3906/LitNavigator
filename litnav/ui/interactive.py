@@ -81,6 +81,12 @@ class TutorSession:
         # ORIENT + LOST
         "orient_tour": "Walking the concept roadmap",
         "handle_lost": "Re-explaining from a different angle",
+        # Spaced-retrieval / probe nodes
+        "review_probe": "Quick recall — revisiting an earlier concept",
+        "grade_probe": "Grading recall answer",
+        # Open-world build stages (used as pseudo-node labels in build events)
+        "discover": "Finding real sources",
+        "digest": "Reading and building concept map",
     }
 
     def _step_event(self, node: str, delta: dict) -> dict:

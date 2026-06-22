@@ -140,6 +140,18 @@ NODE_META: dict[str, dict[str, str]] = {
         "method": "dual-threshold advance (mastery + confidence)",
         "paper": "BKT (Corbett & Anderson 1995)",
     },
+
+    # ── Spaced-retrieval / probe ─────────────────────────────────────────────
+    "review_probe": {
+        "skill": "assess",
+        "method": "spaced-retrieval probe (FSRS / Ebbinghaus forgetting curve)",
+        "paper": "Nature Reviews Psychology 2022 (Kornell/Bjork); FSRS Ye et al.",
+    },
+    "grade_probe": {
+        "skill": "assess",
+        "method": "BKT posterior update on recall answer",
+        "paper": "Corbett & Anderson 1995 (BKT)",
+    },
 }
 
 _DEFAULT_META: dict[str, str] = {"skill": "—", "method": "—", "paper": "—"}

@@ -72,7 +72,27 @@
  .feedback-mark.ok{color:var(--ok)}
  .feedback-mark.warn{color:var(--warn)}
  .feedback-text{color:var(--tx-primary);line-height:1.45}
- .working{color:var(--accent);font-size:.85rem;margin:.3rem 0;font-family:var(--mono)}
+ /* ── Working indicator — live step name ── */
+ .working{color:var(--accent);font-size:.85rem;margin:.3rem 0;font-family:var(--mono);display:flex;align-items:center;gap:.5rem}
+ .working-dot{width:.55rem;height:.55rem;border-radius:50%;background:var(--accent);flex-shrink:0}
+ @media (prefers-reduced-motion: no-preference){
+   .working-dot{animation:pulse-dot 1.2s ease-in-out infinite}
+   @keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+ }
+ /* ── Build tracker (4-row cold-start progress) ── */
+ .build-tracker{background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:.8rem 1rem;margin:.5rem 0}
+ .build-tracker-title{font-size:.8rem;font-weight:600;color:var(--tx-secondary);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.55rem;font-family:var(--mono)}
+ .build-row{display:flex;align-items:center;gap:.6rem;padding:.28rem 0;font-size:.85rem;color:var(--tx-secondary);border-radius:5px;transition:background .2s}
+ .build-row.active{color:var(--tx-primary);background:color-mix(in srgb,var(--accent) 6%,transparent);padding-left:.4rem;padding-right:.4rem}
+ .build-row.done{color:var(--ok)}
+ .build-row.pending{opacity:.45}
+ .build-icon{width:1.2rem;text-align:center;font-family:var(--mono);flex-shrink:0}
+ .build-label{flex:1}
+ .build-count{font-family:var(--mono);font-size:.78rem;color:var(--accent)}
+ .build-elapsed{font-family:var(--mono);font-size:.75rem;color:var(--tx-secondary);margin-top:.5rem;text-align:right}
+ @media (prefers-reduced-motion: no-preference){
+   .build-row.active .build-icon{animation:pulse-dot 1.1s ease-in-out infinite}
+ }
  .answer{display:flex;gap:.5rem;margin-top:.6rem}
  .answer input{
    flex:1;padding:.55rem .7rem;
@@ -215,8 +235,29 @@
   <!-- ── Chat ── -->
   <div id="chat">
     {% if building %}
-    <div class="card"><b>Open-world session</b>
-      <div class="mut">Building your course from real sources for: <b>{{ goal }}</b></div>
+    <div class="build-tracker" id="build-tracker" aria-live="polite">
+      <div class="build-tracker-title">Building your course for: <b>{{ goal }}</b></div>
+      <div class="build-row active" id="brow-discover">
+        <span class="build-icon">○</span>
+        <span class="build-label">Discover sources</span>
+        <span class="build-count" id="bcount-discover"></span>
+      </div>
+      <div class="build-row pending" id="brow-digest">
+        <span class="build-icon">○</span>
+        <span class="build-label">Digest into map</span>
+        <span class="build-count" id="bcount-digest"></span>
+      </div>
+      <div class="build-row pending" id="brow-plan">
+        <span class="build-icon">○</span>
+        <span class="build-label">Plan route</span>
+        <span class="build-count" id="bcount-plan"></span>
+      </div>
+      <div class="build-row pending" id="brow-teach">
+        <span class="build-icon">○</span>
+        <span class="build-label">Start teaching</span>
+        <span class="build-count" id="bcount-teach"></span>
+      </div>
+      <div class="build-elapsed" id="build-elapsed">0s</div>
     </div>
     <script>window.__BUILDING__=true;</script>
     {% endif %}
@@ -255,7 +296,10 @@
       {% endfor %}
       {% if question %}<div class="bubble ai qa">{{ question | e }}</div>{% endif %}
     </div>
-    <div class="working" id="working" style="display:none">● agent working…</div>
+    <div class="working" id="working" style="display:none" aria-live="polite" aria-label="Agent working">
+      <div class="working-dot" aria-hidden="true"></div>
+      <span id="working-label">Working…</span>
+    </div>
     {% if done %}
     <div class="card"><b>Session complete.</b>
       {% if artifact_url %}<a href="{{ artifact_url }}" download>download take-away ↓</a> · {% endif %}
@@ -628,6 +672,58 @@ function updateGlass(e){
   }
 }
 
+// ── Build tracker helpers ────────────────────────────────────────────────────
+const _BUILD_STAGE_MAP = {
+  'discover':      'discover',
+  'discover_done': 'discover',
+  'digest':        'digest',
+  'map':           'plan',
+  'teach':         'teach',   // first teach event = start-teaching
+};
+
+function _buildRowDone(rowId, iconEl, countEl, countText){
+  const row = document.getElementById(rowId);
+  if(!row)return;
+  row.className='build-row done';
+  if(iconEl)iconEl.textContent='✓';
+  if(countEl&&countText)countEl.textContent=countText;
+}
+function _buildRowActive(rowId){
+  const row = document.getElementById(rowId);
+  if(!row||row.classList.contains('done'))return;
+  row.className='build-row active';
+  const ic = row.querySelector('.build-icon');
+  if(ic)ic.textContent='○';
+}
+
+let _lastBuildStage = null;
+
+function advanceBuildTracker(stage, countText){
+  // Map the SSE stage to a tracker row
+  const rowKey = _BUILD_STAGE_MAP[stage] || null;
+  if(!rowKey)return;
+  // Mark previous rows done when we advance
+  const order = ['discover','digest','plan','teach'];
+  const idx = order.indexOf(rowKey);
+  if(idx < 0)return;
+  for(let i=0;i<idx;i++){
+    const prev = order[i];
+    _buildRowDone('brow-'+prev, document.querySelector('#brow-'+prev+' .build-icon'),
+                  document.getElementById('bcount-'+prev), '');
+  }
+  if(stage==='discover_done'||stage==='map'){
+    // Mark the current row done with count
+    _buildRowDone('brow-'+rowKey, document.querySelector('#brow-'+rowKey+' .build-icon'),
+                  document.getElementById('bcount-'+rowKey), countText||'');
+    // Activate next row
+    const next = order[idx+1];
+    if(next)_buildRowActive('brow-'+next);
+  } else {
+    _buildRowActive('brow-'+rowKey);
+  }
+  _lastBuildStage = stage;
+}
+
 function handleEvent(e, steps, inp){
   if(e.type==='dispatch'){
     steps.length=0;
@@ -641,6 +737,9 @@ function handleEvent(e, steps, inp){
     steps.push({label:e.label,detail:e.detail,state:'active',
                 skill:e.skill,method:e.method,paper:e.paper});
     setFlow(steps);
+    // Update live working indicator with the current step name
+    const wl = document.getElementById('working-label');
+    if(wl) wl.textContent = e.label || 'Working…';
   } else if(e.type==='feedback'){
     const t=document.getElementById('thread');
     const d=document.createElement('div');
@@ -656,6 +755,11 @@ function handleEvent(e, steps, inp){
     t.scrollTop=t.scrollHeight;
   } else if(e.type==='teach'){
     steps.forEach(s=>s.state='done');setFlow(steps);
+    // If we were in the build phase, mark 'plan' done and 'teach' active on first teach
+    if(window.__BUILDING__ && _lastBuildStage !== 'teach'){
+      advanceBuildTracker('teach', '');
+      _lastBuildStage = 'teach';
+    }
     if(e.text){
       const bubble = addBubble('ai',e.text,true);
       // Append inline citation chips for each cited chunk (e.cited[])
@@ -681,6 +785,8 @@ function handleEvent(e, steps, inp){
     updateGlass(e);
   } else if(e.type==='done'){
     document.getElementById('working').style.display='none';
+    const wl = document.getElementById('working-label');
+    if(wl) wl.textContent = 'Working…';
     if(e.done){
       location.href='/tutor/'+SID;
     } else {
@@ -691,10 +797,17 @@ function handleEvent(e, steps, inp){
     steps.forEach(s=>s.state='done');
     steps.push({label:e.label,detail:'',state:'active',skill:e.skill,method:e.method,paper:e.paper});
     setFlow(steps);
-    if(e.stage==='discover')addBubble('ai','🔎 '+e.label,false);
-    else if(e.stage==='discover_done')addBubble('ai','📄 '+e.label,false);
-    else if(e.stage==='map'){addBubble('ai','🗺️ '+e.label,false);
-      if(e.graph)document.getElementById('cmap').innerHTML=e.graph;}
+    // Update live step name in working indicator
+    const wl = document.getElementById('working-label');
+    if(wl) wl.textContent = e.label || 'Building…';
+    // Advance the 4-row build tracker
+    if(e.stage==='discover')advanceBuildTracker('discover');
+    else if(e.stage==='discover_done')advanceBuildTracker('discover_done', e.label?e.label.slice(0,40):'');
+    else if(e.stage==='digest')advanceBuildTracker('digest');
+    else if(e.stage==='map'){
+      advanceBuildTracker('map', e.label||'');
+      if(e.graph)document.getElementById('cmap').innerHTML=e.graph;
+    }
   } else if(e.type==='artifact'){
     renderArtifact(e);
   } else if(e.type==='error'){
@@ -756,8 +869,22 @@ async function submitAnswer(ev){
 
 // Open-world cold start: the page loads in a "building" state and streams discover→digest→teach.
 if(window.__BUILDING__){
-  addBubble('ai','Building your course from real sources… this can take ~30–90s.',false);
-  streamEvents({});
+  // Start elapsed timer
+  const _buildStart = Date.now();
+  const _buildTimer = setInterval(()=>{
+    const el = document.getElementById('build-elapsed');
+    if(el) el.textContent = Math.round((Date.now()-_buildStart)/1000)+'s elapsed';
+  }, 1000);
+  // Stream events + stop timer when done
+  (async()=>{
+    await streamEvents({});
+    clearInterval(_buildTimer);
+    // Mark all rows done once streaming ends
+    ['discover','digest','plan','teach'].forEach(r=>{
+      _buildRowDone('brow-'+r, document.querySelector('#brow-'+r+' .build-icon'),
+                    document.getElementById('bcount-'+r), '');
+    });
+  })();
 }
 
 // Apply markdown to server-rendered AI bubbles on initial page load
