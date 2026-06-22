@@ -10,6 +10,17 @@ Drawn from docs/open-world-methods.md and docs/open-world-storyboard.md.
 from __future__ import annotations
 
 NODE_META: dict[str, dict[str, str]] = {
+    # ── Open-world build (DISCOVER → DIGEST) ─────────────────────────────────
+    "discover": {
+        "skill": "find-sources",
+        "method": "intent classify → OpenAlex/Wikipedia/S2/arXiv search → embedding rerank + relevance gate",
+        "paper": "BM25 (Robertson & Zaragoza); SPECTER-style rerank",
+    },
+    "digest": {
+        "skill": "digest-corpus",
+        "method": "concept/keypoint extraction → prerequisite edges (RefD-style + LLM judge) → cited graph",
+        "paper": "RefD prerequisite relations (cf. Liang et al., 2015)",
+    },
     # ── Goal / planning / orient ─────────────────────────────────────────────
     "goal_elicit": {
         "skill": "teach",
