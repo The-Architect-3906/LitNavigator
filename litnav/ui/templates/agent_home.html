@@ -398,6 +398,12 @@
       vertical-align: -3px;
       animation: ln-blink 1.1s step-end infinite;
     }
+    /* Decorative caret only while the field is idle + empty — otherwise the real
+       browser caret takes over, so we never show two blinking cursors at once. */
+    .ln-wt-input:focus + .ln-wt-cursor,
+    .ln-wt-input:not(:placeholder-shown) + .ln-wt-cursor {
+      display: none;
+    }
     .ln-wt-byline {
       margin-top: 12px;
       font-family: 'Spectral', serif;
