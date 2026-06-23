@@ -45,7 +45,9 @@ def extract_concepts(di: DigestInput, *, candidate: dict, session_id: str | None
         'Bad: "explain ReAct". Good: "Explain how ReAct interleaves reasoning traces and actions '
         'so that the agent can ground its decisions in real-world observations."\n\n'
         f"Evidence:\n{chunk_blob}\n\n"
-        'Respond as JSON: {"concepts": [{"slug","name","domain","frontier_flag"}], '
+        "For each concept, you MAY list the slugs of concepts it directly builds on (its prerequisites), "
+        "using ONLY slugs from this same response; omit the field if none.\n"
+        'Respond as JSON: {"concepts": [{"slug","name","domain","frontier_flag","builds_on":[]}], '
         '"keypoints": [{"kp_id","concept_slug","name","objective","evidence_chunk_id",'
         '"evidence_quote","bloom_level"}]} '
         'where evidence_quote is a SHORT (≤120 chars) VERBATIM span copied from the evidence '
@@ -66,6 +68,16 @@ def extract_concepts(di: DigestInput, *, candidate: dict, session_id: str | None
         c.setdefault("frontier_flag", None)
 
     slugs = {c["slug"] for c in concepts}
+    # Parse builds_on: filter to valid slugs in this response; drop self-refs; default [].
+    # Offline candidates without builds_on get [] (no mutation of shared candidate objects).
+    for c in concepts:
+        raw_bo = c.get("builds_on")
+        if isinstance(raw_bo, list):
+            c["builds_on"] = [s for s in raw_bo
+                               if isinstance(s, str) and s in slugs and s != c["slug"]]
+        else:
+            c["builds_on"] = []
+
     raw_kps = result.get("keypoints") if isinstance(result, dict) else None
     keypoints: list[dict] | None = None
     if isinstance(raw_kps, list):
