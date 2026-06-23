@@ -48,7 +48,10 @@ def extract_concepts(di: DigestInput, *, candidate: dict, session_id: str | None
         "For each concept, you MAY list the slugs of concepts it directly builds on (its prerequisites), "
         "using ONLY slugs from this same response; omit the field if none.\n"
         'Respond as JSON: {"concepts": [{"slug","name","domain","frontier_flag","builds_on":[]}], '
-        '"keypoints": [{"kp_id","concept_slug","name","objective","evidence_chunk_id","bloom_level"}]}'
+        '"keypoints": [{"kp_id","concept_slug","name","objective","evidence_chunk_id",'
+        '"evidence_quote","bloom_level"}]} '
+        'where evidence_quote is a SHORT (≤120 chars) VERBATIM span copied from the evidence '
+        'text that directly supports this keypoint (copy the exact words, do not paraphrase).'
     )
     result = router.complete_json(prompt, tier="cheap", stage="digest", fallback=candidate,
                                   session_id=session_id, conn=conn, budget=budget, cache=True)

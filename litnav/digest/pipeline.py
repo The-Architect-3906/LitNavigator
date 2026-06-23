@@ -12,6 +12,7 @@ import sqlite3
 
 from litnav.digest.contract import DigestInput, DigestResult, slice_key
 from litnav.digest import extract, edges as edges_mod, verify as verify_mod
+from litnav.digest.evidence import resolve_evidence_chunk
 from litnav.llm import router
 from litnav.storage import repo, openworld_repo
 
@@ -25,9 +26,11 @@ def _norm_chunk_id(raw, valid_ids: list[str]) -> str | None:
 
     The extractor often returns bare indices ('1', 1, 'c3') that don't match the global
     'c{idx}' ids we actually write, or hallucinates indices when there are fewer chunks than
-    keypoints. We resolve to a real chunk so evidence/citations link (else artifacts come out
-    empty — the OW-5.1 linkage bug). Unresolvable ids fall back to the first chunk (cite the
-    source) rather than dangling.
+    keypoints. We resolve to a real chunk so evidence/citations link.
+
+    Returns None when the id is unresolvable — NEVER the first chunk as a default.
+    Callers should use resolve_evidence_chunk (evidence.py) to handle the None case
+    via the full quote-authority + id-corroboration ladder.
     """
     if not valid_ids:
         return None
@@ -36,11 +39,11 @@ def _norm_chunk_id(raw, valid_ids: list[str]) -> str | None:
     try:
         i = int(str(raw).lstrip("cC"))
     except (TypeError, ValueError):
-        return valid_ids[0]
+        return None
     for cand in (f"c{i}", f"c{i - 1}"):   # tolerate 0- vs 1-indexed
         if cand in valid_ids:
             return cand
-    return valid_ids[0]
+    return None
 
 
 def _slice_key(di: DigestInput) -> str:
@@ -75,7 +78,9 @@ def _write_sources(conn: sqlite3.Connection, di: DigestInput) -> None:
 def _write_graph(conn: sqlite3.Connection, di: DigestInput, concepts: list[dict],
                  scored_edges: list[dict], keypoints: list[dict],
                  quiz_seeds: list[dict], misconceptions: list[dict],
-                 slice_key: str | None = None) -> dict[str, int]:
+                 slice_key: str | None = None,
+                 session_id: str | None = None,
+                 budget: int | None = None) -> dict[str, int]:
     """Write concepts/edges/keypoints/quiz seeds/misconceptions as source='digested';
     return {slug: concept_id}."""
     _write_sources(conn, di)
@@ -83,6 +88,14 @@ def _write_graph(conn: sqlite3.Connection, di: DigestInput, concepts: list[dict]
     # evidence_chunk_id onto real chunks so evidence/citations resolve downstream.
     total_chunks = sum(len(s.chunks) for s in di.sources)
     valid_chunk_ids = [f"c{i}" for i in range(total_chunks)]
+    # Chunk text map for quote-authority resolver (resolve_evidence_chunk).
+    chunk_texts: dict[str, str] = {}
+    _idx = 0
+    for s in di.sources:
+        for ch in s.chunks:
+            chunk_texts[f"c{_idx}"] = ch
+            _idx += 1
+
     ids: dict[str, int] = {}
     for c in concepts:
         existing = repo.get_concept_by_slug(conn, c["slug"])
@@ -122,10 +135,31 @@ def _write_graph(conn: sqlite3.Connection, di: DigestInput, concepts: list[dict]
     # This is what makes retrieve_node (which filters paper_chunks by concept_id)
     # return evidence instead of 0 chunks (B18).
     concept_chunk_ids: dict[int, set[str]] = {cid: set() for cid in ids.values()}
+    # Track resolved chunk per keypoint_id so quizzes can inherit (Task 4 / B1).
+    kp_resolved_chunk: dict[str, str | None] = {}
     for k in keypoints:
         if k["concept_slug"] in ids:
-            resolved = _norm_chunk_id(k.get("evidence_chunk_id"), valid_chunk_ids)
-            repo.create_keypoint(conn, k["kp_id"], ids[k["concept_slug"]], k["name"],
+            # Use quote-authority + id-corroboration ladder (B1 fix).
+            # _norm_chunk_id still used as a quick id normaliser (it now returns None on failure),
+            # and we pass its result as emitted_id to the resolver.
+            emitted_id = _norm_chunk_id(k.get("evidence_chunk_id"), valid_chunk_ids)
+            quote = k.get("evidence_quote") or ""
+            # FIX 1: wire the real embedder so the embedding branch fires in production.
+            # On provider=none, router.embed_texts returns None → resolver treats that
+            # as "no embedding signal" and degrades to paper-level, so offline stays safe.
+            # FIX 2: pass query_text=keypoint name so an empty quote can embed-match.
+            resolved, _label = resolve_evidence_chunk(
+                quote, emitted_id, chunk_texts,
+                embed_fn=lambda texts: router.embed_texts(
+                    texts, stage="digest", session_id=session_id, conn=conn, budget=budget
+                ),
+                query_text=k.get("name", ""),
+            )
+            # TODO(evidence-label): persist resolve_evidence_chunk label for the UI confidence
+            # signal (no column yet — add a label column to keypoints when the UI is ready).
+            kp_id = k["kp_id"]
+            kp_resolved_chunk[kp_id] = resolved
+            repo.create_keypoint(conn, kp_id, ids[k["concept_slug"]], k["name"],
                                  k.get("objective", ""),
                                  resolved,
                                  bloom_level=k.get("bloom_level", "recall"))
@@ -157,10 +191,16 @@ def _write_graph(conn: sqlite3.Connection, di: DigestInput, concepts: list[dict]
 
     for q in quiz_seeds:
         if q["concept_slug"] in ids:
+            # Quiz inherits its keypoint's resolved chunk (B1 / Task 4).
+            # This avoids redundant re-resolution and guarantees the quiz cites the same
+            # evidence the lesson used. Only falls back to None if keypoint_id is absent.
+            kp_id_for_quiz = q.get("keypoint_id")
+            inherited_chunk = kp_resolved_chunk.get(kp_id_for_quiz) if kp_id_for_quiz else None
             repo.create_quiz_item(conn, ids[q["concept_slug"]], q["question"], q["answer_key"],
                                   qtype=q.get("qtype", "explain"),
-                                  keypoint_id=q.get("keypoint_id"),
-                                  bloom_level=q.get("bloom_level", "recall"))
+                                  keypoint_id=kp_id_for_quiz,
+                                  bloom_level=q.get("bloom_level", "recall"),
+                                  evidence_chunk_id=inherited_chunk)
     for m in misconceptions:
         if m.get("concept_slug") in ids:
             repo.record_induced_misconception(
@@ -393,7 +433,7 @@ def digest(di: DigestInput, *, conn: sqlite3.Connection, candidate: dict,
 
     if write:
         _write_graph(conn, di, concepts, verified, keypoints, quiz_seeds, misconceptions,
-                     slice_key=key)
+                     slice_key=key, session_id=session_id, budget=budget)
         openworld_repo.cache_put(conn, key, model_key=mk)
 
     return DigestResult(
