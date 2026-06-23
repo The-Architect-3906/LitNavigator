@@ -176,17 +176,30 @@
       display: flex;
       min-height: 0;
       overflow: hidden;
+      --glass-w: 460px;   /* width of the right glass column; drag-adjustable, persisted */
     }
 
-    /* ── LEFT pane: conversation (~512px) ── */
+    /* ── LEFT pane: conversation — prioritized, grows to fill, with a floor ── */
     .ln-pane-left {
-      width: 512px;
-      flex: none;
+      flex: 1 1 auto;
+      min-width: 440px;
       border-right: 1px solid #ece5d6;
       display: flex;
       flex-direction: column;
       min-height: 0;
       background: #fff;
+    }
+    /* ── Draggable splitter between conversation and glass column ── */
+    .ln-splitter {
+      flex: none;
+      width: 6px;
+      cursor: col-resize;
+      background: transparent;
+      margin: 0 -3px;          /* widen the hit area without shifting layout */
+      z-index: 5;
+    }
+    .ln-splitter:hover, .ln-splitter.dragging {
+      background: rgba(47, 109, 240, .25);
     }
     .ln-pane-left-header {
       flex: none;
@@ -690,8 +703,10 @@
     /* ── CENTER pane: Induced curriculum ── */
     /* 2-pane: glass column = induced map (top) + provenance rail (below) */
     .ln-pane-glass {
-      flex: 1;
-      min-width: 0;
+      flex: 0 0 var(--glass-w);
+      width: var(--glass-w);
+      min-width: 300px;
+      max-width: 760px;
       display: flex;
       flex-direction: column;
       min-height: 0;
@@ -1233,7 +1248,7 @@
 
     /* ── Responsive ── */
     @media (max-width: 1100px) {
-      .ln-pane-left { width: 440px; }
+      .ln-panes { --glass-w: 380px; }   /* give the conversation more room on smaller screens */
     }
     @media (max-width: 860px) {
       body { overflow: auto; }
@@ -1430,6 +1445,10 @@
       </form>
 
     </div><!-- /.ln-pane-left -->
+
+    <!-- Draggable divider — resize the glass column (conversation takes the rest) -->
+    <div class="ln-splitter" id="pane-splitter" role="separator" aria-orientation="vertical"
+         aria-label="Resize panels" tabindex="0"></div>
 
     <!-- ════════════════════════════════
          RIGHT column (2-pane): induced map (top) + provenance rail (below)
@@ -1645,6 +1664,54 @@
 
 <script>
 const SID = document.body.dataset.sid;
+
+// ── Draggable splitter: resize the glass column; conversation fills the rest ──
+(function() {
+  const panes = document.querySelector('.ln-panes');
+  const splitter = document.getElementById('pane-splitter');
+  if (!panes || !splitter) return;
+  const MIN = 300, MAX = 760;
+  const clamp = w => Math.max(MIN, Math.min(MAX, w));
+  // restore
+  try {
+    const saved = parseInt(localStorage.getItem('litnav-glass-w'), 10);
+    if (saved) panes.style.setProperty('--glass-w', clamp(saved) + 'px');
+  } catch(e) {}
+  let dragging = false;
+  function onMove(ev) {
+    if (!dragging) return;
+    const x = ev.touches ? ev.touches[0].clientX : ev.clientX;
+    const w = clamp(panes.getBoundingClientRect().right - x);
+    panes.style.setProperty('--glass-w', w + 'px');
+  }
+  function onUp() {
+    if (!dragging) return;
+    dragging = false;
+    splitter.classList.remove('dragging');
+    document.body.style.userSelect = '';
+    const cur = panes.style.getPropertyValue('--glass-w');
+    try { localStorage.setItem('litnav-glass-w', parseInt(cur, 10)); } catch(e) {}
+  }
+  function onDown(ev) {
+    dragging = true;
+    splitter.classList.add('dragging');
+    document.body.style.userSelect = 'none';
+    ev.preventDefault();
+  }
+  splitter.addEventListener('mousedown', onDown);
+  splitter.addEventListener('touchstart', onDown, {passive: false});
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('touchmove', onMove, {passive: false});
+  document.addEventListener('mouseup', onUp);
+  document.addEventListener('touchend', onUp);
+  // keyboard a11y: arrow keys nudge width
+  splitter.addEventListener('keydown', ev => {
+    const cur = parseInt(panes.style.getPropertyValue('--glass-w') || '460', 10);
+    if (ev.key === 'ArrowLeft')  { panes.style.setProperty('--glass-w', clamp(cur + 24) + 'px'); ev.preventDefault(); }
+    if (ev.key === 'ArrowRight') { panes.style.setProperty('--glass-w', clamp(cur - 24) + 'px'); ev.preventDefault(); }
+    try { localStorage.setItem('litnav-glass-w', parseInt(panes.style.getPropertyValue('--glass-w'), 10)); } catch(e) {}
+  });
+})();
 
 function esc(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, c => (
