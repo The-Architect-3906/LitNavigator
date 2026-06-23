@@ -244,3 +244,122 @@ def test_write_graph_stores_none_not_c0_when_unresolvable(monkeypatch):
         f"Expected None for unresolvable keypoint, got {resolved!r}. "
         "Old behaviour was to collapse to c0."
     )
+
+
+# ---------------------------------------------------------------------------
+# FIX 2: query_text param — empty quote uses keypoint name for embedding
+# ---------------------------------------------------------------------------
+
+from litnav.digest.evidence import resolve_evidence_chunk
+
+
+def _fake_embed_for_fix2(texts: list[str]) -> list[list[float]]:
+    """Keyword-based fake embedder: 3 dims [attention, positional, recurrent]."""
+    kws = ["attention", "positional", "recurrent"]
+    result = []
+    for t in texts:
+        t_low = t.lower()
+        result.append([float(kw in t_low) for kw in kws])
+    return result
+
+
+def test_empty_quote_with_query_text_resolves_via_embedding():
+    """When quote is empty but query_text is set (keypoint name), embedding fires
+    and resolves to the semantically closest chunk.
+
+    Before FIX 2: query_text param doesn't exist → TypeError.
+    After FIX 2: embedding fires using query_text, resolves to c2 (recurrent).
+    """
+    chunks = {
+        "c0": "The attention mechanism computes a weighted sum of values.",
+        "c1": "Transformer models use positional encodings to handle sequence order.",
+        "c2": "Recurrent networks maintain a hidden state across timesteps.",
+    }
+    # query_text = "recurrent hidden state" → should embed-match to c2
+    resolved, label = resolve_evidence_chunk(
+        quote="",
+        emitted_id="BAD_ID",
+        chunks=chunks,
+        embed_fn=_fake_embed_for_fix2,
+        query_text="recurrent hidden state",
+        sim_min=0.5,
+    )
+    assert label == "embedding", (
+        f"Expected label='embedding' when query_text is set, got {label!r}. resolved={resolved!r}"
+    )
+    assert resolved == "c2", (
+        f"Expected c2 (recurrent chunk matches query 'recurrent hidden state'), got {resolved!r}"
+    )
+
+
+def test_empty_quote_no_query_text_still_degrades():
+    """Regression: empty quote, no query_text → paper-level (no change from pre-FIX 2)."""
+    chunks = {
+        "c0": "The attention mechanism computes a weighted sum of values.",
+        "c1": "Transformer models use positional encodings to handle sequence order.",
+    }
+    resolved, label = resolve_evidence_chunk(
+        quote="",
+        emitted_id="BAD_ID",
+        chunks=chunks,
+        embed_fn=_fake_embed_for_fix2,
+        # no query_text
+        sim_min=0.5,
+    )
+    assert label == "paper-level", (
+        f"Expected paper-level without query_text, got {label!r}"
+    )
+    assert resolved is None, f"Expected None, got {resolved!r}"
+
+
+def test_write_graph_passes_keypoint_name_as_query_text(monkeypatch):
+    """When a keypoint has no quote, _write_graph passes query_text=keypoint_name
+    so the embedding resolver can fire on the keypoint's topic.
+
+    This verifies FIX 1 + FIX 2 integration: the wired embed_fn + query_text flow
+    reaches resolve_evidence_chunk with the right arguments.
+    """
+    monkeypatch.setenv("LITNAV_LLM_PROVIDER", "none")
+    captured = []
+
+    import litnav.digest.evidence as ev_mod
+    original_resolve = ev_mod.resolve_evidence_chunk
+
+    def spy_resolve(quote, emitted_id, chunks, *, embed_fn=None, query_text=None, **kw):
+        captured.append({"quote": quote, "query_text": query_text})
+        return original_resolve(quote, emitted_id, chunks, embed_fn=embed_fn,
+                                query_text=query_text, **kw)
+
+    monkeypatch.setattr(ev_mod, "resolve_evidence_chunk", spy_resolve)
+    # Also patch pipeline's import of resolve_evidence_chunk
+    import litnav.digest.pipeline as pipeline_mod
+    monkeypatch.setattr(pipeline_mod, "resolve_evidence_chunk", spy_resolve)
+
+    c = _make_conn()
+    candidate = {
+        "concepts": [
+            {"slug": "attention", "name": "Attention Mechanism", "domain": "ml", "frontier_flag": None},
+        ],
+        "keypoints": [
+            {
+                "kp_id": "kp_attn_noq",
+                "concept_slug": "attention",
+                "name": "Attention weighted sum",
+                "objective": "Explain attention.",
+                "evidence_chunk_id": "c0",
+                "evidence_quote": "",   # no quote → query_text should be keypoint name
+                "bloom_level": "recall",
+            },
+        ],
+        "prereq_edges": [], "similarity_edges": [],
+        "quiz_seeds": [], "judge_labels": {}, "misconceptions": [],
+    }
+    di = _make_di()
+    pipeline.digest(di, conn=c, candidate=candidate, session_id="s")
+
+    assert captured, "resolve_evidence_chunk was never called"
+    call = captured[0]
+    assert call["query_text"] == "Attention weighted sum", (
+        f"Expected query_text='Attention weighted sum' (keypoint name), "
+        f"got query_text={call['query_text']!r}"
+    )

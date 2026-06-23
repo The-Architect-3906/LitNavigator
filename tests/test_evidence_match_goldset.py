@@ -216,10 +216,92 @@ def test_goldset_accuracy_and_zero_false_positives():
             f"instead of {r['correct_chunk']!r}."
         )
 
-    # 4. Overall accuracy must be at least 4/6 (83%) — even if KP 6 degrades to paper-level,
-    #    cases 1-5 must all be correct.
-    assert match_accuracy >= 4 / 6, (
-        f"Match accuracy {match_accuracy:.1%} below expected minimum 66.7%."
+    # 4. Overall accuracy must be at least 5/6 (83.3%) — cases 1-5 must all be correct.
+    #    KP 6 (no quote, no id) may degrade to paper-level, but the floor is 5/6 not 4/6.
+    assert match_accuracy >= 5 / 6, (
+        f"Match accuracy {match_accuracy:.1%} below expected minimum 83.3%."
+    )
+
+
+# ---------------------------------------------------------------------------
+# FIX 3: multi-match with no id tiebreak must NOT collapse to matches[0]
+# ---------------------------------------------------------------------------
+
+CHUNKS_MULTI_OVERLAP = {
+    "cA": "The attention mechanism uses a softmax function.",
+    "cB": "The softmax function normalises probabilities in attention.",
+    "cC": "Backpropagation trains the network layer by layer.",
+}
+# "softmax" appears in BOTH cA and cB
+
+
+def test_multi_match_bad_id_falls_to_paper_level():
+    """When quote matches multiple chunks AND emitted_id does NOT disambiguate
+    (not among matches), the resolver must NOT return matches[0] (old soft-collapse).
+    With no embed_fn it must fall through to paper-level.
+
+    Before FIX 3: returns matches[0]='cA' with label 'quote-multi'.
+    After FIX 3: returns (None, 'paper-level').
+    """
+    resolved, label = resolve_evidence_chunk(
+        quote="softmax",
+        emitted_id="JUNK_ID",
+        chunks=CHUNKS_MULTI_OVERLAP,
+        embed_fn=None,
+        sim_min=0.5,
+    )
+    assert resolved != "cA", (
+        f"Got matches[0]='cA' (old soft-collapse). After FIX 3 must fall through. "
+        f"label={label!r}"
+    )
+    assert label == "paper-level", (
+        f"Expected paper-level fallthrough (no embed_fn), got label={label!r}, resolved={resolved!r}"
+    )
+    assert resolved is None, f"Expected None (paper-level), got {resolved!r}"
+
+
+def test_multi_match_good_id_still_disambiguates():
+    """FIX 3 regression: when emitted_id IS among the multi-matches,
+    the resolver should still return the id-disambiguated chunk.
+    """
+    resolved, label = resolve_evidence_chunk(
+        quote="softmax",
+        emitted_id="cB",
+        chunks=CHUNKS_MULTI_OVERLAP,
+        embed_fn=None,
+        sim_min=0.5,
+    )
+    assert resolved == "cB", f"Expected cB (id-disambiguated), got {resolved!r}"
+    assert label == "quote-multi", f"Expected quote-multi, got {label!r}"
+
+
+def test_multi_match_bad_id_with_embed_fn_falls_to_embedding_not_c0():
+    """When quote multi-matches, emitted_id is bad, but embed_fn is available,
+    the resolver falls through to embedding — NOT quote-multi/matches[0].
+
+    The key invariant: label != 'quote-multi' (which was the buggy pre-FIX 3 behavior).
+    """
+    def _fake_embed(texts):
+        # 2-dim: [has_softmax, has_backprop]
+        result = []
+        for t in texts:
+            t_low = t.lower()
+            result.append([float("softmax" in t_low), float("backprop" in t_low)])
+        return result
+
+    resolved, label = resolve_evidence_chunk(
+        quote="softmax",
+        emitted_id="JUNK_ID",
+        chunks=CHUNKS_MULTI_OVERLAP,
+        embed_fn=_fake_embed,
+        sim_min=0.5,
+    )
+    assert label != "quote-multi", (
+        f"Got quote-multi — means matches[0] returned without tiebreak. "
+        f"resolved={resolved!r}"
+    )
+    assert label in ("embedding", "paper-level"), (
+        f"Expected embedding or paper-level after fall-through, got {label!r}"
     )
 
 

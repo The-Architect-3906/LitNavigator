@@ -103,15 +103,39 @@ def test_quote_multi_uses_id_to_disambiguate():
     assert label == "quote-multi"
 
 
-def test_quote_multi_falls_back_to_first_match_when_id_not_among_matches():
-    """'attention' in c0 and c1; emitted id c2 not in matches → first match (c0)."""
+def test_quote_multi_falls_through_when_id_is_junk():
+    """'attention' in c0 and c1; emitted id is junk (not a real chunk at all) → ambiguous.
+    FIX 3: must NOT return matches[0] (old soft-collapse to c0). With no embed_fn and a
+    junk id (id_resolved=None), falls through to paper-level.
+    """
     chunk_id, label = resolve_evidence_chunk(
         quote="attention",
-        emitted_id="c2",
+        emitted_id="JUNK_NOT_A_REAL_ID",   # junk → id_resolved=None, no tiebreak
         chunks=CHUNKS,
+        embed_fn=None,                      # no embed → falls to paper-level
     )
-    assert chunk_id == "c0"
-    assert label == "quote-multi"
+    assert chunk_id is None, (
+        f"Expected None (paper-level fall-through), got {chunk_id!r}. "
+        "FIX 3: ambiguous multi-match with no id tiebreak must not collapse to c0."
+    )
+    assert label == "paper-level", f"Expected paper-level, got {label!r}"
+
+
+def test_quote_multi_id_not_in_matches_but_valid_falls_to_id_only():
+    """'attention' in c0 and c1; emitted id c2 (valid but not in matches) → id-only.
+    FIX 3 only affects the 'return matches[0]' path. When id_resolved is a REAL chunk
+    (even if not among the multi-matches), Branch 3 (id-only) still fires — the caller
+    chose c2 for a reason, and it's a valid chunk.
+    """
+    chunk_id, label = resolve_evidence_chunk(
+        quote="attention",
+        emitted_id="c2",   # c2 IS a real chunk (recurrent), not in matches (c0, c1)
+        chunks=CHUNKS,
+        embed_fn=None,
+    )
+    # After multi-match fall-through (no id in matches), Branch 3 fires: c2 is valid
+    assert chunk_id == "c2", f"Expected c2 (id-only from Branch 3), got {chunk_id!r}"
+    assert label == "id-only", f"Expected id-only, got {label!r}"
 
 
 # ---------------------------------------------------------------------------

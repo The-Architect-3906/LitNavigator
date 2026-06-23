@@ -78,7 +78,9 @@ def _write_sources(conn: sqlite3.Connection, di: DigestInput) -> None:
 def _write_graph(conn: sqlite3.Connection, di: DigestInput, concepts: list[dict],
                  scored_edges: list[dict], keypoints: list[dict],
                  quiz_seeds: list[dict], misconceptions: list[dict],
-                 slice_key: str | None = None) -> dict[str, int]:
+                 slice_key: str | None = None,
+                 session_id: str | None = None,
+                 budget: int | None = None) -> dict[str, int]:
     """Write concepts/edges/keypoints/quiz seeds/misconceptions as source='digested';
     return {slug: concept_id}."""
     _write_sources(conn, di)
@@ -128,9 +130,19 @@ def _write_graph(conn: sqlite3.Connection, di: DigestInput, concepts: list[dict]
             # and we pass its result as emitted_id to the resolver.
             emitted_id = _norm_chunk_id(k.get("evidence_chunk_id"), valid_chunk_ids)
             quote = k.get("evidence_quote") or ""
+            # FIX 1: wire the real embedder so the embedding branch fires in production.
+            # On provider=none, router.embed_texts returns None → resolver treats that
+            # as "no embedding signal" and degrades to paper-level, so offline stays safe.
+            # FIX 2: pass query_text=keypoint name so an empty quote can embed-match.
             resolved, _label = resolve_evidence_chunk(
-                quote, emitted_id, chunk_texts
+                quote, emitted_id, chunk_texts,
+                embed_fn=lambda texts: router.embed_texts(
+                    texts, stage="digest", session_id=session_id, conn=conn, budget=budget
+                ),
+                query_text=k.get("name", ""),
             )
+            # TODO(evidence-label): persist resolve_evidence_chunk label for the UI confidence
+            # signal (no column yet — add a label column to keypoints when the UI is ready).
             kp_id = k["kp_id"]
             kp_resolved_chunk[kp_id] = resolved
             repo.create_keypoint(conn, kp_id, ids[k["concept_slug"]], k["name"],
@@ -407,7 +419,7 @@ def digest(di: DigestInput, *, conn: sqlite3.Connection, candidate: dict,
 
     if write:
         _write_graph(conn, di, concepts, verified, keypoints, quiz_seeds, misconceptions,
-                     slice_key=key)
+                     slice_key=key, session_id=session_id, budget=budget)
         openworld_repo.cache_put(conn, key, model_key=mk)
 
     return DigestResult(

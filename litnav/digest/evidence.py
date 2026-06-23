@@ -39,6 +39,7 @@ def resolve_evidence_chunk(
     chunks: dict[str, str],
     *,
     embed_fn=None,
+    query_text: str | None = None,
     sim_min: float = _EVIDENCE_SIM_MIN,
 ) -> tuple[str | None, str]:
     """Resolve a keypoint's evidence to a chunk id, with honest degradation.
@@ -47,16 +48,20 @@ def resolve_evidence_chunk(
         quote:      Short verbatim span (≤~120 chars) copied from the source text.
         emitted_id: The chunk id the LLM emitted (may be wrong/hallucinated).
         chunks:     {chunk_id: chunk_text} — all available chunks.
-        embed_fn:   Optional callable(list[str]) -> list[list[float]].  When None,
-                    the embedding fallback is skipped.  In production, pass embed_texts;
-                    in tests, pass a deterministic fake.
+        embed_fn:   Optional callable(list[str]) -> list[list[float]] | None.
+                    When None (or when it returns None, as in offline/provider=none
+                    mode), the embedding fallback is skipped gracefully.
+                    In production, pass embed_texts; in tests, a deterministic fake.
+        query_text: Optional fallback query for the embedding step.  When `quote`
+                    is empty/whitespace, this text is used as the embedding query
+                    instead (e.g. the keypoint name).  Ignored when quote is present.
         sim_min:    Minimum cosine similarity for the embedding fallback to fire.
 
     Returns:
         (chunk_id | None, label) where label is one of:
             "verified"    — quote matched exactly one chunk AND emitted_id agrees
             "quote-exact" — quote matched exactly one chunk; emitted_id disagreed
-            "quote-multi" — quote matched multiple chunks (id used to disambiguate or first)
+            "quote-multi" — quote matched multiple chunks AND id disambiguates
             "id-only"     — no quote match; emitted_id resolves to a real chunk
             "embedding"   — embedding cosine similarity above sim_min
             "paper-level" — nothing resolved; caller cites the paper, not a chunk
@@ -89,9 +94,12 @@ def resolve_evidence_chunk(
 
         if len(matches) > 1:
             # Branch 2: multiple chunks contain the quote.
+            # Disambiguate ONLY when the emitted id is among the matches.
+            # When the id does NOT disambiguate, the quote is ambiguous — fall
+            # through to the embedding step rather than blindly returning matches[0].
             if id_resolved and id_resolved in matches:
                 return id_resolved, "quote-multi"
-            return matches[0], "quote-multi"
+            # Ambiguous quote, no id tiebreak → fall through to embedding/paper-level.
 
     # ------------------------------------------------------------------
     # Branch 3: id corroboration (quote matched nothing, but id is real)
@@ -103,11 +111,19 @@ def resolve_evidence_chunk(
     # Branch 4: embedding fallback
     # ------------------------------------------------------------------
     if embed_fn is not None:
-        query_text = quote if quote else ""
-        if query_text:
+        # Use the quote as the embedding query when present; otherwise fall back
+        # to query_text (e.g. the keypoint name) so a keypoint with no usable
+        # quote can still embed-match on its own semantic content (FIX 2).
+        embed_query = (quote.strip() if quote and quote.strip() else None) or (
+            query_text.strip() if query_text and query_text.strip() else None
+        )
+        if embed_query:
             try:
-                vecs = embed_fn([query_text] + list(chunks.values()))
-                if vecs and len(vecs) == len(chunks) + 1:
+                vecs = embed_fn([embed_query] + list(chunks.values()))
+                # embed_fn returns None offline (provider=none) — treat as no signal.
+                if vecs is None:
+                    pass  # fall through to paper-level
+                elif len(vecs) == len(chunks) + 1:
                     query_vec = vecs[0]
                     best_id, best_sim = None, -1.0
                     for cid, chunk_vec in zip(chunks.keys(), vecs[1:]):
