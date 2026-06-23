@@ -36,3 +36,9 @@ the highest-leverage follow-up for getting a general backbone on niche/conversat
 Fix A is correct, tested, and regression-free, and it measurably improves plan generality **when a
 survey/Wikipedia source is retrieved** (GNN case). It does NOT fully solve the niche-goal narrow-plan
 problem on its own — that needs query normalization so a general backbone is actually found.
+
+## Follow-up done: Wikipedia best-match reranker
+The "next lever" above (Wikipedia query brittleness) is addressed without a new LLM call: the adapter
+now fetches a candidate pool and re-ranks by topical match + junk penalty, so the right article
+survives to the existing LLM relevance_gate. Live: "agent memory across steps" → [AI agent, Cognitive
+model, Reinforcement learning] (was "The 39 Steps (1935 film)"). 487 tests green.
