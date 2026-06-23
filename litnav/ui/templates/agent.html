@@ -9,8 +9,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
   <link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,500;0,600;1,400&amp;family=Public+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
 
-  <h1 class="sr-only">LitNavigator — Adaptive Research Tutor</h1>
-
   <style>
     /* ── Reset ── */
     *, *::before, *::after { box-sizing: border-box; }
@@ -464,6 +462,12 @@
       border: 1.5px solid #e7b75e;
       background: #fffaf0;
     }
+    /* Spaced-recap variant — distinct dashed card */
+    .ai.qa.recap {
+      border-style: dashed;
+      border-color: #d7cfbe;
+      background: #fff;
+    }
     .qa-header {
       display: flex;
       align-items: center;
@@ -516,6 +520,39 @@
     .feedback-mark.ok { color: #1f9d57; }
     .feedback-mark.warn { color: #ef6a4a; }
     .feedback-text { color: #3b342a; line-height: 1.45; }
+
+    /* Mastery-move line (grade_kp live mastery delta) */
+    .mastery-move {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: #6b6357;
+      margin-top: 5px;
+      padding-left: 22px;
+    }
+    .mastery-move .mm-nums { color: #2b2620; font-weight: 600; }
+    .mastery-move .mm-gate { color: #1f9d57; }
+
+    /* Frontier double-check escalation card */
+    .escalation-card {
+      border: 1.5px solid #ef6a4a;
+      border-radius: 8px;
+      padding: 9px 12px;
+      margin-top: 6px;
+      background: rgba(192, 73, 42, .04);
+    }
+    .escalation-card-header {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      color: #c0492a;
+      margin-bottom: 4px;
+    }
+    .escalation-card-body {
+      font-size: 11.5px;
+      color: #6b6357;
+      line-height: 1.45;
+    }
 
     /* Error bubble */
     .error-bubble {
@@ -1204,6 +1241,8 @@
 </head>
 <body class="mode-chat show-detail" data-sid="{{ sid }}">
 
+<h1 class="sr-only">LitNavigator — Adaptive Research Tutor</h1>
+
 <!-- Hidden toggle buttons — kept present so JS never crashes; visually hidden -->
 <button id="t-chat" class="ln-hidden-toggle" aria-hidden="true" tabindex="-1" onclick="setMode('chat')">Chat</button>
 <button id="t-glass" class="ln-hidden-toggle" aria-hidden="true" tabindex="-1" onclick="setMode('glass')">Glass</button>
@@ -1223,7 +1262,7 @@
     {% if live %}
     <div class="ln-live-pill" role="status" aria-label="Live data sources connected">
       <span class="ln-live-dot" aria-hidden="true"></span>
-      <span class="ln-live-label">Live · OpenAlex +3</span>
+      <span class="ln-live-label">Live · open-world</span>
     </div>
     {% endif %}
     <div class="ln-cost-chip" title="Cumulative LLM cost this session">
@@ -1545,9 +1584,7 @@
       <div class="ln-rail-card">
         <div class="ln-cost-total">
           <span class="ln-cost-total-label">Cost ledger</span>
-          <!-- NOTE: per-stage cost breakdown has no live data source yet -->
-          <!-- PLACEHOLDER: stage-level cost split (find-sources / digest / teach / escalation)
-               awaits a dedicated cost_ledger SSE event -->
+          <span class="ln-cost-total-value" id="cost-ledger-total">{% if cost and cost.tokens %}${{ cost.usd }}{% else %}—{% endif %}</span>
         </div>
         <!-- NOTE: per-stage rows below are static structural placeholders -->
         <div class="ln-cost-ledger">
@@ -1877,12 +1914,11 @@ function updateGlass(e) {
 
   // ── Cost ──
   if (e.cost) {
+    const costStr = e.cost.tokens ? '$' + e.cost.usd : '$0';
     const costEl = document.getElementById('cost');
-    if (costEl) {
-      costEl.textContent = e.cost.tokens
-        ? '$' + e.cost.usd
-        : '$0';
-    }
+    if (costEl) costEl.textContent = costStr;
+    const ledgerEl = document.getElementById('cost-ledger-total');
+    if (ledgerEl) ledgerEl.textContent = costStr;
   }
 
   // ── Recommend-next panel ──
@@ -1984,6 +2020,32 @@ function handleEvent(e, steps, inp) {
     txt.textContent = e.text || '';
     d.appendChild(mark); d.appendChild(txt);
     t.appendChild(d);
+    // Mastery-move line (real data from grade_kp — only rendered when present)
+    if (e.mastery_before != null && e.mastery_after != null) {
+      const mm = document.createElement('div');
+      mm.className = 'mastery-move';
+      const pct = n => Math.round(n * 100);
+      const gate = pct(e.mastery_after) >= 75;
+      mm.innerHTML = 'mastery <span class="mm-nums">'
+        + pct(e.mastery_before) + '% → ' + pct(e.mastery_after) + '%'
+        + '</span>'
+        + (gate ? ' · <span class="mm-gate">clears gate ≥ 75 %</span>' : '')
+        + (e.correct ? ' · advancing' : '');
+      t.appendChild(mm);
+    }
+    // Frontier double-check card (only rendered when escalation fired)
+    if (e.escalated) {
+      const ec = document.createElement('div');
+      ec.className = 'escalation-card';
+      const eh = document.createElement('div');
+      eh.className = 'escalation-card-header';
+      eh.textContent = '↑ FRONTIER DOUBLE-CHECK';
+      const eb = document.createElement('div');
+      eb.className = 'escalation-card-body';
+      eb.textContent = 'Cheap grader was uncertain near the mastery gate — re-graded once on the frontier model for a high-stakes, accurate call.';
+      ec.appendChild(eh); ec.appendChild(eb);
+      t.appendChild(ec);
+    }
     const chat = document.getElementById('chat');
     chat.scrollTop = chat.scrollHeight;
   } else if (e.type === 'teach') {
@@ -2012,7 +2074,7 @@ function handleEvent(e, steps, inp) {
     }
   } else if (e.type === 'question') {
     if (e.text) {
-      const qBubble = addBubble('ai qa', '', false);
+      const qBubble = addBubble('ai qa' + (e.is_retrieval ? ' recap' : ''), '', false);
       const hdr = document.createElement('div');
       hdr.className = 'qa-header';
       if (e.is_retrieval) {
