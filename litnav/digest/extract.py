@@ -46,7 +46,10 @@ def extract_concepts(di: DigestInput, *, candidate: dict, session_id: str | None
         'so that the agent can ground its decisions in real-world observations."\n\n'
         f"Evidence:\n{chunk_blob}\n\n"
         'Respond as JSON: {"concepts": [{"slug","name","domain","frontier_flag"}], '
-        '"keypoints": [{"kp_id","concept_slug","name","objective","evidence_chunk_id","bloom_level"}]}'
+        '"keypoints": [{"kp_id","concept_slug","name","objective","evidence_chunk_id",'
+        '"evidence_quote","bloom_level"}]} '
+        'where evidence_quote is a SHORT (≤120 chars) VERBATIM span copied from the evidence '
+        'text that directly supports this keypoint (copy the exact words, do not paraphrase).'
     )
     result = router.complete_json(prompt, tier="cheap", stage="digest", fallback=candidate,
                                   session_id=session_id, conn=conn, budget=budget, cache=True)
