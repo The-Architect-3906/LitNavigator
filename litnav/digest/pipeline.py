@@ -12,6 +12,7 @@ import sqlite3
 
 from litnav.digest.contract import DigestInput, DigestResult, slice_key
 from litnav.digest import extract, edges as edges_mod, verify as verify_mod
+from litnav.digest.evidence import resolve_evidence_chunk
 from litnav.llm import router
 from litnav.storage import repo, openworld_repo
 
@@ -85,6 +86,14 @@ def _write_graph(conn: sqlite3.Connection, di: DigestInput, concepts: list[dict]
     # evidence_chunk_id onto real chunks so evidence/citations resolve downstream.
     total_chunks = sum(len(s.chunks) for s in di.sources)
     valid_chunk_ids = [f"c{i}" for i in range(total_chunks)]
+    # Chunk text map for quote-authority resolver (resolve_evidence_chunk).
+    chunk_texts: dict[str, str] = {}
+    _idx = 0
+    for s in di.sources:
+        for ch in s.chunks:
+            chunk_texts[f"c{_idx}"] = ch
+            _idx += 1
+
     ids: dict[str, int] = {}
     for c in concepts:
         existing = repo.get_concept_by_slug(conn, c["slug"])
@@ -110,10 +119,21 @@ def _write_graph(conn: sqlite3.Connection, di: DigestInput, concepts: list[dict]
     # This is what makes retrieve_node (which filters paper_chunks by concept_id)
     # return evidence instead of 0 chunks (B18).
     concept_chunk_ids: dict[int, set[str]] = {cid: set() for cid in ids.values()}
+    # Track resolved chunk per keypoint_id so quizzes can inherit (Task 4 / B1).
+    kp_resolved_chunk: dict[str, str | None] = {}
     for k in keypoints:
         if k["concept_slug"] in ids:
-            resolved = _norm_chunk_id(k.get("evidence_chunk_id"), valid_chunk_ids)
-            repo.create_keypoint(conn, k["kp_id"], ids[k["concept_slug"]], k["name"],
+            # Use quote-authority + id-corroboration ladder (B1 fix).
+            # _norm_chunk_id still used as a quick id normaliser (it now returns None on failure),
+            # and we pass its result as emitted_id to the resolver.
+            emitted_id = _norm_chunk_id(k.get("evidence_chunk_id"), valid_chunk_ids)
+            quote = k.get("evidence_quote") or ""
+            resolved, _label = resolve_evidence_chunk(
+                quote, emitted_id, chunk_texts
+            )
+            kp_id = k["kp_id"]
+            kp_resolved_chunk[kp_id] = resolved
+            repo.create_keypoint(conn, kp_id, ids[k["concept_slug"]], k["name"],
                                  k.get("objective", ""),
                                  resolved,
                                  bloom_level=k.get("bloom_level", "recall"))
@@ -145,10 +165,16 @@ def _write_graph(conn: sqlite3.Connection, di: DigestInput, concepts: list[dict]
 
     for q in quiz_seeds:
         if q["concept_slug"] in ids:
+            # Quiz inherits its keypoint's resolved chunk (B1 / Task 4).
+            # This avoids redundant re-resolution and guarantees the quiz cites the same
+            # evidence the lesson used. Only falls back to None if keypoint_id is absent.
+            kp_id_for_quiz = q.get("keypoint_id")
+            inherited_chunk = kp_resolved_chunk.get(kp_id_for_quiz) if kp_id_for_quiz else None
             repo.create_quiz_item(conn, ids[q["concept_slug"]], q["question"], q["answer_key"],
                                   qtype=q.get("qtype", "explain"),
-                                  keypoint_id=q.get("keypoint_id"),
-                                  bloom_level=q.get("bloom_level", "recall"))
+                                  keypoint_id=kp_id_for_quiz,
+                                  bloom_level=q.get("bloom_level", "recall"),
+                                  evidence_chunk_id=inherited_chunk)
     for m in misconceptions:
         if m.get("concept_slug") in ids:
             repo.record_induced_misconception(
