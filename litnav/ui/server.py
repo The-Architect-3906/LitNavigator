@@ -37,6 +37,12 @@ _ARTIFACT_DIR = "artifacts"
 
 app = FastAPI(title="LitNavigator trace panel")
 
+# Serve static assets (logo, favicon) for the manuscript UI.
+from fastapi.staticfiles import StaticFiles
+_STATIC_DIR = Path(__file__).parent / "static"
+if _STATIC_DIR.is_dir():
+    app.mount("/static", StaticFiles(directory=str(_STATIC_DIR)), name="static")
+
 _TEMPLATES = Environment(
     loader=FileSystemLoader(str(Path(__file__).parent / "templates")),
     autoescape=select_autoescape(["html"]),
