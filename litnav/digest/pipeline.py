@@ -25,9 +25,11 @@ def _norm_chunk_id(raw, valid_ids: list[str]) -> str | None:
 
     The extractor often returns bare indices ('1', 1, 'c3') that don't match the global
     'c{idx}' ids we actually write, or hallucinates indices when there are fewer chunks than
-    keypoints. We resolve to a real chunk so evidence/citations link (else artifacts come out
-    empty — the OW-5.1 linkage bug). Unresolvable ids fall back to the first chunk (cite the
-    source) rather than dangling.
+    keypoints. We resolve to a real chunk so evidence/citations link.
+
+    Returns None when the id is unresolvable — NEVER the first chunk as a default.
+    Callers should use resolve_evidence_chunk (evidence.py) to handle the None case
+    via the full quote-authority + id-corroboration ladder.
     """
     if not valid_ids:
         return None
@@ -36,11 +38,11 @@ def _norm_chunk_id(raw, valid_ids: list[str]) -> str | None:
     try:
         i = int(str(raw).lstrip("cC"))
     except (TypeError, ValueError):
-        return valid_ids[0]
+        return None
     for cand in (f"c{i}", f"c{i - 1}"):   # tolerate 0- vs 1-indexed
         if cand in valid_ids:
             return cand
-    return valid_ids[0]
+    return None
 
 
 def _slice_key(di: DigestInput) -> str:
