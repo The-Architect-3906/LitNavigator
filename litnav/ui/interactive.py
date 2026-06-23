@@ -16,7 +16,7 @@ from litnav.nodes.retrieve import retrieve_node
 from litnav.recommend.recommend_next import recommend_next
 from litnav.storage import repo
 from litnav.ui.cost import session_cost
-from litnav.ui.flow_meta import meta_for
+from litnav.ui.flow_meta import meta_for, mastery_tier, why_sentence
 from litnav.ui.graph_svg import to_svg
 from litnav.ui.trace import concept_graph
 # Open-world cold-start (live mode): discover real sources → digest into a graph → teach.
@@ -24,6 +24,20 @@ from litnav.discover import find_sources
 from litnav.discover.contract import DiscoverInput
 from litnav.digest import pipeline
 from litnav.digest.contract import DigestInput, SourceDoc
+
+_DIGEST_TOPN = 3   # Fix A.4: digest the top-N full-text sources, not just one
+
+
+def _pick_digest_sources(withft: list, n: int = _DIGEST_TOPN) -> list:
+    """Choose up to n full-text sources for digest, general-concepts backbone first.
+
+    A survey/review or a Wikipedia article gives field-general concepts (the antidote to one paper's
+    proprietary jargon), so it leads; primary papers follow for depth. Stable within each group.
+    """
+    def _is_backbone(s) -> bool:
+        return getattr(s, "is_review", False) or s.source_type == "wikipedia"
+    ordered = sorted(withft, key=lambda s: not _is_backbone(s))   # backbone first, else input order
+    return ordered[:n]
 
 
 class TutorSession:
@@ -81,6 +95,12 @@ class TutorSession:
         # ORIENT + LOST
         "orient_tour": "Walking the concept roadmap",
         "handle_lost": "Re-explaining from a different angle",
+        # Spaced-retrieval / probe nodes
+        "review_probe": "Quick recall — revisiting an earlier concept",
+        "grade_probe": "Grading recall answer",
+        # Open-world build stages (used as pseudo-node labels in build events)
+        "discover": "Finding real sources",
+        "digest": "Reading and building concept map",
     }
 
     def _step_event(self, node: str, delta: dict) -> dict:
@@ -100,6 +120,22 @@ class TutorSession:
         return {"type": "step", "node": node,
                 "label": self._STEP_LABELS.get(node, node), "detail": detail,
                 "skill": meta["skill"], "method": meta["method"], "paper": meta["paper"]}
+
+    def _resolve_cited(self, chunk_ids: list) -> list[dict]:
+        """Resolve chunk IDs to dicts with chunk_id, text, paper_id, and paper_title."""
+        result = []
+        for cid in chunk_ids:
+            row = self.conn.execute(
+                "SELECT pc.text, pc.paper_id, p.title "
+                "FROM paper_chunks pc LEFT JOIN papers p ON p.id = pc.paper_id "
+                "WHERE pc.id=?", (cid,)
+            ).fetchone()
+            if row:
+                result.append({"chunk_id": cid, "text": row[0] or "",
+                                "paper_id": row[1], "paper_title": row[2]})
+            else:
+                result.append({"chunk_id": cid, "text": "", "paper_id": None, "paper_title": None})
+        return result
 
     def _recommend(self) -> list[dict]:
         """Call recommend_next and return a serialisable list; empty on any error."""
@@ -145,16 +181,33 @@ class TutorSession:
 
     def _terminal_events(self) -> list[dict]:
         cur = self.current()
+        # B18: mark session done in DB when the route is fully complete (idempotent).
+        if cur.get("done"):
+            repo.complete_session(self.conn, self.sid)
         events = [
             {"type": "teach", "text": text, "cited": cur.get("cited") or []}
             for text in (cur.get("teach_messages") or [])
             if text
         ]
+        # B16: when the route is complete, emit a short completion message instead of the empty
+        # question bubble (text='', bloom_level=None) that previously appeared alongside the artifact.
+        if cur.get("done"):
+            route = cur.get("route") or []
+            n_done = sum(1 for s in route if s.get("status") == "done")
+            n_total = len(route)
+            events.append({"type": "completion",
+                           "text": (f"Route complete — {n_done} of {n_total} concept(s) mastered. "
+                                    "Here's your study artifact below."),
+                           "bloom_level": None})
+        elif cur.get("question"):
+            is_retrieval = cur.get("decision") == "review_probe"
+            events.append({"type": "question", "text": cur["question"],
+                           "bloom_level": cur.get("bloom"), "is_retrieval": is_retrieval})
         events.extend([
-            {"type": "question", "text": cur.get("question") or "", "bloom_level": cur.get("bloom")},
             {"type": "state", "route": cur["route"], "route_version": cur["route_version"],
              "learner": cur["learner"], "cited": cur["cited"], "decision": cur["decision"],
-             "rationale": cur["rationale"], "induced": cur["induced"], "intent": cur.get("intent"),
+             "rationale": cur["rationale"], "why_sentence": why_sentence(cur.get("decision")),
+             "induced": cur["induced"], "intent": cur.get("intent"),
              "graph": to_svg(concept_graph(self.conn, self.sid)),
              "cost": session_cost(self.conn, self.sid),
              "recommend": self._recommend()},
@@ -191,6 +244,24 @@ class TutorSession:
         collected.reverse()
         return collected
 
+    @staticmethod
+    def _feedback_event(node: str, delta: dict) -> dict | None:
+        """Return a learner-facing feedback event when a grade node runs, else None.
+        Reuses the already-computed quiz_result (feedback text + correctness + misconception).
+        """
+        if node not in ("grade", "grade_kp"):
+            return None
+        qr = delta.get("quiz_result") or {}
+        score = qr.get("score")
+        if score is None:
+            return None
+        correct = score == 1.0
+        text = qr.get("feedback") or ("Correct!" if correct else "Not quite.")
+        misconception = qr.get("detected_misconception")
+        if not correct and misconception:
+            text = f"{text} (misconception detected: {misconception})"
+        return {"type": "feedback", "correct": correct, "text": text}
+
     def stream_answer(self, text: str):
         """Inject the answer and resume, yielding one event per executed node, then the
         terminal teach/question/state/done events. Used by the SSE endpoint."""
@@ -201,6 +272,9 @@ class TutorSession:
                 if node.startswith("__"):   # skip LangGraph control keys (e.g. __interrupt__)
                     continue
                 yield self._step_event(node, delta or {})
+                fb = self._feedback_event(node, delta or {})
+                if fb:
+                    yield fb
         for ev in self._terminal_events():
             yield ev
 
@@ -241,6 +315,34 @@ class TutorSession:
 
         cs = (vals.get("learner_state") or {}).get(focus_id, {}) if focus_id is not None else {}
 
+        # Build learner list including ALL route concepts (pre-quiz ones show as not-yet-assessed).
+        learner_state = vals.get("learner_state") or {}
+        route_cids = [st.get("concept_id") for st in route if st.get("concept_id") is not None]
+        # Union of route concept ids + observed concept ids (preserves order: route first)
+        seen_cids: list[int] = []
+        for cid in route_cids:
+            if cid not in seen_cids:
+                seen_cids.append(cid)
+        for cid in learner_state:
+            if cid not in seen_cids:
+                seen_cids.append(cid)
+        learner_list = []
+        for cid in seen_cids:
+            cname = (self.conn.execute("SELECT name FROM concepts WHERE id=?", (cid,)).fetchone() or [None])[0]
+            cstate = learner_state.get(cid, {})
+            m = round(cstate.get("mastery", 0.0), 3)
+            c = round(cstate.get("confidence", 0.0), 3)
+            assessed = bool(cstate.get("n_observations"))
+            learner_list.append({
+                "name": cname,
+                "mastery": m,
+                "confidence": c,
+                "tier": mastery_tier(m) if assessed else None,
+                "held": cstate.get("held_misconceptions", []),
+                "assessed": assessed,
+            })
+
+        decision = vals.get("decision")
         return {
             "session_id": self.sid,
             "done": done,
@@ -263,22 +365,11 @@ class TutorSession:
                 for st in route
             ],
             "evidence": vals.get("current_evidence") or [],
-            "cited": [
-                {"chunk_id": cid,
-                 "text": (self.conn.execute("SELECT text FROM paper_chunks WHERE id=?", (cid,)).fetchone() or [""])[0],
-                 "paper_id": (self.conn.execute("SELECT paper_id FROM paper_chunks WHERE id=?", (cid,)).fetchone() or [None])[0]}
-                for cid in (vals.get("current_cited_chunks") or [])
-            ],
-            "decision": vals.get("decision"),
+            "cited": self._resolve_cited(vals.get("current_cited_chunks") or []),
+            "decision": decision,
             "rationale": vals.get("rationale"),
-            "learner": [
-                {"name": (self.conn.execute("SELECT name FROM concepts WHERE id=?", (cid,)).fetchone() or [None])[0],
-                 "mastery": round(cs.get("mastery", 0.0), 3),
-                 "confidence": round(cs.get("confidence", 0.0), 3),
-                 "held": cs.get("held_misconceptions", [])}
-                for cid, cs in (vals.get("learner_state") or {}).items()
-                if cs.get("n_observations")
-            ],
+            "why_sentence": why_sentence(decision),
+            "learner": learner_list,
             "induced": [
                 {"prereq": (self.conn.execute("SELECT name FROM concepts WHERE id=?", (e["prereq_concept"],)).fetchone() or [None])[0],
                  "target": (self.conn.execute("SELECT name FROM concepts WHERE id=?", (e["target_concept"],)).fetchone() or [None])[0],
@@ -288,6 +379,8 @@ class TutorSession:
             "intent": vals.get("intent"),
             "teach_depth": vals.get("teach_depth"),
             "mastery_threshold": vals.get("mastery_threshold"),
+            "cost": session_cost(self.conn, self.sid),
+            "recommend": self._recommend(),
             "graph": to_svg(concept_graph(self.conn, self.sid)),
         }
 
@@ -300,7 +393,8 @@ class AgentSession:
     _BUDGET = 120000
 
     def __init__(self, domain_conn, checkpoint_conn, session_id: str, fixture_data: dict | None = None,
-                 *, open_world_goal: str | None = None, live: bool = False, out_dir: str = "artifacts"):
+                 *, open_world_goal: str | None = None, live: bool = False, out_dir: str = "artifacts",
+                 selected_adapters: list[str] | None = None):
         self.conn = domain_conn
         self.ckpt = checkpoint_conn
         self.sid = session_id
@@ -308,6 +402,7 @@ class AgentSession:
         # Open-world (live) mode: no fixture — build this learner's own graph from real sources.
         self.open_world = bool(open_world_goal and live)
         self.goal = (open_world_goal or "").strip()
+        self.selected_adapters = selected_adapters or None  # which DISCOVER sources (None = registry defaults)
         self.built = False
         self.tutor: TutorSession | None = None
         if fixture_data:
@@ -329,21 +424,28 @@ class AgentSession:
         return bool(self.tutor and not cur.get("done") and cur.get("question"))
 
     def current(self) -> dict:
-        """Snapshot for the initial page render (empty 'conversing' state before teaching)."""
+        """Snapshot for the initial page render (empty 'conversing' state before teaching).
+        Includes cost + recommend so Jinja first-paint matches the SSE updateGlass payload."""
+        _empty_cost = session_cost(self.conn, self.sid)
+        _empty_rec = self.tutor._recommend() if self.tutor else []
         if self.open_world and not self.built:
             # "Building your course" placeholder — the page auto-streams the cold start on load.
             return {"done": False, "building": True, "goal": self.goal, "concept_name": None,
                     "teach": None, "teach_messages": [], "question": None, "route": [],
                     "route_version": 1, "learner": [], "cited": [], "evidence": [],
-                    "decision": None, "rationale": None, "induced": [], "intent": None,
+                    "decision": None, "rationale": None, "why_sentence": None,
+                    "induced": [], "intent": None,
                     "mastery": None, "confidence": None,
+                    "cost": _empty_cost, "recommend": _empty_rec,
                     "graph": to_svg(concept_graph(self.conn, None))}
         if self.tutor:
             return self.tutor.current()
         return {"done": False, "concept_name": None, "teach": None, "teach_messages": [], "question": None,
                 "route": [], "route_version": 1, "learner": [], "cited": [], "evidence": [],
-                "decision": None, "rationale": None, "induced": [], "intent": None,
+                "decision": None, "rationale": None, "why_sentence": None,
+                "induced": [], "intent": None,
                 "mastery": None, "confidence": None,
+                "cost": _empty_cost, "recommend": _empty_rec,
                 # Base concept map (no session state yet) — orients the learner before teaching.
                 "graph": to_svg(concept_graph(self.conn, None))}
 
@@ -363,8 +465,8 @@ class AgentSession:
                "skill": "find-sources", "method": "BM25 + embedding rerank + relevance gate",
                "paper": "Robertson; Cohan 2020"}
         try:
-            res = find_sources.find(DiscoverInput(self.goal, k=6), conn=self.conn,
-                                    session_id=self.sid, budget=self._BUDGET)
+            res = find_sources.find(DiscoverInput(self.goal, k=6, selected_adapters=self.selected_adapters),
+                                    conn=self.conn, session_id=self.sid, budget=self._BUDGET)
         except Exception as e:
             yield {"type": "reply", "kind": "boundary", "text": f"Source search failed: {e}"}
             yield {"type": "done", "done": False}
@@ -377,12 +479,19 @@ class AgentSession:
             yield {"type": "done", "done": False}
             return
         top = withft[0]
-        yield {"type": "build", "stage": "discover_done", "label": f"Source: {top.title[:80]}"}
+        # B: report HOW MANY + WHICH sources, streamed one-by-one (not just the top title).
+        yield {"type": "build", "stage": "discover_done",
+               "label": f"Found {len(withft)} sources", "count": f"{len(withft)} sources"}
+        for s in withft:
+            yield {"type": "build", "stage": "source", "label": s.title[:90],
+                   "source_type": s.source_type}
         yield {"type": "build", "stage": "digest", "label": "Reading it and building your concept map…",
                "skill": "digest-corpus", "method": "concept extraction + RefD prereqs + gpt-4o verify",
                "paper": "Liang 2015"}
+        # Fix A.4: digest the top-3 sources (general-concepts backbone first), not just the top one.
+        picks = _pick_digest_sources(withft)
         di = DigestInput(self.goal,
-                         [SourceDoc(top.source_type, top.source_id, top.title, top.url, top.chunks)],
+                         [SourceDoc(s.source_type, s.source_id, s.title, s.url, s.chunks) for s in picks],
                          target_slugs=[])
         pipeline.digest(di, conn=self.conn,
                         candidate={"concepts": [], "keypoints": [], "prereq_edges": [],
@@ -397,7 +506,11 @@ class AgentSession:
         # Repopulate concepts from the freshly-built graph so dispatch works during teaching.
         self.concepts = [{"id": r[0], "slug": r[1], "name": r[2]} for r in
                          self.conn.execute("SELECT id, slug, name FROM concepts ORDER BY id").fetchall()]
-        yield {"type": "build", "stage": "map", "label": f"Concept map ready — {len(tids)} concepts",
+        # C: reveal the extracted concepts one-by-one before the final map render.
+        for c in self.concepts:
+            yield {"type": "build", "stage": "concept", "label": c["name"]}
+        yield {"type": "build", "stage": "map",
+               "label": f"Concept map ready — {len(self.concepts)} concepts", "count": f"{len(self.concepts)} concepts",
                "graph": to_svg(concept_graph(self.conn, self.sid))}
         self.tutor = TutorSession(self.conn, self.ckpt, self.sid, out_dir=self.out_dir)
         self.tutor.start(self.goal, target_concept_ids=tids, goal_text=self.goal, mastery_threshold=0.75)
@@ -487,17 +600,17 @@ class AgentSession:
             else:
                 yield {"type": "reply", "text": self._grounded_aside(message, aside_slug)}
             if question:
-                yield {"type": "question", "text": question, "bloom_level": cur.get("bloom")}
+                yield {"type": "question", "text": question, "bloom_level": cur.get("bloom"), "is_retrieval": False}
             yield {"type": "done", "done": False}
         elif d["action"] == "out_of_scope" and _looks_learn_request(message):
             # The learner wants to learn something we don't have — decline honestly and name it,
             # rather than a flat "I can teach: …" list. (Greetings/chit-chat fall through to chat.)
             yield {"type": "reply", "text": self._boundary_reply(message), "kind": "boundary"}
             if question:
-                yield {"type": "question", "text": question, "bloom_level": cur.get("bloom")}
+                yield {"type": "question", "text": question, "bloom_level": cur.get("bloom"), "is_retrieval": False}
             yield {"type": "done", "done": bool(cur.get("done"))}
         else:  # chat, or out_of_scope that isn't a learn request (e.g. a greeting)
             yield {"type": "reply", "text": d["reply"] or "What would you like to learn?"}
             if question:
-                yield {"type": "question", "text": question, "bloom_level": cur.get("bloom")}
+                yield {"type": "question", "text": question, "bloom_level": cur.get("bloom"), "is_retrieval": False}
             yield {"type": "done", "done": bool(cur.get("done"))}

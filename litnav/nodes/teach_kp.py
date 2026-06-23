@@ -104,6 +104,7 @@ def teach_kp_node(state: NavState, conn: sqlite3.Connection) -> dict:
 
     return {
         "concept_progress": updated_cp,
+        "current_cited_chunks": [kp_meta["evidence_chunk_id"]] if kp_meta.get("evidence_chunk_id") else [],
         "rationale": (
             f"TEACH keypoint {new_idx}/{len(cp['keypoints'])}: '{kp_meta['name']}' "
             f"(no quiz yet — full lecture pass first)"

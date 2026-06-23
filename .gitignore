@@ -23,3 +23,6 @@ dist/
 artifacts/
 
 .DS_Store
+
+# transient agent worktrees
+.claude/worktrees/

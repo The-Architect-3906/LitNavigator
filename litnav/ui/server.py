@@ -15,7 +15,7 @@ import sqlite3
 import uuid
 from pathlib import Path
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Query, Request
 from fastapi.responses import (FileResponse, HTMLResponse, JSONResponse, RedirectResponse,
                                StreamingResponse)
 from jinja2 import Environment, FileSystemLoader, select_autoescape
@@ -25,7 +25,6 @@ from litnav.goal import resolve_goal
 from litnav.storage import repo
 from litnav.storage.schema import init_db
 from litnav.storage.seed import seed_demo_data
-from litnav.ui.cost import session_cost
 from litnav.ui.interactive import AgentSession, TutorSession
 from litnav.ui.trace import build_trace
 
@@ -121,6 +120,36 @@ def _n_papers(data: dict) -> int:
     return len(ids) or len(data["concepts"])
 
 
+def _live_story_context(ag) -> dict:
+    """Build the story-band context from a live open-world session's real DB data.
+
+    Returns the same keys as _story_context so agent.html renders unchanged.
+    Queries ag.conn (the per-session SQLite that digest already populated).
+    """
+    conn = ag.conn
+    concepts = conn.execute("SELECT name FROM concepts ORDER BY id").fetchall()
+    concept_names = [r[0] for r in concepts]
+
+    papers = conn.execute("SELECT title, year FROM papers ORDER BY id").fetchall()
+    paper_count = len(papers)
+    rep_papers = [{"title": r[0], "year": r[1] or ""} for r in papers[:5]]
+
+    try:
+        edge_count = conn.execute("SELECT COUNT(*) FROM concept_edges").fetchone()[0]
+    except Exception:
+        edge_count = 0
+
+    return {
+        "story_domain": ag.goal or ag.topic,
+        "story_paper_count": paper_count,
+        "story_representative_papers": rep_papers,
+        "story_concept_count": len(concept_names),
+        "story_edge_count": edge_count,
+        "story_target_names": concept_names[:4],
+        "story_concept_names": concept_names,
+    }
+
+
 def _story_context(data: dict) -> dict:
     papers = data.get("papers") or []
     concepts = data.get("concepts") or []
@@ -155,7 +184,7 @@ def _story_context(data: dict) -> dict:
     }
 
 
-def _start_agent(goal: str, intent: str | None) -> str:
+def _start_agent(goal: str, intent: str | None, selected_adapters: list[str] | None = None) -> str:
     sid = str(uuid.uuid4())
     base = Path(DEMO_DB_PATH).parent
     base.mkdir(parents=True, exist_ok=True)
@@ -169,7 +198,8 @@ def _start_agent(goal: str, intent: str | None) -> str:
         # The page auto-streams the cold start (discover → digest → teach) on first /events.
         repo.create_session(conn, sid, topic=goal.strip())
         _AGENTS[sid] = AgentSession(conn, ckpt, sid, fixture_data=None,
-                                    open_world_goal=goal.strip(), live=True, out_dir=_ARTIFACT_DIR)
+                                    open_world_goal=goal.strip(), live=True, out_dir=_ARTIFACT_DIR,
+                                    selected_adapters=selected_adapters)
         return sid
 
     # CURATED offline pack (deterministic, $0) — unchanged behaviour.
@@ -188,17 +218,51 @@ def _start_agent(goal: str, intent: str | None) -> str:
     return sid
 
 
+# ── Scenario display metadata (name + emoji) keyed by slug ──────────────────
+_SCENARIO_DISPLAY: dict[str, tuple[str, str]] = {
+    "diffusion-models":        ("Diffusion Models",          "🎨"),
+    "crispr":                  ("CRISPR Gene Editing",       "🧬"),
+    "raft-consensus":          ("Raft Consensus",             "🗳️"),
+    "quantum-error-correction":("Quantum Error Correction",  "⚛️"),
+    "black-scholes":           ("Black-Scholes Options Pricing", "📈"),
+    "mrna-vaccines":           ("mRNA Vaccines",             "💉"),
+    "transformer-attention":   ("Transformer Self-Attention","🔤"),
+    "behavioral-economics":    ("Behavioral Economics",      "🧠"),
+    "rlhf":                    ("RLHF",                      "🤖"),
+    "graph-neural-nets":       ("Graph Neural Networks",     "🕸️"),
+}
+
+# Full language name map for two-letter codes → human-readable label
+_LANG_NAMES: dict[str, str] = {
+    "English": "English", "Chinese": "中文", "Spanish": "Español", "French": "Français",
+}
+
+
+def _enrich_scenarios(scenarios: list[dict]) -> list[dict]:
+    """Return a new list of scenario dicts with 'name', 'emoji', 'lang_label' added."""
+    out = []
+    for s in scenarios:
+        name, emoji = _SCENARIO_DISPLAY.get(s["slug"], (s["slug"].replace("-", " ").title(), "📖"))
+        out.append({**s, "name": name, "emoji": emoji,
+                    "lang_label": _LANG_NAMES.get(s["language"], s["language"])})
+    return out
+
+
 @app.get("/tutor", response_class=HTMLResponse)
 def tutor_home(message: str = ""):
+    from litnav.discover.adapters import available_adapters
+    from litnav.evaluation.e2e_scenarios import SCENARIOS
     data = _fixture_data()
+    live = os.getenv("LITNAV_LLM_PROVIDER", "none") != "none"
     return _TEMPLATES.get_template("agent_home.html").render(
-        message=message, n_papers=_n_papers(data), **_story_context(data))
+        message=message, n_papers=_n_papers(data), adapters=available_adapters(),
+        live=live, scenarios=_enrich_scenarios(SCENARIOS), **_story_context(data))
 
 
 @app.get("/tutor/start")
-def tutor_start(goal: str = "", intent: str = ""):
+def tutor_start(goal: str = "", intent: str = "", adapters: list[str] = Query(default=[])):
     from litnav.intent import INTENTS
-    sid = _start_agent(goal, intent if intent in INTENTS else None)
+    sid = _start_agent(goal, intent if intent in INTENTS else None, selected_adapters=adapters or None)
     return RedirectResponse(f"/tutor/{sid}", status_code=303)
 
 
@@ -207,12 +271,20 @@ def tutor_page(sid: str):
     ag = _AGENTS.get(sid)
     if ag is None:
         return RedirectResponse("/tutor", status_code=303)
-    data = _fixture_data()
     artifact_url = (f"/tutor/{sid}/artifact"
                     if getattr(getattr(ag, "tutor", None), "artifact_path", None) else None)
+    # Live open-world sessions: story band from the session's REAL sources/concepts (bug fix);
+    # curated/offline sessions keep the fixture story. cost is in ag.current() (B6 symmetric paint).
+    if ag.open_world:
+        story = _live_story_context(ag)
+        n_papers = story["story_paper_count"]
+    else:
+        data = _fixture_data()
+        story = _story_context(data)
+        n_papers = _n_papers(data)
     return _TEMPLATES.get_template("agent.html").render(
-        sid=sid, n_papers=_n_papers(data), artifact_url=artifact_url,
-        cost=session_cost(ag.conn, sid), **_story_context(data), **ag.current())
+        sid=sid, n_papers=n_papers, artifact_url=artifact_url,
+        live=ag.open_world, **story, **ag.current())
 
 
 @app.post("/tutor/{sid}/events")

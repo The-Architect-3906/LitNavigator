@@ -24,6 +24,22 @@ TEACH_STRATEGIES = ["direct", "analogy", "contrast", "worked_example"]
 KP_MASTERY_THRESHOLD = 0.75
 KP_CONF_THRESHOLD = 0.50    # requires correct_obs >= 2 to pass
 
+# Advance-mastery target by Bloom ceiling (RC#1). kp_bump from the 0.30 floor peaks at
+# recall 0.475 / comprehension 0.685 / application 0.858, so the flat 0.75 gate was unreachable
+# for survey goals (comprehension ceiling) — the route stalled. The target is now relative to the
+# goal's ceiling: reachable by climbing through the ceiling rung with >=2 correct observations,
+# but NOT by a single rung. application keeps the historical 0.75.
+_MASTERY_TARGET_BY_CEILING = {
+    "recall": 0.55,          # 2 correct recalls reach ~0.606; one (0.475) does not
+    "comprehension": 0.65,   # recall+comprehension reach 0.685; recall-only (0.475) does not
+    "application": KP_MASTERY_THRESHOLD,
+}
+
+
+def mastery_target_for(bloom_ceiling: str | None) -> float:
+    """Mastery needed to ADVANCE, relative to the goal's Bloom ceiling (defaults to the top bar)."""
+    return _MASTERY_TARGET_BY_CEILING.get(bloom_ceiling or "application", KP_MASTERY_THRESHOLD)
+
 
 class KeyPointState(TypedDict):
     keypoint_id: str

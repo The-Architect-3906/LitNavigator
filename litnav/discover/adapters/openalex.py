@@ -8,6 +8,7 @@ import urllib.parse
 import urllib.request
 
 from litnav.discover.contract import Source
+from litnav.discover.adapters._review import looks_like_review
 
 _API = "https://api.openalex.org/works"
 _AUTH_SAT = math.log(5000.0)   # ~5000 citations -> authority saturates near 1.0
@@ -56,5 +57,6 @@ def search(query: str, k: int = 10, *, fetch=None) -> list[Source]:
             authority_score=_authority(int(w.get("cited_by_count") or 0)),
             abstract=_reconstruct_abstract(w.get("abstract_inverted_index")),
             arxiv_id=arxiv_id,
+            is_review=(w.get("type") == "review") or looks_like_review(w.get("title") or ""),
         ))
     return out

@@ -9,17 +9,18 @@ from __future__ import annotations
 
 import html
 
-# Learner-state fill colors (tinted neutrals / soft state hues).
+# Learner-state fill colors — dark-surface-safe, consistent with the B1 design system.
+# Surfaces: --s1 #181d27, --s2 #1f2636, --s3 #28334a
 _STATE_FILL = {
-    "idle": "#f1f4f9",
-    "current": "#ede9ff",
-    "mastered": "#e6f6ec",
-    "conceded": "#fbeaf0",
-    "lectured": "#e9eefb",   # orientation-only: taught from evidence, not assessed
+    "idle":     "#1f2636",   # --s2: neutral dark, unvisited
+    "current":  "#28334a",   # --s3: slightly brighter, active concept
+    "mastered": "#172b20",   # --ok (#2da65c) tinted surface: mastered
+    "conceded": "#2b1f10",   # --warn (#b3700d) tinted surface: conceded
+    "lectured": "#1e2638",   # --accent (#E0A33C) tinted surface: lectured/oriented
 }
-# Frontier outline colors (reused from the panel tokens).
-_FRONTIER_STROKE = {"consensus": "#258a51", "contested": "#b3700d", "open": "#cf4f24"}
-_CURRENT_STROKE = "#5b49c4"
+# Frontier outline colors — semantic status tokens from B1.
+_FRONTIER_STROKE = {"consensus": "#2da65c", "contested": "#b3700d", "open": "#b3700d"}
+_CURRENT_STROKE = "#E0A33C"   # --accent amber: active concept border
 
 _COL_W, _ROW_H = 215, 66
 _NODE_W, _NODE_H = 158, 42
@@ -76,7 +77,7 @@ def to_svg(graph: dict, *, max_label: int = 20) -> str:
         f"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 {width} {height}' "
         f"width='100%' style='max-width:{width}px;font-family:system-ui,sans-serif'>",
         "<defs><marker id='arw' markerWidth='8' markerHeight='8' refX='7' refY='3' "
-        "orient='auto'><path d='M0,0 L7,3 L0,6 z' fill='#9aa4b5'/></marker></defs>",
+        "orient='auto'><path d='M0,0 L7,3 L0,6 z' fill='#4a5568'/></marker></defs>",
     ]
 
     # Edges first (under nodes). Right edge of prereq -> left edge of target.
@@ -90,7 +91,7 @@ def to_svg(graph: dict, *, max_label: int = 20) -> str:
         dash = " stroke-dasharray='4 3'" if e["source"] == "induced" else ""
         parts.append(
             f"<path d='M{sx:.0f},{sy:.0f} C{sx + 40:.0f},{sy:.0f} {tx - 40:.0f},{ty:.0f} "
-            f"{tx:.0f},{ty:.0f}' fill='none' stroke='#9aa4b5' stroke-width='1.5'"
+            f"{tx:.0f},{ty:.0f}' fill='none' stroke='#4a5568' stroke-width='1.5'"
             f"{dash} marker-end='url(#arw)'/>"
         )
 
@@ -101,14 +102,14 @@ def to_svg(graph: dict, *, max_label: int = 20) -> str:
         if n["state"] == "current":
             stroke, sw = _CURRENT_STROKE, 3
         else:
-            stroke, sw = _FRONTIER_STROKE.get(n["frontier_flag"], "#9aa4b5"), 1.5
+            stroke, sw = _FRONTIER_STROKE.get(n["frontier_flag"], "#4a5568"), 1.5
         dash = " stroke-dasharray='5 3'" if n["induced"] else ""
         label = n["name"] if len(n["name"]) <= max_label else n["name"][: max_label - 1] + "…"
         parts.append(
             f"<g><rect x='{x:.0f}' y='{y:.0f}' rx='8' width='{_NODE_W}' height='{_NODE_H}' "
             f"fill='{fill}' stroke='{stroke}' stroke-width='{sw}'{dash}/>"
             f"<text x='{x + _NODE_W / 2:.0f}' y='{y + _NODE_H / 2 + 4:.0f}' text-anchor='middle' "
-            f"font-size='12' fill='#1c2430'>{html.escape(label)}</text></g>"
+            f"font-size='12' fill='#e2e8f0'>{html.escape(label)}</text></g>"
         )
 
     parts.append("</svg>")

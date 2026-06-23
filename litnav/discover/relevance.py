@@ -12,7 +12,8 @@ import sqlite3
 from litnav.discover.contract import Source
 from litnav.llm import router
 
-_KEEP_MIN_SCORE = 2   # 3=directly on-goal, 2=substantially, 1=same-area-different (reject), 0=unrelated
+_KEEP_MIN_SCORE = 2     # 3=directly on-goal, 2=substantially, 1=same-area-different (reject), 0=unrelated
+_DECLINE_SCORE = 1      # below this = topic-MISMATCH (different domain): never keep, even as fallback
 
 
 def relevance_gate(
@@ -37,14 +38,20 @@ def relevance_gate(
 
     listing = "\n".join(f"{i}: {s.title} — {s.abstract[:300]}" for i, s in enumerate(sources))
     prompt = (
-        "A learner wants to study this SPECIFIC goal. Score how well EACH source matches THAT goal.\n"
+        "A learner wants to study this SPECIFIC goal. First infer the CANONICAL technical sense the "
+        "learner most likely means (e.g. 'ReAct' = the LLM reasoning-and-acting agent technique, NOT "
+        "psychological reactance or react.js; 'attention' = the deep-learning attention mechanism, NOT "
+        "attention in cognitive psychology). Then score how well EACH source's ACTUAL SUBJECT matches "
+        "that intended DOMAIN — not just whether the words overlap or the source is authoritative.\n"
         f"GOAL: {goal}\n\n"
-        "Scoring (be strict about specificity):\n"
-        "  3 = directly and specifically about the goal\n"
-        "  2 = substantially about the goal\n"
-        "  1 = same broad area but a DIFFERENT method / sub-topic than asked (e.g. a different "
-        "algorithm in the same family, or a related-but-not-asked subject) — NOT what the learner wants\n"
-        "  0 = unrelated (different field, a film, an off-topic page)\n\n"
+        "Scoring (judge topic/domain match, be strict — a high-authority paper in the WRONG domain "
+        "scores 0, not 1):\n"
+        "  3 = directly and specifically about the goal, in the intended domain\n"
+        "  2 = substantially about the goal, in the intended domain\n"
+        "  1 = same broad area/domain but a DIFFERENT method / sub-topic than asked (e.g. a different "
+        "algorithm in the same family) — NOT what the learner wants\n"
+        "  0 = topic MISMATCH: a different field/domain, a homonym in the wrong sense, a film, or an "
+        "off-topic page — even if it is highly cited\n\n"
         f"Sources:\n{listing}\n\n"
         'Respond JSON only: {"scores": [{"i": <index>, "score": <0-3>}]}'
     )
@@ -74,6 +81,11 @@ def relevance_gate(
     kept_idx = sorted((i for i, sc in score_by_i.items() if sc >= _KEEP_MIN_SCORE),
                       key=lambda i: (-score_by_i[i], i))
     if len(kept_idx) < min_keep:
-        # Never starve digest — keep the top min_keep by score (then rank).
-        kept_idx = sorted(range(len(sources)), key=lambda i: (-score_by_i[i], i))[:min_keep]
+        # A6: never STARVE digest — but never feed it a topic-MISMATCH either. The fallback keeps
+        # the top min_keep *only among sources that are at least weakly on-topic* (score >= 1, same
+        # broad area). When every candidate scores 0 (different domain — the ReAct→reactance bug),
+        # nothing clears the bar and we return empty: the caller declines honestly rather than
+        # building a confidently-wrong course on a high-authority off-topic paper.
+        on_topic = [i for i in range(len(sources)) if score_by_i[i] >= _DECLINE_SCORE]
+        kept_idx = sorted(on_topic, key=lambda i: (-score_by_i[i], i))[:min_keep]
     return [sources[i] for i in kept_idx]

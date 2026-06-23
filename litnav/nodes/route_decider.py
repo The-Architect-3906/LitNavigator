@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import sqlite3
 
-from litnav.state import KP_CONF_THRESHOLD, KP_MASTERY_THRESHOLD, NavState, kp_confidence
+from litnav.state import KP_CONF_THRESHOLD, KP_MASTERY_THRESHOLD, NavState, kp_confidence, mastery_target_for
 from litnav.storage import repo
 
 
@@ -36,8 +36,9 @@ def route_decider_node(state: NavState) -> str:
 
     m = _concept_mastery(kp_states)
     c = _concept_confidence(kp_states)
+    target = mastery_target_for(state.get("bloom_ceiling"))  # RC#1: relative to the goal's ceiling
 
-    if m >= KP_MASTERY_THRESHOLD and c >= KP_CONF_THRESHOLD:
+    if m >= target and c >= KP_CONF_THRESHOLD:
         return "advance"
 
     return "hold"
@@ -53,7 +54,8 @@ def advance_kp_node(state: NavState, conn: sqlite3.Connection) -> dict:
 
     m = _concept_mastery(kp_states)
     c = _concept_confidence(kp_states)
-    mastered = m >= KP_MASTERY_THRESHOLD and c >= KP_CONF_THRESHOLD
+    target = mastery_target_for(state.get("bloom_ceiling"))  # RC#1: same ceiling-aware bar as the gate
+    mastered = m >= target and c >= KP_CONF_THRESHOLD
     decision = "advance" if mastered else "concede"
     new_status = "done" if mastered else "conceded"
 
@@ -69,13 +71,13 @@ def advance_kp_node(state: NavState, conn: sqlite3.Connection) -> dict:
 
     if mastered:
         rationale = (
-            f"ADVANCE concept {concept_id}: mastery={m:.3f}≥{KP_MASTERY_THRESHOLD}, "
+            f"ADVANCE concept {concept_id}: mastery={m:.3f}≥{target} (goal ceiling), "
             f"confidence={c:.3f}≥{KP_CONF_THRESHOLD} (≥2 correct observations). Concept mastered."
         )
     else:
         rationale = (
             f"CONCEDE concept {concept_id}: reteach exhausted and thresholds not met "
-            f"(mastery={m:.3f}<{KP_MASTERY_THRESHOLD} or confidence={c:.3f}<{KP_CONF_THRESHOLD}). "
+            f"(mastery={m:.3f}<{target} or confidence={c:.3f}<{KP_CONF_THRESHOLD}). "
             f"Marking not-yet-mastered and moving on rather than looping."
         )
     repo.record_decision(

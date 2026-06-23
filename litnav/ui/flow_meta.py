@@ -10,6 +10,17 @@ Drawn from docs/open-world-methods.md and docs/open-world-storyboard.md.
 from __future__ import annotations
 
 NODE_META: dict[str, dict[str, str]] = {
+    # ── Open-world build (DISCOVER → DIGEST) ─────────────────────────────────
+    "discover": {
+        "skill": "find-sources",
+        "method": "intent classify → OpenAlex/Wikipedia/S2/arXiv search → embedding rerank + relevance gate",
+        "paper": "BM25 (Robertson & Zaragoza); SPECTER-style rerank",
+    },
+    "digest": {
+        "skill": "digest-corpus",
+        "method": "concept/keypoint extraction → prerequisite edges (RefD-style + LLM judge) → cited graph",
+        "paper": "RefD prerequisite relations (cf. Liang et al., 2015)",
+    },
     # ── Goal / planning / orient ─────────────────────────────────────────────
     "goal_elicit": {
         "skill": "teach",
@@ -140,6 +151,18 @@ NODE_META: dict[str, dict[str, str]] = {
         "method": "dual-threshold advance (mastery + confidence)",
         "paper": "BKT (Corbett & Anderson 1995)",
     },
+
+    # ── Spaced-retrieval / probe ─────────────────────────────────────────────
+    "review_probe": {
+        "skill": "assess",
+        "method": "spaced-retrieval probe (FSRS / Ebbinghaus forgetting curve)",
+        "paper": "Nature Reviews Psychology 2022 (Kornell/Bjork); FSRS Ye et al.",
+    },
+    "grade_probe": {
+        "skill": "assess",
+        "method": "BKT posterior update on recall answer",
+        "paper": "Corbett & Anderson 1995 (BKT)",
+    },
 }
 
 _DEFAULT_META: dict[str, str] = {"skill": "—", "method": "—", "paper": "—"}
@@ -152,3 +175,37 @@ def meta_for(node: str) -> dict[str, str]:
     not in NODE_META so callers never receive a KeyError.
     """
     return dict(NODE_META.get(node, _DEFAULT_META))
+
+
+# ── Plain-language "why this next" chip copy ─────────────────────────────────
+# Maps each route-decision token to a learner-facing sentence.
+# Raw token stays behind the existing detail toggle; this copy goes in #why-human.
+DECISION_SENTENCES: dict[str, str] = {
+    "advance":   "You passed — moving on",
+    "reteach":   "Let's try this a different way",
+    "diagnose":  "Adding a prerequisite first",
+    "replan":    "Adding a prerequisite first",
+    "concede":   "Marking this not-yet and moving on",
+    "bloom-up":  "Stepping up to apply-level",
+    "lecture":   "No quiz needed — moving on",
+}
+
+
+def why_sentence(decision: str | None) -> str | None:
+    """Map a raw decision token to a learner-facing sentence, or None if unknown."""
+    if not decision:
+        return None
+    return DECISION_SENTENCES.get(decision.lower())
+
+
+# ── Named mastery tiers ───────────────────────────────────────────────────────
+# Matches Khan Academy tier naming; thresholds from the Direction B spec.
+def mastery_tier(mastery: float) -> str:
+    """Return a named tier label for a mastery score in [0, 1]."""
+    if mastery >= 0.78:
+        return "Mastered"
+    if mastery >= 0.55:
+        return "Solid"
+    if mastery >= 0.30:
+        return "Familiar"
+    return "Seen"

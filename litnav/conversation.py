@@ -50,6 +50,12 @@ _LOST_CUES = (
     "i have no idea",
     "what does that mean",
     "i need more context",
+    # "I don't know" family — learner honesty should never be penalised as a wrong answer
+    "i don't know",
+    "i dont know",
+    "don't know",
+    "dont know",
+    "idk",
 )
 
 
