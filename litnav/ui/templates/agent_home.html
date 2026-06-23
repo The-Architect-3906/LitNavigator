@@ -34,19 +34,29 @@
  .src input{accent-color:var(--accent);cursor:pointer}
  .src-name{font-weight:600;color:var(--tx-primary)}
  .src-desc{color:var(--tx-secondary);font-size:.8rem}
- .scenario-row{display:flex;flex-wrap:wrap;gap:.4rem;margin:.3rem 0 .6rem}
- .scenario-btn{display:inline-flex;align-items:center;gap:.4rem;padding:.32rem .6rem;border-radius:999px;
-   font-size:.8rem;text-decoration:none;color:var(--tx-primary);border:1px solid var(--border);
-   background:var(--s2);transition:filter .15s}
- .scenario-btn:hover{filter:brightness(1.25)}
- .scenario-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
- .scenario-btn .sc-id{font-family:var(--mono);font-size:.72rem;opacity:.7}
- .scenario-btn .sc-lang{font-family:var(--mono);font-size:.66rem;padding:.05rem .3rem;border-radius:4px;
-   background:rgba(255,255,255,.08);color:var(--tx-secondary)}
- .scenario-btn.sc0{border-left:3px solid #E0A33C} .scenario-btn.sc1{border-left:3px solid #2da65c}
- .scenario-btn.sc2{border-left:3px solid #4a9ed8} .scenario-btn.sc3{border-left:3px solid #c77dde}
- .scenario-btn.sc4{border-left:3px solid #e06c75} .scenario-btn.sc5{border-left:3px solid #56b6c2}
- .scenario-btn.sc6{border-left:3px solid #d19a66} .scenario-btn.sc7{border-left:3px solid #98c379}
+ /* ── Scenario grid ──────────────────────────────────────────────────── */
+ .scenarios-section{margin:.8rem 0 .6rem}
+ .scenarios-label{font-size:.78rem;letter-spacing:.04em;text-transform:uppercase;
+   font-family:var(--mono);color:var(--tx-secondary);margin:.8rem 0 .5rem}
+ .scenarios-label span{font-family:inherit;color:var(--tx-secondary);opacity:.7}
+ .scenario-grid{display:grid;
+   grid-template-columns:repeat(auto-fill,minmax(170px,1fr));
+   gap:.55rem;margin:0}
+ .sc-card{display:flex;flex-direction:column;gap:.25rem;
+   padding:.7rem .85rem;border-radius:10px;
+   border:1px solid var(--border);background:var(--s2);
+   text-decoration:none;color:var(--tx-primary);
+   transition:background .14s,border-color .14s,transform .12s}
+ .sc-card:hover{background:var(--s3);border-color:color-mix(in srgb,var(--accent) 40%,var(--border));
+   transform:translateY(-1px)}
+ .sc-card:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+ .sc-emoji{font-size:1.5rem;line-height:1;margin-bottom:.1rem}
+ .sc-name{font-size:.88rem;font-weight:600;line-height:1.3;color:var(--tx-primary)}
+ .sc-meta{display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.3rem}
+ .sc-tag{font-family:var(--mono);font-size:.66rem;padding:.12rem .38rem;border-radius:4px;
+   background:rgba(255,255,255,.07);color:var(--tx-secondary);white-space:nowrap}
+ .sc-tag.sc-live{background:color-mix(in srgb,var(--ok) 15%,transparent);
+   color:var(--ok);border:1px solid color-mix(in srgb,var(--ok) 35%,transparent)}
  input::placeholder{color:var(--tx-secondary)}
  input:focus{outline:2px solid var(--accent);outline-offset:0}
  button{
@@ -113,15 +123,23 @@
  </ul>
  <p class="scope">Built from {{ n_papers }} LLM-agent papers. Ask within this scope; out-of-scope goals get an honest decline.</p>
  {% if scenarios %}
- <p style="margin:.8rem 0 .3rem"><b>Test scenarios</b> <span class="scope">— one-click live runs across domains &amp; languages</span></p>
- <div class="scenario-row">
-   {% for s in scenarios %}
-   <a class="scenario-btn sc{{ s.id % 8 }}" href="/tutor/start?goal={{ s.goal_text | urlencode }}"
-      title="{{ s.goal_text }} ({{ s.language }} · {{ s.intended_depth }})">
-     <span class="sc-id">{{ s.id }}</span>{{ s.slug }}
-     <span class="sc-lang">{{ s.language[:2]|upper }}</span>
-   </a>
-   {% endfor %}
+ <div class="scenarios-section">
+   <div class="scenarios-label">Test scenarios <span>— one-click live runs across domains &amp; languages</span></div>
+   <div class="scenario-grid">
+     {% for s in scenarios %}
+     <a class="sc-card" href="/tutor/start?goal={{ s.goal_text | urlencode }}"
+        title="{{ s.goal_text }}">
+       <div class="sc-emoji" aria-hidden="true">{{ s.emoji }}</div>
+       <div class="sc-name">{{ s.name }}</div>
+       <div class="sc-meta">
+         <span class="sc-tag">{{ s.lang_label }}</span>
+         <span class="sc-tag">{{ s.intended_depth }}</span>
+         <span class="sc-tag">{{ s.domain }}</span>
+         {% if live %}<span class="sc-tag sc-live">live</span>{% endif %}
+       </div>
+     </a>
+     {% endfor %}
+   </div>
  </div>
  {% endif %}
  </div>

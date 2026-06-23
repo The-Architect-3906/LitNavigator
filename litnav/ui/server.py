@@ -188,6 +188,36 @@ def _start_agent(goal: str, intent: str | None, selected_adapters: list[str] | N
     return sid
 
 
+# ── Scenario display metadata (name + emoji) keyed by slug ──────────────────
+_SCENARIO_DISPLAY: dict[str, tuple[str, str]] = {
+    "diffusion-models":        ("Diffusion Models",          "🎨"),
+    "crispr":                  ("CRISPR Gene Editing",       "🧬"),
+    "raft-consensus":          ("Raft Consensus",             "🗳️"),
+    "quantum-error-correction":("Quantum Error Correction",  "⚛️"),
+    "black-scholes":           ("Black-Scholes Options Pricing", "📈"),
+    "mrna-vaccines":           ("mRNA Vaccines",             "💉"),
+    "transformer-attention":   ("Transformer Self-Attention","🔤"),
+    "behavioral-economics":    ("Behavioral Economics",      "🧠"),
+    "rlhf":                    ("RLHF",                      "🤖"),
+    "graph-neural-nets":       ("Graph Neural Networks",     "🕸️"),
+}
+
+# Full language name map for two-letter codes → human-readable label
+_LANG_NAMES: dict[str, str] = {
+    "English": "English", "Chinese": "中文", "Spanish": "Español", "French": "Français",
+}
+
+
+def _enrich_scenarios(scenarios: list[dict]) -> list[dict]:
+    """Return a new list of scenario dicts with 'name', 'emoji', 'lang_label' added."""
+    out = []
+    for s in scenarios:
+        name, emoji = _SCENARIO_DISPLAY.get(s["slug"], (s["slug"].replace("-", " ").title(), "📖"))
+        out.append({**s, "name": name, "emoji": emoji,
+                    "lang_label": _LANG_NAMES.get(s["language"], s["language"])})
+    return out
+
+
 @app.get("/tutor", response_class=HTMLResponse)
 def tutor_home(message: str = ""):
     from litnav.discover.adapters import available_adapters
@@ -196,7 +226,7 @@ def tutor_home(message: str = ""):
     live = os.getenv("LITNAV_LLM_PROVIDER", "none") != "none"
     return _TEMPLATES.get_template("agent_home.html").render(
         message=message, n_papers=_n_papers(data), adapters=available_adapters(),
-        live=live, scenarios=SCENARIOS, **_story_context(data))
+        live=live, scenarios=_enrich_scenarios(SCENARIOS), **_story_context(data))
 
 
 @app.get("/tutor/start")
