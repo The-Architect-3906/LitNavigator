@@ -11,6 +11,16 @@ from litnav.llm import router
 
 _REL_W, _AUTH_W = 0.7, 0.3
 
+# Fix A.2: intent-aware survey bonus, added to the rel+auth blend for is_review sources.
+# Soft re-sort, never a filter — heavy for beginner/overview intents, light for cutting-edge.
+_SURVEY_BONUS = {"survey": 0.20, "crash-course": 0.20, "beginner": 0.20,
+                 "reference": 0.15, "cutting-edge": 0.05}
+_SURVEY_BONUS_DEFAULT = 0.12
+
+
+def survey_bonus(intent: str | None) -> float:
+    return _SURVEY_BONUS.get((intent or "").lower(), _SURVEY_BONUS_DEFAULT)
+
 
 def _norm_title(t: str) -> str:
     return re.sub(r"[^a-z0-9]+", " ", t.lower()).strip()
@@ -67,7 +77,8 @@ def _cosine(a, b):
 
 
 def rank_sources(goal_text: str, sources: list[Source], *, conn: sqlite3.Connection | None,
-                 session_id: str | None, k: int = 6, budget: int | None = None) -> list[Source]:
+                 session_id: str | None, k: int = 6, budget: int | None = None,
+                 intent: str | None = None) -> list[Source]:
     sources = dedup(sources)
     sources = bm25_prefilter(goal_text, sources, keep=max(k, 3 * k))  # cheap keyword prefilter
     texts = [f"{s.title}. {s.abstract}" for s in sources]
@@ -75,9 +86,12 @@ def rank_sources(goal_text: str, sources: list[Source], *, conn: sqlite3.Connect
                               conn=conn, budget=budget) if conn is not None else None
     if vecs:
         gvec, svecs = vecs[0], vecs[1:]
-        scored = [(_REL_W * _cosine(gvec, sv) + _AUTH_W * s.authority_score, s)
+        bonus = survey_bonus(intent)
+        scored = [(_REL_W * _cosine(gvec, sv) + _AUTH_W * s.authority_score
+                   + (bonus if s.is_review else 0.0), s)
                   for s, sv in zip(sources, svecs)]
     else:
-        scored = [(s.authority_score, s) for s in sources]
+        bonus = survey_bonus(intent)
+        scored = [(s.authority_score + (bonus if s.is_review else 0.0), s) for s in sources]
     scored.sort(key=lambda t: t[0], reverse=True)
     return [s for _, s in scored[:k]]

@@ -8,6 +8,8 @@ from __future__ import annotations
 import json
 import sqlite3
 
+from litnav.ui.cost import session_cost
+
 
 def _loads(value, default):
     if not value:
@@ -221,8 +223,12 @@ def build_trace(conn: sqlite3.Connection, session_id: str) -> dict:
         if row:
             evidence.append({"chunk_id": row[0], "paper_id": row[1], "text": row[2]})
 
-    total_tokens = sum((t["token_cost"] or 0) for t in tutor_turns) + \
-        sum((d["token_cost"] or 0) for d in decisions)
+    cost = session_cost(conn, session_id)
+    if cost["tokens"]:
+        total_tokens = cost["tokens"]
+    else:
+        total_tokens = sum((t["token_cost"] or 0) for t in tutor_turns) + \
+            sum((d["token_cost"] or 0) for d in decisions)
 
     return {
         "session": session,

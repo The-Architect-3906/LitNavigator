@@ -19,6 +19,10 @@ from litnav.storage import repo
 # Escalation constants
 CONF_MIN = 0.6                                       # confidence below this triggers re-grade check
 _BAND = (KP_MASTERY_THRESHOLD - 0.30, KP_MASTERY_THRESHOLD + 0.05)  # near-threshold mastery band
+# NOTE: the A6 word-overlap "answer-relevance guard" was removed — it was English/Latin-only and
+# force-failed CORRECT non-English answers (French/Spanish scored 0.0 vs English 1.0; live-test B7).
+# Catching a rare off-topic answer was not worth systematically failing every non-English learner;
+# the LLM grader handles genuine off-topic answers. (Off-topic SOURCE matching stays in discover.)
 
 
 def grade_kp_node(state: NavState, conn: sqlite3.Connection) -> dict:

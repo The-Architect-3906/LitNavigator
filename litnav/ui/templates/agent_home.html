@@ -1,35 +1,143 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><title>LitNavigator</title>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>LitNavigator — Adaptive Research Tutor</title>
 <style>
- body{font-family:system-ui,sans-serif;margin:0;background:#f6f7fb;color:#1c2430}
- header{background:#1c2430;color:#fff;padding:.8rem 1.2rem}header b{color:#7fd1a6}
+ /* ── Direction-B dark design system (mirrors agent.html :root) ─────────── */
+ :root{
+   --s0:#0e1117;--s1:#181d27;--s2:#1f2636;--s3:#28334a;
+   --border:#2d3848;
+   --accent:#E0A33C;
+   --ok:#2da65c;--warn:#b3700d;--idle:#4a5568;
+   --tx-primary:#e2e8f0;--tx-secondary:#8899aa;
+   --mono:'Geist Mono','Berkeley Mono',ui-monospace,'SF Mono',monospace;
+ }
+ *{box-sizing:border-box}
+ body{
+   font-family:'Geist','Geist Sans',ui-sans-serif,system-ui,sans-serif;
+   font-size:1rem;line-height:1.55;
+   margin:0;background:var(--s0);color:var(--tx-primary)
+ }
+ header{
+   background:var(--s1);color:var(--tx-primary);
+   padding:.8rem 1.2rem;border-bottom:1px solid var(--border)
+ }
+ header b{color:var(--ok)}
  .wrap{max-width:60rem;margin:2rem auto;padding:0 1rem}
- form{display:flex;gap:.5rem;margin:1rem 0}
- input{flex:1;padding:.7rem;font-size:1rem;border:1px solid #c5ccd8;border-radius:8px}
- button{padding:.7rem 1.2rem;border:0;border-radius:8px;background:#5b49c4;color:#fff;font-size:1rem;cursor:pointer}
- .note{color:#b3700d;background:#fff6e5;padding:.6rem .8rem;border-radius:6px}
- .scope{color:#7a8699;font-size:.85rem}
- ul{color:#444}a{color:#5b49c4}
- .hero,.card{background:#fff;border:1px solid #e2e6ee;border-radius:14px;padding:1rem 1.1rem;margin:1rem 0}
- .hero{background:linear-gradient(135deg,#fff 0%,#f3f0ff 100%)}
+ form{display:flex;flex-wrap:wrap;gap:.5rem;margin:1rem 0;align-items:flex-start}
+ input#goal{
+   flex:1;min-width:16rem;padding:.7rem;font-size:1rem;
+   border:1px solid var(--border);border-radius:8px;
+   background:var(--s2);color:var(--tx-primary);font-family:inherit
+ }
+ .sources{flex-basis:100%;border:1px solid var(--border);border-radius:8px;margin:0;padding:.6rem .8rem;background:var(--s1)}
+ .sources legend{font-size:.78rem;letter-spacing:.04em;text-transform:uppercase;color:var(--tx-secondary);padding:0 .3rem}
+ .src{display:flex;align-items:baseline;gap:.45rem;flex-wrap:wrap;padding:.25rem 0;font-size:.9rem;cursor:pointer}
+ .src input{accent-color:var(--accent);cursor:pointer}
+ .src-name{font-weight:600;color:var(--tx-primary)}
+ .src-desc{color:var(--tx-secondary);font-size:.8rem}
+ .scenario-row{display:flex;flex-wrap:wrap;gap:.4rem;margin:.3rem 0 .6rem}
+ .scenario-btn{display:inline-flex;align-items:center;gap:.4rem;padding:.32rem .6rem;border-radius:999px;
+   font-size:.8rem;text-decoration:none;color:var(--tx-primary);border:1px solid var(--border);
+   background:var(--s2);transition:filter .15s}
+ .scenario-btn:hover{filter:brightness(1.25)}
+ .scenario-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+ .scenario-btn .sc-id{font-family:var(--mono);font-size:.72rem;opacity:.7}
+ .scenario-btn .sc-lang{font-family:var(--mono);font-size:.66rem;padding:.05rem .3rem;border-radius:4px;
+   background:rgba(255,255,255,.08);color:var(--tx-secondary)}
+ .scenario-btn.sc0{border-left:3px solid #E0A33C} .scenario-btn.sc1{border-left:3px solid #2da65c}
+ .scenario-btn.sc2{border-left:3px solid #4a9ed8} .scenario-btn.sc3{border-left:3px solid #c77dde}
+ .scenario-btn.sc4{border-left:3px solid #e06c75} .scenario-btn.sc5{border-left:3px solid #56b6c2}
+ .scenario-btn.sc6{border-left:3px solid #d19a66} .scenario-btn.sc7{border-left:3px solid #98c379}
+ input::placeholder{color:var(--tx-secondary)}
+ input:focus{outline:2px solid var(--accent);outline-offset:0}
+ button{
+   padding:.7rem 1.2rem;border:0;border-radius:8px;
+   background:var(--accent);color:#0e1117;
+   font-size:1rem;font-weight:600;cursor:pointer;font-family:inherit
+ }
+ button:focus-visible{outline:2px solid var(--tx-primary);outline-offset:2px}
+ .note{color:var(--warn);background:var(--s2);border:1px solid var(--warn);padding:.6rem .8rem;border-radius:6px}
+ .scope{color:var(--tx-secondary);font-size:.85rem}
+ ul{color:var(--tx-primary)}
+ a{color:var(--accent)}
+ a:hover{color:var(--tx-primary)}
+ .hero,.card{background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:1rem 1.1rem;margin:1rem 0}
+ /* Hero: dark surface, no gradient */
+ .hero{background:var(--s2);border-color:var(--border)}
  .pipeline{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.8rem;margin-top:1rem}
- .stage{background:#f8f9fd;border:1px solid #e2e6ee;border-radius:12px;padding:.9rem}
- .k{font-size:.78rem;letter-spacing:.04em;color:#7a8699;text-transform:uppercase}
- .stage b{display:block;margin:.25rem 0 .45rem}
+ .stage{background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:.9rem}
+ .k{font-size:.78rem;letter-spacing:.04em;color:var(--tx-secondary);text-transform:uppercase;font-family:var(--mono)}
+ .stage b{display:block;margin:.25rem 0 .45rem;color:var(--tx-primary)}
  .paper-grid,.chip-row{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.65rem}
- .paper,.chip{background:#fff;border:1px solid #dbe0ea;border-radius:999px;padding:.38rem .7rem;font-size:.86rem}
- .paper span,.chip span{color:#7a8699}
+ .paper,.chip{background:var(--s3);border:1px solid var(--border);border-radius:999px;padding:.38rem .7rem;font-size:.86rem;color:var(--tx-primary)}
+ .paper span,.chip span{color:var(--tx-secondary)}
+ .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 </style></head>
 <body>
 <header><b>LitNavigator</b> &nbsp; interactive tutor</header>
 <div class="wrap">
+ <h1 class="sr-only">LitNavigator — Adaptive Research Tutor</h1>
+ <div class="card">
+ <form action="/tutor/start" method="get">
+   <label for="goal" class="sr-only">Your learning goal</label>
+   <input id="goal" name="goal" autofocus required
+          placeholder="e.g. I want to understand multi-agent debate"
+          aria-label="Your learning goal">
+   {% if adapters %}
+   <fieldset class="sources">
+     <legend>Sources to search</legend>
+     {% for a in adapters %}
+     <label class="src" title="{{ a.description }}">
+       <input type="checkbox" name="adapters" value="{{ a.id }}" {% if a.default_on %}checked{% endif %}>
+       <span class="src-name">{{ a.name }}</span>
+       <span class="src-desc">{{ a.description }}</span>
+     </label>
+     {% endfor %}
+   </fieldset>
+   {% endif %}
+   <button type="submit">Teach me</button>
+ </form>
+ <p>Try, for example:</p>
+ <ul>
+   <li><a href="/tutor/start?goal=I want to understand ReAct">I want to understand ReAct</a>
+       &nbsp;<i>(misconception &rarr; reteach)</i></li>
+   <li><a href="/tutor/start?goal=how do agents remember things across steps">how do agents remember things across steps</a></li>
+   <li><a href="/tutor/start?goal=I keep seeing multi-agent debate, where does it fit">I keep seeing multi-agent debate</a>
+       &nbsp;<i>(off-skeleton &rarr; induced from the papers)</i></li>
+ </ul>
+ <p>… or explore the <b>same corpus re-scoped to your purpose</b>:</p>
+ <ul>
+   <li><a href="/tutor/start?intent=researcher">Researcher entering the field</a>
+       &nbsp;<i>(full prerequisite chain, deep explanations, high bar)</i></li>
+   <li><a href="/tutor/start?intent=journalist">Journalist prepping an interview</a>
+       &nbsp;<i>(short route, leads with the live controversy, lower bar)</i></li>
+ </ul>
+ <p class="scope">Built from {{ n_papers }} LLM-agent papers. Ask within this scope; out-of-scope goals get an honest decline.</p>
+ {% if scenarios %}
+ <p style="margin:.8rem 0 .3rem"><b>Test scenarios</b> <span class="scope">— one-click live runs across domains &amp; languages</span></p>
+ <div class="scenario-row">
+   {% for s in scenarios %}
+   <a class="scenario-btn sc{{ s.id % 8 }}" href="/tutor/start?goal={{ s.goal_text | urlencode }}"
+      title="{{ s.goal_text }} ({{ s.language }} · {{ s.intended_depth }})">
+     <span class="sc-id">{{ s.id }}</span>{{ s.slug }}
+     <span class="sc-lang">{{ s.language[:2]|upper }}</span>
+   </a>
+   {% endfor %}
+ </div>
+ {% endif %}
+ </div>
  <div class="hero">
-  <div class="k">Offline Discover + Digest</div>
+  <div class="k">{{ "Live Discover + Digest" if live else "Offline Discover + Digest" }}</div>
   <h2 style="margin:.25rem 0 .5rem">From a research area to a teachable concept map</h2>
+  {% if live %}
+  <p style="margin:.2rem 0 .8rem">Type a goal and the agent <b>discovers real sources live</b>
+     (OpenAlex · Wikipedia · Semantic Scholar · arXiv), <b>digests</b> them into a cited concept map,
+     then teaches, quizzes, and adapts in real time. The panels below show a sample offline pack.</p>
+  {% else %}
   <p style="margin:.2rem 0 .8rem">This demo starts from the field <b>{{ story_domain }}</b>, uses an offline
      corpus of <b>{{ story_paper_count }} papers</b>, distills them into <b>{{ story_concept_count }} concepts</b>
      and <b>{{ story_edge_count }} prerequisite links</b>, then switches to a live tutor that teaches,
      quizzes, and adapts in real time.</p>
+  {% endif %}
   <div class="paper-grid">
     {% for paper in story_representative_papers %}
     <div class="paper">{{ paper.title }} <span>· {{ paper.year }}</span></div>
@@ -62,26 +170,4 @@
   </div>
  </div>
  {% if message %}<p class="note">{{ message }}</p>{% endif %}
- <div class="card">
- <form action="/tutor/start" method="get">
-   <input name="goal" autofocus required placeholder="e.g. I want to understand multi-agent debate">
-   <button type="submit">Teach me</button>
- </form>
- <p>Try, for example:</p>
- <ul>
-   <li><a href="/tutor/start?goal=I want to understand ReAct">I want to understand ReAct</a>
-       &nbsp;<i>(misconception &rarr; reteach)</i></li>
-   <li><a href="/tutor/start?goal=how do agents remember things across steps">how do agents remember things across steps</a></li>
-   <li><a href="/tutor/start?goal=I keep seeing multi-agent debate, where does it fit">I keep seeing multi-agent debate</a>
-       &nbsp;<i>(off-skeleton &rarr; induced from the papers)</i></li>
- </ul>
- <p>… or explore the <b>same corpus re-scoped to your purpose</b>:</p>
- <ul>
-   <li><a href="/tutor/start?intent=researcher">Researcher entering the field</a>
-       &nbsp;<i>(full prerequisite chain, deep explanations, high bar)</i></li>
-   <li><a href="/tutor/start?intent=journalist">Journalist prepping an interview</a>
-       &nbsp;<i>(short route, leads with the live controversy, lower bar)</i></li>
- </ul>
- <p class="scope">Built from {{ n_papers }} LLM-agent papers. Ask within this scope; out-of-scope goals get an honest decline.</p>
- </div>
 </div></body></html>

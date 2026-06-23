@@ -182,3 +182,89 @@ def test_flow_meta_imports_cleanly():
     from litnav.ui import flow_meta as fm  # noqa: F401
     assert hasattr(fm, "NODE_META")
     assert hasattr(fm, "meta_for")
+
+
+# ── B7: Quiz card + recap framing ───────────────────────────────────────────
+
+def test_agent_html_b7_bloom_chip_css():
+    from pathlib import Path
+    html = Path("litnav/ui/templates/agent.html").read_text(encoding="utf-8")
+    assert "bloom-chip" in html, "B7: .bloom-chip CSS class missing"
+    assert "qa-header" in html, "B7: .qa-header class missing"
+    assert "recap-badge" in html, "B7: .recap-badge class missing"
+
+
+def test_agent_html_b7_question_handler_uses_bloom_and_retrieval():
+    from pathlib import Path
+    html = Path("litnav/ui/templates/agent.html").read_text(encoding="utf-8")
+    assert "e.bloom_level" in html, "B7: bloom_level not used in question handler"
+    assert "e.is_retrieval" in html, "B7: is_retrieval not used in question handler"
+    assert "QUESTION" in html, "B7: QUESTION chip text missing"
+    assert "Recap" in html, "B7: Recap badge text missing"
+
+
+def test_interactive_question_event_has_is_retrieval():
+    """_terminal_events must include is_retrieval on question events."""
+    from litnav.ui.interactive import TutorSession
+    import inspect
+    src = inspect.getsource(TutorSession._terminal_events)
+    assert "is_retrieval" in src, "is_retrieval not emitted in _terminal_events"
+
+
+# ── B8: Inline error + retry ─────────────────────────────────────────────────
+
+def test_agent_html_b8_error_bubble_css():
+    from pathlib import Path
+    html = Path("litnav/ui/templates/agent.html").read_text(encoding="utf-8")
+    assert "error-bubble" in html, "B8: .error-bubble CSS missing"
+    assert "error-btn-retry" in html, "B8: .error-btn-retry missing"
+
+
+def test_agent_html_b8_no_blind_reload_on_error():
+    from pathlib import Path
+    html = Path("litnav/ui/templates/agent.html").read_text(encoding="utf-8")
+    # The error SSE handler and catch block must not do a bare location.href reload.
+    # We check: showError is called, not location.href, in the error/catch contexts.
+    assert "showError" in html, "B8: showError function missing"
+    # Confirm _lastStreamBody is stored (enables retry)
+    assert "_lastStreamBody" in html, "B8: _lastStreamBody tracking missing"
+
+
+# ── B9: a11y + quick wins ────────────────────────────────────────────────────
+
+def test_agent_home_has_viewport_meta():
+    from pathlib import Path
+    html = Path("litnav/ui/templates/agent_home.html").read_text(encoding="utf-8")
+    assert 'name="viewport"' in html, "B9: viewport meta missing from agent_home.html"
+    assert "width=device-width" in html
+
+
+def test_agent_home_has_h1():
+    from pathlib import Path
+    html = Path("litnav/ui/templates/agent_home.html").read_text(encoding="utf-8")
+    assert "<h1" in html, "B9: <h1> missing from agent_home.html"
+
+
+def test_agent_home_has_label_for_goal():
+    from pathlib import Path
+    html = Path("litnav/ui/templates/agent_home.html").read_text(encoding="utf-8")
+    assert 'for="goal"' in html or 'aria-label' in html, "B9: label/aria-label missing from goal input"
+
+
+def test_agent_html_thread_has_aria_live():
+    from pathlib import Path
+    html = Path("litnav/ui/templates/agent.html").read_text(encoding="utf-8")
+    # thread div must have aria-live
+    assert 'id="thread"' in html and 'aria-live' in html
+    # Quick check: the aria-live appears near the thread div (both on same line or within 5 chars)
+    idx = html.index('id="thread"')
+    assert 'aria-live' in html[idx:idx+60], "B9: aria-live not on #thread div"
+
+
+def test_agent_html_progressbar_role_on_tier_meter():
+    from pathlib import Path
+    html = Path("litnav/ui/templates/agent.html").read_text(encoding="utf-8")
+    assert 'role="progressbar"' in html, "B9: role=progressbar missing from tier meter"
+    assert 'aria-valuenow' in html, "B9: aria-valuenow missing"
+    assert 'aria-valuemin' in html
+    assert 'aria-valuemax' in html

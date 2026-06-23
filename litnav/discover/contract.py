@@ -11,6 +11,7 @@ class DiscoverInput:
     intent: str | None = None
     budget: int | None = None
     k: int = 6
+    selected_adapters: list[str] | None = None
 
 
 @dataclass
@@ -23,6 +24,7 @@ class Source:
     why: str = ""
     abstract: str = ""
     arxiv_id: str | None = None
+    is_review: bool = False        # survey/review paper (or encyclopedic overview) — boosted in rank
     chunks: list[str] = field(default_factory=list)
 
 

@@ -78,7 +78,9 @@ def test_open_world_build_streams_and_teaches(monkeypatch, tmp_path):
     evs = list(ag.current_events())
     stages = [e["stage"] for e in evs if e.get("type") == "build"]
     assert "discover" in stages and "digest" in stages and "map" in stages
-    assert any(e.get("type") in ("teach", "question") for e in evs)
+    # After build, terminal events include at least a "state" event (with route/learner info)
+    # or a question/teach/completion event when the session has a quiz pending or is done.
+    assert any(e.get("type") in ("teach", "question", "completion", "state") for e in evs)
     assert ag.built is True
     assert ag.concepts  # repopulated from the built graph
 

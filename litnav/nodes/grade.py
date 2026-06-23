@@ -57,6 +57,9 @@ def grade_node(state: NavState, conn: sqlite3.Connection) -> dict:
             feedback = grade_result.get("feedback") or "Correct."
             correct = True
 
+    # (A6 word-overlap answer-relevance guard removed — English-only, force-failed correct
+    # non-English answers; live-test B7. The LLM grader handles genuine off-topic answers.)
+
     # ── Misconception detection (only meaningful on a wrong answer) ──────────────
     detected_id = None
     # Start from the teach turn's LLM cost (grounded explanation), then add grading's own cost.

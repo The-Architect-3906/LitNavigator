@@ -15,7 +15,7 @@ import sqlite3
 import uuid
 from pathlib import Path
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Query, Request
 from fastapi.responses import (FileResponse, HTMLResponse, JSONResponse, RedirectResponse,
                                StreamingResponse)
 from jinja2 import Environment, FileSystemLoader, select_autoescape
@@ -25,7 +25,6 @@ from litnav.goal import resolve_goal
 from litnav.storage import repo
 from litnav.storage.schema import init_db
 from litnav.storage.seed import seed_demo_data
-from litnav.ui.cost import session_cost
 from litnav.ui.interactive import AgentSession, TutorSession
 from litnav.ui.trace import build_trace
 
@@ -155,7 +154,7 @@ def _story_context(data: dict) -> dict:
     }
 
 
-def _start_agent(goal: str, intent: str | None) -> str:
+def _start_agent(goal: str, intent: str | None, selected_adapters: list[str] | None = None) -> str:
     sid = str(uuid.uuid4())
     base = Path(DEMO_DB_PATH).parent
     base.mkdir(parents=True, exist_ok=True)
@@ -169,7 +168,8 @@ def _start_agent(goal: str, intent: str | None) -> str:
         # The page auto-streams the cold start (discover → digest → teach) on first /events.
         repo.create_session(conn, sid, topic=goal.strip())
         _AGENTS[sid] = AgentSession(conn, ckpt, sid, fixture_data=None,
-                                    open_world_goal=goal.strip(), live=True, out_dir=_ARTIFACT_DIR)
+                                    open_world_goal=goal.strip(), live=True, out_dir=_ARTIFACT_DIR,
+                                    selected_adapters=selected_adapters)
         return sid
 
     # CURATED offline pack (deterministic, $0) — unchanged behaviour.
@@ -190,15 +190,19 @@ def _start_agent(goal: str, intent: str | None) -> str:
 
 @app.get("/tutor", response_class=HTMLResponse)
 def tutor_home(message: str = ""):
+    from litnav.discover.adapters import available_adapters
+    from litnav.evaluation.e2e_scenarios import SCENARIOS
     data = _fixture_data()
+    live = os.getenv("LITNAV_LLM_PROVIDER", "none") != "none"
     return _TEMPLATES.get_template("agent_home.html").render(
-        message=message, n_papers=_n_papers(data), **_story_context(data))
+        message=message, n_papers=_n_papers(data), adapters=available_adapters(),
+        live=live, scenarios=SCENARIOS, **_story_context(data))
 
 
 @app.get("/tutor/start")
-def tutor_start(goal: str = "", intent: str = ""):
+def tutor_start(goal: str = "", intent: str = "", adapters: list[str] = Query(default=[])):
     from litnav.intent import INTENTS
-    sid = _start_agent(goal, intent if intent in INTENTS else None)
+    sid = _start_agent(goal, intent if intent in INTENTS else None, selected_adapters=adapters or None)
     return RedirectResponse(f"/tutor/{sid}", status_code=303)
 
 
@@ -210,9 +214,10 @@ def tutor_page(sid: str):
     data = _fixture_data()
     artifact_url = (f"/tutor/{sid}/artifact"
                     if getattr(getattr(ag, "tutor", None), "artifact_path", None) else None)
+    # cost is now included in ag.current() (B6: symmetric first paint)
     return _TEMPLATES.get_template("agent.html").render(
         sid=sid, n_papers=_n_papers(data), artifact_url=artifact_url,
-        cost=session_cost(ag.conn, sid), **_story_context(data), **ag.current())
+        **_story_context(data), **ag.current())
 
 
 @app.post("/tutor/{sid}/events")

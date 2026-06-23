@@ -2,90 +2,241 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>LitNavigator — {{ concept_name or "tutor" }}</title>
 <style>
- :root{--accent:#5b49c4;--ok:#258a51;--warn:#b3700d}
+ /* ── Direction-B dark design system ──────────────────────────────────────── */
+ :root{
+   /* 4 surface levels by OKLCH lightness (darkest → lightest) */
+   --s0:#0e1117;   /* base / page background  (~L 11%) */
+   --s1:#181d27;   /* panel / card surface     (~L 16%) */
+   --s2:#1f2636;   /* nested / hover surface   (~L 20%) */
+   --s3:#28334a;   /* overlay / popover        (~L 26%) */
+   /* Hairline border — ~8-10% lighter than panel surface */
+   --border:#2d3848;
+   /* Accent: amber-gold — active step, primary buttons, citations only */
+   --accent:#E0A33C;
+   /* Semantic status tokens */
+   --ok:#2da65c;    /* mastered — green */
+   --warn:#b3700d;  /* conceded / boundary — amber */
+   --idle:#4a5568;  /* pending — neutral gray */
+   /* Text */
+   --tx-primary:#e2e8f0;   /* body text on dark — >4.5:1 on --s1 */
+   --tx-secondary:#8899aa; /* muted / labels — ~40-50% opacity equivalent */
+   /* Monospace stack — applied to all numerals */
+   --mono:'Geist Mono','Berkeley Mono',ui-monospace,'SF Mono',monospace;
+ }
  *{box-sizing:border-box}
- body{font-family:system-ui,sans-serif;margin:0;background:#f6f7fb;color:#1c2430}
- header{background:#1c2430;color:#fff;padding:.7rem 1.1rem;display:flex;align-items:center;gap:.8rem;flex-wrap:wrap}
- header b{color:#7fd1a6}
- .toggle{margin-left:auto;display:flex;border:1px solid #3a4456;border-radius:8px;overflow:hidden}
- .toggle button{background:transparent;color:#cdd5e0;border:0;padding:.35rem .8rem;font-size:.85rem;cursor:pointer}
- .toggle button.on{background:var(--accent);color:#fff}
- .mut{color:#7a8699;font-size:.8rem}
+ body{
+   font-family:'Geist','Geist Sans',ui-sans-serif,system-ui,sans-serif;
+   font-size:1rem;line-height:1.55;
+   margin:0;background:var(--s0);color:var(--tx-primary)
+ }
+ /* ── Monospace for all numerals ── */
+ .bar-row span:last-child,.cost-num,#cost,.route-v-num,
+ .mastery-pct,.confid-pct{font-family:var(--mono);font-variant-numeric:tabular-nums}
+ header{
+   background:var(--s1);color:var(--tx-primary);
+   padding:.7rem 1.1rem;display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;
+   border-bottom:1px solid var(--border)
+ }
+ header b{color:var(--ok)}
+ .toggle{margin-left:auto;display:flex;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+ .toggle button{background:transparent;color:var(--tx-secondary);border:0;padding:.35rem .8rem;font-size:.85rem;cursor:pointer}
+ .toggle button.on{background:var(--accent);color:#0e1117}
+ .toggle button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+ .detail-toggle input:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:2px}
+ .mut{color:var(--tx-secondary);font-size:.8rem}
 
  /* ── Research-detail toggle ── */
- .detail-toggle{display:flex;align-items:center;gap:.4rem;font-size:.8rem;color:#cdd5e0;margin-left:.6rem}
+ .detail-toggle{display:flex;align-items:center;gap:.4rem;font-size:.8rem;color:var(--tx-secondary);margin-left:.6rem}
  .detail-toggle input{accent-color:var(--accent);cursor:pointer}
- .research-chip{font-size:.72rem;color:#5b7494;border-left:2px solid #c5d4e8;padding-left:.45rem;margin:.18rem 0 0 1.6rem;line-height:1.45}
+ .research-chip{font-size:.72rem;color:var(--tx-secondary);border-left:2px solid var(--border);padding-left:.45rem;margin:.18rem 0 0 1.6rem;line-height:1.45}
  .research-chip .chip-skill{font-weight:600;color:var(--accent)}
- .research-chip .chip-sep{color:#c5ccd8;margin:0 .25rem}
+ .research-chip .chip-sep{color:var(--border);margin:0 .25rem}
  /* Hide chips when the toggle is off */
  body:not(.show-detail) .research-chip{display:none}
  .cols{display:flex;gap:1rem;max-width:64rem;margin:1.2rem auto;padding:0 1rem;align-items:flex-start}
- .card{background:#fff;border:1px solid #e2e6ee;border-radius:10px;padding:1rem;margin-bottom:1rem}
+ .card{background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:1rem;margin-bottom:1rem;color:var(--tx-primary)}
 
  /* ── Chat ── */
  #chat{flex:1;min-width:0}
  .bubble{max-width:85%;padding:.6rem .85rem;border-radius:14px;margin:.5rem 0;line-height:1.5;word-wrap:break-word}
- .me{margin-left:auto;background:#e6e2fb;color:#2a2270;white-space:pre-wrap}
- .ai{background:#fff;border:1px solid #e2e6ee}
- .ai.boundary{background:#fff8ec;border-color:#e8c98a}
- .ai.boundary::before{content:"outside my literature pack";display:block;font-size:.7rem;font-weight:600;letter-spacing:.02em;text-transform:uppercase;color:#a9750c;margin-bottom:.25rem}
+ .me{margin-left:auto;background:var(--s3);color:var(--tx-primary);white-space:pre-wrap;border:1px solid var(--border)}
+ .ai{background:var(--s2);border:1px solid var(--border);color:var(--tx-primary)}
+ .ai.boundary{background:var(--s2);border-color:var(--warn)}
+ .ai.boundary::before{content:"outside my literature pack";display:block;font-size:.7rem;font-weight:600;letter-spacing:.02em;text-transform:uppercase;color:var(--warn);margin-bottom:.25rem}
  .ai p{margin:.3rem 0}.ai p:first-child{margin-top:0}.ai p:last-child{margin-bottom:0}
  .ai ul,.ai ol{margin:.3rem 0;padding-left:1.3rem}.ai li{margin:.15rem 0}
- .qa{font-weight:500}
- .working{color:var(--accent);font-size:.85rem;margin:.3rem 0}
+ /* ── B7: Quiz "Knowledge Check · Bloom" card ── */
+ .qa-header{
+   display:flex;align-items:center;gap:.5rem;margin-bottom:.4rem
+ }
+ .bloom-chip{
+   font-family:var(--mono);font-size:.68rem;font-weight:700;letter-spacing:.06em;
+   text-transform:uppercase;color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--s2));
+   border:1px solid color-mix(in srgb,var(--accent) 35%,var(--border));
+   border-radius:4px;padding:.1rem .4rem;line-height:1.3;flex-shrink:0
+ }
+ /* quiz bubble gets a stronger left-accent and slightly different bg */
+ .ai.qa{
+   border-left:3px solid var(--accent);
+   background:color-mix(in srgb,var(--accent) 5%,var(--s2));
+   padding-left:.7rem;font-weight:normal
+ }
+ /* ── B7: Spaced-retrieval recap badge ── */
+ .recap-badge{
+   display:inline-flex;align-items:center;gap:.35rem;
+   background:color-mix(in srgb,var(--idle) 15%,var(--s2));
+   border:1px solid color-mix(in srgb,var(--idle) 40%,var(--border));
+   border-radius:5px;padding:.18rem .5rem;font-size:.72rem;font-weight:600;
+   color:var(--tx-secondary);margin-bottom:.35rem
+ }
+ /* ── Feedback bubble (B2/B3) ── */
+ .feedback{border-left:3px solid var(--ok);background:color-mix(in srgb,var(--ok) 8%,var(--s1));padding:.5rem .75rem;border-radius:8px;font-size:.9rem;display:flex;align-items:flex-start;gap:.45rem;margin:.4rem 0}
+ .feedback.wrong{border-left-color:var(--warn);background:color-mix(in srgb,var(--warn) 8%,var(--s1))}
+ /* ── B8: Inline error bubble ── */
+ .error-bubble{
+   background:color-mix(in srgb,var(--warn) 10%,var(--s1));
+   border:1px solid var(--warn);border-radius:8px;
+   padding:.6rem .85rem;margin:.5rem 0;font-size:.88rem;
+   display:flex;align-items:flex-start;gap:.6rem
+ }
+ .error-bubble-body{flex:1}
+ .error-bubble-title{font-weight:700;color:var(--warn);margin-bottom:.2rem}
+ .error-bubble-msg{color:var(--tx-secondary);font-size:.82rem;word-break:break-word}
+ .error-bubble-actions{display:flex;gap:.5rem;margin-top:.5rem;flex-wrap:wrap}
+ .error-btn-retry{
+   padding:.3rem .75rem;border:0;border-radius:6px;
+   background:var(--accent);color:#0e1117;font-weight:600;
+   cursor:pointer;font-size:.82rem;font-family:inherit
+ }
+ .error-btn-retry:focus-visible{outline:2px solid var(--tx-primary);outline-offset:2px}
+ .error-btn-dismiss{
+   padding:.3rem .75rem;border:1px solid var(--border);border-radius:6px;
+   background:transparent;color:var(--tx-secondary);
+   cursor:pointer;font-size:.82rem;font-family:inherit
+ }
+ .error-btn-dismiss:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+ .feedback-mark{flex-shrink:0;font-weight:700;font-size:1rem;line-height:1.4}
+ .feedback-mark.ok{color:var(--ok)}
+ .feedback-mark.warn{color:var(--warn)}
+ .feedback-text{color:var(--tx-primary);line-height:1.45}
+ /* ── Working indicator — live step name ── */
+ .working{color:var(--accent);font-size:.85rem;margin:.3rem 0;font-family:var(--mono);display:flex;align-items:center;gap:.5rem}
+ .working-dot{width:.55rem;height:.55rem;border-radius:50%;background:var(--accent);flex-shrink:0}
+ @media (prefers-reduced-motion: no-preference){
+   .working-dot{animation:pulse-dot 1.2s ease-in-out infinite}
+   @keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+ }
+ /* ── Build tracker (4-row cold-start progress) ── */
+ .build-tracker{background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:.8rem 1rem;margin:.5rem 0}
+ .build-tracker-title{font-size:.8rem;font-weight:600;color:var(--tx-secondary);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.55rem;font-family:var(--mono)}
+ .build-row{display:flex;align-items:center;gap:.6rem;padding:.28rem 0;font-size:.85rem;color:var(--tx-secondary);border-radius:5px;transition:background .2s}
+ .build-row.active{color:var(--tx-primary);background:color-mix(in srgb,var(--accent) 6%,transparent);padding-left:.4rem;padding-right:.4rem}
+ .build-row.done{color:var(--ok)}
+ .build-row.pending{opacity:.45}
+ .build-icon{width:1.2rem;text-align:center;font-family:var(--mono);flex-shrink:0}
+ .build-label{flex:1}
+ .build-count{font-family:var(--mono);font-size:.78rem;color:var(--accent)}
+ .build-elapsed{font-family:var(--mono);font-size:.75rem;color:var(--tx-secondary);margin-top:.5rem;text-align:right}
+ .build-detail{list-style:none;margin:.35rem 0 0;padding:.25rem 0 0 1.6rem;border-top:1px solid var(--border)}
+ .build-detail li{font-size:.8rem;color:var(--tx-secondary);padding:.12rem 0;display:flex;gap:.45rem;align-items:baseline}
+ .build-detail li .bd-ic{font-family:var(--mono);color:var(--accent);flex-shrink:0}
+ @media (prefers-reduced-motion: no-preference){
+   .build-row.active .build-icon{animation:pulse-dot 1.1s ease-in-out infinite}
+ }
  .answer{display:flex;gap:.5rem;margin-top:.6rem}
- .answer input{flex:1;padding:.55rem .7rem;border:1px solid #c5ccd8;border-radius:8px;font-size:1rem}
- .answer button{padding:.55rem 1rem;border:0;border-radius:8px;background:var(--accent);color:#fff;cursor:pointer}
- .storyband{background:linear-gradient(135deg,#fff 0%,#f3f0ff 100%);border:1px solid #ded8ff}
+ .answer input{
+   flex:1;padding:.55rem .7rem;
+   border:1px solid var(--border);border-radius:8px;font-size:1rem;
+   background:var(--s2);color:var(--tx-primary);
+   font-family:inherit
+ }
+ .answer input::placeholder{color:var(--tx-secondary)}
+ .answer input:focus{outline:2px solid var(--accent);outline-offset:0}
+ .answer button{
+   padding:.55rem 1rem;border:0;border-radius:8px;
+   background:var(--accent);color:#0e1117;
+   cursor:pointer;font-weight:600;font-family:inherit
+ }
+ .answer button:focus-visible{outline:2px solid var(--tx-primary);outline-offset:2px}
+ /* Story band — dark surface, no gradient */
+ .storyband{background:var(--s2);border:1px solid var(--border)}
  .storygrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.7rem}
- .storycell{background:#fff;border:1px solid #e2e6ee;border-radius:10px;padding:.75rem}
- .storyk{font-size:.73rem;letter-spacing:.04em;color:#7a8699;text-transform:uppercase}
+ .storycell{background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:.75rem}
+ .storyk{font-size:.73rem;letter-spacing:.04em;color:var(--tx-secondary);text-transform:uppercase;font-family:var(--mono)}
  .storychips{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.45rem}
- .storychip{background:#f6f7fb;border:1px solid #e2e6ee;border-radius:999px;padding:.22rem .55rem;font-size:.78rem}
- .storypapers{margin-top:.5rem;color:#4d5766;font-size:.84rem}
+ .storychip{background:var(--s3);border:1px solid var(--border);border-radius:999px;padding:.22rem .55rem;font-size:.78rem;color:var(--tx-primary)}
+ .storypapers{margin-top:.5rem;color:var(--tx-secondary);font-size:.84rem}
 
  /* ── Glass box ── */
  #glass{flex:1;min-width:0;font-size:.9rem}
  .step{display:flex;gap:.5rem;padding:.25rem 0;align-items:baseline}
  .step .ic{width:1.1rem;text-align:center}
  .step.done .ic{color:var(--ok)}
- .step.active{background:#eef0ff;border-radius:6px;padding:.25rem .4rem}
- .step.pending{color:#9aa3b2}
- .ev{font-size:.82rem;color:#3a4456;border-left:2px solid var(--accent);padding-left:.5rem;margin:.3rem 0}
+ .step.active{background:var(--s2);border-radius:6px;padding:.25rem .4rem;border-left:2px solid var(--accent)}
+ .step.pending{color:var(--idle)}
+ .ev{font-size:.82rem;color:var(--tx-secondary);border-left:2px solid var(--accent);padding-left:.5rem;margin:.3rem 0}
  .cmap{overflow-x:auto} .cmap svg{display:block}
  .maplegend{margin-top:.4rem}
- .costp{background:#eef3ff;border-color:#cfe0ff}
+ /* Cost card — subdued, demoted to ledger style */
+ .costp{background:var(--s1);border-color:var(--border)}
+ #cost{font-family:var(--mono);font-size:.85rem}
 
  /* Route panel */
  .route-concept{display:flex;align-items:center;gap:.5rem;padding:.22rem 0}
  .rbadge{width:.6rem;height:.6rem;border-radius:50%;flex-shrink:0}
- .rbadge-pending{background:#c5ccd8}
+ .rbadge-pending{background:var(--idle)}
  .rbadge-active{background:var(--accent)}
  .rbadge-done{background:var(--ok)}
  .rbadge-conceded{background:var(--warn)}
- .route-new{animation:flash-in .8s ease}
- @keyframes flash-in{0%,40%{background:#fffbe6}100%{background:transparent}}
 
- /* route_version bump */
- .vbump{animation:vbump .7s ease}
- @keyframes vbump{0%,30%{color:var(--warn);font-weight:700}100%{color:inherit;font-weight:normal}}
+ /* ── Motion: only when user hasn't opted out ── */
+ @media (prefers-reduced-motion: no-preference){
+   .route-new{animation:flash-in .8s ease}
+   @keyframes flash-in{0%,40%{background:color-mix(in srgb,var(--accent) 12%,transparent)}100%{background:transparent}}
+   .vbump{animation:vbump .7s ease}
+   @keyframes vbump{0%,30%{color:var(--warn);font-weight:700}100%{color:inherit;font-weight:normal}}
+   .bar-fill{transition:width .5s ease}
+   .tier-seg{transition:background .4s}
+ }
+ /* Static fallback for reduced-motion: no animation, but flash-in/vbump classes are harmless */
+ .route-new{}
+ .vbump{}
 
  /* Mastery bars */
  .bar-row{display:flex;align-items:center;gap:.4rem;margin:.12rem 0;font-size:.8rem}
- .bar-label{width:3.2rem;color:#7a8699;flex-shrink:0}
- .bar-bg{flex:1;height:.45rem;background:#e2e6ee;border-radius:3px;overflow:hidden}
- .bar-fill{height:100%;border-radius:3px;transition:width .5s ease}
+ .bar-label{width:3.2rem;color:var(--tx-secondary);flex-shrink:0}
+ .bar-bg{flex:1;height:.45rem;background:var(--s3);border-radius:3px;overflow:hidden}
+ .bar-fill{height:100%;border-radius:3px}
  .bar-m{background:var(--accent)}
- .bar-c{background:#7fd1a6}
+ .bar-c{background:var(--ok)}
+ .bar-row span:last-child{font-family:var(--mono);font-variant-numeric:tabular-nums}
  .learner-name{font-size:.85rem;font-weight:500;margin-top:.35rem}
  .misconception{font-size:.76rem;color:var(--warn);margin-top:.1rem}
+ /* ── Mastery tier chip + segmented meter ── */
+ .tier-row{display:flex;align-items:center;gap:.45rem;margin:.18rem 0}
+ .tier-chip{font-size:.7rem;font-weight:600;letter-spacing:.03em;text-transform:uppercase;
+   padding:.15rem .45rem;border-radius:4px;font-family:var(--mono);line-height:1.3}
+ .tier-seen{background:color-mix(in srgb,var(--idle) 20%,transparent);color:var(--idle)}
+ .tier-familiar{background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent)}
+ .tier-solid{background:color-mix(in srgb,var(--ok) 15%,transparent);color:var(--ok)}
+ .tier-mastered{background:color-mix(in srgb,var(--ok) 25%,transparent);color:var(--ok)}
+ .tier-pct{font-size:.72rem;color:var(--tx-secondary);font-family:var(--mono);font-variant-numeric:tabular-nums}
+ /* 4-segment tier meter */
+ .tier-meter{display:flex;height:.35rem;gap:.06rem;flex:1;border-radius:2px;overflow:hidden}
+ .tier-seg{flex:1;background:var(--s3);border-radius:1px}
+ /* ── Why-this-next chip ── */
+ .why-chip{display:inline-flex;align-items:center;gap:.35rem;
+   background:color-mix(in srgb,var(--accent) 10%,var(--s2));
+   border:1px solid color-mix(in srgb,var(--accent) 30%,var(--border));
+   border-radius:6px;padding:.28rem .6rem;font-size:.82rem;color:var(--tx-primary);margin:.3rem 0}
+ .why-chip-icon{color:var(--accent);font-size:.9rem}
+ .why-token{font-size:.72rem;color:var(--tx-secondary);font-family:var(--mono);margin-left:.3rem}
 
  /* ── Recommend-next card ── */
  .rec-item{display:flex;align-items:baseline;gap:.45rem;padding:.22rem 0;font-size:.84rem}
  .rec-icon{flex-shrink:0;width:1.1rem;text-align:center}
  .rec-name{font-weight:500}
- .rec-reason{color:#5b7494;font-size:.78rem}
+ .rec-reason{color:var(--tx-secondary);font-size:.78rem}
 
  /* Mode switching */
  body.mode-chat #glass{display:none}
@@ -94,6 +245,28 @@
    .cols{flex-direction:column}
    body.mode-glass #chat,body.mode-chat #glass{display:block}
  }
+
+ /* ── Citation chips ── */
+ .cite-chip{
+   display:inline-block;vertical-align:super;font-size:.65em;line-height:1;
+   font-family:var(--mono);font-variant-numeric:tabular-nums;
+   background:var(--s3);color:var(--accent);border:1px solid var(--border);
+   border-radius:4px;padding:.05em .3em;margin-left:.15em;
+   cursor:pointer;text-decoration:none;transition:background .15s
+ }
+ .cite-chip:hover{background:color-mix(in srgb,var(--accent) 18%,var(--s3))}
+ .cite-chip.active{background:color-mix(in srgb,var(--accent) 25%,var(--s3));border-color:var(--accent)}
+
+ /* ── Evidence cards ── */
+ .ev-card{
+   background:var(--s2);border:1px solid var(--border);border-radius:8px;
+   padding:.55rem .7rem;margin:.4rem 0;transition:border-color .2s
+ }
+ .ev-card.highlight{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,var(--s2))}
+ .ev-source{font-size:.75rem;font-weight:600;color:var(--accent);margin-bottom:.2rem;
+   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .ev-text{font-size:.82rem;color:var(--tx-secondary);line-height:1.45}
+ .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 </style></head>
 <body class="mode-chat show-detail" data-sid="{{ sid }}">
 <header>
@@ -114,8 +287,30 @@
   <!-- ── Chat ── -->
   <div id="chat">
     {% if building %}
-    <div class="card"><b>Open-world session</b>
-      <div class="mut">Building your course from real sources for: <b>{{ goal }}</b></div>
+    <div class="build-tracker" id="build-tracker" aria-live="polite">
+      <div class="build-tracker-title">Building your course for: <b>{{ goal }}</b></div>
+      <div class="build-row active" id="brow-discover">
+        <span class="build-icon">○</span>
+        <span class="build-label">Discover sources</span>
+        <span class="build-count" id="bcount-discover"></span>
+      </div>
+      <div class="build-row pending" id="brow-digest">
+        <span class="build-icon">○</span>
+        <span class="build-label">Digest into map</span>
+        <span class="build-count" id="bcount-digest"></span>
+      </div>
+      <div class="build-row pending" id="brow-plan">
+        <span class="build-icon">○</span>
+        <span class="build-label">Plan route</span>
+        <span class="build-count" id="bcount-plan"></span>
+      </div>
+      <div class="build-row pending" id="brow-teach">
+        <span class="build-icon">○</span>
+        <span class="build-label">Start teaching</span>
+        <span class="build-count" id="bcount-teach"></span>
+      </div>
+      <ul class="build-detail" id="build-detail" aria-live="polite"></ul>
+      <div class="build-elapsed" id="build-elapsed">0s</div>
     </div>
     <script>window.__BUILDING__=true;</script>
     {% endif %}
@@ -147,14 +342,17 @@
       </div>
     </div>
     {% endif %}
-    <div id="thread">
+    <div id="thread" aria-live="polite" aria-label="Conversation">
       <div class="bubble me">{{ concept_name or "Teach me" }}</div>
       {% for msg in teach_messages or ([] if not teach else [teach]) %}
       <div class="bubble ai" data-md>{{ msg | e }}</div>
       {% endfor %}
       {% if question %}<div class="bubble ai qa">{{ question | e }}</div>{% endif %}
     </div>
-    <div class="working" id="working" style="display:none">● agent working…</div>
+    <div class="working" id="working" style="display:none" aria-live="polite" aria-label="Agent working">
+      <div class="working-dot" aria-hidden="true"></div>
+      <span id="working-label">Working…</span>
+    </div>
     {% if done %}
     <div class="card"><b>Session complete.</b>
       {% if artifact_url %}<a href="{{ artifact_url }}" download>download take-away ↓</a> · {% endif %}
@@ -162,7 +360,10 @@
     {% endif %}
     <div id="artifact-card" class="card" style="display:none"></div>
     <form class="answer" id="answer-form" onsubmit="return submitAnswer(event)">
-      <input id="answer-input" autocomplete="off" autofocus placeholder="ask anything, or answer the question…">
+      <label id="answer-label" for="answer-input" class="sr-only">Your message</label>
+      <input id="answer-input" autocomplete="off" autofocus
+             placeholder="ask anything, or answer the question…"
+             aria-label="Your message">
       <button type="submit">Send</button>
     </form>
   </div>
@@ -173,7 +374,7 @@
     <!-- Concept map -->
     <div class="card"><b>Concept map</b>
       <div id="cmap" class="cmap">{{ graph|safe }}</div>
-      <div class="mut maplegend">current · <span style="color:var(--ok)">mastered</span> · lectured · <span style="color:#cf4f24">conceded</span> · dashed = induced</div>
+      <div class="mut maplegend">current · <span style="color:var(--ok)">mastered</span> · lectured · <span style="color:var(--warn)">conceded</span> · dashed = induced</div>
     </div>
 
     <!-- Agent flow -->
@@ -202,7 +403,12 @@
     <div class="card"><b>Cited evidence</b>
       <div id="evidence">
         {% for e in cited %}
-        <div class="ev">{{ e.chunk_id }}: {{ e.text[:140] }}…</div>
+        <div class="ev-card" data-chunk="{{ e.chunk_id }}">
+          <div class="ev-source">{{ e.paper_title or ('Source ' ~ e.paper_id) if e.paper_id else e.chunk_id }}</div>
+          <div class="ev-text">{{ e.text[:160] }}{% if e.text|length > 160 %}…{% endif %}</div>
+        </div>
+        {% else %}
+        <span class="mut">Citations appear as I teach each keypoint</span>
         {% endfor %}
       </div>
     </div>
@@ -211,23 +417,38 @@
     <div class="card"><b>Learner model</b>
       <div id="learner">
         {% for c in learner %}
+        {% set mp = (c.mastery * 100)|round|int %}
+        {% set tier = c.tier or 'Seen' %}
+        {% set tier_cls = tier|lower %}
         <div>
           <div class="learner-name">{{ c.name }}</div>
-          <div class="bar-row">
-            <span class="bar-label">mastery</span>
-            <div class="bar-bg"><div class="bar-fill bar-m" style="width:{{ (c.mastery * 100)|round|int }}%"></div></div>
-            <span>{{ (c.mastery * 100)|round|int }}%</span>
+          {% if c.assessed %}
+          <div class="tier-row">
+            <span class="tier-chip tier-{{ tier_cls }}">{{ tier }}</span>
+            <div class="tier-meter" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ mp }}" aria-label="Mastery {{ mp }}%">
+              <div class="tier-seg" style="background:{% if mp >= 1 %}var(--idle){% else %}var(--s3){% endif %}"></div>
+              <div class="tier-seg" style="background:{% if mp >= 30 %}var(--accent){% else %}var(--s3){% endif %}"></div>
+              <div class="tier-seg" style="background:{% if mp >= 55 %}var(--ok){% else %}var(--s3){% endif %}"></div>
+              <div class="tier-seg" style="background:{% if mp >= 78 %}var(--ok){% else %}var(--s3){% endif %}"></div>
+            </div>
+            <span class="tier-pct">{{ mp }}%</span>
           </div>
           <div class="bar-row">
             <span class="bar-label">confid.</span>
             <div class="bar-bg"><div class="bar-fill bar-c" style="width:{{ (c.confidence * 100)|round|int }}%"></div></div>
             <span>{{ (c.confidence * 100)|round|int }}%</span>
           </div>
+          {% else %}
+          <div class="mut" style="font-size:.78rem">Not yet assessed</div>
+          {% endif %}
           {% if c.held %}
           <div class="misconception">misconception: {{ c.held|join(', ') }}</div>
           {% endif %}
         </div>
         {% endfor %}
+        {% if not learner %}
+        <span class="mut">Mastery builds after your first answer</span>
+        {% endif %}
       </div>
     </div>
 
@@ -240,6 +461,7 @@
     <!-- Decision rationale -->
     <div class="card" id="why" {% if not rationale %}style="display:none"{% endif %}>
       <b>Why this step</b>
+      <div id="why-human">{% if decision %}<span class="why-chip"><span class="why-chip-icon">→</span>{{ decision }}</span>{% endif %}</div>
       <div class="mut" id="why-text">{{ decision or '' }}{% if decision %} — {% endif %}{{ rationale }}</div>
     </div>
 
@@ -256,8 +478,11 @@
     <!-- Cost -->
     <div class="card costp">
       <b>Cost so far</b>
+      {% if cost and cost.tokens %}
       <span id="cost">{{ cost.tokens }} tok ≈ ${{ cost.usd }}</span>
-      <span class="mut">(offline = $0)</span>
+      {% else %}
+      <span id="cost">Offline run — $0</span>
+      {% endif %}
     </div>
 
   </div><!-- /glass -->
@@ -271,13 +496,34 @@ function esc(s){
 }
 
 function setMode(m){
-  document.body.className='mode-'+m;
+  // Preserve non-mode classes (e.g. show-detail) when switching views.
+  const keep = [...document.body.classList].filter(c=>!c.startsWith('mode-'));
+  document.body.className = [...keep, 'mode-'+m].join(' ');
   document.getElementById('t-chat').classList.toggle('on',m==='chat');
   document.getElementById('t-glass').classList.toggle('on',m==='glass');
   try{localStorage.setItem('litnav-mode',m)}catch(e){}
 }
 // Always start in chat mode so the learner sees teaching content first.
 // Glass box is opt-in per-session (button top-right); we don't persist across sessions.
+
+// Activate the Cited Evidence panel and highlight the card for a given chunk_id.
+// Switches to glass view if in chat mode, scrolls the card into view.
+function activateEvidence(chunkId){
+  // Switch to glass mode so the evidence panel is visible
+  setMode('glass');
+  // Remove previous highlights and mark active chip
+  document.querySelectorAll('.ev-card.highlight').forEach(c=>c.classList.remove('highlight'));
+  document.querySelectorAll('.cite-chip.active').forEach(c=>c.classList.remove('active'));
+  // Highlight the matching evidence card
+  const card = document.querySelector('.ev-card[data-chunk="'+CSS.escape(chunkId)+'"]');
+  if(card){
+    card.classList.add('highlight');
+    card.scrollIntoView({behavior:'smooth',block:'nearest'});
+  }
+  // Mark matching chips active
+  document.querySelectorAll('.cite-chip[data-chunk="'+CSS.escape(chunkId)+'"]')
+    .forEach(c=>c.classList.add('active'));
+}
 
 // Lightweight markdown → HTML (bold, italic, lists, paragraphs).
 // Input text must NOT already contain HTML — we escape first then add tags.
@@ -401,31 +647,61 @@ function updateGlass(e){
   }
 
   // ── Evidence ──
-  document.getElementById('evidence').innerHTML=(e.cited||[]).map(c=>
-    '<div class="ev">'+esc(c.chunk_id)+': '+esc((c.text||'').slice(0,140))+'…</div>'
-  ).join('') || '<span class="mut">–</span>';
+  const cited = e.cited || [];
+  document.getElementById('evidence').innerHTML = cited.length
+    ? cited.map(c => {
+        const src = c.paper_title || (c.paper_id != null ? 'Source ' + esc(String(c.paper_id)) : esc(c.chunk_id));
+        const txt = (c.text || '');
+        const snippet = txt.length > 160 ? esc(txt.slice(0, 160)) + '…' : esc(txt);
+        return '<div class="ev-card" data-chunk="'+esc(c.chunk_id)+'">'
+          + '<div class="ev-source">'+esc(src)+'</div>'
+          + '<div class="ev-text">'+snippet+'</div>'
+          + '</div>';
+      }).join('')
+    : '<span class="mut">–</span>';
 
-  // ── Learner model with visual bars ──
-  document.getElementById('learner').innerHTML=(e.learner||[]).map(c=>{
-    const mp = Math.round((c.mastery||0)*100);
-    const cp = Math.round((c.confidence||0)*100);
-    const held = (c.held||[]);
-    return '<div>'
-      + '<div class="learner-name">'+esc(c.name)+'</div>'
-      + '<div class="bar-row"><span class="bar-label">mastery</span>'
-      +   '<div class="bar-bg"><div class="bar-fill bar-m" style="width:'+mp+'%"></div></div>'
-      +   '<span>'+mp+'%</span></div>'
-      + '<div class="bar-row"><span class="bar-label">confid.</span>'
-      +   '<div class="bar-bg"><div class="bar-fill bar-c" style="width:'+cp+'%"></div></div>'
-      +   '<span>'+cp+'%</span></div>'
-      + (held.length ? '<div class="misconception">misconception: '+held.map(esc).join(', ')+'</div>' : '')
-      + '</div>';
-  }).join('') || '<span class="mut">–</span>';
+  // ── Learner model with tier meter (includes pre-quiz "not yet assessed" concepts) ──
+  const learnerItems = e.learner || [];
+  document.getElementById('learner').innerHTML = learnerItems.length
+    ? learnerItems.map(c=>{
+        const mp = Math.round((c.mastery||0)*100);
+        const cp = Math.round((c.confidence||0)*100);
+        const held = (c.held||[]);
+        const assessed = c.assessed !== false; // default true for backwards compat
+        const tier = c.tier || (assessed ? 'Seen' : null);
+        const tierCls = tier ? tier.toLowerCase() : '';
+        const seg = (th) => '<div class="tier-seg" style="background:'+(mp>=th?'var(--'+(th>=78?'ok':th>=55?'ok':th>=30?'accent':'idle')+')':'var(--s3)')+'"></div>';
+        const tierHtml = assessed
+          ? '<div class="tier-row">'
+            + '<span class="tier-chip tier-'+tierCls+'">'+esc(tier)+'</span>'
+            + '<div class="tier-meter" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+mp+'" aria-label="Mastery '+mp+'%">'+seg(1)+seg(30)+seg(55)+seg(78)+'</div>'
+            + '<span class="tier-pct">'+mp+'%</span>'
+            + '</div>'
+            + '<div class="bar-row"><span class="bar-label">confid.</span>'
+            +   '<div class="bar-bg"><div class="bar-fill bar-c" style="width:'+cp+'%"></div></div>'
+            +   '<span>'+cp+'%</span></div>'
+          : '<div class="mut" style="font-size:.78rem">Not yet assessed</div>';
+        return '<div>'
+          + '<div class="learner-name">'+esc(c.name)+'</div>'
+          + tierHtml
+          + (held.length ? '<div class="misconception">misconception: '+held.map(esc).join(', ')+'</div>' : '')
+          + '</div>';
+      }).join('')
+    : '<span class="mut">Mastery builds after your first answer</span>';
 
-  // ── Decision rationale ──
+  // ── Decision rationale + why-sentence chip ──
   if(e.rationale){
     document.getElementById('why').style.display='';
     document.getElementById('why-text').textContent=(e.decision||'')+' — '+e.rationale;
+    // Plain-language "why" chip — shows the human sentence; raw token stays above
+    const whySentence = e.why_sentence || null;
+    const whyHuman = document.getElementById('why-human');
+    if(whyHuman){
+      whyHuman.innerHTML = whySentence
+        ? '<span class="why-chip"><span class="why-chip-icon">→</span>'+esc(whySentence)
+          +(e.decision ? '<span class="why-token">'+esc(e.decision)+'</span>' : '')+'</span>'
+        : (e.decision ? '<span class="why-chip"><span class="why-chip-icon">→</span>'+esc(e.decision)+'</span>' : '');
+    }
   }
 
   // ── Induced panel (SSE update) ──
@@ -443,7 +719,12 @@ function updateGlass(e){
 
   // ── Cost ──
   if(e.cost){
-    document.getElementById('cost').textContent=e.cost.tokens+' tok ≈ $'+e.cost.usd;
+    const costEl = document.getElementById('cost');
+    if(costEl){
+      costEl.textContent = e.cost.tokens
+        ? e.cost.tokens+' tok ≈ $'+e.cost.usd
+        : 'Offline run — $0';
+    }
   }
 
   // ── Recommend-next panel ──
@@ -463,6 +744,66 @@ function updateGlass(e){
   }
 }
 
+// ── Build tracker helpers ────────────────────────────────────────────────────
+const _BUILD_STAGE_MAP = {
+  'discover':      'discover',
+  'discover_done': 'discover',
+  'digest':        'digest',
+  'map':           'plan',
+  'teach':         'teach',   // first teach event = start-teaching
+};
+
+function _buildRowDone(rowId, iconEl, countEl, countText){
+  const row = document.getElementById(rowId);
+  if(!row)return;
+  row.className='build-row done';
+  if(iconEl)iconEl.textContent='✓';
+  if(countEl&&countText)countEl.textContent=countText;
+}
+function _buildRowActive(rowId){
+  const row = document.getElementById(rowId);
+  if(!row||row.classList.contains('done'))return;
+  row.className='build-row active';
+  const ic = row.querySelector('.build-icon');
+  if(ic)ic.textContent='○';
+}
+
+let _lastBuildStage = null;
+
+function buildDetailItem(icon, text){
+  // Append a streamed source/concept line to the build detail list (B + C).
+  const ul=document.getElementById('build-detail');
+  if(!ul||!text)return;
+  const li=document.createElement('li');
+  li.innerHTML='<span class="bd-ic">'+esc(icon)+'</span><span>'+esc(text)+'</span>';
+  ul.appendChild(li);
+}
+function advanceBuildTracker(stage, countText){
+  // Map the SSE stage to a tracker row
+  const rowKey = _BUILD_STAGE_MAP[stage] || null;
+  if(!rowKey)return;
+  // Mark previous rows done when we advance
+  const order = ['discover','digest','plan','teach'];
+  const idx = order.indexOf(rowKey);
+  if(idx < 0)return;
+  for(let i=0;i<idx;i++){
+    const prev = order[i];
+    _buildRowDone('brow-'+prev, document.querySelector('#brow-'+prev+' .build-icon'),
+                  document.getElementById('bcount-'+prev), '');
+  }
+  if(stage==='discover_done'||stage==='map'){
+    // Mark the current row done with count
+    _buildRowDone('brow-'+rowKey, document.querySelector('#brow-'+rowKey+' .build-icon'),
+                  document.getElementById('bcount-'+rowKey), countText||'');
+    // Activate next row
+    const next = order[idx+1];
+    if(next)_buildRowActive('brow-'+next);
+  } else {
+    _buildRowActive('brow-'+rowKey);
+  }
+  _lastBuildStage = stage;
+}
+
 function handleEvent(e, steps, inp){
   if(e.type==='dispatch'){
     steps.length=0;
@@ -476,16 +817,86 @@ function handleEvent(e, steps, inp){
     steps.push({label:e.label,detail:e.detail,state:'active',
                 skill:e.skill,method:e.method,paper:e.paper});
     setFlow(steps);
+    // Update live working indicator with the current step name
+    const wl = document.getElementById('working-label');
+    if(wl) wl.textContent = e.label || 'Working…';
+  } else if(e.type==='feedback'){
+    const t=document.getElementById('thread');
+    const d=document.createElement('div');
+    d.className='feedback'+(e.correct?'':' wrong');
+    const mark=document.createElement('span');
+    mark.className='feedback-mark '+(e.correct?'ok':'warn');
+    mark.textContent=e.correct?'✓':'✗';
+    const txt=document.createElement('span');
+    txt.className='feedback-text';
+    txt.textContent=e.text||'';
+    d.appendChild(mark);d.appendChild(txt);
+    t.appendChild(d);
+    t.scrollTop=t.scrollHeight;
   } else if(e.type==='teach'){
     steps.forEach(s=>s.state='done');setFlow(steps);
-    if(e.text)addBubble('ai',e.text,true);
+    // If we were in the build phase, mark 'plan' done and 'teach' active on first teach
+    if(window.__BUILDING__ && _lastBuildStage !== 'teach'){
+      advanceBuildTracker('teach', '');
+      _lastBuildStage = 'teach';
+    }
+    if(e.text){
+      const bubble = addBubble('ai',e.text,true);
+      // Append inline citation chips for each cited chunk (e.cited[])
+      const cites = e.cited || [];
+      if(cites.length){
+        const chipRow = document.createElement('div');
+        chipRow.style.cssText='margin-top:.4rem;display:flex;flex-wrap:wrap;gap:.3rem;align-items:center';
+        cites.forEach((c,i)=>{
+          const chip = document.createElement('button');
+          chip.className='cite-chip';
+          chip.dataset.chunk=c.chunk_id;
+          chip.textContent='['+(i+1)+']';
+          chip.title=(c.paper_title||(c.paper_id!=null?'Source '+c.paper_id:c.chunk_id));
+          chip.addEventListener('click',()=>activateEvidence(c.chunk_id));
+          chipRow.appendChild(chip);
+        });
+        bubble.appendChild(chipRow);
+      }
+    }
   } else if(e.type==='question'){
-    if(e.text)addBubble('ai qa',e.text,false);
+    if(e.text){
+      const qBubble = addBubble('ai qa','',false);
+      // Build header: recap badge OR bloom chip
+      const hdr = document.createElement('div');
+      hdr.className='qa-header';
+      if(e.is_retrieval){
+        const badge = document.createElement('span');
+        badge.className='recap-badge';
+        badge.textContent='🔁 Recap — revisiting an earlier concept';
+        hdr.appendChild(badge);
+      } else if(e.bloom_level){
+        const chip = document.createElement('span');
+        chip.className='bloom-chip';
+        chip.textContent='QUESTION · '+String(e.bloom_level).toUpperCase();
+        hdr.appendChild(chip);
+      }
+      if(hdr.children.length) qBubble.prepend(hdr);
+      // Add question text (markdown rendered)
+      const p = document.createElement('div');
+      p.innerHTML = md(e.text);
+      qBubble.appendChild(p);
+      // Update input caption and placeholder
+      const inp2 = document.getElementById('answer-input');
+      if(inp2){
+        inp2.placeholder = 'Type your answer…';
+        const lbl = document.getElementById('answer-label');
+        if(lbl) lbl.textContent = 'Your answer';
+      }
+    }
   } else if(e.type==='state'){
     updateGlass(e);
   } else if(e.type==='done'){
     document.getElementById('working').style.display='none';
+    const wl = document.getElementById('working-label');
+    if(wl) wl.textContent = 'Working…';
     if(e.done){
+      // Session complete — reload to render the done-state template.
       location.href='/tutor/'+SID;
     } else {
       inp.disabled=false;
@@ -495,14 +906,26 @@ function handleEvent(e, steps, inp){
     steps.forEach(s=>s.state='done');
     steps.push({label:e.label,detail:'',state:'active',skill:e.skill,method:e.method,paper:e.paper});
     setFlow(steps);
-    if(e.stage==='discover')addBubble('ai','🔎 '+e.label,false);
-    else if(e.stage==='discover_done')addBubble('ai','📄 '+e.label,false);
-    else if(e.stage==='map'){addBubble('ai','🗺️ '+e.label,false);
-      if(e.graph)document.getElementById('cmap').innerHTML=e.graph;}
+    // Update live step name in working indicator
+    const wl = document.getElementById('working-label');
+    if(wl) wl.textContent = e.label || 'Building…';
+    // Advance the 4-row build tracker
+    if(e.stage==='discover')advanceBuildTracker('discover');
+    else if(e.stage==='discover_done')advanceBuildTracker('discover_done', e.count||'');
+    else if(e.stage==='source')buildDetailItem('🔎', e.label);          // B: stream each found source
+    else if(e.stage==='digest')advanceBuildTracker('digest');
+    else if(e.stage==='concept')buildDetailItem('●', e.label);          // C: stream each extracted concept
+    else if(e.stage==='map'){
+      advanceBuildTracker('map', e.count||'');
+      if(e.graph)document.getElementById('cmap').innerHTML=e.graph;
+    }
   } else if(e.type==='artifact'){
     renderArtifact(e);
   } else if(e.type==='error'){
-    location.href='/tutor/'+SID;
+    document.getElementById('working').style.display='none';
+    const inp=document.getElementById('answer-input');
+    if(inp){inp.disabled=false;}
+    showError(e.message||'The agent encountered an error.', true);
   }
 }
 
@@ -516,7 +939,52 @@ function renderArtifact(e){
     +esc((e.preview||'').slice(0,500))+'…</pre>';
 }
 
+// ── B8: Inline error helpers ─────────────────────────────────────────────
+let _lastStreamBody = null; // remembers the last POST body so Retry can re-run
+
+function clearError(){
+  document.querySelectorAll('.error-bubble').forEach(el=>el.remove());
+}
+
+function showError(message, retryable){
+  clearError();
+  const t = document.getElementById('thread');
+  const d = document.createElement('div');
+  d.className = 'error-bubble';
+  d.setAttribute('role','alert');
+  d.innerHTML =
+    '<div class="error-bubble-body">'
+    +'<div class="error-bubble-title">⚠ Something went wrong</div>'
+    +'<div class="error-bubble-msg">'+esc(message||'An unexpected error occurred.')+'</div>'
+    +'<div class="error-bubble-actions">'
+    +(retryable!==false
+      ? '<button class="error-btn-retry" type="button">Retry</button>'
+      : '<button class="error-btn-retry" type="button" onclick="location.href=\'/tutor/\'+SID">Reload page</button>')
+    +'<button class="error-btn-dismiss" type="button">Dismiss</button>'
+    +'</div>'
+    +'</div>';
+  t.appendChild(d);
+  t.scrollTop = t.scrollHeight;
+  // Wire buttons
+  const retryBtn = d.querySelector('.error-btn-retry');
+  if(retryBtn && retryable!==false){
+    retryBtn.addEventListener('click', ()=>{
+      d.remove();
+      if(_lastStreamBody !== null) streamEvents(_lastStreamBody);
+    });
+  }
+  d.querySelector('.error-btn-dismiss').addEventListener('click', ()=>{
+    d.remove();
+    // Re-enable input so learner can try again manually
+    const inp = document.getElementById('answer-input');
+    if(inp){ inp.disabled=false; inp.focus(); }
+    document.getElementById('working').style.display='none';
+  });
+}
+
 async function streamEvents(body){
+  _lastStreamBody = body;
+  clearError();
   const inp=document.getElementById('answer-input');
   inp.disabled=true;
   document.getElementById('working').style.display='block';
@@ -543,7 +1011,10 @@ async function streamEvents(body){
       }
     }
   }catch(err){
-    location.href='/tutor/'+SID;
+    document.getElementById('working').style.display='none';
+    const inp=document.getElementById('answer-input');
+    if(inp){inp.disabled=false;}
+    showError(err&&err.message?err.message:'Network error — check your connection.', true);
   }
 }
 
@@ -560,8 +1031,22 @@ async function submitAnswer(ev){
 
 // Open-world cold start: the page loads in a "building" state and streams discover→digest→teach.
 if(window.__BUILDING__){
-  addBubble('ai','Building your course from real sources… this can take ~30–90s.',false);
-  streamEvents({});
+  // Start elapsed timer
+  const _buildStart = Date.now();
+  const _buildTimer = setInterval(()=>{
+    const el = document.getElementById('build-elapsed');
+    if(el) el.textContent = Math.round((Date.now()-_buildStart)/1000)+'s elapsed';
+  }, 1000);
+  // Stream events + stop timer when done
+  (async()=>{
+    await streamEvents({});
+    clearInterval(_buildTimer);
+    // Mark all rows done once streaming ends
+    ['discover','digest','plan','teach'].forEach(r=>{
+      _buildRowDone('brow-'+r, document.querySelector('#brow-'+r+' .build-icon'),
+                    document.getElementById('bcount-'+r), '');
+    });
+  })();
 }
 
 // Apply markdown to server-rendered AI bubbles on initial page load

@@ -11,14 +11,16 @@ from litnav.discover.contract import DiscoverInput, DiscoverResult, Source
 from litnav.discover import intent as intent_mod, rank as rank_mod, fulltext as fulltext_mod
 from litnav.discover import relevance as relevance_mod
 from litnav.discover import query as query_mod
-from litnav.discover.adapters import openalex, wikipedia
+from litnav.discover.adapters import registry as adapter_registry
 from litnav.storage import openworld_repo
 
 _FULLTEXT_TOPK = 3
+_WIKIPEDIA_K = 3   # Wikipedia always fetches a smaller set
 
 
 def _query_key(di: DiscoverInput) -> str:
-    raw = f"{di.goal_text}|{di.k}"
+    adapter_key = ",".join(sorted(di.selected_adapters)) if di.selected_adapters else ""
+    raw = f"{di.goal_text}|{di.k}|{adapter_key}"
     return "discover:" + hashlib.sha1(raw.encode()).hexdigest()[:16]
 
 
@@ -34,14 +36,17 @@ def find(di: DiscoverInput, *, conn: sqlite3.Connection, session_id: str | None 
     sq = query_mod.to_search_query(di.goal_text, conn=conn, session_id=session_id, budget=budget)
     intent = intent_mod.classify(di.goal_text, conn=conn, session_id=session_id,
                                  explicit=di.intent, budget=budget)
+    adapters = adapter_registry.resolve(di.selected_adapters)
     sources = []
-    for adapter, n in ((openalex, di.k * 2), (wikipedia, 3)):
+    for ad in adapters:
+        # Wikipedia historically gets a smaller k to avoid flooding results
+        n = _WIKIPEDIA_K if ad.id == "wikipedia" else di.k * 2
         try:
-            sources.extend(adapter.search(sq, k=n))
+            sources.extend(ad.search(sq, k=n))
         except Exception:
             pass                                   # an adapter outage is non-fatal
     ranked = rank_mod.rank_sources(sq, sources, conn=conn, session_id=session_id,
-                                   k=di.k, budget=budget)
+                                   k=di.k, budget=budget, intent=intent)
     # A14: gate on the ORIGINAL goal (full specificity — e.g. "Raft" not just "consensus") so
     # same-family-but-different sources (PBFT, QLoRA, vision-attention) are rejected, not just films.
     ranked = relevance_mod.relevance_gate(di.goal_text, ranked, conn=conn, session_id=session_id,
