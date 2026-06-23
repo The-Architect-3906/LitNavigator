@@ -2091,7 +2091,7 @@ function handleEvent(e, steps, inp) {
       if (e.is_retrieval) {
         const badge = document.createElement('span');
         badge.className = 'recap-badge';
-        badge.textContent = '&#x1F501; Recap — revisiting an earlier concept';
+        badge.textContent = '🔁 Recap — revisiting an earlier concept';
         hdr.appendChild(badge);
       } else if (e.bloom_level) {
         const chip = document.createElement('span');
@@ -2130,9 +2130,9 @@ function handleEvent(e, steps, inp) {
     if (wl) wl.textContent = e.label || 'Building…';
     if (e.stage === 'discover')           advanceBuildTracker('discover');
     else if (e.stage === 'discover_done') advanceBuildTracker('discover_done', e.count || '');
-    else if (e.stage === 'source')        buildDetailItem('&#x1F50E;', e.label);
+    else if (e.stage === 'source')        buildDetailItem('🔎', e.label);
     else if (e.stage === 'digest')        advanceBuildTracker('digest');
-    else if (e.stage === 'concept')       buildDetailItem('&#x25CF;', e.label);
+    else if (e.stage === 'concept')       buildDetailItem('●', e.label);
     else if (e.stage === 'map') {
       advanceBuildTracker('map', e.count || '');
       if (e.graph) document.getElementById('cmap').innerHTML = e.graph;
