@@ -14,7 +14,7 @@ def test_home_shows_free_text_goal_box(client):
     r = client.get("/tutor")
     assert r.status_code == 200
     assert 'name="goal"' in r.text
-    assert "Built from" in r.text  # corpus scope line
+    assert "Reads the literature" in r.text  # hero headline (replaces old corpus scope line)
 
 
 def test_concept_goal_starts_session(client):

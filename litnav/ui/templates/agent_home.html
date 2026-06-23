@@ -1,191 +1,1164 @@
-<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>LitNavigator — Adaptive Research Tutor</title>
-<style>
- /* ── Direction-B dark design system (mirrors agent.html :root) ─────────── */
- :root{
-   --s0:#0e1117;--s1:#181d27;--s2:#1f2636;--s3:#28334a;
-   --border:#2d3848;
-   --accent:#E0A33C;
-   --ok:#2da65c;--warn:#b3700d;--idle:#4a5568;
-   --tx-primary:#e2e8f0;--tx-secondary:#8899aa;
-   --mono:'Geist Mono','Berkeley Mono',ui-monospace,'SF Mono',monospace;
- }
- *{box-sizing:border-box}
- body{
-   font-family:'Geist','Geist Sans',ui-sans-serif,system-ui,sans-serif;
-   font-size:1rem;line-height:1.55;
-   margin:0;background:var(--s0);color:var(--tx-primary)
- }
- header{
-   background:var(--s1);color:var(--tx-primary);
-   padding:.8rem 1.2rem;border-bottom:1px solid var(--border)
- }
- header b{color:var(--ok)}
- .wrap{max-width:60rem;margin:2rem auto;padding:0 1rem}
- form{display:flex;flex-wrap:wrap;gap:.5rem;margin:1rem 0;align-items:flex-start}
- input#goal{
-   flex:1;min-width:16rem;padding:.7rem;font-size:1rem;
-   border:1px solid var(--border);border-radius:8px;
-   background:var(--s2);color:var(--tx-primary);font-family:inherit
- }
- .sources{flex-basis:100%;border:1px solid var(--border);border-radius:8px;margin:0;padding:.6rem .8rem;background:var(--s1)}
- .sources legend{font-size:.78rem;letter-spacing:.04em;text-transform:uppercase;color:var(--tx-secondary);padding:0 .3rem}
- .src{display:flex;align-items:baseline;gap:.45rem;flex-wrap:wrap;padding:.25rem 0;font-size:.9rem;cursor:pointer}
- .src input{accent-color:var(--accent);cursor:pointer}
- .src-name{font-weight:600;color:var(--tx-primary)}
- .src-desc{color:var(--tx-secondary);font-size:.8rem}
- /* ── Scenario grid ──────────────────────────────────────────────────── */
- .scenarios-section{margin:.8rem 0 .6rem}
- .scenarios-label{font-size:.78rem;letter-spacing:.04em;text-transform:uppercase;
-   font-family:var(--mono);color:var(--tx-secondary);margin:.8rem 0 .5rem}
- .scenarios-label span{font-family:inherit;color:var(--tx-secondary);opacity:.7}
- .scenario-grid{display:grid;
-   grid-template-columns:repeat(auto-fill,minmax(170px,1fr));
-   gap:.55rem;margin:0}
- .sc-card{display:flex;flex-direction:column;gap:.25rem;
-   padding:.7rem .85rem;border-radius:10px;
-   border:1px solid var(--border);background:var(--s2);
-   text-decoration:none;color:var(--tx-primary);
-   transition:background .14s,border-color .14s,transform .12s}
- .sc-card:hover{background:var(--s3);border-color:color-mix(in srgb,var(--accent) 40%,var(--border));
-   transform:translateY(-1px)}
- .sc-card:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
- .sc-emoji{font-size:1.5rem;line-height:1;margin-bottom:.1rem}
- .sc-name{font-size:.88rem;font-weight:600;line-height:1.3;color:var(--tx-primary)}
- .sc-meta{display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.3rem}
- .sc-tag{font-family:var(--mono);font-size:.66rem;padding:.12rem .38rem;border-radius:4px;
-   background:rgba(255,255,255,.07);color:var(--tx-secondary);white-space:nowrap}
- .sc-tag.sc-live{background:color-mix(in srgb,var(--ok) 15%,transparent);
-   color:var(--ok);border:1px solid color-mix(in srgb,var(--ok) 35%,transparent)}
- input::placeholder{color:var(--tx-secondary)}
- input:focus{outline:2px solid var(--accent);outline-offset:0}
- button{
-   padding:.7rem 1.2rem;border:0;border-radius:8px;
-   background:var(--accent);color:#0e1117;
-   font-size:1rem;font-weight:600;cursor:pointer;font-family:inherit
- }
- button:focus-visible{outline:2px solid var(--tx-primary);outline-offset:2px}
- .note{color:var(--warn);background:var(--s2);border:1px solid var(--warn);padding:.6rem .8rem;border-radius:6px}
- .scope{color:var(--tx-secondary);font-size:.85rem}
- ul{color:var(--tx-primary)}
- a{color:var(--accent)}
- a:hover{color:var(--tx-primary)}
- .hero,.card{background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:1rem 1.1rem;margin:1rem 0}
- /* Hero: dark surface, no gradient */
- .hero{background:var(--s2);border-color:var(--border)}
- .pipeline{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.8rem;margin-top:1rem}
- .stage{background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:.9rem}
- .k{font-size:.78rem;letter-spacing:.04em;color:var(--tx-secondary);text-transform:uppercase;font-family:var(--mono)}
- .stage b{display:block;margin:.25rem 0 .45rem;color:var(--tx-primary)}
- .paper-grid,.chip-row{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.65rem}
- .paper,.chip{background:var(--s3);border:1px solid var(--border);border-radius:999px;padding:.38rem .7rem;font-size:.86rem;color:var(--tx-primary)}
- .paper span,.chip span{color:var(--tx-secondary)}
- .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
-</style></head>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LitNavigator — Adaptive Research Tutor</title>
+  <link rel="icon" href="/static/logo-sm.png" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,500;0,600;1,400&amp;family=Public+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+  <style>
+    /* ── Reset ── */
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Public Sans', sans-serif;
+      background: #e7e5df;
+      color: #1f1b15;
+      min-height: 100dvh;
+    }
+
+    /* ── Keyframes ── */
+    @keyframes ln-blink {
+      0%, 49% { opacity: 1; }
+      50%, 100% { opacity: 0; }
+    }
+    @keyframes ln-marq-a {
+      from { transform: translateX(0); }
+      to   { transform: translateX(-50%); }
+    }
+    @keyframes ln-marq-b {
+      from { transform: translateX(-50%); }
+      to   { transform: translateX(0); }
+    }
+
+    /* ── Screen wrapper ── */
+    .ln-screen {
+      width: 100%;
+      max-width: 1340px;
+      margin: 0 auto;
+      background: #faf8f3;
+      border: 1px solid #e0d9cb;
+      border-radius: 6px;
+      box-shadow: 0 1px 3px rgba(60, 50, 30, .10);
+      display: flex;
+      flex-direction: column;
+      min-height: 100dvh;
+    }
+
+    /* ── Top bar ── */
+    .ln-topbar {
+      height: 60px;
+      flex: none;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 0 22px;
+      border-bottom: 1px solid #e8e1d3;
+      background: #fdfcf8;
+      border-radius: 6px 6px 0 0;
+    }
+    .ln-topbar-logo {
+      width: 30px;
+      height: 30px;
+      border-radius: 7px;
+      object-fit: contain;
+    }
+    .ln-topbar-name {
+      font-family: 'Spectral', serif;
+      font-size: 19px;
+      font-weight: 600;
+      color: #1f1b15;
+      letter-spacing: -.01em;
+    }
+    .ln-topbar-divider {
+      width: 1px;
+      height: 22px;
+      background: #e2dacb;
+    }
+    .ln-topbar-sub {
+      font-size: 12.5px;
+      color: #8a8175;
+    }
+    .ln-topbar-spacer { flex: 1; }
+    .ln-live-pill {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: #f0f7f1;
+      border: 1px solid #cfe6d3;
+      border-radius: 20px;
+      padding: 5px 11px;
+    }
+    .ln-live-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #1f9d57;
+      box-shadow: 0 0 0 3px rgba(31, 157, 87, .16);
+    }
+    .ln-live-label {
+      font-size: 11.5px;
+      color: #2c6b43;
+      font-weight: 600;
+    }
+
+    /* ── Hero split ── */
+    .ln-hero {
+      display: flex;
+      gap: 38px;
+      align-items: stretch;
+      padding: 46px 44px 6px;
+    }
+
+    /* ── LEFT: headline + agent loop ── */
+    .ln-hero-left {
+      flex: 1 1 0;
+      min-width: 0;
+      padding-top: 6px;
+    }
+    .ln-eyebrow {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      letter-spacing: .16em;
+      color: #b0795f;
+      font-weight: 500;
+    }
+    .ln-headline {
+      font-family: 'Spectral', serif;
+      font-size: 44px;
+      line-height: 1.1;
+      font-weight: 600;
+      color: #1b1712;
+      margin: 14px 0 0;
+      letter-spacing: -.018em;
+    }
+    .ln-subhead {
+      font-size: 15.5px;
+      line-height: 1.6;
+      color: #6b6357;
+      margin: 16px 0 0;
+      max-width: 460px;
+    }
+    .ln-subhead strong { color: #3b342a; }
+
+    /* ── Agent loop ── */
+    .ln-loop-wrap { margin-top: 28px; }
+    .ln-loop-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .ln-loop-icon {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 1.5px solid #c9a24a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #b3781a;
+      font-size: 12px;
+      flex: none;
+    }
+    .ln-loop-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      letter-spacing: .12em;
+      color: #8a7f6a;
+    }
+    .ln-loop-meta {
+      font-size: 11.5px;
+      color: #a59a86;
+    }
+    .ln-step-row {
+      display: flex;
+      gap: 14px;
+      align-items: stretch;
+    }
+    .ln-step-track {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .ln-step-num {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: 1.5px solid #d3c7af;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: #8a7f6a;
+      flex: none;
+    }
+    .ln-step-line {
+      width: 1.5px;
+      flex: 1;
+      background: #e3dacb;
+      margin: 4px 0;
+    }
+    .ln-step-body { padding-bottom: 18px; }
+    .ln-step-body-last { padding-bottom: 0; }
+    .ln-step-title-row {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      flex-wrap: wrap;
+    }
+    .ln-step-title {
+      font-family: 'Spectral', serif;
+      font-size: 18px;
+      font-weight: 600;
+      color: #1f1b15;
+    }
+    .ln-step-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      background: #f1ece0;
+      color: #8a7f6a;
+      border-radius: 5px;
+      padding: 3px 7px;
+    }
+    .ln-step-desc {
+      margin: 5px 0 0;
+      font-size: 12.5px;
+      color: #6b6357;
+      line-height: 1.5;
+      max-width: 430px;
+    }
+
+    /* ── Decides callout ── */
+    .ln-decides {
+      margin-top: 18px;
+      background: #fff7ea;
+      border: 1px solid #f0d9a8;
+      border-radius: 11px;
+      padding: 12px 14px;
+      max-width: 470px;
+    }
+    .ln-decides-head {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 5px;
+    }
+    .ln-decides-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      letter-spacing: .1em;
+      color: #b3781a;
+    }
+    .ln-decides-body {
+      margin: 0;
+      font-size: 12px;
+      color: #5a5247;
+      line-height: 1.5;
+    }
+    .ln-glassbox-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 14px;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: #2f6df0;
+      text-decoration: none;
+    }
+
+    /* ── RIGHT: session sheet (paper) ── */
+    .ln-hero-right {
+      flex: 1.18 1 0;
+      min-width: 0;
+      position: relative;
+      display: flex;
+    }
+    .ln-paper-shadow-back {
+      position: absolute;
+      inset: 0;
+      transform: translate(11px, 13px);
+      background: #eceae3;
+      border: 1px solid #ddd7c8;
+      border-radius: 13px;
+    }
+    .ln-paper-shadow-mid {
+      position: absolute;
+      inset: 0;
+      transform: translate(5px, 6px);
+      background: #f4f2ec;
+      border: 1px solid #e0dace;
+      border-radius: 14px;
+    }
+    .ln-paper {
+      position: relative;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: #ffffff;
+      border: 1px solid #e2dccd;
+      border-radius: 15px;
+      box-shadow: 0 12px 32px rgba(60, 50, 30, .13);
+      overflow: hidden;
+    }
+    .ln-paper-corner {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 0;
+      height: 0;
+      border-style: solid;
+      border-width: 0 28px 28px 0;
+      border-color: transparent #f0ece3 transparent transparent;
+      z-index: 2;
+    }
+    .ln-paper-margin {
+      position: absolute;
+      left: 28px;
+      top: 0;
+      bottom: 0;
+      width: 1.5px;
+      background: #ecc0b5;
+    }
+    .ln-paper-inner {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 18px 24px 18px 42px;
+    }
+
+    /* paper header */
+    .ln-paper-meta {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin-bottom: 7px;
+    }
+    .ln-paper-competition {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      font-weight: 500;
+      letter-spacing: .12em;
+      color: #9e8e72;
+    }
+    .ln-paper-section {
+      margin-left: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8.5px;
+      color: #bcae93;
+      letter-spacing: .1em;
+    }
+    .ln-rule { height: 1px; background: #e9e0cf; }
+    .ln-rule-double { height: 1px; background: #e9e0cf; margin-top: 2px; }
+
+    /* working title */
+    .ln-working-title {
+      text-align: center;
+      padding: 22px 8px 6px;
+    }
+    .ln-wt-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8px;
+      letter-spacing: .18em;
+      color: #bcae93;
+      margin-bottom: 11px;
+    }
+    .ln-wt-input-wrap {
+      position: relative;
+      display: inline-block;
+    }
+    /* The visible styled placeholder title — hidden once user focuses */
+    .ln-wt-input {
+      font-family: 'Spectral', serif;
+      font-size: 25px;
+      font-weight: 600;
+      color: #1b1712;
+      line-height: 1.25;
+      letter-spacing: -.012em;
+      border: none;
+      background: transparent;
+      text-align: center;
+      width: 100%;
+      outline: none;
+      padding: 0;
+    }
+    .ln-wt-input::placeholder {
+      color: #b3a890;
+    }
+    .ln-wt-cursor {
+      display: inline-block;
+      width: 2px;
+      height: 22px;
+      background: #6f6650;
+      margin-left: 3px;
+      vertical-align: -3px;
+      animation: ln-blink 1.1s step-end infinite;
+    }
+    .ln-wt-byline {
+      margin-top: 12px;
+      font-family: 'Spectral', serif;
+      font-style: italic;
+      font-size: 12.5px;
+      color: #7d7565;
+    }
+
+    /* index terms */
+    .ln-index-terms {
+      margin-top: 14px;
+      border-top: 1px solid #ece3d2;
+      border-bottom: 1px solid #ece3d2;
+      padding: 11px 2px;
+    }
+    .ln-index-hint {
+      font-size: 9.5px;
+      color: #c4b89f;
+      font-style: italic;
+      margin-bottom: 4px;
+    }
+    .ln-index-row {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+    .ln-index-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8px;
+      letter-spacing: .1em;
+      color: #bcae93;
+    }
+    .ln-index-dashes {
+      font-size: 11px;
+      color: #cabfa8;
+      letter-spacing: .28em;
+    }
+
+    /* prepared for */
+    .ln-prepared-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      letter-spacing: .14em;
+      color: #a59a86;
+    }
+    .ln-role-row {
+      margin-top: 9px;
+      display: flex;
+      gap: 9px;
+      align-items: stretch;
+    }
+    .ln-role-btn {
+      flex: 1;
+      text-align: left;
+      border-radius: 10px;
+      padding: 9px 11px;
+      cursor: pointer;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      font-family: 'Public Sans', sans-serif;
+      text-decoration: none;
+    }
+    .ln-role-btn-researcher {
+      background: #fff;
+      border: 1.5px solid #2f6df0;
+      box-shadow: 0 0 0 3px rgba(47, 109, 240, .09);
+    }
+    .ln-role-btn-journalist {
+      background: #fff;
+      border: 1.5px solid #e4ddcd;
+    }
+    .ln-role-icon {
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex: none;
+    }
+    .ln-role-icon-researcher {
+      background: linear-gradient(145deg, #3b78f2, #7c3aed);
+      box-shadow: inset 0 1px 1.5px rgba(255, 255, 255, .45), 0 3px 6px rgba(70, 50, 150, .28);
+    }
+    .ln-role-icon-journalist {
+      background: linear-gradient(145deg, #f2733b, #e0431f);
+      box-shadow: inset 0 1px 1.5px rgba(255, 255, 255, .4), 0 3px 6px rgba(160, 50, 30, .26);
+    }
+    .ln-role-text { flex: 1; min-width: 0; }
+    .ln-role-name {
+      font-size: 12px;
+      font-weight: 700;
+      color: #1f1b15;
+    }
+    .ln-role-desc {
+      font-size: 9.5px;
+      color: #8a8175;
+      margin-top: 2px;
+      line-height: 1.25;
+    }
+    .ln-role-radio-active {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 4px solid #2f6df0;
+      background: #fff;
+      flex: none;
+    }
+    .ln-role-radio-inactive {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 1.5px solid #cdc2ac;
+      background: #fff;
+      flex: none;
+    }
+    .ln-role-soon {
+      flex: none;
+      width: 104px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border: 1.5px dashed #d8cdb6;
+      border-radius: 10px;
+      padding: 9px 10px;
+      opacity: .6;
+      -webkit-mask-image: linear-gradient(90deg, #000 58%, transparent);
+      mask-image: linear-gradient(90deg, #000 58%, transparent);
+    }
+    .ln-role-soon-icon {
+      width: 26px;
+      height: 26px;
+      border-radius: 7px;
+      background: #efe9dc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex: none;
+    }
+    .ln-role-soon-label {
+      font-size: 10.5px;
+      color: #9a907d;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    /* references / sources */
+    .ln-refs { margin-top: 18px; }
+    .ln-refs-head {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      margin-bottom: 5px;
+    }
+    .ln-refs-title {
+      font-family: 'Spectral', serif;
+      font-size: 14px;
+      font-weight: 600;
+      color: #1f1b15;
+    }
+    .ln-refs-count {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8.5px;
+      color: #b3a892;
+      letter-spacing: .08em;
+    }
+    .ln-refs-list { border-top: 1.5px solid #e3dccb; }
+    .ln-ref-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 7px 0;
+      border-bottom: 1px dotted #e7dfce;
+    }
+    .ln-ref-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: #b3a892;
+      width: 20px;
+      flex: none;
+    }
+    .ln-ref-text { flex: 1; min-width: 0; }
+    .ln-ref-name {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: #2b2620;
+    }
+    .ln-ref-desc {
+      font-size: 11px;
+      color: #a59a86;
+    }
+    .ln-check-on {
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+      background: linear-gradient(135deg, #2f6df0, #7c3aed);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 10px;
+      flex: none;
+      cursor: pointer;
+    }
+    .ln-check-off {
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+      background: #fff;
+      border: 1.5px solid #d3c7af;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex: none;
+      cursor: pointer;
+    }
+    /* hide the real checkbox but keep it functional */
+    .ln-ref-row input[type="checkbox"] {
+      position: absolute;
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .ln-ref-soon {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8.5px;
+      color: #bcae93;
+      letter-spacing: .08em;
+    }
+
+    /* footer row of session sheet */
+    .ln-sheet-footer {
+      margin-top: auto;
+      padding-top: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .ln-try-text {
+      font-size: 12px;
+      color: #7d7565;
+    }
+    .ln-try-color { color: #9a907d; }
+    .ln-try-link {
+      color: #2f6df0;
+      text-decoration: none;
+      border-bottom: 1px solid rgba(47, 109, 240, .3);
+      margin: 0 3px;
+    }
+    .ln-begin-btn {
+      margin-left: auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: #1f1b15;
+      color: #f6f1e6;
+      border: none;
+      border-radius: 5px;
+      padding: 9px 16px;
+      cursor: pointer;
+      font-family: 'Spectral', serif;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: .08em;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, .13), 0 2px 5px rgba(40, 30, 15, .2);
+      flex: none;
+    }
+    .ln-begin-btn:focus-visible {
+      outline: 2px solid #2f6df0;
+      outline-offset: 2px;
+    }
+    .ln-kbd {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9.5px;
+      font-weight: 400;
+      letter-spacing: 0;
+      color: #a89a82;
+      border: 1px solid #45413a;
+      border-radius: 4px;
+      padding: 2px 5px;
+    }
+
+    /* protocol footnote */
+    .ln-footnote {
+      margin-top: 14px;
+      border-top: 1px solid #ece3d2;
+      padding-top: 11px;
+    }
+    .ln-footnote p {
+      margin: 0;
+      font-size: 10px;
+      line-height: 1.55;
+      color: #a99e8c;
+      text-align: justify;
+    }
+    .ln-footnote-mono {
+      font-family: 'JetBrains Mono', monospace;
+      color: #bcae93;
+    }
+
+    /* ── Scenario marquee ── */
+    .ln-marquee-section {
+      margin-top: 30px;
+      border-top: 1px solid #ece5d6;
+      background: #fcfaf5;
+      padding: 22px 0 26px;
+    }
+    .ln-marquee-header {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+    .ln-marquee-title {
+      font-family: 'Spectral', serif;
+      font-size: 16px;
+      font-weight: 600;
+      color: #1f1b15;
+    }
+    .ln-marquee-sub {
+      font-size: 11.5px;
+      color: #9a907d;
+    }
+    .ln-marquee-mask {
+      width: 100%;
+      overflow: hidden;
+      -webkit-mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent);
+      mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent);
+    }
+    .ln-marquee-row {
+      display: flex;
+      gap: 12px;
+      width: max-content;
+      padding: 0 6px 12px;
+    }
+    .ln-marquee-row-a {
+      animation: ln-marq-a 46s linear infinite;
+    }
+    .ln-marquee-row-b {
+      animation: ln-marq-b 46s linear infinite;
+    }
+    .ln-marquee-row:hover {
+      animation-play-state: paused;
+    }
+    .ln-sc-card {
+      flex: none;
+      background: #fff;
+      border: 1px solid #e7dfce;
+      border-radius: 11px;
+      padding: 10px 13px;
+      width: 240px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      box-shadow: 0 1px 2px rgba(60, 50, 30, .03);
+      text-decoration: none;
+      color: inherit;
+    }
+    .ln-sc-card:focus-visible {
+      outline: 2px solid #2f6df0;
+      outline-offset: 2px;
+    }
+    .ln-sc-top {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .ln-sc-emoji { font-size: 15px; }
+    .ln-sc-name {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: #1f1b15;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .ln-sc-lang {
+      margin-left: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8.5px;
+      background: #f1ece0;
+      color: #8a8175;
+      border-radius: 4px;
+      padding: 2px 6px;
+      white-space: nowrap;
+      flex: none;
+    }
+    .ln-sc-desc {
+      margin: 0;
+      font-size: 10.8px;
+      color: #6b6357;
+      line-height: 1.42;
+      min-height: 30px;
+    }
+    .ln-sc-bottom {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .ln-sc-domain {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8.5px;
+      background: #eef1f6;
+      color: #37445c;
+      border-radius: 4px;
+      padding: 2px 6px;
+    }
+    .ln-sc-domain-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+    }
+    .ln-sc-run {
+      margin-left: auto;
+      font-size: 11px;
+      color: #2f6df0;
+      font-weight: 600;
+    }
+
+    /* domain dot colors cycle */
+    .ln-dot-blue   { background: #2f6df0; }
+    .ln-dot-purple { background: #7c3aed; }
+    .ln-dot-green  { background: #1f9d57; }
+    .ln-dot-red    { background: #ef4423; }
+    .ln-dot-amber  { background: #e08a1e; }
+
+    /* ── A11y: sr-only ── */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 900px) {
+      .ln-hero { flex-direction: column; padding: 24px 16px 6px; }
+      .ln-headline { font-size: 32px; }
+      .ln-screen { border-radius: 0; border-left: none; border-right: none; }
+      .ln-topbar { padding: 0 14px; }
+      .ln-paper-inner { padding: 14px 16px 14px 32px; }
+    }
+  </style>
+</head>
 <body>
-<header><b>LitNavigator</b> &nbsp; interactive tutor</header>
-<div class="wrap">
- <h1 class="sr-only">LitNavigator — Adaptive Research Tutor</h1>
- <div class="card">
- <form action="/tutor/start" method="get">
-   <label for="goal" class="sr-only">Your learning goal</label>
-   <input id="goal" name="goal" autofocus required
-          placeholder="e.g. I want to understand multi-agent debate"
-          aria-label="Your learning goal">
-   {% if adapters %}
-   <fieldset class="sources">
-     <legend>Sources to search</legend>
-     {% for a in adapters %}
-     <label class="src" title="{{ a.description }}">
-       <input type="checkbox" name="adapters" value="{{ a.id }}" {% if a.default_on %}checked{% endif %}>
-       <span class="src-name">{{ a.name }}</span>
-       <span class="src-desc">{{ a.description }}</span>
-     </label>
-     {% endfor %}
-   </fieldset>
-   {% endif %}
-   <button type="submit">Teach me</button>
- </form>
- <p>Try, for example:</p>
- <ul>
-   <li><a href="/tutor/start?goal=I want to understand ReAct">I want to understand ReAct</a>
-       &nbsp;<i>(misconception &rarr; reteach)</i></li>
-   <li><a href="/tutor/start?goal=how do agents remember things across steps">how do agents remember things across steps</a></li>
-   <li><a href="/tutor/start?goal=I keep seeing multi-agent debate, where does it fit">I keep seeing multi-agent debate</a>
-       &nbsp;<i>(off-skeleton &rarr; induced from the papers)</i></li>
- </ul>
- <p>… or explore the <b>same corpus re-scoped to your purpose</b>:</p>
- <ul>
-   <li><a href="/tutor/start?intent=researcher">Researcher entering the field</a>
-       &nbsp;<i>(full prerequisite chain, deep explanations, high bar)</i></li>
-   <li><a href="/tutor/start?intent=journalist">Journalist prepping an interview</a>
-       &nbsp;<i>(short route, leads with the live controversy, lower bar)</i></li>
- </ul>
- <p class="scope">Built from {{ n_papers }} LLM-agent papers. Ask within this scope; out-of-scope goals get an honest decline.</p>
- {% if scenarios %}
- <div class="scenarios-section">
-   <div class="scenarios-label">Test scenarios <span>— one-click live runs across domains &amp; languages</span></div>
-   <div class="scenario-grid">
-     {% for s in scenarios %}
-     <a class="sc-card" href="/tutor/start?goal={{ s.goal_text | urlencode }}"
-        title="{{ s.goal_text }}">
-       <div class="sc-emoji" aria-hidden="true">{{ s.emoji }}</div>
-       <div class="sc-name">{{ s.name }}</div>
-       <div class="sc-meta">
-         <span class="sc-tag">{{ s.lang_label }}</span>
-         <span class="sc-tag">{{ s.intended_depth }}</span>
-         <span class="sc-tag">{{ s.domain }}</span>
-         {% if live %}<span class="sc-tag sc-live">live</span>{% endif %}
-       </div>
-     </a>
-     {% endfor %}
-   </div>
- </div>
- {% endif %}
- </div>
- <div class="hero">
-  <div class="k">{{ "Live Discover + Digest" if live else "Offline Discover + Digest" }}</div>
-  <h2 style="margin:.25rem 0 .5rem">From a research area to a teachable concept map</h2>
-  {% if live %}
-  <p style="margin:.2rem 0 .8rem">Type a goal and the agent <b>discovers real sources live</b>
-     (OpenAlex · Wikipedia · Semantic Scholar · arXiv), <b>digests</b> them into a cited concept map,
-     then teaches, quizzes, and adapts in real time. The panels below show a sample offline pack.</p>
-  {% else %}
-  <p style="margin:.2rem 0 .8rem">This demo starts from the field <b>{{ story_domain }}</b>, uses an offline
-     corpus of <b>{{ story_paper_count }} papers</b>, distills them into <b>{{ story_concept_count }} concepts</b>
-     and <b>{{ story_edge_count }} prerequisite links</b>, then switches to a live tutor that teaches,
-     quizzes, and adapts in real time.</p>
-  {% endif %}
-  <div class="paper-grid">
-    {% for paper in story_representative_papers %}
-    <div class="paper">{{ paper.title }} <span>· {{ paper.year }}</span></div>
-    {% endfor %}
-  </div>
- </div>
- <div class="pipeline">
-  <div class="stage">
-    <div class="k">1. Discover</div>
-    <b>Representative papers selected offline</b>
-    <div>{{ story_paper_count }} papers were collected for the domain, with 5 anchor papers used to
-      orient the learner-facing story.</div>
-  </div>
-  <div class="stage">
-    <div class="k">2. Digest</div>
-    <b>Concept graph built before the demo</b>
-    <div>The corpus was compressed into a reusable map of concepts such as
-      {{ story_target_names|join(', ') }}.</div>
-    <div class="chip-row">
-      {% for concept in story_concept_names[:7] %}
-      <div class="chip">{{ concept }}</div>
-      {% endfor %}
+
+<h1 class="sr-only">LitNavigator — Adaptive Research Tutor</h1>
+
+<div class="ln-screen">
+
+  <!-- top bar -->
+  <div class="ln-topbar">
+    <img src="/static/logo.png" alt="LitNavigator logo" class="ln-topbar-logo">
+    <span class="ln-topbar-name">LitNavigator</span>
+    <span class="ln-topbar-divider" aria-hidden="true"></span>
+    <span class="ln-topbar-sub">agentic study copilot</span>
+    <span class="ln-topbar-spacer"></span>
+    {% if live %}
+    <div class="ln-live-pill" role="status" aria-label="Live data sources connected">
+      <span class="ln-live-dot" aria-hidden="true"></span>
+      <span class="ln-live-label">Live · OpenAlex +3</span>
     </div>
+    {% endif %}
   </div>
-  <div class="stage">
-    <div class="k">3. Teach Live</div>
-    <b>Stateful tutoring starts now</b>
-    <div>Once you pick a goal, the live graph teaches from cited chunks, asks questions, and
-      changes route when your answers reveal gaps.</div>
+
+  <!-- goal form wraps the whole session sheet so all inputs submit together -->
+  <form action="/tutor/start" method="get" id="goal-form">
+
+    <!-- hero split -->
+    <div class="ln-hero">
+
+      <!-- LEFT: headline + agent loop -->
+      <div class="ln-hero-left">
+        <p class="ln-eyebrow">AGENTIC STUDY COPILOT FOR RESEARCHERS</p>
+        <h2 class="ln-headline">Reads the literature.<br>Builds the course.<br>Shows its work.</h2>
+        <p class="ln-subhead">An agentic copilot that discovers real sources, induces a prerequisite map, then teaches and quizzes you through them — <strong>every claim cited, every number rule-computed.</strong></p>
+
+        <div class="ln-loop-wrap">
+          <div class="ln-loop-header">
+            <span class="ln-loop-icon" aria-hidden="true">&#x21BB;</span>
+            <span class="ln-loop-label">THE AGENT LOOP</span>
+            <span class="ln-loop-meta">ReAct + Plan-and-Solve · plans · acts · observes · adapts</span>
+          </div>
+
+          <!-- Step 01: Discover -->
+          <div class="ln-step-row">
+            <div class="ln-step-track" aria-hidden="true">
+              <span class="ln-step-num">01</span>
+              <div class="ln-step-line"></div>
+            </div>
+            <div class="ln-step-body">
+              <div class="ln-step-title-row">
+                <span class="ln-step-title">Discover</span>
+                <span class="ln-step-tag">BM25 + rerank + gate</span>
+              </div>
+              <p class="ln-step-desc">Chooses which sources to trust and gates out off-topic papers — or declines a goal it can't serve.</p>
+            </div>
+          </div>
+
+          <!-- Step 02: Digest -->
+          <div class="ln-step-row">
+            <div class="ln-step-track" aria-hidden="true">
+              <span class="ln-step-num">02</span>
+              <div class="ln-step-line"></div>
+            </div>
+            <div class="ln-step-body">
+              <div class="ln-step-title-row">
+                <span class="ln-step-title">Digest</span>
+                <span class="ln-step-tag">RefD-style + judge + verify</span>
+              </div>
+              <p class="ln-step-desc">Builds the prerequisite map, then verifies or downgrades each edge it proposed.</p>
+            </div>
+          </div>
+
+          <!-- Step 03: Teach -->
+          <div class="ln-step-row">
+            <div class="ln-step-track" aria-hidden="true">
+              <span class="ln-step-num">03</span>
+            </div>
+            <div class="ln-step-body ln-step-body-last">
+              <div class="ln-step-title-row">
+                <span class="ln-step-title">Teach</span>
+                <span class="ln-step-tag">BKT-lite · cited · escalation</span>
+              </div>
+              <p class="ln-step-desc">Plans the route, then reroutes on a missing prereq, escalates on close calls, and concedes when a concept won't land.</p>
+            </div>
+          </div>
+
+          <div class="ln-decides">
+            <div class="ln-decides-head">
+              <span aria-hidden="true">&#x1F9ED;</span>
+              <span class="ln-decides-label">IT DECIDES, NOT JUST GENERATES</span>
+            </div>
+            <p class="ln-decides-body">Re-plans on a missing prereq · escalates only on near-threshold answers · concedes when a concept won't land — every decision logged in plain language.</p>
+          </div>
+          <a href="#glassbox" class="ln-glassbox-link">See how each stage works <span aria-hidden="true">&#x2193;</span></a>
+        </div>
+      </div>
+
+      <!-- RIGHT: session sheet (paper) -->
+      <div class="ln-hero-right">
+        <div class="ln-paper-shadow-back" aria-hidden="true"></div>
+        <div class="ln-paper-shadow-mid" aria-hidden="true"></div>
+        <div class="ln-paper">
+          <div class="ln-paper-corner" aria-hidden="true"></div>
+          <div class="ln-paper-margin" aria-hidden="true"></div>
+          <div class="ln-paper-inner">
+
+            <!-- paper header -->
+            <div class="ln-paper-meta">
+              <span class="ln-paper-competition">ICCSE 2026 · AGENTIC AI COMPETITION</span>
+              <span class="ln-paper-section">SESSION SHEET · §1</span>
+            </div>
+            <div class="ln-rule"></div>
+            <div class="ln-rule-double"></div>
+
+            <!-- working title (real goal input) -->
+            <div class="ln-working-title">
+              <div class="ln-wt-label">WORKING TITLE — TYPE YOUR OBJECTIVE</div>
+              <label for="goal" class="sr-only">Your learning goal</label>
+              <input
+                id="goal"
+                name="goal"
+                type="text"
+                class="ln-wt-input"
+                placeholder="I want to understand multi-agent debate"
+                autocomplete="off"
+                autofocus
+                aria-label="Your learning goal"
+              ><span class="ln-wt-cursor" aria-hidden="true"></span>
+              <div class="ln-wt-byline">Assembled live by LitNavigator — an agentic tutor</div>
+            </div>
+
+            <!-- index terms -->
+            <div class="ln-index-terms">
+              <div class="ln-index-hint">&#x23CE; press Enter to load index terms</div>
+              <div class="ln-index-row">
+                <span class="ln-index-label">INDEX TERMS</span>
+                <span class="ln-index-dashes">— — — —</span>
+              </div>
+            </div>
+
+            <!-- prepared for / role buttons -->
+            <div style="margin-top:18px;">
+              <span class="ln-prepared-label">PREPARED FOR</span>
+              <div class="ln-role-row">
+                <a href="/tutor/start?intent=researcher" class="ln-role-btn ln-role-btn-researcher" aria-label="Researcher — deep, high bar">
+                  <span class="ln-role-icon ln-role-icon-researcher" aria-hidden="true">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round">
+                      <circle cx="10.5" cy="10.5" r="6"></circle>
+                      <line x1="15" y1="15" x2="20" y2="20"></line>
+                    </svg>
+                  </span>
+                  <div class="ln-role-text">
+                    <div class="ln-role-name">Researcher</div>
+                    <div class="ln-role-desc">Deep · high bar</div>
+                  </div>
+                  <span class="ln-role-radio-active" aria-hidden="true"></span>
+                </a>
+                <a href="/tutor/start?intent=journalist" class="ln-role-btn ln-role-btn-journalist" aria-label="Journalist — short, controversy">
+                  <span class="ln-role-icon ln-role-icon-journalist" aria-hidden="true">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="9" y="3" width="6" height="11" rx="3"></rect>
+                      <path d="M6 11a6 6 0 0 0 12 0"></path>
+                      <line x1="12" y1="17" x2="12" y2="21"></line>
+                      <line x1="9" y1="21" x2="15" y2="21"></line>
+                    </svg>
+                  </span>
+                  <div class="ln-role-text">
+                    <div class="ln-role-name">Journalist</div>
+                    <div class="ln-role-desc">Short · controversy</div>
+                  </div>
+                  <span class="ln-role-radio-inactive" aria-hidden="true"></span>
+                </a>
+                <div class="ln-role-soon" aria-label="Student and Educator — coming soon" aria-disabled="true">
+                  <span class="ln-role-soon-icon" aria-hidden="true">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c2b69d" stroke-width="2.2" stroke-linecap="round">
+                      <circle cx="12" cy="8" r="4"></circle>
+                      <path d="M5 21a7 7 0 0 1 14 0"></path>
+                    </svg>
+                  </span>
+                  <span class="ln-role-soon-label">Student · Educator</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- references / sources -->
+            <div class="ln-refs">
+              <div class="ln-refs-head">
+                <span class="ln-refs-title">References</span>
+                <span class="ln-refs-count">SOURCES TO SEARCH · {{ adapters | selectattr('default_on', 'equalto', true) | list | length }} SELECTED</span>
+              </div>
+              <div class="ln-refs-list">
+                {% for a in adapters %}
+                <label class="ln-ref-row" title="{{ a.description }}">
+                  <input type="checkbox" name="adapters" value="{{ a.id }}" {% if a.default_on %}checked{% endif %}>
+                  <span class="ln-ref-num">[{{ loop.index }}]</span>
+                  <span class="ln-ref-text">
+                    <span class="ln-ref-name">{{ a.name }}</span><span class="ln-ref-desc"> — {{ a.description }}</span>
+                  </span>
+                  {% if a.default_on %}
+                  <span class="ln-check-on" aria-label="selected">&#x2713;</span>
+                  {% else %}
+                  <span class="ln-check-off" aria-label="not selected"></span>
+                  {% endif %}
+                </label>
+                {% endfor %}
+                <div class="ln-ref-row">
+                  <span class="ln-ref-num">[{{ adapters | length + 1 }}]</span>
+                  <span class="ln-ref-text">
+                    <span class="ln-ref-name" style="color:#b3a892;">PubMed · CORE</span><span class="ln-ref-desc"> — additional adapters</span>
+                  </span>
+                  <span class="ln-ref-soon">SOON</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- try links + begin session -->
+            <div class="ln-sheet-footer">
+              <span class="ln-try-text">
+                <span class="ln-try-color">Try:</span>
+                <a href="/tutor/start?goal=I+want+to+understand+ReAct" class="ln-try-link">ReAct</a> ·
+                <a href="/tutor/start?goal=how+do+agents+remember+things+across+steps" class="ln-try-link">memory across steps</a> ·
+                <a href="/tutor/start?goal=I+keep+seeing+multi-agent+debate%2C+where+does+it+fit" class="ln-try-link">multi-agent debate</a>
+              </span>
+              <button type="submit" class="ln-begin-btn">Begin session&nbsp;&nbsp;&#x2192;<span class="ln-kbd">Ctrl &#x23CE;</span></button>
+            </div>
+
+            <!-- protocol footnote -->
+            <div class="ln-footnote">
+              <p><span class="ln-footnote-mono">&#x2020;</span> On <em>Begin</em>, the agent will discover and vet real sources, induce a prerequisite concept map, then teach and quiz you through it. Every claim will be cited to its source chunk; mastery, confidence and routing are rule-computed — never self-graded.</p>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div><!-- /.ln-hero -->
+
+  </form><!-- /#goal-form -->
+
+  <!-- scenarios marquee -->
+  {% if scenarios %}
+  <div class="ln-marquee-section">
+    <div class="ln-marquee-header">
+      <span class="ln-marquee-title">Test scenarios</span>
+      <span class="ln-marquee-sub">one-click live runs across domains &amp; languages</span>
+    </div>
+    <div class="ln-marquee-mask" aria-label="Test scenario quick-launch cards">
+      <!-- Row A: first half of scenarios (forward scroll) -->
+      <div class="ln-marquee-row ln-marquee-row-a" aria-hidden="true">
+        {% for s in scenarios %}
+        <a class="ln-sc-card" href="/tutor/start?goal={{ s.goal_text | urlencode }}" tabindex="-1">
+          <div class="ln-sc-top">
+            <span class="ln-sc-emoji">{{ s.emoji }}</span>
+            <span class="ln-sc-name">{{ s.name }}</span>
+            <span class="ln-sc-lang">{{ s.lang_label }}</span>
+          </div>
+          <p class="ln-sc-desc">{{ s.goal_text }}</p>
+          <div class="ln-sc-bottom">
+            <span class="ln-sc-domain">
+              <span class="ln-sc-domain-dot" style="background:{{ ['#2f6df0','#7c3aed','#1f9d57','#ef4423','#e08a1e'][loop.index0 % 5] }};"></span>
+              {{ s.domain }}
+            </span>
+            <span class="ln-sc-run">&#x25B6; Run</span>
+          </div>
+        </a>
+        {% endfor %}
+        <!-- duplicate for seamless loop -->
+        {% for s in scenarios %}
+        <a class="ln-sc-card" href="/tutor/start?goal={{ s.goal_text | urlencode }}" tabindex="-1" aria-hidden="true">
+          <div class="ln-sc-top">
+            <span class="ln-sc-emoji">{{ s.emoji }}</span>
+            <span class="ln-sc-name">{{ s.name }}</span>
+            <span class="ln-sc-lang">{{ s.lang_label }}</span>
+          </div>
+          <p class="ln-sc-desc">{{ s.goal_text }}</p>
+          <div class="ln-sc-bottom">
+            <span class="ln-sc-domain">
+              <span class="ln-sc-domain-dot" style="background:{{ ['#2f6df0','#7c3aed','#1f9d57','#ef4423','#e08a1e'][loop.index0 % 5] }};"></span>
+              {{ s.domain }}
+            </span>
+            <span class="ln-sc-run">&#x25B6; Run</span>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+    <!-- Accessible non-animated list for keyboard/screen reader users -->
+    <ul style="display:none;" aria-label="Test scenarios">
+      {% for s in scenarios %}
+      <li><a href="/tutor/start?goal={{ s.goal_text | urlencode }}">{{ s.name }} — {{ s.goal_text }}</a></li>
+      {% endfor %}
+    </ul>
   </div>
- </div>
- {% if message %}<p class="note">{{ message }}</p>{% endif %}
-</div></body></html>
+  {% endif %}
+
+  {% if message %}
+  <div role="alert" style="margin:12px 44px; padding:10px 14px; background:#fff7ea; border:1px solid #f0d9a8; border-radius:8px; font-size:13px; color:#5a5247;">{{ message }}</div>
+  {% endif %}
+
+</div><!-- /.ln-screen -->
+
+<script>
+  /* Ctrl+Enter submits the goal form */
+  document.addEventListener('keydown', function(e) {
+    if ((e.ctrlKey || e.metaKey) && (e.key === 'Enter' || e.keyCode === 13)) {
+      var form = document.getElementById('goal-form');
+      if (form) { form.submit(); }
+    }
+  });
+</script>
+
+</body>
+</html>
