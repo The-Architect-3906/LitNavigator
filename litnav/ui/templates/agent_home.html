@@ -848,6 +848,401 @@
       border: 0;
     }
 
+    /* ── Corpus marquee section ── */
+    .ln-corpus-section {
+      border-top: 1px solid #ece5d6;
+      padding: 22px 0 24px;
+      background: #fcfaf5;
+    }
+    .ln-corpus-header {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 5px;
+    }
+    .ln-corpus-title {
+      font-family: 'Spectral', serif;
+      font-size: 16px;
+      font-weight: 600;
+      color: #1f1b15;
+    }
+    .ln-corpus-sub {
+      font-size: 11.5px;
+      color: #9a907d;
+    }
+    .ln-corpus-stat {
+      text-align: center;
+      font-size: 11px;
+      color: #b3a892;
+      margin: 0 0 14px;
+    }
+    .ln-corpus-mask {
+      width: 100%;
+      overflow: hidden;
+      -webkit-mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent);
+      mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent);
+    }
+    .ln-corpus-row {
+      display: flex;
+      gap: 10px;
+      width: max-content;
+      padding: 0 6px;
+      animation: ln-marq-b 60s linear infinite;
+    }
+    .ln-corpus-row:hover {
+      animation-play-state: paused;
+    }
+    /* Curated chip */
+    .ln-chip-curated {
+      flex: none;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      background: #fff;
+      border: 1px solid #e3dbc9;
+      border-radius: 9px;
+      padding: 7px 13px;
+    }
+    .ln-chip-curated .ln-chip-name {
+      font-size: 12px;
+      color: #1f1b15;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    /* Fetched chip */
+    .ln-chip-fetched {
+      flex: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #fdfbf6;
+      border: 1px solid #ece5d6;
+      border-radius: 9px;
+      padding: 7px 13px;
+    }
+    .ln-chip-fetched .ln-chip-name {
+      font-size: 11.5px;
+      color: #6b6357;
+      font-style: italic;
+      white-space: nowrap;
+    }
+    .ln-chip-fetched .ln-chip-name-faint {
+      font-size: 11.5px;
+      color: #b3a892;
+      font-style: italic;
+    }
+    .ln-chip-arxiv {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8.5px;
+      color: #9a907d;
+      background: #f4f0e7;
+      border-radius: 4px;
+      padding: 1px 5px;
+      white-space: nowrap;
+    }
+    /* Page icon with dot */
+    .ln-page-icon {
+      flex: none;
+      width: 13px;
+      height: 16px;
+      background: #faf6ec;
+      border: 1px solid #ddd2bb;
+      border-radius: 2.5px;
+      position: relative;
+      display: block;
+    }
+    .ln-page-dot {
+      position: absolute;
+      right: 1px;
+      bottom: 1px;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+    }
+    .ln-page-dot-gradient {
+      background: linear-gradient(135deg, #2f6df0, #7c3aed);
+    }
+    .ln-page-dot-gray {
+      background: #c9bfa8;
+    }
+    /* corpus legend */
+    .ln-corpus-legend {
+      display: flex;
+      gap: 18px;
+      justify-content: center;
+      font-size: 10.5px;
+      color: #9a907d;
+      margin-top: 14px;
+    }
+    .ln-corpus-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* ── UNDER THE GLASS section ── */
+    .ln-glassbox-section {
+      border-top: 1px solid #ece5d6;
+      background: #fbf8f1;
+      padding: 34px 48px 34px;
+    }
+    .ln-glassbox-eyebrow {
+      text-align: center;
+      margin-bottom: 6px;
+    }
+    .ln-glassbox-eyebrow-text {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      letter-spacing: .16em;
+      color: #b0795f;
+    }
+    .ln-glassbox-h2 {
+      text-align: center;
+      font-family: 'Spectral', serif;
+      font-size: 26px;
+      font-weight: 600;
+      color: #1b1712;
+      margin: 6px 0 4px;
+      letter-spacing: -.01em;
+    }
+    .ln-glassbox-sub {
+      text-align: center;
+      font-size: 13.5px;
+      color: #7d7565;
+      margin: 0 auto;
+      max-width: 640px;
+    }
+    .ln-glassbox-cards {
+      display: flex;
+      gap: 18px;
+      align-items: stretch;
+      margin-top: 24px;
+    }
+    .ln-glassbox-card {
+      flex: 1 1 0;
+      min-width: 0;
+      background: #fff;
+      border: 1px solid #e8e1d3;
+      border-radius: 14px;
+      padding: 17px 17px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .ln-glassbox-card-header {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+    .ln-glassbox-badge {
+      width: 26px;
+      height: 26px;
+      border-radius: 8px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      flex: none;
+    }
+    .ln-glassbox-badge-discover {
+      background: #2f6df0;
+      box-shadow: 0 2px 5px rgba(47, 109, 240, .3);
+    }
+    .ln-glassbox-badge-digest {
+      background: #7c3aed;
+      box-shadow: 0 2px 5px rgba(124, 58, 237, .3);
+    }
+    .ln-glassbox-badge-teach {
+      background: #d98a1e;
+      box-shadow: 0 2px 5px rgba(217, 138, 30, .3);
+    }
+    .ln-glassbox-card-title {
+      font-family: 'Spectral', serif;
+      font-size: 18px;
+      font-weight: 600;
+      color: #1f1b15;
+    }
+    .ln-glassbox-card-tag {
+      margin-left: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8.5px;
+      color: #a59a86;
+    }
+    .ln-glassbox-flow {
+      background: #faf7f0;
+      border: 1px solid #efe8da;
+      border-radius: 9px;
+      padding: 9px 11px;
+    }
+    .ln-glassbox-flow-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8px;
+      letter-spacing: .12em;
+      color: #b3a892;
+      margin-bottom: 5px;
+    }
+    .ln-glassbox-flow-steps {
+      font-size: 11px;
+      line-height: 1.85;
+      color: #3b342a;
+    }
+    .ln-glassbox-flow-sep {
+      color: #cbbfa8;
+      margin: 0 5px;
+    }
+    .ln-glassbox-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+    .ln-glassbox-chip {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      border-radius: 5px;
+      padding: 3px 7px;
+    }
+    .ln-chip-blue-bg   { background: #eef1f6; color: #37445c; }
+    .ln-chip-blue-acc  { background: #eef4fe; color: #2f6df0; }
+    .ln-chip-purple-bg { background: #f4eefe; color: #7c3aed; }
+    .ln-chip-green-bg  { background: #f0f7f1; color: #2c6b43; }
+    .ln-chip-amber-bg  { background: #fef6e9; color: #b3781a; }
+    .ln-glassbox-decides {
+      font-size: 11px;
+      color: #6b6357;
+      line-height: 1.45;
+    }
+    .ln-glassbox-decides strong {
+      color: #3b342a;
+    }
+    .ln-glassbox-what-discover {
+      margin-top: auto;
+      background: #eef4fe;
+      border: 1px solid #d8e6fb;
+      border-radius: 9px;
+      padding: 9px 11px;
+    }
+    .ln-glassbox-what-digest {
+      margin-top: auto;
+      background: #f4eefe;
+      border: 1px solid #e6d9fb;
+      border-radius: 9px;
+      padding: 9px 11px;
+    }
+    .ln-glassbox-what-teach {
+      margin-top: auto;
+      background: #fef6e9;
+      border: 1px solid #f3e3c6;
+      border-radius: 9px;
+      padding: 9px 11px;
+    }
+    .ln-glassbox-what-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+    .ln-glassbox-what-label-discover {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8px;
+      letter-spacing: .1em;
+      color: #2f6df0;
+    }
+    .ln-glassbox-what-label-digest {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8px;
+      letter-spacing: .1em;
+      color: #7c3aed;
+    }
+    .ln-glassbox-what-label-teach {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8px;
+      letter-spacing: .1em;
+      color: #b3781a;
+    }
+    .ln-glassbox-what-text {
+      margin: 0;
+      font-size: 11px;
+      line-height: 1.45;
+      color: #5a5247;
+    }
+    /* Agentic gold box */
+    .ln-agentic-gold {
+      background: #fff7ea;
+      border: 1px solid #f0d9a8;
+      border-radius: 9px;
+      padding: 9px 11px;
+    }
+    .ln-agentic-gold-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8px;
+      letter-spacing: .12em;
+      color: #b3781a;
+      margin-bottom: 6px;
+    }
+    .ln-agentic-gold-body {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      font-size: 10.8px;
+      color: #5a5247;
+      line-height: 1.4;
+    }
+    .ln-agentic-gold-body strong {
+      color: #9e5a16;
+    }
+    /* Trust invariant bar */
+    .ln-trust-bar {
+      margin-top: 20px;
+      background: #1f1b15;
+      border-radius: 13px;
+      padding: 16px 22px;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+    .ln-trust-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9.5px;
+      letter-spacing: .12em;
+      color: #d6a07f;
+    }
+    .ln-trust-text {
+      font-size: 13.5px;
+      line-height: 1.5;
+      color: #ece4d6;
+      flex: 1;
+      min-width: 340px;
+    }
+    .ln-trust-text strong {
+      color: #fff;
+    }
+    .ln-trust-chips {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .ln-trust-chip {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9.5px;
+      background: rgba(255, 255, 255, .08);
+      color: #e3d6bf;
+      border-radius: 6px;
+      padding: 5px 9px;
+    }
+    .ln-glassbox-footer {
+      margin: 12px 0 0;
+      text-align: center;
+      font-size: 11px;
+      color: #a59a86;
+    }
+    .ln-glassbox-footer-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
     /* ── Responsive ── */
     @media (max-width: 900px) {
       .ln-hero { flex-direction: column; padding: 24px 16px 6px; }
@@ -855,6 +1250,8 @@
       .ln-screen { border-radius: 0; border-left: none; border-right: none; }
       .ln-topbar { padding: 0 14px; }
       .ln-paper-inner { padding: 14px 16px 14px 32px; }
+      .ln-glassbox-section { padding: 24px 16px; }
+      .ln-glassbox-cards { flex-direction: column; }
     }
   </style>
 </head>
@@ -1153,6 +1550,385 @@
   {% if message %}
   <div role="alert" style="margin:12px 44px; padding:10px 14px; background:#fff7ea; border:1px solid #f0d9a8; border-radius:8px; font-size:13px; color:#5a5247;">{{ message }}</div>
   {% endif %}
+
+  <!-- ══ SECTION: The offline corpus ══ -->
+  <section class="ln-corpus-section" aria-label="The offline corpus">
+    <div class="ln-corpus-header">
+      <h2 class="ln-corpus-title">&#x1F4DA; The offline corpus</h2>
+      <span class="ln-corpus-sub">agents_expanded.json &middot; what the offline tutor teaches from</span>
+    </div>
+    <p class="ln-corpus-stat">9 hand-curated + 16 fetched from arXiv &middot; live sessions discover fresh sources per goal</p>
+
+    <div class="ln-corpus-mask" aria-label="Paper chip scroll — offline corpus">
+      <div class="ln-corpus-row" aria-hidden="true">
+        <!-- Curated 9 -->
+        <div class="ln-chip-curated">
+          <span class="ln-page-icon"><span class="ln-page-dot ln-page-dot-gradient"></span></span>
+          <span class="ln-chip-name">ReAct</span>
+        </div>
+        <div class="ln-chip-curated">
+          <span class="ln-page-icon"><span class="ln-page-dot ln-page-dot-gradient"></span></span>
+          <span class="ln-chip-name">Toolformer</span>
+        </div>
+        <div class="ln-chip-curated">
+          <span class="ln-page-icon"><span class="ln-page-dot ln-page-dot-gradient"></span></span>
+          <span class="ln-chip-name">Reflexion</span>
+        </div>
+        <div class="ln-chip-curated">
+          <span class="ln-page-icon"><span class="ln-page-dot ln-page-dot-gradient"></span></span>
+          <span class="ln-chip-name">Generative Agents</span>
+        </div>
+        <div class="ln-chip-curated">
+          <span class="ln-page-icon"><span class="ln-page-dot ln-page-dot-gradient"></span></span>
+          <span class="ln-chip-name">Voyager</span>
+        </div>
+        <div class="ln-chip-curated">
+          <span class="ln-page-icon"><span class="ln-page-dot ln-page-dot-gradient"></span></span>
+          <span class="ln-chip-name">A Survey on LLM-Based Autonomous Agents</span>
+        </div>
+        <div class="ln-chip-curated">
+          <span class="ln-page-icon"><span class="ln-page-dot ln-page-dot-gradient"></span></span>
+          <span class="ln-chip-name">MetaGPT</span>
+        </div>
+        <div class="ln-chip-curated">
+          <span class="ln-page-icon"><span class="ln-page-dot ln-page-dot-gradient"></span></span>
+          <span class="ln-chip-name">CAMEL</span>
+        </div>
+        <div class="ln-chip-curated">
+          <span class="ln-page-icon"><span class="ln-page-dot ln-page-dot-gradient"></span></span>
+          <span class="ln-chip-name">Multi-Agent Debate</span>
+        </div>
+        <!-- Fetched 16 -->
+        <div class="ln-chip-fetched">
+          <span class="ln-page-icon"><span class="ln-page-dot ln-page-dot-gray"></span></span>
+          <span class="ln-chip-name">HuggingGPT</span>
+          <span class="ln-chip-arxiv">2303.17580</span>
+        </div>
+        <div class="ln-chip-fetched">
+          <span class="ln-page-icon"><span class="ln-page-dot ln-page-dot-gray"></span></span>
+          <span class="ln-chip-name">ToolLLM</span>
+          <span class="ln-chip-arxiv">2307.16789</span>
+        </div>
+        <div class="ln-chip-fetched">
+          <span class="ln-page-icon"><span class="ln-page-dot ln-page-dot-gray"></span></span>
+          <span class="ln-chip-name">AutoGen</span>
+          <span class="ln-chip-arxiv">2308.08155</span>
+        </div>
+        <div class="ln-chip-fetched">
+          <span class="ln-page-icon"><span class="ln-page-dot ln-page-dot-gray"></span></span>
+          <span class="ln-chip-name">Tree of Thoughts</span>
+          <span class="ln-chip-arxiv">2305.10601</span>
+        </div>
+        <div class="ln-chip-fetched">
+          <span class="ln-page-icon"><span class="ln-page-dot ln-page-dot-gray"></span></span>
+          <span class="ln-chip-name">Graph of Thoughts</span>
+          <span class="ln-chip-arxiv">2308.09687</span>
+        </div>
+        <div class="ln-chip-fetched">
+          <span class="ln-page-icon"><span class="ln-page-dot ln-page-dot-gray"></span></span>
+          <span class="ln-chip-name">Self-Refine</span>
+          <span class="ln-chip-arxiv">2303.17651</span>
+        </div>
+        <div class="ln-chip-fetched">
+          <span class="ln-page-icon"><span class="ln-page-dot ln-page-dot-gray"></span></span>
+          <span class="ln-chip-name">Plan-and-Solve</span>
+          <span class="ln-chip-arxiv">2305.04091</span>
+        </div>
+        <div class="ln-chip-fetched">
+          <span class="ln-page-icon"><span class="ln-page-dot ln-page-dot-gray"></span></span>
+          <span class="ln-chip-name">ChatDev</span>
+          <span class="ln-chip-arxiv">2307.07924</span>
+        </div>
+        <div class="ln-chip-fetched">
+          <span class="ln-page-icon"><span class="ln-page-dot ln-page-dot-gray"></span></span>
+          <span class="ln-chip-name">AgentBench</span>
+          <span class="ln-chip-arxiv">2308.03688</span>
+        </div>
+        <div class="ln-chip-fetched">
+          <span class="ln-page-icon"><span class="ln-page-dot ln-page-dot-gray"></span></span>
+          <span class="ln-chip-name">Gorilla</span>
+          <span class="ln-chip-arxiv">2305.15334</span>
+        </div>
+        <div class="ln-chip-fetched">
+          <span class="ln-page-icon"><span class="ln-page-dot ln-page-dot-gray"></span></span>
+          <span class="ln-chip-name">Mind2Web</span>
+          <span class="ln-chip-arxiv">2306.06070</span>
+        </div>
+        <div class="ln-chip-fetched">
+          <span class="ln-page-icon"><span class="ln-page-dot ln-page-dot-gray"></span></span>
+          <span class="ln-chip-name">WebArena</span>
+          <span class="ln-chip-arxiv">2307.13854</span>
+        </div>
+        <div class="ln-chip-fetched">
+          <span class="ln-page-icon"><span class="ln-page-dot ln-page-dot-gray"></span></span>
+          <span class="ln-chip-name">Rise &amp; Potential of LLM Agents (Survey)</span>
+          <span class="ln-chip-arxiv">2309.07864</span>
+        </div>
+        <div class="ln-chip-fetched">
+          <span class="ln-page-icon"><span class="ln-page-dot ln-page-dot-gray"></span></span>
+          <span class="ln-chip-name">DEPS &middot; open-world planning</span>
+          <span class="ln-chip-arxiv">2302.01560</span>
+        </div>
+        <div class="ln-chip-fetched">
+          <span class="ln-page-icon"><span class="ln-page-dot ln-page-dot-gray"></span></span>
+          <span class="ln-chip-name">SwiftSage</span>
+          <span class="ln-chip-arxiv">2305.17390</span>
+        </div>
+        <div class="ln-chip-fetched">
+          <span class="ln-page-icon"><span class="ln-page-dot ln-page-dot-gray"></span></span>
+          <span class="ln-chip-name-faint">title n/a</span>
+          <span class="ln-chip-arxiv">2305.18323</span>
+        </div>
+        <!-- Duplicate set for seamless loop -->
+        <div class="ln-chip-curated">
+          <span class="ln-page-icon"><span class="ln-page-dot ln-page-dot-gradient"></span></span>
+          <span class="ln-chip-name">ReAct</span>
+        </div>
+        <div class="ln-chip-curated">
+          <span class="ln-page-icon"><span class="ln-page-dot ln-page-dot-gradient"></span></span>
+          <span class="ln-chip-name">Toolformer</span>
+        </div>
+        <div class="ln-chip-curated">
+          <span class="ln-page-icon"><span class="ln-page-dot ln-page-dot-gradient"></span></span>
+          <span class="ln-chip-name">Reflexion</span>
+        </div>
+        <div class="ln-chip-curated">
+          <span class="ln-page-icon"><span class="ln-page-dot ln-page-dot-gradient"></span></span>
+          <span class="ln-chip-name">Generative Agents</span>
+        </div>
+        <div class="ln-chip-curated">
+          <span class="ln-page-icon"><span class="ln-page-dot ln-page-dot-gradient"></span></span>
+          <span class="ln-chip-name">Voyager</span>
+        </div>
+        <div class="ln-chip-curated">
+          <span class="ln-page-icon"><span class="ln-page-dot ln-page-dot-gradient"></span></span>
+          <span class="ln-chip-name">A Survey on LLM-Based Autonomous Agents</span>
+        </div>
+        <div class="ln-chip-curated">
+          <span class="ln-page-icon"><span class="ln-page-dot ln-page-dot-gradient"></span></span>
+          <span class="ln-chip-name">MetaGPT</span>
+        </div>
+        <div class="ln-chip-curated">
+          <span class="ln-page-icon"><span class="ln-page-dot ln-page-dot-gradient"></span></span>
+          <span class="ln-chip-name">CAMEL</span>
+        </div>
+        <div class="ln-chip-curated">
+          <span class="ln-page-icon"><span class="ln-page-dot ln-page-dot-gradient"></span></span>
+          <span class="ln-chip-name">Multi-Agent Debate</span>
+        </div>
+        <div class="ln-chip-fetched">
+          <span class="ln-page-icon"><span class="ln-page-dot ln-page-dot-gray"></span></span>
+          <span class="ln-chip-name">HuggingGPT</span>
+          <span class="ln-chip-arxiv">2303.17580</span>
+        </div>
+        <div class="ln-chip-fetched">
+          <span class="ln-page-icon"><span class="ln-page-dot ln-page-dot-gray"></span></span>
+          <span class="ln-chip-name">ToolLLM</span>
+          <span class="ln-chip-arxiv">2307.16789</span>
+        </div>
+        <div class="ln-chip-fetched">
+          <span class="ln-page-icon"><span class="ln-page-dot ln-page-dot-gray"></span></span>
+          <span class="ln-chip-name">AutoGen</span>
+          <span class="ln-chip-arxiv">2308.08155</span>
+        </div>
+        <div class="ln-chip-fetched">
+          <span class="ln-page-icon"><span class="ln-page-dot ln-page-dot-gray"></span></span>
+          <span class="ln-chip-name">Tree of Thoughts</span>
+          <span class="ln-chip-arxiv">2305.10601</span>
+        </div>
+        <div class="ln-chip-fetched">
+          <span class="ln-page-icon"><span class="ln-page-dot ln-page-dot-gray"></span></span>
+          <span class="ln-chip-name">Graph of Thoughts</span>
+          <span class="ln-chip-arxiv">2308.09687</span>
+        </div>
+        <div class="ln-chip-fetched">
+          <span class="ln-page-icon"><span class="ln-page-dot ln-page-dot-gray"></span></span>
+          <span class="ln-chip-name">Self-Refine</span>
+          <span class="ln-chip-arxiv">2303.17651</span>
+        </div>
+        <div class="ln-chip-fetched">
+          <span class="ln-page-icon"><span class="ln-page-dot ln-page-dot-gray"></span></span>
+          <span class="ln-chip-name">Plan-and-Solve</span>
+          <span class="ln-chip-arxiv">2305.04091</span>
+        </div>
+        <div class="ln-chip-fetched">
+          <span class="ln-page-icon"><span class="ln-page-dot ln-page-dot-gray"></span></span>
+          <span class="ln-chip-name">ChatDev</span>
+          <span class="ln-chip-arxiv">2307.07924</span>
+        </div>
+        <div class="ln-chip-fetched">
+          <span class="ln-page-icon"><span class="ln-page-dot ln-page-dot-gray"></span></span>
+          <span class="ln-chip-name">AgentBench</span>
+          <span class="ln-chip-arxiv">2308.03688</span>
+        </div>
+        <div class="ln-chip-fetched">
+          <span class="ln-page-icon"><span class="ln-page-dot ln-page-dot-gray"></span></span>
+          <span class="ln-chip-name">Gorilla</span>
+          <span class="ln-chip-arxiv">2305.15334</span>
+        </div>
+        <div class="ln-chip-fetched">
+          <span class="ln-page-icon"><span class="ln-page-dot ln-page-dot-gray"></span></span>
+          <span class="ln-chip-name">Mind2Web</span>
+          <span class="ln-chip-arxiv">2306.06070</span>
+        </div>
+        <div class="ln-chip-fetched">
+          <span class="ln-page-icon"><span class="ln-page-dot ln-page-dot-gray"></span></span>
+          <span class="ln-chip-name">WebArena</span>
+          <span class="ln-chip-arxiv">2307.13854</span>
+        </div>
+        <div class="ln-chip-fetched">
+          <span class="ln-page-icon"><span class="ln-page-dot ln-page-dot-gray"></span></span>
+          <span class="ln-chip-name">Rise &amp; Potential of LLM Agents (Survey)</span>
+          <span class="ln-chip-arxiv">2309.07864</span>
+        </div>
+        <div class="ln-chip-fetched">
+          <span class="ln-page-icon"><span class="ln-page-dot ln-page-dot-gray"></span></span>
+          <span class="ln-chip-name">DEPS &middot; open-world planning</span>
+          <span class="ln-chip-arxiv">2302.01560</span>
+        </div>
+        <div class="ln-chip-fetched">
+          <span class="ln-page-icon"><span class="ln-page-dot ln-page-dot-gray"></span></span>
+          <span class="ln-chip-name">SwiftSage</span>
+          <span class="ln-chip-arxiv">2305.17390</span>
+        </div>
+        <div class="ln-chip-fetched">
+          <span class="ln-page-icon"><span class="ln-page-dot ln-page-dot-gray"></span></span>
+          <span class="ln-chip-name-faint">title n/a</span>
+          <span class="ln-chip-arxiv">2305.18323</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="ln-corpus-legend" aria-label="Corpus legend">
+      <span class="ln-corpus-legend-item">
+        <span class="ln-page-icon"><span class="ln-page-dot ln-page-dot-gradient"></span></span>
+        curated core &mdash; titled in the fixture (9)
+      </span>
+      <span class="ln-corpus-legend-item">
+        <span class="ln-page-icon"><span class="ln-page-dot ln-page-dot-gray"></span></span>
+        <i>fetched from arXiv &mdash; shown by ID, titles inferred (16)</i>
+      </span>
+    </div>
+  </section>
+
+  <!-- ══ SECTION: UNDER THE GLASS ══ -->
+  <section id="glassbox" class="ln-glassbox-section" aria-labelledby="glassbox-heading">
+    <div class="ln-glassbox-eyebrow">
+      <span class="ln-glassbox-eyebrow-text">&#x1F50D; UNDER THE GLASS</span>
+    </div>
+    <h2 id="glassbox-heading" class="ln-glassbox-h2">One agent, three skills &mdash; over one shared concept graph</h2>
+    <p class="ln-glassbox-sub">An outer ReAct + Plan-and-Solve loop runs contracted skills against a single cited graph. Each stage surfaces its own provenance.</p>
+
+    <div class="ln-glassbox-cards">
+
+      <!-- Card 01: Discover -->
+      <div class="ln-glassbox-card">
+        <div class="ln-glassbox-card-header">
+          <span class="ln-glassbox-badge ln-glassbox-badge-discover" aria-hidden="true">01</span>
+          <h3 class="ln-glassbox-card-title">Discover</h3>
+          <span class="ln-glassbox-card-tag">online&nbsp;&middot;&nbsp;cached</span>
+        </div>
+        <div class="ln-glassbox-flow">
+          <div class="ln-glassbox-flow-label">FLOW</div>
+          <div class="ln-glassbox-flow-steps">
+            <span>goal</span><span class="ln-glassbox-flow-sep">&#x203A;</span><span>normalize</span><span class="ln-glassbox-flow-sep">&#x203A;</span><span>classify intent</span><span class="ln-glassbox-flow-sep">&#x203A;</span><span>fan-out adapters</span><span class="ln-glassbox-flow-sep">&#x203A;</span><span>rank</span><span class="ln-glassbox-flow-sep">&#x203A;</span><span>relevance gate</span><span class="ln-glassbox-flow-sep">&#x203A;</span><span>attach full-text</span>
+          </div>
+        </div>
+        <div class="ln-glassbox-chips">
+          <span class="ln-glassbox-chip ln-chip-blue-bg">OpenAlex</span>
+          <span class="ln-glassbox-chip ln-chip-blue-bg">Sem. Scholar</span>
+          <span class="ln-glassbox-chip ln-chip-blue-bg">arXiv</span>
+          <span class="ln-glassbox-chip ln-chip-blue-bg">Wikipedia</span>
+          <span class="ln-glassbox-chip ln-chip-blue-acc">relevance .7 + authority .3</span>
+        </div>
+        <div class="ln-glassbox-decides"><strong>Decides:</strong> an LLM relevance gate keeps, drops, or honestly declines &mdash; it doesn&rsquo;t just rank.</div>
+        <div class="ln-glassbox-what-discover">
+          <div class="ln-glassbox-what-header">
+            <span aria-hidden="true">&#x1F441;</span>
+            <span class="ln-glassbox-what-label-discover">WHAT YOU SEE</span>
+          </div>
+          <p class="ln-glassbox-what-text">Intent &middot; which adapters ran &middot; each source&rsquo;s authority + is-review tag + the keep / drop / decline verdict.</p>
+        </div>
+      </div>
+
+      <!-- Card 02: Digest -->
+      <div class="ln-glassbox-card">
+        <div class="ln-glassbox-card-header">
+          <span class="ln-glassbox-badge ln-glassbox-badge-digest" aria-hidden="true">02</span>
+          <h3 class="ln-glassbox-card-title">Digest</h3>
+          <span class="ln-glassbox-card-tag">backbone-first</span>
+        </div>
+        <div class="ln-glassbox-flow">
+          <div class="ln-glassbox-flow-label">FLOW</div>
+          <div class="ln-glassbox-flow-steps">
+            <span>chunk</span><span class="ln-glassbox-flow-sep">&#x203A;</span><span>extract 4&ndash;8 concepts</span><span class="ln-glassbox-flow-sep">&#x203A;</span><span>type edges</span><span class="ln-glassbox-flow-sep">&#x203A;</span><span>frontier-verify</span><span class="ln-glassbox-flow-sep">&#x203A;</span><span>seed quizzes + misconceptions</span><span class="ln-glassbox-flow-sep">&#x203A;</span><span>persist cited graph</span>
+          </div>
+        </div>
+        <div class="ln-glassbox-chips">
+          <span class="ln-glassbox-chip ln-chip-purple-bg">RefD-style</span>
+          <span class="ln-glassbox-chip ln-chip-green-bg">LLM judge</span>
+          <span class="ln-glassbox-chip ln-chip-blue-bg">pairwise cross-encoder</span>
+          <span class="ln-glassbox-chip ln-chip-purple-bg">frontier-verified</span>
+        </div>
+        <div class="ln-glassbox-decides">Prerequisites from <strong>two signals</strong> (corpus RefD + LLM judge); then it <strong>verifies or downgrades</strong> each edge it proposed.</div>
+        <div class="ln-glassbox-what-digest">
+          <div class="ln-glassbox-what-header">
+            <span aria-hidden="true">&#x1F441;</span>
+            <span class="ln-glassbox-what-label-digest">WHAT YOU SEE</span>
+          </div>
+          <p class="ln-glassbox-what-text">Per-edge provenance &mdash; &ldquo;RefD &#x2713; + LLM judge &#x2713; + frontier-verified&rdquo;, downgraded &rarr; similarity, induced &rarr; dashed.</p>
+        </div>
+      </div>
+
+      <!-- Card 03: Teach -->
+      <div class="ln-glassbox-card">
+        <div class="ln-glassbox-card-header">
+          <span class="ln-glassbox-badge ln-glassbox-badge-teach" aria-hidden="true">03</span>
+          <h3 class="ln-glassbox-card-title">Teach</h3>
+          <span class="ln-glassbox-card-tag">LangGraph agent</span>
+        </div>
+        <div class="ln-glassbox-flow">
+          <div class="ln-glassbox-flow-label">FLOW</div>
+          <div class="ln-glassbox-flow-steps">
+            <span>elicit goal (Bloom ceiling)</span><span class="ln-glassbox-flow-sep">&#x203A;</span><span>plan + orient</span><span class="ln-glassbox-flow-sep">&#x203A;</span><span>select + retrieve</span><span class="ln-glassbox-flow-sep">&#x203A;</span><span>spaced recap</span><span class="ln-glassbox-flow-sep">&#x203A;</span><span>teach (fading)</span><span class="ln-glassbox-flow-sep">&#x203A;</span><span>assess (rising Bloom &middot; IRT)</span><span class="ln-glassbox-flow-sep">&#x203A;</span><span>grade (key-idea)</span><span class="ln-glassbox-flow-sep">&#x203A;</span><span>decide</span>
+          </div>
+        </div>
+        <div class="ln-glassbox-chips">
+          <span class="ln-glassbox-chip ln-chip-amber-bg">BKT-lite</span>
+          <span class="ln-glassbox-chip ln-chip-blue-bg">IRT difficulty</span>
+          <span class="ln-glassbox-chip ln-chip-blue-bg">key-idea grade</span>
+          <span class="ln-glassbox-chip ln-chip-green-bg">spaced retrieval</span>
+        </div>
+        <div class="ln-agentic-gold">
+          <div class="ln-agentic-gold-label">AGENTIC GOLD</div>
+          <div class="ln-agentic-gold-body">
+            <div><strong>&#x2605; Confidence-gated escalation</strong> &mdash; the frontier model fires only on near-threshold answers, where a wrong call flips pass/fail.</div>
+            <div>&middot; Ceiling-aware advance vs. honest <strong>concede</strong></div>
+            <div>&middot; &ldquo;I&rsquo;m lost / I don&rsquo;t know&rdquo; &rarr; <strong>no penalty</strong></div>
+            <div>&middot; Plain-language decision trail, logged</div>
+          </div>
+        </div>
+        <div class="ln-glassbox-what-teach">
+          <div class="ln-glassbox-what-header">
+            <span aria-hidden="true">&#x1F441;</span>
+            <span class="ln-glassbox-what-label-teach">WHAT YOU SEE</span>
+          </div>
+          <p class="ln-glassbox-what-text">Every turn&rsquo;s decision { re-quiz &middot; reteach &middot; advance &middot; concede } with its plain-language reason and the rule behind it.</p>
+        </div>
+      </div>
+
+    </div><!-- /.ln-glassbox-cards -->
+
+    <div class="ln-trust-bar" role="note" aria-label="Trust invariant">
+      <span class="ln-trust-label">TRUST INVARIANT</span>
+      <span class="ln-trust-text">The LLM only supplies <strong>content + a verdict</strong>. Mastery, confidence, routing &amp; cost are <strong>rule-computed &mdash; never self-graded.</strong></span>
+      <div class="ln-trust-chips">
+        <span class="ln-trust-chip">real cost ledger + semantic cache</span>
+        <span class="ln-trust-chip">offline-deterministic = $0</span>
+      </div>
+    </div>
+    <p class="ln-glassbox-footer">Every node maps to <span class="ln-glassbox-footer-mono">{ skill &middot; method &middot; paper }</span> &mdash; and the whole run is a recordable trace.</p>
+  </section>
 
 </div><!-- /.ln-screen -->
 
