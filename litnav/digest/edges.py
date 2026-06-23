@@ -88,6 +88,22 @@ def _propose_edges(concepts: list[dict], by_chunk: dict, candidate: dict, *,
 
     slug_lines = "\n".join(_line(c) for c in concepts)
     chunks_txt = "\n".join(f"[{cid}] {txt}" for cid, txt in by_chunk.items())
+
+    # Build hint section from builds_on annotations captured at extraction time (full-context model).
+    # The extraction model had the complete source text and noted direction; this primes recall.
+    hint_lines: list[str] = []
+    for c in concepts:
+        for dep in (c.get("builds_on") or []):
+            if dep in {x["slug"] for x in concepts}:
+                hint_lines.append(f"  {dep} -> {c['slug']}")
+    hint_section = ""
+    if hint_lines:
+        hint_section = (
+            "Candidate prerequisite hints (a learner-facing model proposed these from full source context "
+            "— CONFIRM, CORRECT the direction, or EXTEND them; cite evidence for any you keep):\n"
+            + "\n".join(hint_lines) + "\n\n"
+        )
+
     prompt = (
         f"You are building a concept graph for an adaptive tutor (domain: '{domain or 'this subject'}').\n"
         "Your job is CANDIDATE GENERATION: surface genuine relations BETWEEN THE LISTED CONCEPTS ONLY; "
@@ -100,6 +116,7 @@ def _propose_edges(concepts: list[dict], by_chunk: dict, candidate: dict, *,
         "Cite only evidence chunk ids that reference at least one endpoint concept. max_strength: "
         "'explicit_assertion' (relation stated), 'general_statement' (clearly implied), 'weak_hint' (loose).\n\n"
         f"Concepts (slug: name — objectives; use these slugs as endpoints, nothing else):\n{slug_lines}\n\n"
+        f"{hint_section}"
         f"Evidence chunks (cite their ids):\n{chunks_txt}\n\n"
         'Respond JSON: {"prereq_edges": [{"prereq_slug","target_slug","evidence_chunks":[ids],'
         '"max_strength":"weak_hint|general_statement|explicit_assertion"}], '
@@ -157,6 +174,48 @@ def build_edges(di: DigestInput, concepts: list[dict], *, candidate: dict,
     # LLM proposes edges over the extracted concept slugs (live); offline: candidate is the fallback.
     proposed = _propose_edges(concepts, by_chunk, candidate, session_id=session_id,
                               conn=conn, budget=budget, domain=di.domain_key, keypoints=keypoints)
+
+    # Evidence-backed fallback: when the LLM returned NO prereq edges but builds_on hints exist,
+    # synthesise seed edges so the graph isn't left empty (and the backbone is not needed).
+    # Seeds are injected into proposed["prereq_edges"] BEFORE the scoring loop so they flow through
+    # the normal evidence-filter + confidence + verify path unchanged.
+    # CRITICAL: each seed must carry real evidence chunk ids or it will be dropped by the
+    # `if not cleaned: continue` guard. We use the union of both endpoint concepts' keypoint
+    # evidence_chunk_ids; if an endpoint has no resolved chunk we fall back to the first chunk id.
+    if not proposed["prereq_edges"] and by_chunk:
+        # Build a map: slug -> set of evidence chunk ids from keypoints.
+        chunk_ids_for_slug: dict[str, list[str]] = {c["slug"]: [] for c in concepts}
+        for k in (keypoints or []):
+            cid = k.get("evidence_chunk_id")
+            slug = k.get("concept_slug")
+            if cid and slug and cid in by_chunk and slug in chunk_ids_for_slug:
+                if cid not in chunk_ids_for_slug[slug]:
+                    chunk_ids_for_slug[slug].append(cid)
+        first_chunk = next(iter(by_chunk))  # guaranteed non-empty (checked above)
+
+        def _endpoint_chunks(slug: str) -> list[str]:
+            cids = chunk_ids_for_slug.get(slug) or []
+            return cids if cids else [first_chunk]
+
+        seed_edges = []
+        seen_pairs: set[tuple[str, str]] = set()
+        for c in concepts:
+            for dep in (c.get("builds_on") or []):
+                if dep not in slugs:
+                    continue
+                pair = (dep, c["slug"])
+                if pair in seen_pairs:
+                    continue
+                seen_pairs.add(pair)
+                ev = list(dict.fromkeys(_endpoint_chunks(dep) + _endpoint_chunks(c["slug"])))
+                seed_edges.append({
+                    "prereq_slug": dep,
+                    "target_slug": c["slug"],
+                    "evidence_chunks": ev,
+                    "max_strength": "weak_hint",
+                })
+        if seed_edges:
+            proposed["prereq_edges"] = seed_edges
 
     # --- prerequisite edges ---
     for e in proposed["prereq_edges"]:
