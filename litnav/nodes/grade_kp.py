@@ -180,6 +180,8 @@ def grade_kp_node(state: NavState, conn: sqlite3.Connection) -> dict:
             "keypoint_id": kp_id,
             "bloom": bloom,
             "mastery": s["mastery"],
+            "mastery_before": old_mastery,
+            **({"escalated": True} if escalated else {}),
         },
         "rationale": (
             f"GRADE {bloom} on '{kp_id}': {'correct' if correct else 'wrong'} "

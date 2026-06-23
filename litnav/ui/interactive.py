@@ -248,6 +248,7 @@ class TutorSession:
     def _feedback_event(node: str, delta: dict) -> dict | None:
         """Return a learner-facing feedback event when a grade node runs, else None.
         Reuses the already-computed quiz_result (feedback text + correctness + misconception).
+        For grade_kp, also exposes mastery_before/mastery_after and escalated when available.
         """
         if node not in ("grade", "grade_kp"):
             return None
@@ -260,7 +261,17 @@ class TutorSession:
         misconception = qr.get("detected_misconception")
         if not correct and misconception:
             text = f"{text} (misconception detected: {misconception})"
-        return {"type": "feedback", "correct": correct, "text": text}
+        ev: dict = {"type": "feedback", "correct": correct, "text": text}
+        # grade_kp exposes real mastery movement and escalation flag (never fabricated)
+        if node == "grade_kp":
+            mastery_before = qr.get("mastery_before")
+            mastery_after = qr.get("mastery")
+            if mastery_before is not None and mastery_after is not None:
+                ev["mastery_before"] = round(mastery_before, 3)
+                ev["mastery_after"] = round(mastery_after, 3)
+            if qr.get("escalated"):
+                ev["escalated"] = True
+        return ev
 
     def stream_answer(self, text: str):
         """Inject the answer and resume, yielding one event per executed node, then the
