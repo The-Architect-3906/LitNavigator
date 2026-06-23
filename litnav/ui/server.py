@@ -120,6 +120,36 @@ def _n_papers(data: dict) -> int:
     return len(ids) or len(data["concepts"])
 
 
+def _live_story_context(ag) -> dict:
+    """Build the story-band context from a live open-world session's real DB data.
+
+    Returns the same keys as _story_context so agent.html renders unchanged.
+    Queries ag.conn (the per-session SQLite that digest already populated).
+    """
+    conn = ag.conn
+    concepts = conn.execute("SELECT name FROM concepts ORDER BY id").fetchall()
+    concept_names = [r[0] for r in concepts]
+
+    papers = conn.execute("SELECT title, year FROM papers ORDER BY id").fetchall()
+    paper_count = len(papers)
+    rep_papers = [{"title": r[0], "year": r[1] or ""} for r in papers[:5]]
+
+    try:
+        edge_count = conn.execute("SELECT COUNT(*) FROM concept_edges").fetchone()[0]
+    except Exception:
+        edge_count = 0
+
+    return {
+        "story_domain": ag.goal or ag.topic,
+        "story_paper_count": paper_count,
+        "story_representative_papers": rep_papers,
+        "story_concept_count": len(concept_names),
+        "story_edge_count": edge_count,
+        "story_target_names": concept_names[:4],
+        "story_concept_names": concept_names,
+    }
+
+
 def _story_context(data: dict) -> dict:
     papers = data.get("papers") or []
     concepts = data.get("concepts") or []
@@ -241,13 +271,20 @@ def tutor_page(sid: str):
     ag = _AGENTS.get(sid)
     if ag is None:
         return RedirectResponse("/tutor", status_code=303)
-    data = _fixture_data()
     artifact_url = (f"/tutor/{sid}/artifact"
                     if getattr(getattr(ag, "tutor", None), "artifact_path", None) else None)
-    # cost is now included in ag.current() (B6: symmetric first paint)
+    # Live open-world sessions: story band from the session's REAL sources/concepts (bug fix);
+    # curated/offline sessions keep the fixture story. cost is in ag.current() (B6 symmetric paint).
+    if ag.open_world:
+        story = _live_story_context(ag)
+        n_papers = story["story_paper_count"]
+    else:
+        data = _fixture_data()
+        story = _story_context(data)
+        n_papers = _n_papers(data)
     return _TEMPLATES.get_template("agent.html").render(
-        sid=sid, n_papers=_n_papers(data), artifact_url=artifact_url,
-        **_story_context(data), **ag.current())
+        sid=sid, n_papers=n_papers, artifact_url=artifact_url,
+        live=ag.open_world, **story, **ag.current())
 
 
 @app.post("/tutor/{sid}/events")

@@ -320,7 +320,11 @@
         <div class="storycell">
           <div class="storyk">Discover</div>
           <b>{{ story_domain }}</b>
+          {% if live %}
+          <div class="storypapers">{{ story_paper_count }} source{{ 's' if story_paper_count != 1 else '' }} discovered live for this goal.</div>
+          {% else %}
           <div class="storypapers">{{ story_paper_count }} papers were collected offline for this domain.</div>
+          {% endif %}
         </div>
         <div class="storycell">
           <div class="storyk">Digest</div>
