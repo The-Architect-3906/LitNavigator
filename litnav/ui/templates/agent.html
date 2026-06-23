@@ -1,617 +1,1714 @@
-<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>LitNavigator — {{ concept_name or "tutor" }}</title>
-<style>
- /* ── Direction-B dark design system ──────────────────────────────────────── */
- :root{
-   /* 4 surface levels by OKLCH lightness (darkest → lightest) */
-   --s0:#0e1117;   /* base / page background  (~L 11%) */
-   --s1:#181d27;   /* panel / card surface     (~L 16%) */
-   --s2:#1f2636;   /* nested / hover surface   (~L 20%) */
-   --s3:#28334a;   /* overlay / popover        (~L 26%) */
-   /* Hairline border — ~8-10% lighter than panel surface */
-   --border:#2d3848;
-   /* Accent: amber-gold — active step, primary buttons, citations only */
-   --accent:#E0A33C;
-   /* Semantic status tokens */
-   --ok:#2da65c;    /* mastered — green */
-   --warn:#b3700d;  /* conceded / boundary — amber */
-   --idle:#4a5568;  /* pending — neutral gray */
-   /* Text */
-   --tx-primary:#e2e8f0;   /* body text on dark — >4.5:1 on --s1 */
-   --tx-secondary:#8899aa; /* muted / labels — ~40-50% opacity equivalent */
-   /* Monospace stack — applied to all numerals */
-   --mono:'Geist Mono','Berkeley Mono',ui-monospace,'SF Mono',monospace;
- }
- *{box-sizing:border-box}
- body{
-   font-family:'Geist','Geist Sans',ui-sans-serif,system-ui,sans-serif;
-   font-size:1rem;line-height:1.55;
-   margin:0;background:var(--s0);color:var(--tx-primary)
- }
- /* ── Monospace for all numerals ── */
- .bar-row span:last-child,.cost-num,#cost,.route-v-num,
- .mastery-pct,.confid-pct{font-family:var(--mono);font-variant-numeric:tabular-nums}
- header{
-   background:var(--s1);color:var(--tx-primary);
-   padding:.7rem 1.1rem;display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;
-   border-bottom:1px solid var(--border)
- }
- header b{color:var(--ok)}
- .toggle{margin-left:auto;display:flex;border:1px solid var(--border);border-radius:8px;overflow:hidden}
- .toggle button{background:transparent;color:var(--tx-secondary);border:0;padding:.35rem .8rem;font-size:.85rem;cursor:pointer}
- .toggle button.on{background:var(--accent);color:#0e1117}
- .toggle button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
- .detail-toggle input:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:2px}
- .mut{color:var(--tx-secondary);font-size:.8rem}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LitNavigator — {{ concept_name or "tutor" }}</title>
+  <link rel="icon" href="/static/logo-sm.png" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,500;0,600;1,400&amp;family=Public+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
 
- /* ── Research-detail toggle ── */
- .detail-toggle{display:flex;align-items:center;gap:.4rem;font-size:.8rem;color:var(--tx-secondary);margin-left:.6rem}
- .detail-toggle input{accent-color:var(--accent);cursor:pointer}
- .research-chip{font-size:.72rem;color:var(--tx-secondary);border-left:2px solid var(--border);padding-left:.45rem;margin:.18rem 0 0 1.6rem;line-height:1.45}
- .research-chip .chip-skill{font-weight:600;color:var(--accent)}
- .research-chip .chip-sep{color:var(--border);margin:0 .25rem}
- /* Hide chips when the toggle is off */
- body:not(.show-detail) .research-chip{display:none}
- .cols{display:flex;gap:1rem;max-width:64rem;margin:1.2rem auto;padding:0 1rem;align-items:flex-start}
- .card{background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:1rem;margin-bottom:1rem;color:var(--tx-primary)}
+  <h1 class="sr-only">LitNavigator — Adaptive Research Tutor</h1>
 
- /* ── Chat ── */
- #chat{flex:1;min-width:0}
- .bubble{max-width:85%;padding:.6rem .85rem;border-radius:14px;margin:.5rem 0;line-height:1.5;word-wrap:break-word}
- .me{margin-left:auto;background:var(--s3);color:var(--tx-primary);white-space:pre-wrap;border:1px solid var(--border)}
- .ai{background:var(--s2);border:1px solid var(--border);color:var(--tx-primary)}
- .ai.boundary{background:var(--s2);border-color:var(--warn)}
- .ai.boundary::before{content:"outside my literature pack";display:block;font-size:.7rem;font-weight:600;letter-spacing:.02em;text-transform:uppercase;color:var(--warn);margin-bottom:.25rem}
- .ai p{margin:.3rem 0}.ai p:first-child{margin-top:0}.ai p:last-child{margin-bottom:0}
- .ai ul,.ai ol{margin:.3rem 0;padding-left:1.3rem}.ai li{margin:.15rem 0}
- /* ── B7: Quiz "Knowledge Check · Bloom" card ── */
- .qa-header{
-   display:flex;align-items:center;gap:.5rem;margin-bottom:.4rem
- }
- .bloom-chip{
-   font-family:var(--mono);font-size:.68rem;font-weight:700;letter-spacing:.06em;
-   text-transform:uppercase;color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--s2));
-   border:1px solid color-mix(in srgb,var(--accent) 35%,var(--border));
-   border-radius:4px;padding:.1rem .4rem;line-height:1.3;flex-shrink:0
- }
- /* quiz bubble gets a stronger left-accent and slightly different bg */
- .ai.qa{
-   border-left:3px solid var(--accent);
-   background:color-mix(in srgb,var(--accent) 5%,var(--s2));
-   padding-left:.7rem;font-weight:normal
- }
- /* ── B7: Spaced-retrieval recap badge ── */
- .recap-badge{
-   display:inline-flex;align-items:center;gap:.35rem;
-   background:color-mix(in srgb,var(--idle) 15%,var(--s2));
-   border:1px solid color-mix(in srgb,var(--idle) 40%,var(--border));
-   border-radius:5px;padding:.18rem .5rem;font-size:.72rem;font-weight:600;
-   color:var(--tx-secondary);margin-bottom:.35rem
- }
- /* ── Feedback bubble (B2/B3) ── */
- .feedback{border-left:3px solid var(--ok);background:color-mix(in srgb,var(--ok) 8%,var(--s1));padding:.5rem .75rem;border-radius:8px;font-size:.9rem;display:flex;align-items:flex-start;gap:.45rem;margin:.4rem 0}
- .feedback.wrong{border-left-color:var(--warn);background:color-mix(in srgb,var(--warn) 8%,var(--s1))}
- /* ── B8: Inline error bubble ── */
- .error-bubble{
-   background:color-mix(in srgb,var(--warn) 10%,var(--s1));
-   border:1px solid var(--warn);border-radius:8px;
-   padding:.6rem .85rem;margin:.5rem 0;font-size:.88rem;
-   display:flex;align-items:flex-start;gap:.6rem
- }
- .error-bubble-body{flex:1}
- .error-bubble-title{font-weight:700;color:var(--warn);margin-bottom:.2rem}
- .error-bubble-msg{color:var(--tx-secondary);font-size:.82rem;word-break:break-word}
- .error-bubble-actions{display:flex;gap:.5rem;margin-top:.5rem;flex-wrap:wrap}
- .error-btn-retry{
-   padding:.3rem .75rem;border:0;border-radius:6px;
-   background:var(--accent);color:#0e1117;font-weight:600;
-   cursor:pointer;font-size:.82rem;font-family:inherit
- }
- .error-btn-retry:focus-visible{outline:2px solid var(--tx-primary);outline-offset:2px}
- .error-btn-dismiss{
-   padding:.3rem .75rem;border:1px solid var(--border);border-radius:6px;
-   background:transparent;color:var(--tx-secondary);
-   cursor:pointer;font-size:.82rem;font-family:inherit
- }
- .error-btn-dismiss:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
- .feedback-mark{flex-shrink:0;font-weight:700;font-size:1rem;line-height:1.4}
- .feedback-mark.ok{color:var(--ok)}
- .feedback-mark.warn{color:var(--warn)}
- .feedback-text{color:var(--tx-primary);line-height:1.45}
- /* ── Working indicator — live step name ── */
- .working{color:var(--accent);font-size:.85rem;margin:.3rem 0;font-family:var(--mono);display:flex;align-items:center;gap:.5rem}
- .working-dot{width:.55rem;height:.55rem;border-radius:50%;background:var(--accent);flex-shrink:0}
- @media (prefers-reduced-motion: no-preference){
-   .working-dot{animation:pulse-dot 1.2s ease-in-out infinite}
-   @keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
- }
- /* ── Build tracker (4-row cold-start progress) ── */
- .build-tracker{background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:.8rem 1rem;margin:.5rem 0}
- .build-tracker-title{font-size:.8rem;font-weight:600;color:var(--tx-secondary);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.55rem;font-family:var(--mono)}
- .build-row{display:flex;align-items:center;gap:.6rem;padding:.28rem 0;font-size:.85rem;color:var(--tx-secondary);border-radius:5px;transition:background .2s}
- .build-row.active{color:var(--tx-primary);background:color-mix(in srgb,var(--accent) 6%,transparent);padding-left:.4rem;padding-right:.4rem}
- .build-row.done{color:var(--ok)}
- .build-row.pending{opacity:.45}
- .build-icon{width:1.2rem;text-align:center;font-family:var(--mono);flex-shrink:0}
- .build-label{flex:1}
- .build-count{font-family:var(--mono);font-size:.78rem;color:var(--accent)}
- .build-elapsed{font-family:var(--mono);font-size:.75rem;color:var(--tx-secondary);margin-top:.5rem;text-align:right}
- .build-detail{list-style:none;margin:.35rem 0 0;padding:.25rem 0 0 1.6rem;border-top:1px solid var(--border)}
- .build-detail li{font-size:.8rem;color:var(--tx-secondary);padding:.12rem 0;display:flex;gap:.45rem;align-items:baseline}
- .build-detail li .bd-ic{font-family:var(--mono);color:var(--accent);flex-shrink:0}
- @media (prefers-reduced-motion: no-preference){
-   .build-row.active .build-icon{animation:pulse-dot 1.1s ease-in-out infinite}
- }
- .answer{display:flex;gap:.5rem;margin-top:.6rem}
- .answer input{
-   flex:1;padding:.55rem .7rem;
-   border:1px solid var(--border);border-radius:8px;font-size:1rem;
-   background:var(--s2);color:var(--tx-primary);
-   font-family:inherit
- }
- .answer input::placeholder{color:var(--tx-secondary)}
- .answer input:focus{outline:2px solid var(--accent);outline-offset:0}
- .answer button{
-   padding:.55rem 1rem;border:0;border-radius:8px;
-   background:var(--accent);color:#0e1117;
-   cursor:pointer;font-weight:600;font-family:inherit
- }
- .answer button:focus-visible{outline:2px solid var(--tx-primary);outline-offset:2px}
- /* Story band — dark surface, no gradient */
- .storyband{background:var(--s2);border:1px solid var(--border)}
- .storygrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.7rem}
- .storycell{background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:.75rem}
- .storyk{font-size:.73rem;letter-spacing:.04em;color:var(--tx-secondary);text-transform:uppercase;font-family:var(--mono)}
- .storychips{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.45rem}
- .storychip{background:var(--s3);border:1px solid var(--border);border-radius:999px;padding:.22rem .55rem;font-size:.78rem;color:var(--tx-primary)}
- .storypapers{margin-top:.5rem;color:var(--tx-secondary);font-size:.84rem}
+  <style>
+    /* ── Reset ── */
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Public Sans', sans-serif;
+      background: #e7e5df;
+      color: #1f1b15;
+      min-height: 100dvh;
+      overflow: hidden;
+    }
 
- /* ── Glass box ── */
- #glass{flex:1;min-width:0;font-size:.9rem}
- .step{display:flex;gap:.5rem;padding:.25rem 0;align-items:baseline}
- .step .ic{width:1.1rem;text-align:center}
- .step.done .ic{color:var(--ok)}
- .step.active{background:var(--s2);border-radius:6px;padding:.25rem .4rem;border-left:2px solid var(--accent)}
- .step.pending{color:var(--idle)}
- .ev{font-size:.82rem;color:var(--tx-secondary);border-left:2px solid var(--accent);padding-left:.5rem;margin:.3rem 0}
- .cmap{overflow-x:auto} .cmap svg{display:block}
- .maplegend{margin-top:.4rem}
- /* Cost card — subdued, demoted to ledger style */
- .costp{background:var(--s1);border-color:var(--border)}
- #cost{font-family:var(--mono);font-size:.85rem}
+    /* ── A11y: sr-only ── */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
 
- /* Route panel */
- .route-concept{display:flex;align-items:center;gap:.5rem;padding:.22rem 0}
- .rbadge{width:.6rem;height:.6rem;border-radius:50%;flex-shrink:0}
- .rbadge-pending{background:var(--idle)}
- .rbadge-active{background:var(--accent)}
- .rbadge-done{background:var(--ok)}
- .rbadge-conceded{background:var(--warn)}
+    /* ── Keyframes ── */
+    @keyframes ln-pulse-l {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(224, 138, 30, .0); }
+      50%       { box-shadow: 0 0 0 4px rgba(224, 138, 30, .18); }
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: .4; transform: scale(.7); }
+    }
+    @keyframes flash-in {
+      0%, 40% { background: rgba(224, 138, 30, .10); }
+      100%    { background: transparent; }
+    }
+    @keyframes vbump {
+      0%, 30% { color: #ef6a4a; font-weight: 700; }
+      100%    { color: inherit; font-weight: normal; }
+    }
 
- /* ── Motion: only when user hasn't opted out ── */
- @media (prefers-reduced-motion: no-preference){
-   .route-new{animation:flash-in .8s ease}
-   @keyframes flash-in{0%,40%{background:color-mix(in srgb,var(--accent) 12%,transparent)}100%{background:transparent}}
-   .vbump{animation:vbump .7s ease}
-   @keyframes vbump{0%,30%{color:var(--warn);font-weight:700}100%{color:inherit;font-weight:normal}}
-   .bar-fill{transition:width .5s ease}
-   .tier-seg{transition:background .4s}
- }
- /* Static fallback for reduced-motion: no animation, but flash-in/vbump classes are harmless */
- .route-new{}
- .vbump{}
+    /* ── Manuscript screen shell ── */
+    .ln-screen {
+      width: 100%;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      background: #faf8f3;
+      border: 1px solid #e0d9cb;
+      border-radius: 6px;
+      overflow: hidden;
+    }
 
- /* Mastery bars */
- .bar-row{display:flex;align-items:center;gap:.4rem;margin:.12rem 0;font-size:.8rem}
- .bar-label{width:3.2rem;color:var(--tx-secondary);flex-shrink:0}
- .bar-bg{flex:1;height:.45rem;background:var(--s3);border-radius:3px;overflow:hidden}
- .bar-fill{height:100%;border-radius:3px}
- .bar-m{background:var(--accent)}
- .bar-c{background:var(--ok)}
- .bar-row span:last-child{font-family:var(--mono);font-variant-numeric:tabular-nums}
- .learner-name{font-size:.85rem;font-weight:500;margin-top:.35rem}
- .misconception{font-size:.76rem;color:var(--warn);margin-top:.1rem}
- /* ── Mastery tier chip + segmented meter ── */
- .tier-row{display:flex;align-items:center;gap:.45rem;margin:.18rem 0}
- .tier-chip{font-size:.7rem;font-weight:600;letter-spacing:.03em;text-transform:uppercase;
-   padding:.15rem .45rem;border-radius:4px;font-family:var(--mono);line-height:1.3}
- .tier-seen{background:color-mix(in srgb,var(--idle) 20%,transparent);color:var(--idle)}
- .tier-familiar{background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent)}
- .tier-solid{background:color-mix(in srgb,var(--ok) 15%,transparent);color:var(--ok)}
- .tier-mastered{background:color-mix(in srgb,var(--ok) 25%,transparent);color:var(--ok)}
- .tier-pct{font-size:.72rem;color:var(--tx-secondary);font-family:var(--mono);font-variant-numeric:tabular-nums}
- /* 4-segment tier meter */
- .tier-meter{display:flex;height:.35rem;gap:.06rem;flex:1;border-radius:2px;overflow:hidden}
- .tier-seg{flex:1;background:var(--s3);border-radius:1px}
- /* ── Why-this-next chip ── */
- .why-chip{display:inline-flex;align-items:center;gap:.35rem;
-   background:color-mix(in srgb,var(--accent) 10%,var(--s2));
-   border:1px solid color-mix(in srgb,var(--accent) 30%,var(--border));
-   border-radius:6px;padding:.28rem .6rem;font-size:.82rem;color:var(--tx-primary);margin:.3rem 0}
- .why-chip-icon{color:var(--accent);font-size:.9rem}
- .why-token{font-size:.72rem;color:var(--tx-secondary);font-family:var(--mono);margin-left:.3rem}
+    /* ── Top bar ── */
+    .ln-topbar {
+      height: 60px;
+      flex: none;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 0 22px;
+      border-bottom: 1px solid #e8e1d3;
+      background: #fdfcf8;
+    }
+    .ln-topbar-logo {
+      width: 28px;
+      height: 28px;
+      border-radius: 7px;
+      object-fit: contain;
+      flex: none;
+    }
+    .ln-topbar-name {
+      font-family: 'Spectral', serif;
+      font-size: 18px;
+      font-weight: 600;
+      color: #1f1b15;
+      letter-spacing: -.01em;
+      flex: none;
+    }
+    .ln-topbar-divider {
+      width: 1px;
+      height: 22px;
+      background: #e2dacb;
+      flex: none;
+    }
+    .ln-topbar-goal-stack {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.15;
+    }
+    .ln-topbar-goal-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      letter-spacing: .12em;
+      color: #a59a86;
+    }
+    .ln-topbar-goal-text {
+      font-size: 13.5px;
+      color: #3b342a;
+      font-weight: 600;
+      max-width: 340px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .ln-topbar-spacer { flex: 1; }
+    .ln-live-pill {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: #f0f7f1;
+      border: 1px solid #cfe6d3;
+      border-radius: 20px;
+      padding: 5px 11px;
+      flex: none;
+    }
+    .ln-live-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #1f9d57;
+      box-shadow: 0 0 0 3px rgba(31, 157, 87, .16);
+      flex: none;
+    }
+    .ln-live-label {
+      font-size: 11.5px;
+      color: #2c6b43;
+      font-weight: 600;
+    }
+    .ln-cost-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid #e4ddcd;
+      border-radius: 20px;
+      padding: 5px 11px;
+      background: #fff;
+      flex: none;
+    }
+    .ln-cost-chip-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: #8a8175;
+    }
+    /* cost id lives here — JS updates its text */
+    #cost {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12.5px;
+      color: #2b2620;
+      font-weight: 500;
+    }
+    .ln-topbar-papers {
+      font-size: 11.5px;
+      color: #a89e8b;
+      flex: none;
+    }
+    /* Hidden toggle buttons — kept for JS contract; hidden when all 3 panes visible */
+    .ln-hidden-toggle {
+      display: none !important;
+    }
 
- /* ── Recommend-next card ── */
- .rec-item{display:flex;align-items:baseline;gap:.45rem;padding:.22rem 0;font-size:.84rem}
- .rec-icon{flex-shrink:0;width:1.1rem;text-align:center}
- .rec-name{font-weight:500}
- .rec-reason{color:var(--tx-secondary);font-size:.78rem}
+    /* ── Three-pane body ── */
+    .ln-panes {
+      flex: 1;
+      display: flex;
+      min-height: 0;
+      overflow: hidden;
+    }
 
- /* Mode switching */
- body.mode-chat #glass{display:none}
- body.mode-glass #chat{display:none}
- @media(max-width:760px){
-   .cols{flex-direction:column}
-   body.mode-glass #chat,body.mode-chat #glass{display:block}
- }
+    /* ── LEFT pane: conversation (~512px) ── */
+    .ln-pane-left {
+      width: 512px;
+      flex: none;
+      border-right: 1px solid #ece5d6;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      background: #fff;
+    }
+    .ln-pane-left-header {
+      flex: none;
+      padding: 14px 22px 10px;
+      border-bottom: 1px solid #f0eadd;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .ln-pane-left-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      letter-spacing: .12em;
+      color: #a59a86;
+    }
+    .ln-pane-left-concept {
+      font-size: 13px;
+      font-weight: 600;
+      color: #3b342a;
+      flex: 1;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .ln-pane-left-progress {
+      font-size: 11px;
+      color: #b8ad99;
+      flex: none;
+    }
 
- /* ── Citation chips ── */
- .cite-chip{
-   display:inline-block;vertical-align:super;font-size:.65em;line-height:1;
-   font-family:var(--mono);font-variant-numeric:tabular-nums;
-   background:var(--s3);color:var(--accent);border:1px solid var(--border);
-   border-radius:4px;padding:.05em .3em;margin-left:.15em;
-   cursor:pointer;text-decoration:none;transition:background .15s
- }
- .cite-chip:hover{background:color-mix(in srgb,var(--accent) 18%,var(--s3))}
- .cite-chip.active{background:color-mix(in srgb,var(--accent) 25%,var(--s3));border-color:var(--accent)}
+    /* Grounded-in citation chips row */
+    .ln-grounded-row {
+      flex: none;
+      padding: 9px 22px;
+      border-bottom: 1px solid #f0eadd;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      background: #fbf8f1;
+    }
+    .ln-grounded-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      letter-spacing: .12em;
+      color: #a59a86;
+    }
+    .ln-citation-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #fff;
+      border: 1px solid #e7dfce;
+      border-radius: 7px;
+      padding: 3px 9px 3px 6px;
+      text-decoration: none;
+      max-width: 185px;
+      cursor: pointer;
+    }
+    .ln-citation-chip:focus-visible {
+      outline: 2px solid #2f6df0;
+      outline-offset: 2px;
+    }
+    .ln-citation-chip-icon {
+      flex: none;
+      width: 12px;
+      height: 15px;
+      background: #faf6ec;
+      border: 1px solid #ddd2bb;
+      border-radius: 2.5px;
+      position: relative;
+      display: block;
+    }
+    .ln-citation-chip-icon::after {
+      content: '';
+      position: absolute;
+      right: 1px;
+      bottom: 1px;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #2f6df0, #7c3aed);
+    }
+    .ln-citation-chip-title {
+      font-size: 11px;
+      color: #3b342a;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .ln-grounded-more {
+      font-size: 10.5px;
+      color: #b8ad99;
+    }
 
- /* ── Evidence cards ── */
- .ev-card{
-   background:var(--s2);border:1px solid var(--border);border-radius:8px;
-   padding:.55rem .7rem;margin:.4rem 0;transition:border-color .2s
- }
- .ev-card.highlight{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,var(--s2))}
- .ev-source{font-size:.75rem;font-weight:600;color:var(--accent);margin-bottom:.2rem;
-   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
- .ev-text{font-size:.82rem;color:var(--tx-secondary);line-height:1.45}
- .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
-</style></head>
+    /* Thread (scrollable) */
+    #chat {
+      flex: 1;
+      overflow-y: auto;
+      padding: 18px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* ── Story band (build or non-build first-paint) ── */
+    .ln-storyband {
+      background: #f4f1ea;
+      border: 1px solid #ece5d6;
+      border-radius: 10px;
+      padding: 12px 14px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+    .ln-story-cell {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .ln-story-key {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8.5px;
+      letter-spacing: .1em;
+      color: #a59a86;
+      text-transform: uppercase;
+    }
+    .ln-story-val {
+      font-size: 12px;
+      font-weight: 700;
+      color: #1f1b15;
+    }
+    .ln-story-sub {
+      font-size: 10.5px;
+      color: #8a8175;
+      line-height: 1.35;
+    }
+
+    /* ── Build tracker (cold-start) ── */
+    .build-tracker {
+      background: #fff;
+      border: 1px solid #ece5d6;
+      border-radius: 10px;
+      padding: 13px 15px;
+    }
+    .build-tracker-title {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: #3b342a;
+      margin-bottom: 11px;
+    }
+    .build-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 0;
+      font-size: 12px;
+      color: #9a907d;
+      border-radius: 5px;
+      transition: background .2s;
+    }
+    .build-row.active {
+      color: #3b342a;
+      background: rgba(224, 138, 30, .07);
+      padding-left: 6px;
+      padding-right: 6px;
+    }
+    .build-row.done { color: #1f9d57; }
+    .build-row.pending { opacity: .45; }
+    .build-icon {
+      width: 1.1rem;
+      text-align: center;
+      font-family: 'JetBrains Mono', monospace;
+      flex: none;
+      font-size: 11px;
+    }
+    .build-label { flex: 1; }
+    .build-count {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: #e08a1e;
+    }
+    .build-elapsed {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: #a59a86;
+      text-align: right;
+      margin-top: 6px;
+    }
+    .build-detail {
+      list-style: none;
+      margin: 6px 0 0;
+      padding: 8px 0 0 18px;
+      border-top: 1px solid #ece5d6;
+    }
+    .build-detail li {
+      font-size: 11px;
+      color: #9a907d;
+      padding: 2px 0;
+      display: flex;
+      gap: 6px;
+      align-items: baseline;
+    }
+    .build-detail li .bd-ic {
+      font-family: 'JetBrains Mono', monospace;
+      color: #e08a1e;
+      flex: none;
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      .build-row.active .build-icon { animation: pulse-dot 1.1s ease-in-out infinite; }
+    }
+
+    /* ── Thread bubbles ── */
+    #thread { display: contents; }
+
+    .bubble {
+      max-width: 90%;
+      padding: 12px 15px;
+      border-radius: 14px;
+      line-height: 1.58;
+      word-wrap: break-word;
+      font-size: 14px;
+    }
+    /* Tutor teach bubble */
+    .ai {
+      background: #fff;
+      border: 1px solid #ece5d6;
+      border-radius: 12px;
+      box-shadow: 0 1px 2px rgba(60, 50, 30, .04);
+      color: #34302a;
+      font-size: 14.5px;
+      max-width: 100%;
+    }
+    .ai p { margin: .3rem 0; }
+    .ai p:first-child { margin-top: 0; }
+    .ai p:last-child { margin-bottom: 0; }
+    .ai ul, .ai ol { margin: .3rem 0; padding-left: 1.3rem; }
+    .ai li { margin: .15rem 0; }
+    .ai.boundary {
+      border-color: #e08a1e;
+    }
+    .ai.boundary::before {
+      content: "outside my literature pack";
+      display: block;
+      font-size: .7rem;
+      font-weight: 600;
+      letter-spacing: .02em;
+      text-transform: uppercase;
+      color: #e08a1e;
+      margin-bottom: .25rem;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Learner answer bubble */
+    .me {
+      align-self: flex-end;
+      max-width: 86%;
+      background: #eef1f6;
+      border: 1px solid #dde2ec;
+      border-radius: 12px 12px 4px 12px;
+      padding: 11px 14px;
+      color: #2c3340;
+      font-size: 14px;
+      white-space: pre-wrap;
+    }
+
+    /* Quiz card */
+    .ai.qa {
+      border: 1.5px solid #e7b75e;
+      background: #fffaf0;
+    }
+    .qa-header {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      margin-bottom: .4rem;
+    }
+    .bloom-chip {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: #b07d18;
+      background: #fbeecb;
+      border-radius: 5px;
+      padding: 2px 7px;
+      flex: none;
+    }
+    .recap-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: .35rem;
+      background: #f4f1ea;
+      border: 1px solid #ded6c5;
+      border-radius: 5px;
+      padding: 3px 8px;
+      font-size: 10px;
+      font-weight: 600;
+      color: #7d7565;
+      font-family: 'JetBrains Mono', monospace;
+      letter-spacing: .06em;
+    }
+
+    /* Feedback */
+    .feedback {
+      border-left: 3px solid #1f9d57;
+      background: rgba(31, 157, 87, .06);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      display: flex;
+      align-items: flex-start;
+      gap: 7px;
+    }
+    .feedback.wrong {
+      border-left-color: #ef6a4a;
+      background: rgba(239, 106, 74, .06);
+    }
+    .feedback-mark { flex: none; font-weight: 700; font-size: 1rem; line-height: 1.4; }
+    .feedback-mark.ok { color: #1f9d57; }
+    .feedback-mark.warn { color: #ef6a4a; }
+    .feedback-text { color: #3b342a; line-height: 1.45; }
+
+    /* Error bubble */
+    .error-bubble {
+      background: rgba(224, 138, 30, .08);
+      border: 1px solid #e08a1e;
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 13px;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .error-bubble-body { flex: 1; }
+    .error-bubble-title { font-weight: 700; color: #b3781a; margin-bottom: .2rem; }
+    .error-bubble-msg { color: #6b6357; font-size: 12px; word-break: break-word; }
+    .error-bubble-actions { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+    .error-btn-retry {
+      padding: 5px 12px;
+      border: none;
+      border-radius: 7px;
+      background: #1f1b15;
+      color: #f7f3ea;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 12px;
+      font-family: 'Public Sans', sans-serif;
+    }
+    .error-btn-retry:focus-visible { outline: 2px solid #2f6df0; outline-offset: 2px; }
+    .error-btn-dismiss {
+      padding: 5px 12px;
+      border: 1px solid #ddd5c4;
+      border-radius: 7px;
+      background: #fff;
+      color: #6b6357;
+      cursor: pointer;
+      font-size: 12px;
+      font-family: 'Public Sans', sans-serif;
+    }
+    .error-btn-dismiss:focus-visible { outline: 2px solid #2f6df0; outline-offset: 2px; }
+
+    /* Working indicator */
+    .working {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.5px;
+      color: #8a8175;
+    }
+    .working-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #e08a1e;
+      flex: none;
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      .working-dot { animation: pulse-dot 1.2s ease-in-out infinite; }
+    }
+
+    /* Artifact card */
+    #artifact-card {
+      background: #fff;
+      border: 1px solid #ece5d6;
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 13px;
+      color: #3b342a;
+    }
+
+    /* Done card */
+    .ln-done-card {
+      background: #f0f7f1;
+      border: 1px solid #cfe6d3;
+      border-radius: 10px;
+      padding: 13px 15px;
+      font-size: 13px;
+      color: #2c6b43;
+    }
+    .ln-done-card a {
+      color: #2f6df0;
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .ln-done-card a:hover { text-decoration: underline; }
+
+    /* Research detail chip (Glass box provenance) */
+    .research-chip {
+      font-size: 10.5px;
+      color: #9a907d;
+      border-left: 2px solid #e8e1d3;
+      padding-left: 7px;
+      margin: 3px 0 0 26px;
+      line-height: 1.45;
+    }
+    .research-chip .chip-skill { font-weight: 600; color: #e08a1e; }
+    .research-chip .chip-sep { color: #d3c7af; margin: 0 4px; }
+    body:not(.show-detail) .research-chip { display: none; }
+
+    /* Answer form */
+    .ln-answer-form {
+      flex: none;
+      padding: 14px 22px;
+      border-top: 1px solid #f0eadd;
+      display: flex;
+      gap: 10px;
+    }
+    #answer-input {
+      flex: 1;
+      border: 1px solid #ddd5c4;
+      border-radius: 10px;
+      padding: 11px 14px;
+      font-size: 13.5px;
+      color: #3b342a;
+      background: #fff;
+      font-family: 'Public Sans', sans-serif;
+    }
+    #answer-input::placeholder { color: #a89e8b; }
+    #answer-input:focus { outline: 2px solid #2f6df0; outline-offset: 0; }
+    .ln-answer-form button[type="submit"] {
+      border: none;
+      background: #1f1b15;
+      color: #f7f3ea;
+      font-size: 13.5px;
+      font-weight: 600;
+      border-radius: 10px;
+      padding: 0 20px;
+      cursor: pointer;
+      font-family: 'Public Sans', sans-serif;
+      min-height: 44px;
+    }
+    .ln-answer-form button[type="submit"]:focus-visible {
+      outline: 2px solid #2f6df0;
+      outline-offset: 2px;
+    }
+
+    /* ── CENTER pane: Induced curriculum ── */
+    .ln-pane-center {
+      width: 480px;
+      flex: none;
+      border-right: 1px solid #ece5d6;
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      background: #fcfaf5;
+      overflow-y: auto;
+    }
+    .ln-center-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 4px;
+      flex: none;
+    }
+    .ln-center-title {
+      font-family: 'Spectral', serif;
+      font-size: 15px;
+      font-weight: 600;
+      color: #1f1b15;
+    }
+    .ln-center-meta {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      color: #a59a86;
+    }
+    .ln-center-sub {
+      margin: 0 0 12px;
+      font-size: 11.5px;
+      color: #9a907d;
+      line-height: 1.4;
+      flex: none;
+    }
+
+    /* concept map SVG container */
+    .cmap {
+      flex: 1;
+      min-height: 200px;
+      overflow-x: auto;
+    }
+    .cmap svg { display: block; max-width: 100%; }
+
+    /* Map legend */
+    .ln-map-legend {
+      flex: none;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 14px;
+      font-size: 10.5px;
+      color: #7d7565;
+      padding-top: 12px;
+      border-top: 1px solid #ece5d6;
+      margin-top: 12px;
+    }
+    .ln-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .ln-legend-swatch {
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+    }
+    .ln-legend-dash {
+      width: 14px;
+      height: 0;
+      border-top: 1.8px dashed #c79a3f;
+    }
+
+    /* ── RIGHT pane: provenance rail ── */
+    .ln-pane-right {
+      flex: 1;
+      min-width: 0;
+      padding: 16px 18px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 13px;
+      background: #f7f4ed;
+    }
+
+    /* Rail cards */
+    .ln-rail-card {
+      background: #fff;
+      border: 1px solid #e8e1d3;
+      border-radius: 12px;
+      padding: 13px 15px;
+    }
+    .ln-rail-card-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #1f1b15;
+      margin-bottom: 10px;
+    }
+
+    /* ── Mastery/confidence gauge card (#learner) ── */
+    .ln-gauge-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 11px;
+    }
+    .ln-gauge-concept {
+      font-size: 13px;
+      font-weight: 700;
+      color: #1f1b15;
+    }
+    .ln-gauge-rule-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9.5px;
+      color: #a59a86;
+    }
+    .ln-gauge-row {
+      margin-bottom: 10px;
+    }
+    .ln-gauge-row-head {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: #6b6357;
+      margin-bottom: 4px;
+    }
+    .ln-gauge-row-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+    }
+    .ln-gauge-row-value.green { color: #1f9d57; }
+    .ln-gauge-row-value.neutral { color: #3b342a; }
+    .ln-gauge-bar-bg {
+      height: 7px;
+      background: #eee7d7;
+      border-radius: 4px;
+      position: relative;
+    }
+    .ln-gauge-bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width .5s ease;
+    }
+    .ln-gauge-bar-fill.mastery { background: linear-gradient(90deg, #39a06a, #1f9d57); }
+    .ln-gauge-bar-fill.confidence { background: #8a8175; }
+    .ln-gauge-bar-gate {
+      position: absolute;
+      top: -2px;
+      width: 2px;
+      height: 11px;
+      background: #9e3318;
+    }
+    .ln-gauge-sub {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      color: #a59a86;
+      margin-top: 2px;
+    }
+    .ln-trust-note {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px dashed #ece5d6;
+      display: flex;
+      gap: 8px;
+      font-size: 11px;
+      line-height: 1.45;
+      color: #6b6357;
+    }
+    .ln-trust-note strong { color: #3b342a; }
+
+    /* Tier row (learner list, from SSE) */
+    .learner-name { font-size: 12px; font-weight: 500; margin-top: 8px; color: #1f1b15; }
+    .learner-name:first-child { margin-top: 0; }
+    .tier-row { display: flex; align-items: center; gap: 6px; margin: 3px 0; }
+    .tier-chip {
+      font-size: 9.5px;
+      font-weight: 600;
+      letter-spacing: .03em;
+      text-transform: uppercase;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace;
+      line-height: 1.3;
+    }
+    .tier-seen     { background: rgba(107, 99, 87, .12); color: #6b6357; }
+    .tier-familiar { background: rgba(224, 138, 30, .12); color: #b3781a; }
+    .tier-solid    { background: rgba(31, 157, 87, .12); color: #1f9d57; }
+    .tier-mastered { background: rgba(31, 157, 87, .20); color: #1f9d57; }
+    .tier-pct { font-size: 10px; color: #9a907d; font-family: 'JetBrains Mono', monospace; }
+    .tier-meter {
+      display: flex;
+      height: 5px;
+      gap: 2px;
+      flex: 1;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .tier-seg { flex: 1; background: #e8e1d3; border-radius: 1px; }
+    .bar-row { display: flex; align-items: center; gap: 6px; margin: 2px 0; font-size: 11px; }
+    .bar-label { width: 3.2rem; color: #9a907d; flex: none; }
+    .bar-bg { flex: 1; height: 5px; background: #e8e1d3; border-radius: 3px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 3px; transition: width .5s ease; }
+    .bar-m { background: #e08a1e; }
+    .bar-c { background: #1f9d57; }
+    .bar-row span:last-child { font-family: 'JetBrains Mono', monospace; color: #3b342a; }
+    .misconception { font-size: 10.5px; color: #ef6a4a; margin-top: 2px; }
+
+    /* ── Cited evidence card (#evidence) ── */
+    .ln-evidence-paper-head {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 9px;
+    }
+    .ln-evidence-thumb {
+      flex: none;
+      width: 34px;
+      height: 42px;
+      background: #faf6ec;
+      border: 1px solid #e3d9c4;
+      border-radius: 5px;
+      position: relative;
+      overflow: hidden;
+    }
+    .ln-evidence-thumb::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 0;
+      height: 0;
+      border-style: solid;
+      border-width: 0 9px 9px 0;
+      border-color: transparent #e3d9c4 transparent transparent;
+    }
+    .ln-evidence-thumb-lines {
+      position: absolute;
+      left: 6px;
+      right: 6px;
+      top: 9px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .ln-evidence-thumb-line {
+      height: 2px;
+      background: #e0d6c2;
+      border-radius: 1px;
+    }
+    .ln-evidence-thumb-dot {
+      position: absolute;
+      left: 7px;
+      bottom: 5px;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #2f6df0, #7c3aed);
+    }
+    .ln-evidence-meta { flex: 1; min-width: 0; }
+    .ln-evidence-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #2f6df0;
+      text-decoration: none;
+      line-height: 1.32;
+      display: block;
+    }
+    .ln-evidence-title:hover { text-decoration: underline; }
+    .ln-evidence-byline {
+      font-size: 10.5px;
+      color: #9a907d;
+      margin-top: 3px;
+    }
+    .ln-evidence-chips {
+      display: flex;
+      gap: 5px;
+      margin-top: 6px;
+      flex-wrap: wrap;
+    }
+    .ln-evidence-chip {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      background: #eef1f6;
+      color: #37445c;
+      border-radius: 4px;
+      padding: 2px 6px;
+    }
+    .ln-evidence-quote {
+      font-size: 12px;
+      line-height: 1.5;
+      color: #4a4338;
+      font-style: italic;
+      border-left: 2px solid #cdd9ee;
+      padding-left: 9px;
+      margin: 0;
+    }
+    .ln-evidence-footer {
+      margin-top: 9px;
+      padding-top: 8px;
+      border-top: 1px dashed #ece5d6;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .ln-evidence-footer-note {
+      font-size: 10px;
+      color: #a59a86;
+    }
+    .ln-evidence-open-link {
+      font-size: 10.5px;
+      font-weight: 600;
+      color: #2f6df0;
+      text-decoration: none;
+    }
+    .ln-evidence-open-link:hover { text-decoration: underline; }
+
+    /* ev-card (SSE-driven evidence list) */
+    .ev-card {
+      background: #fcfaf5;
+      border: 1px solid #ece5d6;
+      border-radius: 8px;
+      padding: 9px 11px;
+      margin: 6px 0;
+      transition: border-color .2s;
+    }
+    .ev-card.highlight { border-color: #2f6df0; background: rgba(47, 109, 240, .04); }
+    .ev-source { font-size: 11px; font-weight: 600; color: #2f6df0; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ev-text { font-size: 11px; color: #9a907d; line-height: 1.45; }
+
+    /* cite-chip (inline in teach bubbles) */
+    .cite-chip {
+      display: inline-block;
+      vertical-align: super;
+      font-size: .65em;
+      line-height: 1;
+      font-family: 'JetBrains Mono', monospace;
+      background: #eaf1fe;
+      color: #2f6df0;
+      border: 1px solid #c4d8fa;
+      border-radius: 4px;
+      padding: .05em .3em;
+      margin-left: .15em;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background .15s;
+    }
+    .cite-chip:hover { background: rgba(47, 109, 240, .18); }
+    .cite-chip.active { background: rgba(47, 109, 240, .25); border-color: #2f6df0; }
+
+    /* ── Edge provenance card ── */
+    .ln-edge-prov-pair {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin: 8px 0;
+      font-size: 12px;
+      color: #3b342a;
+    }
+    .ln-edge-prov-pair strong { font-weight: 600; }
+    .ln-edge-prov-arrow { color: #b3a98f; }
+    .ln-edge-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+    .ln-edge-chip {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      border-radius: 5px;
+      padding: 3px 7px;
+    }
+    .ln-chip-blue  { background: #eef1f6; color: #37445c; }
+    .ln-chip-green { background: #f0f7f1; color: #2c6b43; }
+    .ln-edge-prov-note {
+      font-size: 10.5px;
+      color: #9a907d;
+      line-height: 1.4;
+      margin: 0;
+    }
+    /* Placeholder note for no-data-source panels */
+    .ln-placeholder-note {
+      font-size: 11px;
+      color: #b3a892;
+      font-style: italic;
+      line-height: 1.5;
+    }
+
+    /* ── Cost ledger card ── */
+    .ln-cost-ledger {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+    }
+    .ln-cost-row {
+      display: flex;
+      justify-content: space-between;
+      color: #6b6357;
+    }
+    .ln-cost-row.escalation { color: #c0492a; }
+    .ln-cost-row.cache     { color: #2c6b43; }
+    .ln-cost-total {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 9px;
+    }
+    .ln-cost-total-label {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #1f1b15;
+    }
+    .ln-cost-total-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: #2b2620;
+      font-weight: 600;
+    }
+    .ln-cost-offline-note {
+      margin-top: 9px;
+      padding-top: 8px;
+      border-top: 1px dashed #ece5d6;
+      font-size: 10.5px;
+      color: #6b6357;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .ln-cost-offline-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #bdb29d;
+      flex: none;
+    }
+
+    /* ── Retention trail card ── */
+    .ln-retention-inner {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .ln-retention-icon { font-size: 16px; flex: none; }
+    .ln-retention-body { flex: 1; min-width: 0; }
+    .ln-retention-body-title {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #1f1b15;
+      margin-bottom: 3px;
+    }
+    .ln-retention-body-mono {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      color: #6b6357;
+    }
+
+    /* ── Glass-box (route flow) secondary cards ── */
+    .ln-flow-card {
+      background: #fff;
+      border: 1px solid #e8e1d3;
+      border-radius: 12px;
+      padding: 13px 15px;
+    }
+    .ln-flow-card-title {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #1f1b15;
+      margin-bottom: 9px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .ln-route-v {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: #a59a86;
+    }
+
+    /* step row in flow */
+    .step { display: flex; gap: 6px; padding: 4px 0; align-items: baseline; font-size: 12px; color: #9a907d; }
+    .step .ic { width: 1.1rem; text-align: center; flex: none; font-size: 11px; }
+    .step.done .ic { color: #1f9d57; }
+    .step.active { background: rgba(224, 138, 30, .07); border-radius: 6px; padding: 4px 6px; border-left: 2px solid #e08a1e; color: #3b342a; }
+    .step.pending { opacity: .45; }
+    .ev { font-size: 11px; color: #9a907d; border-left: 2px solid #e08a1e; padding-left: 7px; margin: 3px 0; }
+
+    /* route concepts */
+    .route-concept { display: flex; align-items: center; gap: 6px; padding: 3px 0; font-size: 12px; }
+    .rbadge { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+    .rbadge-pending  { background: #d3c7af; }
+    .rbadge-active   { background: #e08a1e; }
+    .rbadge-done     { background: #1f9d57; }
+    .rbadge-conceded { background: #ef6a4a; }
+    @media (prefers-reduced-motion: no-preference) {
+      .route-new { animation: flash-in .8s ease; }
+      .vbump { animation: vbump .7s ease; }
+    }
+    .mut { color: #9a907d; font-size: 10.5px; }
+
+    /* why-chip */
+    .why-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(224, 138, 30, .09);
+      border: 1px solid rgba(224, 138, 30, .28);
+      border-radius: 6px;
+      padding: 4px 9px;
+      font-size: 12px;
+      color: #3b342a;
+      margin: 4px 0;
+    }
+    .why-chip-icon { color: #e08a1e; }
+    .why-token { font-size: 10px; color: #9a907d; font-family: 'JetBrains Mono', monospace; margin-left: 4px; }
+
+    /* recommend items */
+    .rec-item { display: flex; align-items: baseline; gap: 6px; padding: 3px 0; font-size: 12px; }
+    .rec-icon { flex: none; width: 1.1rem; text-align: center; }
+    .rec-name { font-weight: 500; color: #1f1b15; }
+    .rec-reason { color: #9a907d; font-size: 11px; }
+
+    /* detail toggle (accessible but visually subtle) */
+    .detail-toggle {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      color: #9a907d;
+      cursor: pointer;
+    }
+    .detail-toggle input { accent-color: #e08a1e; cursor: pointer; }
+    .detail-toggle input:focus-visible { outline: 2px solid #2f6df0; outline-offset: 2px; border-radius: 2px; }
+
+    /* ── Responsive ── */
+    @media (max-width: 1100px) {
+      .ln-pane-center { width: 360px; }
+    }
+    @media (max-width: 860px) {
+      body { overflow: auto; }
+      .ln-screen { height: auto; }
+      .ln-panes { flex-direction: column; }
+      .ln-pane-left, .ln-pane-center, .ln-pane-right { width: 100%; flex: none; }
+      .ln-pane-left { height: 60dvh; }
+      .ln-pane-center { height: auto; }
+    }
+  </style>
+</head>
 <body class="mode-chat show-detail" data-sid="{{ sid }}">
-<header>
-  <b>LitNavigator</b>
-  <span>{{ concept_name or "tutor" }}</span>
-  <span class="mut">{{ n_papers }} papers{% if intent %} · {{ intent }}{% endif %}</span>
-  <span class="toggle">
-    <button id="t-chat" class="on" onclick="setMode('chat')">Chat</button>
-    <button id="t-glass" onclick="setMode('glass')">Glass box</button>
-  </span>
-  <label class="detail-toggle" title="Show the research method/paper behind each agent step">
-    <input type="checkbox" id="detail-chk" checked onchange="toggleDetail(this.checked)">
-    Show research detail
-  </label>
-</header>
 
-<div class="cols">
-  <!-- ── Chat ── -->
-  <div id="chat">
-    {% if building %}
-    <div class="build-tracker" id="build-tracker" aria-live="polite">
-      <div class="build-tracker-title">Building your course for: <b>{{ goal }}</b></div>
-      <div class="build-row active" id="brow-discover">
-        <span class="build-icon">○</span>
-        <span class="build-label">Discover sources</span>
-        <span class="build-count" id="bcount-discover"></span>
-      </div>
-      <div class="build-row pending" id="brow-digest">
-        <span class="build-icon">○</span>
-        <span class="build-label">Digest into map</span>
-        <span class="build-count" id="bcount-digest"></span>
-      </div>
-      <div class="build-row pending" id="brow-plan">
-        <span class="build-icon">○</span>
-        <span class="build-label">Plan route</span>
-        <span class="build-count" id="bcount-plan"></span>
-      </div>
-      <div class="build-row pending" id="brow-teach">
-        <span class="build-icon">○</span>
-        <span class="build-label">Start teaching</span>
-        <span class="build-count" id="bcount-teach"></span>
-      </div>
-      <ul class="build-detail" id="build-detail" aria-live="polite"></ul>
-      <div class="build-elapsed" id="build-elapsed">0s</div>
+<!-- Hidden toggle buttons — kept present so JS never crashes; visually hidden -->
+<button id="t-chat" class="ln-hidden-toggle" aria-hidden="true" tabindex="-1" onclick="setMode('chat')">Chat</button>
+<button id="t-glass" class="ln-hidden-toggle" aria-hidden="true" tabindex="-1" onclick="setMode('glass')">Glass</button>
+
+<div class="ln-screen">
+
+  <!-- ── Top bar ── -->
+  <header class="ln-topbar">
+    <img src="/static/logo.png" alt="LitNavigator" class="ln-topbar-logo">
+    <span class="ln-topbar-name">LitNavigator</span>
+    <span class="ln-topbar-divider" aria-hidden="true"></span>
+    <div class="ln-topbar-goal-stack">
+      <span class="ln-topbar-goal-label">LEARNING GOAL</span>
+      <span class="ln-topbar-goal-text">{{ (story_domain or concept_name or goal or "Tutor session") }}</span>
     </div>
-    <script>window.__BUILDING__=true;</script>
-    {% endif %}
-    {% if not building %}
-    <div class="card storyband">
-      <div class="storygrid">
-        <div class="storycell">
-          <div class="storyk">Discover</div>
-          <b>{{ story_domain }}</b>
-          {% if live %}
-          <div class="storypapers">{{ story_paper_count }} source{{ 's' if story_paper_count != 1 else '' }} discovered live for this goal.</div>
-          {% else %}
-          <div class="storypapers">{{ story_paper_count }} papers were collected offline for this domain.</div>
-          {% endif %}
-        </div>
-        <div class="storycell">
-          <div class="storyk">Digest</div>
-          <b>{{ story_concept_count }}-concept map</b>
-          <div class="storychips">
-            {% for concept in story_concept_names[:5] %}
-            <span class="storychip">{{ concept }}</span>
-            {% endfor %}
-          </div>
-        </div>
-        <div class="storycell">
-          <div class="storyk">Representative 5</div>
-          <div class="storypapers">
-            {% for paper in story_representative_papers %}
-            {{ paper.title }}{% if not loop.last %}<br>{% endif %}
-            {% endfor %}
-          </div>
-        </div>
-      </div>
+    <span class="ln-topbar-spacer"></span>
+    {% if live %}
+    <div class="ln-live-pill" role="status" aria-label="Live data sources connected">
+      <span class="ln-live-dot" aria-hidden="true"></span>
+      <span class="ln-live-label">Live · OpenAlex +3</span>
     </div>
     {% endif %}
-    <div id="thread" aria-live="polite" aria-label="Conversation">
-      <div class="bubble me">{{ concept_name or "Teach me" }}</div>
-      {% for msg in teach_messages or ([] if not teach else [teach]) %}
-      <div class="bubble ai" data-md>{{ msg | e }}</div>
-      {% endfor %}
-      {% if question %}<div class="bubble ai qa">{{ question | e }}</div>{% endif %}
-    </div>
-    <div class="working" id="working" style="display:none" aria-live="polite" aria-label="Agent working">
-      <div class="working-dot" aria-hidden="true"></div>
-      <span id="working-label">Working…</span>
-    </div>
-    {% if done %}
-    <div class="card"><b>Session complete.</b>
-      {% if artifact_url %}<a href="{{ artifact_url }}" download>download take-away ↓</a> · {% endif %}
-      <a href="/sessions/{{ sid }}">full trace →</a> · <a href="/tutor">new chat</a></div>
-    {% endif %}
-    <div id="artifact-card" class="card" style="display:none"></div>
-    <form class="answer" id="answer-form" onsubmit="return submitAnswer(event)">
-      <label id="answer-label" for="answer-input" class="sr-only">Your message</label>
-      <input id="answer-input" autocomplete="off" autofocus
-             placeholder="ask anything, or answer the question…"
-             aria-label="Your message">
-      <button type="submit">Send</button>
-    </form>
-  </div>
-
-  <!-- ── Glass box ── -->
-  <div id="glass">
-
-    <!-- Concept map -->
-    <div class="card"><b>Concept map</b>
-      <div id="cmap" class="cmap">{{ graph|safe }}</div>
-      <div class="mut maplegend">current · <span style="color:var(--ok)">mastered</span> · lectured · <span style="color:var(--warn)">conceded</span> · dashed = induced</div>
-    </div>
-
-    <!-- Agent flow -->
-    <div class="card">
-      <b>Agent flow</b> <span class="mut" id="route-v">route v{{ route_version }}</span>
-      <div id="flow"></div>
-    </div>
-
-    <!-- Route -->
-    <div class="card">
-      <b>Learning route</b>
-      <div id="route-list">
-        {% for step in route %}
-        <div class="route-concept" data-cid="{{ step.concept_id }}">
-          <span class="rbadge rbadge-{{ step.status or 'pending' }}"></span>
-          <span>{{ step.name }}</span>
-          <span class="mut">{{ step.status or 'pending' }}</span>
-        </div>
-        {% else %}
-        <span class="mut">–</span>
-        {% endfor %}
-      </div>
-    </div>
-
-    <!-- Evidence -->
-    <div class="card"><b>Cited evidence</b>
-      <div id="evidence">
-        {% for e in cited %}
-        <div class="ev-card" data-chunk="{{ e.chunk_id }}">
-          <div class="ev-source">{{ e.paper_title or ('Source ' ~ e.paper_id) if e.paper_id else e.chunk_id }}</div>
-          <div class="ev-text">{{ e.text[:160] }}{% if e.text|length > 160 %}…{% endif %}</div>
-        </div>
-        {% else %}
-        <span class="mut">Citations appear as I teach each keypoint</span>
-        {% endfor %}
-      </div>
-    </div>
-
-    <!-- Learner model -->
-    <div class="card"><b>Learner model</b>
-      <div id="learner">
-        {% for c in learner %}
-        {% set mp = (c.mastery * 100)|round|int %}
-        {% set tier = c.tier or 'Seen' %}
-        {% set tier_cls = tier|lower %}
-        <div>
-          <div class="learner-name">{{ c.name }}</div>
-          {% if c.assessed %}
-          <div class="tier-row">
-            <span class="tier-chip tier-{{ tier_cls }}">{{ tier }}</span>
-            <div class="tier-meter" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ mp }}" aria-label="Mastery {{ mp }}%">
-              <div class="tier-seg" style="background:{% if mp >= 1 %}var(--idle){% else %}var(--s3){% endif %}"></div>
-              <div class="tier-seg" style="background:{% if mp >= 30 %}var(--accent){% else %}var(--s3){% endif %}"></div>
-              <div class="tier-seg" style="background:{% if mp >= 55 %}var(--ok){% else %}var(--s3){% endif %}"></div>
-              <div class="tier-seg" style="background:{% if mp >= 78 %}var(--ok){% else %}var(--s3){% endif %}"></div>
-            </div>
-            <span class="tier-pct">{{ mp }}%</span>
-          </div>
-          <div class="bar-row">
-            <span class="bar-label">confid.</span>
-            <div class="bar-bg"><div class="bar-fill bar-c" style="width:{{ (c.confidence * 100)|round|int }}%"></div></div>
-            <span>{{ (c.confidence * 100)|round|int }}%</span>
-          </div>
-          {% else %}
-          <div class="mut" style="font-size:.78rem">Not yet assessed</div>
-          {% endif %}
-          {% if c.held %}
-          <div class="misconception">misconception: {{ c.held|join(', ') }}</div>
-          {% endif %}
-        </div>
-        {% endfor %}
-        {% if not learner %}
-        <span class="mut">Mastery builds after your first answer</span>
-        {% endif %}
-      </div>
-    </div>
-
-    <!-- Recommend next -->
-    <div class="card" id="recommend" style="display:none">
-      <b>What to learn next</b>
-      <div id="recommend-list"><span class="mut">–</span></div>
-    </div>
-
-    <!-- Decision rationale -->
-    <div class="card" id="why" {% if not rationale %}style="display:none"{% endif %}>
-      <b>Why this step</b>
-      <div id="why-human">{% if decision %}<span class="why-chip"><span class="why-chip-icon">→</span>{{ decision }}</span>{% endif %}</div>
-      <div class="mut" id="why-text">{{ decision or '' }}{% if decision %} — {% endif %}{{ rationale }}</div>
-    </div>
-
-    <!-- Induced -->
-    <div class="card" id="induced-panel" {% if not induced %}style="display:none"{% endif %}>
-      <b>Induced (machine-derived)</b>
-      <div id="induced-list">
-        {% for e in induced %}
-        <div><b>{{ e.prereq }}</b> → {{ e.target }} <span class="mut">conf {{ e.confidence }}</span></div>
-        {% endfor %}
-      </div>
-    </div>
-
-    <!-- Cost -->
-    <div class="card costp">
-      <b>Cost so far</b>
+    <div class="ln-cost-chip" title="Cumulative LLM cost this session">
+      <span class="ln-cost-chip-label">spend</span>
       {% if cost and cost.tokens %}
-      <span id="cost">{{ cost.tokens }} tok ≈ ${{ cost.usd }}</span>
+      <span id="cost">${{ cost.usd }}</span>
       {% else %}
-      <span id="cost">Offline run — $0</span>
+      <span id="cost">$0</span>
       {% endif %}
     </div>
+    <span class="ln-topbar-papers">{{ n_papers }} papers{% if intent %} · {{ intent }}{% endif %}</span>
+    <label class="detail-toggle" title="Show the research method/paper behind each agent step" style="margin-left:8px;">
+      <input type="checkbox" id="detail-chk" checked="" onchange="toggleDetail(this.checked)">
+      <span>Show research detail</span>
+    </label>
+  </header>
 
-  </div><!-- /glass -->
-</div><!-- /cols -->
+  <!-- ── Three panes ── -->
+  <div class="ln-panes">
+
+    <!-- ════════════════════════════════
+         LEFT pane — conversation
+         ════════════════════════════════ -->
+    <div class="ln-pane-left">
+
+      <!-- Pane header: TEACHING / concept / N/M -->
+      <div class="ln-pane-left-header">
+        <span class="ln-pane-left-tag">TEACHING</span>
+        <span class="ln-pane-left-concept">{{ concept_name or "—" }}</span>
+        {% if route %}
+        <span class="ln-pane-left-progress">
+          concept
+          {{ route | selectattr('status', 'in', ['done', 'conceded', 'lectured']) | list | length + 1 }}
+          /
+          {{ route | length }}
+        </span>
+        {% endif %}
+      </div>
+
+      <!-- Grounded-in citation chips (first-paint from cited; updated live via SSE) -->
+      <div class="ln-grounded-row" aria-label="Sources grounding this concept">
+        <span class="ln-grounded-label">GROUNDED IN</span>
+        {% for e in cited[:3] %}
+        <button class="ln-citation-chip" data-chunk="{{ e.chunk_id }}"
+                onclick="activateEvidence('{{ e.chunk_id }}')"
+                title="{{ e.paper_title or e.chunk_id }}"
+                aria-label="Cited source: {{ e.paper_title or e.chunk_id }}">
+          <span class="ln-citation-chip-icon" aria-hidden="true"></span>
+          <span class="ln-citation-chip-title">{{ e.paper_title or e.chunk_id }}</span>
+        </button>
+        {% endfor %}
+        {% if cited | length > 3 %}
+        <span class="ln-grounded-more">+{{ cited | length - 3 }} more</span>
+        {% endif %}
+        {% if not cited %}
+        <span class="ln-grounded-more">Citations appear as teaching begins</span>
+        {% endif %}
+      </div>
+
+      <!-- Scrollable chat thread -->
+      <div id="chat" role="main" aria-label="Teaching conversation">
+
+        <!-- Build tracker (open-world cold start) -->
+        {% if building %}
+        <div class="build-tracker" id="build-tracker" aria-live="polite">
+          <div class="build-tracker-title">Building your course for: <strong>{{ goal }}</strong></div>
+          <div class="build-row active" id="brow-discover">
+            <span class="build-icon">○</span>
+            <span class="build-label">Discover sources</span>
+            <span class="build-count" id="bcount-discover"></span>
+          </div>
+          <div class="build-row pending" id="brow-digest">
+            <span class="build-icon">○</span>
+            <span class="build-label">Digest into map</span>
+            <span class="build-count" id="bcount-digest"></span>
+          </div>
+          <div class="build-row pending" id="brow-plan">
+            <span class="build-icon">○</span>
+            <span class="build-label">Plan route</span>
+            <span class="build-count" id="bcount-plan"></span>
+          </div>
+          <div class="build-row pending" id="brow-teach">
+            <span class="build-icon">○</span>
+            <span class="build-label">Start teaching</span>
+            <span class="build-count" id="bcount-teach"></span>
+          </div>
+          <ul class="build-detail" id="build-detail" aria-live="polite"></ul>
+          <div class="build-elapsed" id="build-elapsed">0s</div>
+        </div>
+        <script>window.__BUILDING__ = true;</script>
+        {% endif %}
+
+        <!-- Story band (shown when not building) -->
+        {% if not building %}
+        <div class="ln-storyband">
+          <div class="ln-story-cell">
+            <span class="ln-story-key">Discover</span>
+            <span class="ln-story-val">{{ story_domain }}</span>
+            {% if live %}
+            <span class="ln-story-sub">{{ story_paper_count }} source{{ 's' if story_paper_count != 1 else '' }} discovered live for this goal.</span>
+            {% else %}
+            <span class="ln-story-sub">{{ story_paper_count }} papers collected offline for this domain.</span>
+            {% endif %}
+          </div>
+          <div class="ln-story-cell">
+            <span class="ln-story-key">Digest</span>
+            <span class="ln-story-val">{{ story_concept_count }}-concept map</span>
+            <span class="ln-story-sub">
+              {% for name in story_concept_names[:4] %}{{ name }}{% if not loop.last %} · {% endif %}{% endfor %}
+            </span>
+          </div>
+          <div class="ln-story-cell">
+            <span class="ln-story-key">Representative papers</span>
+            <span class="ln-story-sub">
+              {% for paper in story_representative_papers %}
+              {{ paper.title }}{% if not loop.last %}<br>{% endif %}
+              {% endfor %}
+            </span>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Thread: teach bubbles + quiz + feedback (server-rendered initial state) -->
+        <div id="thread" aria-live="polite" aria-label="Conversation">
+          <div class="bubble me">{{ concept_name or "Teach me" }}</div>
+          {% for msg in teach_messages or ([] if not teach else [teach]) %}
+          <div class="bubble ai" data-md="">{{ msg | e }}</div>
+          {% endfor %}
+          {% if question %}<div class="bubble ai qa">{{ question | e }}</div>{% endif %}
+        </div>
+
+        <!-- Working indicator -->
+        <div class="working" id="working" style="display:none;" aria-live="polite" aria-label="Agent working">
+          <div class="working-dot" aria-hidden="true"></div>
+          <span id="working-label">Working…</span>
+        </div>
+
+        <!-- Done card -->
+        {% if done %}
+        <div class="ln-done-card">
+          <strong>Session complete.</strong>
+          {% if artifact_url %}<a href="{{ artifact_url }}" download="">download take-away ↓</a> · {% endif %}
+          <a href="/sessions/{{ sid }}">full trace →</a> · <a href="/tutor">new chat</a>
+        </div>
+        {% endif %}
+
+        <!-- Artifact card -->
+        <div id="artifact-card" class="ln-rail-card" style="display:none;"></div>
+
+      </div><!-- /#chat -->
+
+      <!-- Answer input -->
+      <form class="ln-answer-form" id="answer-form" onsubmit="return submitAnswer(event)">
+        <label id="answer-label" for="answer-input" class="sr-only">Your message</label>
+        <input id="answer-input" type="text" autocomplete="off" autofocus=""
+               placeholder="Type your answer or ask anything…"
+               aria-label="Your message">
+        <button type="submit">Send</button>
+      </form>
+
+    </div><!-- /.ln-pane-left -->
+
+    <!-- ════════════════════════════════
+         CENTER pane — Induced curriculum
+         ════════════════════════════════ -->
+    <div class="ln-pane-center" id="induced-panel" {% if not induced %}style="display:flex;"{% endif %}>
+      <div class="ln-center-head">
+        <span class="ln-center-title">Induced curriculum</span>
+        <span class="ln-center-meta" id="induced-list">
+          {% if story_concept_count %}{{ story_concept_count }} concepts · {{ story_edge_count or '?' }} edges{% else %}—{% endif %}
+        </span>
+      </div>
+      <p class="ln-center-sub">Built live from the papers — not hand-authored. Edges are prerequisites.</p>
+
+      <!-- Concept map SVG — injected by 'map' build event and 'state' SSE -->
+      <div id="cmap" class="cmap">{{ graph | safe }}</div>
+
+      <!-- Legend -->
+      <div class="ln-map-legend" aria-label="Map legend">
+        <span class="ln-legend-item">
+          <span class="ln-legend-swatch" style="background:#fff7ea; border:1.5px solid #e08a1e;"></span>
+          current
+        </span>
+        <span class="ln-legend-item">
+          <span class="ln-legend-swatch" style="background:#f0faf3; border:1.5px solid #4cae74;"></span>
+          mastered
+        </span>
+        <span class="ln-legend-item">
+          <span class="ln-legend-swatch" style="background:#fdf1ef; border:1.5px solid #ef6a4a;"></span>
+          contested
+        </span>
+        <span class="ln-legend-item">
+          <span class="ln-legend-dash"></span>
+          induced edge
+        </span>
+      </div>
+    </div><!-- /.ln-pane-center -->
+
+    <!-- ════════════════════════════════
+         RIGHT pane — provenance rail
+         ════════════════════════════════ -->
+    <div class="ln-pane-right" id="glass">
+
+      <!-- ── Mastery + confidence gauge (#learner) ── -->
+      <div class="ln-rail-card">
+        <div class="ln-gauge-head">
+          <span class="ln-gauge-concept">{{ concept_name or "—" }}</span>
+          <span class="ln-gauge-rule-label">rule-computed</span>
+        </div>
+        <div id="learner">
+          {% for c in learner %}
+          {% set mp = (c.mastery * 100) | round | int %}
+          {% set cp = (c.confidence * 100) | round | int %}
+          {% set tier = c.tier or 'Seen' %}
+          {% set tier_cls = tier | lower %}
+          <div>
+            <div class="learner-name">{{ c.name }}</div>
+            {% if c.assessed %}
+            <div class="tier-row">
+              <span class="tier-chip tier-{{ tier_cls }}">{{ tier }}</span>
+              <div class="tier-meter" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ mp }}" aria-label="Mastery {{ mp }}%">
+                <div class="tier-seg" style="background:{% if mp >= 1 %}#6b6357{% else %}#e8e1d3{% endif %};"></div>
+                <div class="tier-seg" style="background:{% if mp >= 30 %}#e08a1e{% else %}#e8e1d3{% endif %};"></div>
+                <div class="tier-seg" style="background:{% if mp >= 55 %}#1f9d57{% else %}#e8e1d3{% endif %};"></div>
+                <div class="tier-seg" style="background:{% if mp >= 78 %}#1f9d57{% else %}#e8e1d3{% endif %};"></div>
+              </div>
+              <span class="tier-pct">{{ mp }}%</span>
+            </div>
+            <div class="bar-row">
+              <span class="bar-label">confid.</span>
+              <div class="bar-bg"><div class="bar-fill bar-c" style="width:{{ cp }}%;"></div></div>
+              <span>{{ cp }}%</span>
+            </div>
+            {% else %}
+            <div class="mut" style="font-size:.78rem;">Not yet assessed</div>
+            {% endif %}
+            {% if c.held %}
+            <div class="misconception">misconception: {{ c.held | join(', ') }}</div>
+            {% endif %}
+          </div>
+          {% endfor %}
+          {% if not learner %}
+          <span class="mut">Mastery builds after your first answer</span>
+          {% endif %}
+        </div>
+        <div class="ln-trust-note">
+          <span aria-hidden="true">&#x1F512;</span>
+          <p style="margin:0;"><strong>The model never grades itself.</strong> Mastery, confidence &amp; routing are computed by rule — the LLM only supplies content and a verdict.</p>
+        </div>
+      </div><!-- /#learner-card -->
+
+      <!-- ── Cited evidence (#evidence) ── -->
+      <div class="ln-rail-card" style="position:relative;">
+        <!-- paper corner fold -->
+        <div style="position:absolute; top:0; right:0; width:0; height:0; border-style:solid; border-width:0 22px 22px 0; border-color:transparent #f1e8d6 transparent transparent;"></div>
+        <div class="ln-rail-card-title">Cited evidence</div>
+        <div id="evidence">
+          {% for e in cited %}
+          <div class="ev-card" data-chunk="{{ e.chunk_id }}">
+            <div class="ev-source">{{ e.paper_title or ('Source ' ~ e.paper_id) if e.paper_id else e.chunk_id }}</div>
+            <div class="ev-text">{{ e.text[:160] }}{% if e.text | length > 160 %}…{% endif %}</div>
+          </div>
+          {% else %}
+          <span class="mut">Citations appear as I teach each keypoint</span>
+          {% endfor %}
+        </div>
+      </div><!-- /#evidence-card -->
+
+      <!-- ── Edge provenance (#why / #why-human / #why-text) ── -->
+      <!-- NOTE: RefD score, LLM-judge, frontier-verified chips are static structural
+           placeholders. No live data source emits these values yet (they await a
+           DIGEST provenance SSE event). They are rendered as a skeleton. -->
+      <div class="ln-rail-card" id="why" {% if not rationale %}style="display:none;"{% endif %}>
+        <div class="ln-rail-card-title">Why this prerequisite?</div>
+        <div id="why-human">
+          {% if decision %}
+          <span class="why-chip"><span class="why-chip-icon">&#x2192;</span>{{ decision }}</span>
+          {% endif %}
+        </div>
+        <div class="mut" id="why-text">{{ decision or '' }}{% if decision %} — {% endif %}{{ rationale }}</div>
+        <!-- Static structural placeholder — awaits live DIGEST provenance event -->
+        <!-- PLACEHOLDER: RefD score, LLM-judge verdict, frontier-verified status have no live data source yet -->
+        <div class="ln-edge-chips" style="margin-top:9px;">
+          <span class="ln-edge-chip ln-chip-blue" title="RefD-style signal — awaits live digest provenance">RefD —</span>
+          <span class="ln-edge-chip ln-chip-green" title="LLM judge — awaits live digest provenance">LLM-judge —</span>
+          <span class="ln-edge-chip ln-chip-blue" title="Frontier verified — awaits live digest provenance">frontier —</span>
+        </div>
+        <p class="ln-edge-prov-note">RefD-style directed signal + LLM relational judge, cross-checked. Induced (dashed) edges show their confidence basis.</p>
+      </div>
+
+      <!-- ── Agent flow (#flow) ── -->
+      <div class="ln-flow-card">
+        <div class="ln-flow-card-title">
+          Agent flow
+          <span class="ln-route-v" id="route-v">route v{{ route_version }}</span>
+        </div>
+        <div id="flow"></div>
+      </div>
+
+      <!-- ── Learning route (#route-list) ── -->
+      <div class="ln-flow-card">
+        <div class="ln-flow-card-title">Learning route</div>
+        <div id="route-list">
+          {% for step in route %}
+          <div class="route-concept" data-cid="{{ step.concept_id }}">
+            <span class="rbadge rbadge-{{ step.status or 'pending' }}"></span>
+            <span>{{ step.name }}</span>
+            <span class="mut">{{ step.status or 'pending' }}</span>
+          </div>
+          {% else %}
+          <span class="mut">—</span>
+          {% endfor %}
+        </div>
+        <!-- Route version value (hidden, JS reads #route-v span) -->
+        <span id="route-v-num" class="mut" style="display:none;">{{ route_version }}</span>
+      </div>
+
+      <!-- ── Cost ledger ── -->
+      <div class="ln-rail-card">
+        <div class="ln-cost-total">
+          <span class="ln-cost-total-label">Cost ledger</span>
+          <!-- NOTE: per-stage cost breakdown has no live data source yet -->
+          <!-- PLACEHOLDER: stage-level cost split (find-sources / digest / teach / escalation)
+               awaits a dedicated cost_ledger SSE event -->
+        </div>
+        <!-- NOTE: per-stage rows below are static structural placeholders -->
+        <div class="ln-cost-ledger">
+          <div class="ln-cost-row"><span>find-sources</span><span>—</span></div>
+          <div class="ln-cost-row"><span>digest → map</span><span>—</span></div>
+          <div class="ln-cost-row"><span>teach · cheap tier</span><span>—</span></div>
+          <div class="ln-cost-row escalation"><span>&#x2191; grade escalation</span><span>—</span></div>
+          <div class="ln-cost-row cache"><span>semantic cache</span><span>—</span></div>
+        </div>
+        <div class="ln-cost-offline-note">
+          <span class="ln-cost-offline-dot"></span>
+          Offline deterministic mode = <strong style="font-family:'JetBrains Mono',monospace; color:#3b342a; margin-left:2px;">$0</strong>, always available
+        </div>
+      </div>
+
+      <!-- ── Retention trail ── -->
+      <!-- NOTE: retention trail (predicted vs actual recap score) has no live data source yet -->
+      <!-- PLACEHOLDER: recap prediction/actual values await a retention_trail SSE event -->
+      <div class="ln-rail-card">
+        <div class="ln-retention-inner">
+          <span class="ln-retention-icon" aria-hidden="true">&#x1F501;</span>
+          <div class="ln-retention-body">
+            <div class="ln-retention-body-title">Retention trail</div>
+            <div class="ln-retention-body-mono ln-placeholder-note">Appears when spaced-recap data is available</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Recommend-next panel (#recommend / #recommend-list) ── -->
+      <div class="ln-flow-card" id="recommend" style="display:none;">
+        <div class="ln-flow-card-title">What to learn next</div>
+        <div id="recommend-list"><span class="mut">—</span></div>
+      </div>
+
+      <!-- ── Decision rationale (additional; main card is #why above) ── -->
+      <!-- (why panel is rendered above; this is a no-op duplicate anchor kept for SSE compat) -->
+
+      <!-- ── Induced edges detail (hidden until SSE; kept for JS contract) ── -->
+      <!-- NOTE: induced-panel is the center pane. The list id is repurposed there for count.
+           The SSE handler for induced-panel updates the center pane header meta. -->
+
+    </div><!-- /.ln-pane-right / #glass -->
+
+  </div><!-- /.ln-panes -->
+
+</div><!-- /.ln-screen -->
 
 <script>
 const SID = document.body.dataset.sid;
 
-function esc(s){
-  return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => (
+    {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]
+  ));
 }
 
-function setMode(m){
+function setMode(m) {
   // Preserve non-mode classes (e.g. show-detail) when switching views.
-  const keep = [...document.body.classList].filter(c=>!c.startsWith('mode-'));
-  document.body.className = [...keep, 'mode-'+m].join(' ');
-  document.getElementById('t-chat').classList.toggle('on',m==='chat');
-  document.getElementById('t-glass').classList.toggle('on',m==='glass');
-  try{localStorage.setItem('litnav-mode',m)}catch(e){}
+  const keep = [...document.body.classList].filter(c => !c.startsWith('mode-'));
+  document.body.className = [...keep, 'mode-' + m].join(' ');
+  document.getElementById('t-chat').classList.toggle('on', m === 'chat');
+  document.getElementById('t-glass').classList.toggle('on', m === 'glass');
+  try { localStorage.setItem('litnav-mode', m); } catch(e) {}
 }
-// Always start in chat mode so the learner sees teaching content first.
-// Glass box is opt-in per-session (button top-right); we don't persist across sessions.
 
 // Activate the Cited Evidence panel and highlight the card for a given chunk_id.
-// Switches to glass view if in chat mode, scrolls the card into view.
-function activateEvidence(chunkId){
-  // Switch to glass mode so the evidence panel is visible
-  setMode('glass');
+function activateEvidence(chunkId) {
   // Remove previous highlights and mark active chip
-  document.querySelectorAll('.ev-card.highlight').forEach(c=>c.classList.remove('highlight'));
-  document.querySelectorAll('.cite-chip.active').forEach(c=>c.classList.remove('active'));
+  document.querySelectorAll('.ev-card.highlight').forEach(c => c.classList.remove('highlight'));
+  document.querySelectorAll('.cite-chip.active').forEach(c => c.classList.remove('active'));
   // Highlight the matching evidence card
-  const card = document.querySelector('.ev-card[data-chunk="'+CSS.escape(chunkId)+'"]');
-  if(card){
+  const card = document.querySelector('.ev-card[data-chunk="' + CSS.escape(chunkId) + '"]');
+  if (card) {
     card.classList.add('highlight');
-    card.scrollIntoView({behavior:'smooth',block:'nearest'});
+    card.scrollIntoView({behavior: 'smooth', block: 'nearest'});
   }
   // Mark matching chips active
-  document.querySelectorAll('.cite-chip[data-chunk="'+CSS.escape(chunkId)+'"]')
-    .forEach(c=>c.classList.add('active'));
+  document.querySelectorAll('.cite-chip[data-chunk="' + CSS.escape(chunkId) + '"]')
+    .forEach(c => c.classList.add('active'));
+  // Also activate grounded-in buttons
+  document.querySelectorAll('.ln-citation-chip[data-chunk="' + CSS.escape(chunkId) + '"]')
+    .forEach(c => c.classList.add('active'));
 }
 
 // Lightweight markdown → HTML (bold, italic, lists, paragraphs).
-// Input text must NOT already contain HTML — we escape first then add tags.
-function md(raw){
-  if(!raw)return '';
-  // 1. escape raw HTML characters
-  let s=raw.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  // 2. split into lines and assemble blocks
-  const lines=s.split('\n');
-  const blocks=[];let lt=null,li=[];
-  function flush(){if(li.length){blocks.push({t:lt,items:[...li]});li=[];lt=null;}}
-  for(const ln of lines){
-    const ol=ln.match(/^(\d+)\.\s+(.*)/);
-    const ul=ln.match(/^[-•*]\s+(.*)/);
-    if(ol){if(lt!=='ol')flush();lt='ol';li.push(ol[2]);}
-    else if(ul){if(lt!=='ul')flush();lt='ul';li.push(ul[1]);}
-    else{flush();blocks.push({t:'p',text:ln});}
+function md(raw) {
+  if (!raw) return '';
+  let s = raw.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const lines = s.split('\n');
+  const blocks = []; let lt = null; let li = [];
+  function flush() { if (li.length) { blocks.push({t: lt, items: [...li]}); li = []; lt = null; } }
+  for (const ln of lines) {
+    const ol = ln.match(/^(\d+)\.\s+(.*)/);
+    const ul = ln.match(/^[-•*]\s+(.*)/);
+    if (ol) { if (lt !== 'ol') flush(); lt = 'ol'; li.push(ol[2]); }
+    else if (ul) { if (lt !== 'ul') flush(); lt = 'ul'; li.push(ul[1]); }
+    else { flush(); blocks.push({t: 'p', text: ln}); }
   }
   flush();
-  // 3. group consecutive 'p' lines into paragraphs
-  let html='';let buf=[];
-  function flushPara(){if(buf.length){html+='<p>'+buf.join('<br>')+'</p>';buf=[];}}
-  for(const b of blocks){
-    if(b.t==='ol'||b.t==='ul'){
+  let html = ''; let buf = [];
+  function flushPara() { if (buf.length) { html += '<p>' + buf.join('<br>') + '</p>'; buf = []; } }
+  for (const b of blocks) {
+    if (b.t === 'ol' || b.t === 'ul') {
       flushPara();
-      html+='<'+b.t+'>'+b.items.map(i=>'<li>'+i+'</li>').join('')+'</'+b.t+'>';
-    }else if(b.text.trim()===''){flushPara();}
-    else{buf.push(b.text);}
+      html += '<' + b.t + '>' + b.items.map(i => '<li>' + i + '</li>').join('') + '</' + b.t + '>';
+    } else if (b.text.trim() === '') { flushPara(); }
+    else { buf.push(b.text); }
   }
   flushPara();
-  // 4. inline: **bold** and *italic*
-  html=html.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
-           .replace(/\*([^*\n]+?)\*/g,'<em>$1</em>');
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+             .replace(/\*([^*\n]+?)\*/g, '<em>$1</em>');
   return html;
 }
 
-function addBubble(cls,text,_tw){
-  const t=document.getElementById('thread');
-  const d=document.createElement('div');
-  d.className='bubble '+cls;
+function addBubble(cls, text, _tw) {
+  const t = document.getElementById('thread');
+  const d = document.createElement('div');
+  d.className = 'bubble ' + cls;
   t.appendChild(d);
-  // AI bubbles: render markdown; user bubbles: plain text (white-space:pre-wrap handles newlines)
-  if(cls.includes('ai')){d.innerHTML=md(text);}else{d.textContent=text;}
-  t.scrollTop=t.scrollHeight;
+  if (cls.includes('ai')) { d.innerHTML = md(text); } else { d.textContent = text; }
+  const chat = document.getElementById('chat');
+  chat.scrollTop = chat.scrollHeight;
   return d;
 }
 
-function setFlow(steps){
-  const f=document.getElementById('flow');f.innerHTML='';
-  steps.forEach(s=>{
-    const d=document.createElement('div');
-    d.className='step '+s.state;
-    const ic=s.state==='done'?'✓':(s.state==='active'?'▶':'○');
-    // Main step line
-    let html='<span class="ic">'+ic+'</span><span>'+esc(s.label)+(s.detail?' <span class="mut">· '+esc(s.detail)+'</span>':'')+'</span>';
-    // Research provenance chip (hidden when show-detail is off)
-    if(s.skill||s.method||s.paper){
-      const skill=s.skill&&s.skill!=='—'?'<span class="chip-skill">'+esc(s.skill)+'</span>':'';
-      const method=s.method&&s.method!=='—'?esc(s.method):'';
-      const paper=s.paper&&s.paper!=='—'?'<em>'+esc(s.paper)+'</em>':'';
-      const parts=[skill,method,paper].filter(Boolean);
-      if(parts.length){
-        html+='<div class="research-chip">'+parts.join('<span class="chip-sep">·</span>')+'</div>';
+function setFlow(steps) {
+  const f = document.getElementById('flow'); f.innerHTML = '';
+  steps.forEach(s => {
+    const d = document.createElement('div');
+    d.className = 'step ' + s.state;
+    const ic = s.state === 'done' ? '&#x2713;' : (s.state === 'active' ? '&#x25B6;' : '&#x25CB;');
+    let html = '<span class="ic">' + ic + '</span><span>' + esc(s.label)
+      + (s.detail ? ' <span class="mut">· ' + esc(s.detail) + '</span>' : '') + '</span>';
+    if (s.skill || s.method || s.paper) {
+      const skill  = s.skill  && s.skill  !== '—' ? '<span class="chip-skill">' + esc(s.skill) + '</span>' : '';
+      const method = s.method && s.method !== '—' ? esc(s.method) : '';
+      const paper  = s.paper  && s.paper  !== '—' ? '<em>' + esc(s.paper) + '</em>' : '';
+      const parts = [skill, method, paper].filter(Boolean);
+      if (parts.length) {
+        html += '<div class="research-chip">' + parts.join('<span class="chip-sep">·</span>') + '</div>';
       }
     }
-    d.innerHTML=html;
+    d.innerHTML = html;
     f.appendChild(d);
   });
 }
 
-function toggleDetail(on){
-  document.body.classList.toggle('show-detail',on);
-  try{localStorage.setItem('litnav-detail',on?'1':'0')}catch(e){}
+function toggleDetail(on) {
+  document.body.classList.toggle('show-detail', on);
+  try { localStorage.setItem('litnav-detail', on ? '1' : '0'); } catch(e) {}
 }
 // Restore detail preference
-(function(){
-  try{
-    const v=localStorage.getItem('litnav-detail');
-    if(v==='0'){
+(function() {
+  try {
+    const v = localStorage.getItem('litnav-detail');
+    if (v === '0') {
       document.body.classList.remove('show-detail');
-      const chk=document.getElementById('detail-chk');
-      if(chk)chk.checked=false;
+      const chk = document.getElementById('detail-chk');
+      if (chk) chk.checked = false;
     }
-  }catch(e){}
+  } catch(e) {}
 })();
 
 // Track previous route_version to detect changes
@@ -619,35 +1716,54 @@ let _prevRouteV = null;
 // Track known concept ids to detect newly inserted concepts
 let _knownCids = new Set();
 
-function updateGlass(e){
+function updateGlass(e) {
   // ── route_version: flash when it changes ──
   const rvEl = document.getElementById('route-v');
   const newV = e.route_version;
-  if(_prevRouteV !== null && _prevRouteV !== newV){
+  if (_prevRouteV !== null && _prevRouteV !== newV) {
     rvEl.classList.remove('vbump');
-    void rvEl.offsetWidth; // force reflow so animation restarts
+    void rvEl.offsetWidth;
     rvEl.classList.add('vbump');
   }
   rvEl.textContent = 'route v' + newV;
   _prevRouteV = newV;
 
-  // ── Route panel: show concept sequence with status dots ──
+  // ── Route panel ──
   const routeEl = document.getElementById('route-list');
   const route = e.route || [];
-  if(route.length === 0){
-    routeEl.innerHTML = '<span class="mut">–</span>';
+  if (route.length === 0) {
+    routeEl.innerHTML = '<span class="mut">—</span>';
   } else {
     routeEl.innerHTML = route.map(r => {
       const cid = String(r.concept_id);
       const isNew = !_knownCids.has(cid);
       const status = r.status || 'pending';
-      return '<div class="route-concept'+(isNew?' route-new':'')+'" data-cid="'+esc(cid)+'">'
-        + '<span class="rbadge rbadge-'+esc(status)+'"></span>'
-        + '<span>'+esc(r.name)+'</span>'
-        + '<span class="mut">'+esc(status)+'</span>'
+      return '<div class="route-concept' + (isNew ? ' route-new' : '') + '" data-cid="' + esc(cid) + '">'
+        + '<span class="rbadge rbadge-' + esc(status) + '"></span>'
+        + '<span>' + esc(r.name) + '</span>'
+        + '<span class="mut">' + esc(status) + '</span>'
         + '</div>';
     }).join('');
     route.forEach(r => _knownCids.add(String(r.concept_id)));
+  }
+
+  // ── Update left-pane concept name + progress ──
+  if (e.route && e.route.length) {
+    const current = e.route.find(r => r.status === 'active' || r.status === 'pending') || e.route[0];
+    if (current) {
+      const nameEl = document.querySelector('.ln-pane-left-concept');
+      if (nameEl) nameEl.textContent = current.name || '—';
+      const total = e.route.length;
+      const done = e.route.filter(r => ['done','conceded','lectured'].includes(r.status)).length;
+      const progEl = document.querySelector('.ln-pane-left-progress');
+      if (progEl) progEl.textContent = 'concept ' + (done + 1) + ' / ' + total;
+    }
+  }
+  // ── Update right-pane gauge concept name ──
+  if (e.route) {
+    const active = (e.route || []).find(r => r.status === 'active' || r.status === 'pending');
+    const gaugeEl = document.querySelector('.ln-gauge-concept');
+    if (gaugeEl && active) gaugeEl.textContent = active.name || '—';
   }
 
   // ── Evidence ──
@@ -657,405 +1773,427 @@ function updateGlass(e){
         const src = c.paper_title || (c.paper_id != null ? 'Source ' + esc(String(c.paper_id)) : esc(c.chunk_id));
         const txt = (c.text || '');
         const snippet = txt.length > 160 ? esc(txt.slice(0, 160)) + '…' : esc(txt);
-        return '<div class="ev-card" data-chunk="'+esc(c.chunk_id)+'">'
-          + '<div class="ev-source">'+esc(src)+'</div>'
-          + '<div class="ev-text">'+snippet+'</div>'
+        return '<div class="ev-card" data-chunk="' + esc(c.chunk_id) + '">'
+          + '<div class="ev-source">' + esc(src) + '</div>'
+          + '<div class="ev-text">' + snippet + '</div>'
           + '</div>';
       }).join('')
-    : '<span class="mut">–</span>';
+    : '<span class="mut">—</span>';
 
-  // ── Learner model with tier meter (includes pre-quiz "not yet assessed" concepts) ──
+  // ── Update grounded-in citation chips row ──
+  if (cited.length) {
+    const groundedRow = document.querySelector('.ln-grounded-row');
+    if (groundedRow) {
+      // Keep the label, rebuild chips
+      const label = groundedRow.querySelector('.ln-grounded-label');
+      groundedRow.innerHTML = '';
+      if (label) groundedRow.appendChild(label);
+      cited.slice(0, 3).forEach(c => {
+        const btn = document.createElement('button');
+        btn.className = 'ln-citation-chip';
+        btn.dataset.chunk = c.chunk_id;
+        btn.title = c.paper_title || c.chunk_id;
+        btn.setAttribute('aria-label', 'Cited source: ' + (c.paper_title || c.chunk_id));
+        btn.addEventListener('click', () => activateEvidence(c.chunk_id));
+        const icon = document.createElement('span');
+        icon.className = 'ln-citation-chip-icon';
+        icon.setAttribute('aria-hidden', 'true');
+        const title = document.createElement('span');
+        title.className = 'ln-citation-chip-title';
+        title.textContent = c.paper_title || c.chunk_id;
+        btn.appendChild(icon);
+        btn.appendChild(title);
+        groundedRow.appendChild(btn);
+      });
+      if (cited.length > 3) {
+        const more = document.createElement('span');
+        more.className = 'ln-grounded-more';
+        more.textContent = '+' + (cited.length - 3) + ' more';
+        groundedRow.appendChild(more);
+      }
+    }
+  }
+
+  // ── Learner model with tier meter ──
   const learnerItems = e.learner || [];
   document.getElementById('learner').innerHTML = learnerItems.length
-    ? learnerItems.map(c=>{
-        const mp = Math.round((c.mastery||0)*100);
-        const cp = Math.round((c.confidence||0)*100);
-        const held = (c.held||[]);
-        const assessed = c.assessed !== false; // default true for backwards compat
+    ? learnerItems.map(c => {
+        const mp = Math.round((c.mastery || 0) * 100);
+        const cp = Math.round((c.confidence || 0) * 100);
+        const held = (c.held || []);
+        const assessed = c.assessed !== false;
         const tier = c.tier || (assessed ? 'Seen' : null);
         const tierCls = tier ? tier.toLowerCase() : '';
-        const seg = (th) => '<div class="tier-seg" style="background:'+(mp>=th?'var(--'+(th>=78?'ok':th>=55?'ok':th>=30?'accent':'idle')+')':'var(--s3)')+'"></div>';
+        const seg = (th) => '<div class="tier-seg" style="background:' + (
+          mp >= th
+            ? (th >= 55 ? '#1f9d57' : (th >= 30 ? '#e08a1e' : '#6b6357'))
+            : '#e8e1d3'
+        ) + ';"></div>';
         const tierHtml = assessed
           ? '<div class="tier-row">'
-            + '<span class="tier-chip tier-'+tierCls+'">'+esc(tier)+'</span>'
-            + '<div class="tier-meter" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+mp+'" aria-label="Mastery '+mp+'%">'+seg(1)+seg(30)+seg(55)+seg(78)+'</div>'
-            + '<span class="tier-pct">'+mp+'%</span>'
+            + '<span class="tier-chip tier-' + tierCls + '">' + esc(tier) + '</span>'
+            + '<div class="tier-meter" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + mp + '" aria-label="Mastery ' + mp + '%">'
+            + seg(1) + seg(30) + seg(55) + seg(78) + '</div>'
+            + '<span class="tier-pct">' + mp + '%</span>'
             + '</div>'
             + '<div class="bar-row"><span class="bar-label">confid.</span>'
-            +   '<div class="bar-bg"><div class="bar-fill bar-c" style="width:'+cp+'%"></div></div>'
-            +   '<span>'+cp+'%</span></div>'
-          : '<div class="mut" style="font-size:.78rem">Not yet assessed</div>';
+            + '<div class="bar-bg"><div class="bar-fill bar-c" style="width:' + cp + '%;"></div></div>'
+            + '<span>' + cp + '%</span></div>'
+          : '<div class="mut" style="font-size:.78rem;">Not yet assessed</div>';
         return '<div>'
-          + '<div class="learner-name">'+esc(c.name)+'</div>'
+          + '<div class="learner-name">' + esc(c.name) + '</div>'
           + tierHtml
-          + (held.length ? '<div class="misconception">misconception: '+held.map(esc).join(', ')+'</div>' : '')
+          + (held.length ? '<div class="misconception">misconception: ' + held.map(esc).join(', ') + '</div>' : '')
           + '</div>';
       }).join('')
     : '<span class="mut">Mastery builds after your first answer</span>';
 
   // ── Decision rationale + why-sentence chip ──
-  if(e.rationale){
-    document.getElementById('why').style.display='';
-    document.getElementById('why-text').textContent=(e.decision||'')+' — '+e.rationale;
-    // Plain-language "why" chip — shows the human sentence; raw token stays above
+  if (e.rationale) {
+    document.getElementById('why').style.display = '';
+    document.getElementById('why-text').textContent = (e.decision || '') + ' — ' + e.rationale;
     const whySentence = e.why_sentence || null;
     const whyHuman = document.getElementById('why-human');
-    if(whyHuman){
+    if (whyHuman) {
       whyHuman.innerHTML = whySentence
-        ? '<span class="why-chip"><span class="why-chip-icon">→</span>'+esc(whySentence)
-          +(e.decision ? '<span class="why-token">'+esc(e.decision)+'</span>' : '')+'</span>'
-        : (e.decision ? '<span class="why-chip"><span class="why-chip-icon">→</span>'+esc(e.decision)+'</span>' : '');
+        ? '<span class="why-chip"><span class="why-chip-icon">&#x2192;</span>' + esc(whySentence)
+          + (e.decision ? '<span class="why-token">' + esc(e.decision) + '</span>' : '') + '</span>'
+        : (e.decision ? '<span class="why-chip"><span class="why-chip-icon">&#x2192;</span>' + esc(e.decision) + '</span>' : '');
     }
   }
 
-  // ── Induced panel (SSE update) ──
-  const indPanel = document.getElementById('induced-panel');
+  // ── Induced panel (center pane meta update) ──
   const induced = e.induced || [];
-  if(induced.length){
-    indPanel.style.display='';
-    document.getElementById('induced-list').innerHTML = induced.map(i=>
-      '<div><b>'+esc(i.prereq)+'</b> → '+esc(i.target)+' <span class="mut">conf '+esc(i.confidence)+'</span></div>'
-    ).join('');
+  if (induced.length) {
+    // Update center pane header meta with count
+    const metaEl = document.getElementById('induced-list');
+    if (metaEl) {
+      metaEl.textContent = induced.length + ' concepts';
+    }
   }
 
   // ── Concept map (SSE update) ──
-  if(e.graph){document.getElementById('cmap').innerHTML=e.graph;}
+  if (e.graph) { document.getElementById('cmap').innerHTML = e.graph; }
 
   // ── Cost ──
-  if(e.cost){
+  if (e.cost) {
     const costEl = document.getElementById('cost');
-    if(costEl){
+    if (costEl) {
       costEl.textContent = e.cost.tokens
-        ? e.cost.tokens+' tok ≈ $'+e.cost.usd
-        : 'Offline run — $0';
+        ? '$' + e.cost.usd
+        : '$0';
     }
   }
 
   // ── Recommend-next panel ──
-  const recPanel=document.getElementById('recommend');
-  const recList=document.getElementById('recommend-list');
-  const recs=e.recommend||[];
-  if(recs.length){
-    recPanel.style.display='';
-    recList.innerHTML=recs.map(r=>{
-      const icon=r.eligible?'✓':'🔒';
+  const recPanel = document.getElementById('recommend');
+  const recList = document.getElementById('recommend-list');
+  const recs = e.recommend || [];
+  if (recs.length) {
+    recPanel.style.display = '';
+    recList.innerHTML = recs.map(r => {
+      const icon = r.eligible ? '&#x2713;' : '&#x1F512;';
       return '<div class="rec-item">'
-        +'<span class="rec-icon">'+icon+'</span>'
-        +'<span><span class="rec-name">'+esc(r.name)+'</span>'
-        +' <span class="rec-reason">'+esc(r.reason)+'</span></span>'
-        +'</div>';
+        + '<span class="rec-icon">' + icon + '</span>'
+        + '<span><span class="rec-name">' + esc(r.name) + '</span>'
+        + ' <span class="rec-reason">' + esc(r.reason) + '</span></span>'
+        + '</div>';
     }).join('');
   }
 }
 
-// ── Build tracker helpers ────────────────────────────────────────────────────
+// ── Build tracker helpers ──
 const _BUILD_STAGE_MAP = {
   'discover':      'discover',
   'discover_done': 'discover',
   'digest':        'digest',
   'map':           'plan',
-  'teach':         'teach',   // first teach event = start-teaching
+  'teach':         'teach',
 };
 
-function _buildRowDone(rowId, iconEl, countEl, countText){
+function _buildRowDone(rowId, iconEl, countEl, countText) {
   const row = document.getElementById(rowId);
-  if(!row)return;
-  row.className='build-row done';
-  if(iconEl)iconEl.textContent='✓';
-  if(countEl&&countText)countEl.textContent=countText;
+  if (!row) return;
+  row.className = 'build-row done';
+  if (iconEl) iconEl.textContent = '✓';
+  if (countEl && countText) countEl.textContent = countText;
 }
-function _buildRowActive(rowId){
+function _buildRowActive(rowId) {
   const row = document.getElementById(rowId);
-  if(!row||row.classList.contains('done'))return;
-  row.className='build-row active';
+  if (!row || row.classList.contains('done')) return;
+  row.className = 'build-row active';
   const ic = row.querySelector('.build-icon');
-  if(ic)ic.textContent='○';
+  if (ic) ic.textContent = '○';
 }
 
 let _lastBuildStage = null;
 
-function buildDetailItem(icon, text){
-  // Append a streamed source/concept line to the build detail list (B + C).
-  const ul=document.getElementById('build-detail');
-  if(!ul||!text)return;
-  const li=document.createElement('li');
-  li.innerHTML='<span class="bd-ic">'+esc(icon)+'</span><span>'+esc(text)+'</span>';
+function buildDetailItem(icon, text) {
+  const ul = document.getElementById('build-detail');
+  if (!ul || !text) return;
+  const li = document.createElement('li');
+  li.innerHTML = '<span class="bd-ic">' + esc(icon) + '</span><span>' + esc(text) + '</span>';
   ul.appendChild(li);
 }
-function advanceBuildTracker(stage, countText){
-  // Map the SSE stage to a tracker row
+function advanceBuildTracker(stage, countText) {
   const rowKey = _BUILD_STAGE_MAP[stage] || null;
-  if(!rowKey)return;
-  // Mark previous rows done when we advance
-  const order = ['discover','digest','plan','teach'];
+  if (!rowKey) return;
+  const order = ['discover', 'digest', 'plan', 'teach'];
   const idx = order.indexOf(rowKey);
-  if(idx < 0)return;
-  for(let i=0;i<idx;i++){
+  if (idx < 0) return;
+  for (let i = 0; i < idx; i++) {
     const prev = order[i];
-    _buildRowDone('brow-'+prev, document.querySelector('#brow-'+prev+' .build-icon'),
-                  document.getElementById('bcount-'+prev), '');
+    _buildRowDone('brow-' + prev, document.querySelector('#brow-' + prev + ' .build-icon'),
+                  document.getElementById('bcount-' + prev), '');
   }
-  if(stage==='discover_done'||stage==='map'){
-    // Mark the current row done with count
-    _buildRowDone('brow-'+rowKey, document.querySelector('#brow-'+rowKey+' .build-icon'),
-                  document.getElementById('bcount-'+rowKey), countText||'');
-    // Activate next row
-    const next = order[idx+1];
-    if(next)_buildRowActive('brow-'+next);
+  if (stage === 'discover_done' || stage === 'map') {
+    _buildRowDone('brow-' + rowKey, document.querySelector('#brow-' + rowKey + ' .build-icon'),
+                  document.getElementById('bcount-' + rowKey), countText || '');
+    const next = order[idx + 1];
+    if (next) _buildRowActive('brow-' + next);
   } else {
-    _buildRowActive('brow-'+rowKey);
+    _buildRowActive('brow-' + rowKey);
   }
   _lastBuildStage = stage;
 }
 
-function handleEvent(e, steps, inp){
-  if(e.type==='dispatch'){
-    steps.length=0;
-    steps.push({label:e.label,detail:'',state:'active'});
+function handleEvent(e, steps, inp) {
+  if (e.type === 'dispatch') {
+    steps.length = 0;
+    steps.push({label: e.label, detail: '', state: 'active'});
     setFlow(steps);
-  } else if(e.type==='reply'){
-    steps.forEach(s=>s.state='done');setFlow(steps);
-    if(e.text)addBubble(e.kind==='boundary'?'ai boundary':'ai',e.text,true);
-  } else if(e.type==='step'){
-    steps.forEach(s=>s.state='done');
-    steps.push({label:e.label,detail:e.detail,state:'active',
-                skill:e.skill,method:e.method,paper:e.paper});
+  } else if (e.type === 'reply') {
+    steps.forEach(s => s.state = 'done'); setFlow(steps);
+    if (e.text) addBubble(e.kind === 'boundary' ? 'ai boundary' : 'ai', e.text, true);
+  } else if (e.type === 'step') {
+    steps.forEach(s => s.state = 'done');
+    steps.push({label: e.label, detail: e.detail, state: 'active',
+                skill: e.skill, method: e.method, paper: e.paper});
     setFlow(steps);
-    // Update live working indicator with the current step name
     const wl = document.getElementById('working-label');
-    if(wl) wl.textContent = e.label || 'Working…';
-  } else if(e.type==='feedback'){
-    const t=document.getElementById('thread');
-    const d=document.createElement('div');
-    d.className='feedback'+(e.correct?'':' wrong');
-    const mark=document.createElement('span');
-    mark.className='feedback-mark '+(e.correct?'ok':'warn');
-    mark.textContent=e.correct?'✓':'✗';
-    const txt=document.createElement('span');
-    txt.className='feedback-text';
-    txt.textContent=e.text||'';
-    d.appendChild(mark);d.appendChild(txt);
+    if (wl) wl.textContent = e.label || 'Working…';
+  } else if (e.type === 'feedback') {
+    const t = document.getElementById('thread');
+    const d = document.createElement('div');
+    d.className = 'feedback' + (e.correct ? '' : ' wrong');
+    const mark = document.createElement('span');
+    mark.className = 'feedback-mark ' + (e.correct ? 'ok' : 'warn');
+    mark.textContent = e.correct ? '✓' : '✗';
+    const txt = document.createElement('span');
+    txt.className = 'feedback-text';
+    txt.textContent = e.text || '';
+    d.appendChild(mark); d.appendChild(txt);
     t.appendChild(d);
-    t.scrollTop=t.scrollHeight;
-  } else if(e.type==='teach'){
-    steps.forEach(s=>s.state='done');setFlow(steps);
-    // If we were in the build phase, mark 'plan' done and 'teach' active on first teach
-    if(window.__BUILDING__ && _lastBuildStage !== 'teach'){
+    const chat = document.getElementById('chat');
+    chat.scrollTop = chat.scrollHeight;
+  } else if (e.type === 'teach') {
+    steps.forEach(s => s.state = 'done'); setFlow(steps);
+    if (window.__BUILDING__ && _lastBuildStage !== 'teach') {
       advanceBuildTracker('teach', '');
       _lastBuildStage = 'teach';
     }
-    if(e.text){
-      const bubble = addBubble('ai',e.text,true);
-      // Append inline citation chips for each cited chunk (e.cited[])
+    if (e.text) {
+      const bubble = addBubble('ai', e.text, true);
       const cites = e.cited || [];
-      if(cites.length){
+      if (cites.length) {
         const chipRow = document.createElement('div');
-        chipRow.style.cssText='margin-top:.4rem;display:flex;flex-wrap:wrap;gap:.3rem;align-items:center';
-        cites.forEach((c,i)=>{
+        chipRow.style.cssText = 'margin-top:.4rem;display:flex;flex-wrap:wrap;gap:.3rem;align-items:center';
+        cites.forEach((c, i) => {
           const chip = document.createElement('button');
-          chip.className='cite-chip';
-          chip.dataset.chunk=c.chunk_id;
-          chip.textContent='['+(i+1)+']';
-          chip.title=(c.paper_title||(c.paper_id!=null?'Source '+c.paper_id:c.chunk_id));
-          chip.addEventListener('click',()=>activateEvidence(c.chunk_id));
+          chip.className = 'cite-chip';
+          chip.dataset.chunk = c.chunk_id;
+          chip.textContent = '[' + (i + 1) + ']';
+          chip.title = (c.paper_title || (c.paper_id != null ? 'Source ' + c.paper_id : c.chunk_id));
+          chip.addEventListener('click', () => activateEvidence(c.chunk_id));
           chipRow.appendChild(chip);
         });
         bubble.appendChild(chipRow);
       }
     }
-  } else if(e.type==='question'){
-    if(e.text){
-      const qBubble = addBubble('ai qa','',false);
-      // Build header: recap badge OR bloom chip
+  } else if (e.type === 'question') {
+    if (e.text) {
+      const qBubble = addBubble('ai qa', '', false);
       const hdr = document.createElement('div');
-      hdr.className='qa-header';
-      if(e.is_retrieval){
+      hdr.className = 'qa-header';
+      if (e.is_retrieval) {
         const badge = document.createElement('span');
-        badge.className='recap-badge';
-        badge.textContent='🔁 Recap — revisiting an earlier concept';
+        badge.className = 'recap-badge';
+        badge.textContent = '&#x1F501; Recap — revisiting an earlier concept';
         hdr.appendChild(badge);
-      } else if(e.bloom_level){
+      } else if (e.bloom_level) {
         const chip = document.createElement('span');
-        chip.className='bloom-chip';
-        chip.textContent='QUESTION · '+String(e.bloom_level).toUpperCase();
+        chip.className = 'bloom-chip';
+        chip.textContent = 'QUESTION · ' + String(e.bloom_level).toUpperCase();
         hdr.appendChild(chip);
       }
-      if(hdr.children.length) qBubble.prepend(hdr);
-      // Add question text (markdown rendered)
+      if (hdr.children.length) qBubble.prepend(hdr);
       const p = document.createElement('div');
       p.innerHTML = md(e.text);
       qBubble.appendChild(p);
-      // Update input caption and placeholder
       const inp2 = document.getElementById('answer-input');
-      if(inp2){
+      if (inp2) {
         inp2.placeholder = 'Type your answer…';
         const lbl = document.getElementById('answer-label');
-        if(lbl) lbl.textContent = 'Your answer';
+        if (lbl) lbl.textContent = 'Your answer';
       }
     }
-  } else if(e.type==='state'){
+  } else if (e.type === 'state') {
     updateGlass(e);
-  } else if(e.type==='done'){
-    document.getElementById('working').style.display='none';
+  } else if (e.type === 'done') {
+    document.getElementById('working').style.display = 'none';
     const wl = document.getElementById('working-label');
-    if(wl) wl.textContent = 'Working…';
-    if(e.done){
-      // Session complete — reload to render the done-state template.
-      location.href='/tutor/'+SID;
+    if (wl) wl.textContent = 'Working…';
+    if (e.done) {
+      location.href = '/tutor/' + SID;
     } else {
-      inp.disabled=false;
+      inp.disabled = false;
       inp.focus();
     }
-  } else if(e.type==='build'){
-    steps.forEach(s=>s.state='done');
-    steps.push({label:e.label,detail:'',state:'active',skill:e.skill,method:e.method,paper:e.paper});
+  } else if (e.type === 'build') {
+    steps.forEach(s => s.state = 'done');
+    steps.push({label: e.label, detail: '', state: 'active', skill: e.skill, method: e.method, paper: e.paper});
     setFlow(steps);
-    // Update live step name in working indicator
     const wl = document.getElementById('working-label');
-    if(wl) wl.textContent = e.label || 'Building…';
-    // Advance the 4-row build tracker
-    if(e.stage==='discover')advanceBuildTracker('discover');
-    else if(e.stage==='discover_done')advanceBuildTracker('discover_done', e.count||'');
-    else if(e.stage==='source')buildDetailItem('🔎', e.label);          // B: stream each found source
-    else if(e.stage==='digest')advanceBuildTracker('digest');
-    else if(e.stage==='concept')buildDetailItem('●', e.label);          // C: stream each extracted concept
-    else if(e.stage==='map'){
-      advanceBuildTracker('map', e.count||'');
-      if(e.graph)document.getElementById('cmap').innerHTML=e.graph;
+    if (wl) wl.textContent = e.label || 'Building…';
+    if (e.stage === 'discover')           advanceBuildTracker('discover');
+    else if (e.stage === 'discover_done') advanceBuildTracker('discover_done', e.count || '');
+    else if (e.stage === 'source')        buildDetailItem('&#x1F50E;', e.label);
+    else if (e.stage === 'digest')        advanceBuildTracker('digest');
+    else if (e.stage === 'concept')       buildDetailItem('&#x25CF;', e.label);
+    else if (e.stage === 'map') {
+      advanceBuildTracker('map', e.count || '');
+      if (e.graph) document.getElementById('cmap').innerHTML = e.graph;
     }
-  } else if(e.type==='artifact'){
+  } else if (e.type === 'artifact') {
     renderArtifact(e);
-  } else if(e.type==='error'){
-    document.getElementById('working').style.display='none';
-    const inp=document.getElementById('answer-input');
-    if(inp){inp.disabled=false;}
-    showError(e.message||'The agent encountered an error.', true);
+  } else if (e.type === 'error') {
+    document.getElementById('working').style.display = 'none';
+    const inp2 = document.getElementById('answer-input');
+    if (inp2) { inp2.disabled = false; }
+    showError(e.message || 'The agent encountered an error.', true);
   }
 }
 
-function renderArtifact(e){
-  const host=document.getElementById('artifact-card');
-  if(!host)return;
-  host.style.display='';
-  host.innerHTML='<b>📄 Take-away ('+esc(e.format||'notes')+')</b>'
-    +' <a href="'+e.url+'" download style="margin-left:.4rem">Download .md</a>'
-    +'<pre style="white-space:pre-wrap;font-size:.8rem;margin:.4rem 0 0;max-height:11rem;overflow:auto">'
-    +esc((e.preview||'').slice(0,500))+'…</pre>';
+function renderArtifact(e) {
+  const host = document.getElementById('artifact-card');
+  if (!host) return;
+  host.style.display = '';
+  host.innerHTML = '<strong>&#x1F4C4; Take-away (' + esc(e.format || 'notes') + ')</strong>'
+    + ' <a href="' + e.url + '" download="" style="margin-left:.4rem;">Download .md</a>'
+    + '<pre style="white-space:pre-wrap;font-size:.75rem;margin:.4rem 0 0;max-height:9rem;overflow:auto;">'
+    + esc((e.preview || '').slice(0, 500)) + '…</pre>';
 }
 
-// ── B8: Inline error helpers ─────────────────────────────────────────────
-let _lastStreamBody = null; // remembers the last POST body so Retry can re-run
+// ── Inline error helpers ──
+let _lastStreamBody = null;
 
-function clearError(){
-  document.querySelectorAll('.error-bubble').forEach(el=>el.remove());
+function clearError() {
+  document.querySelectorAll('.error-bubble').forEach(el => el.remove());
 }
 
-function showError(message, retryable){
+function showError(message, retryable) {
   clearError();
   const t = document.getElementById('thread');
   const d = document.createElement('div');
   d.className = 'error-bubble';
-  d.setAttribute('role','alert');
+  d.setAttribute('role', 'alert');
   d.innerHTML =
     '<div class="error-bubble-body">'
-    +'<div class="error-bubble-title">⚠ Something went wrong</div>'
-    +'<div class="error-bubble-msg">'+esc(message||'An unexpected error occurred.')+'</div>'
-    +'<div class="error-bubble-actions">'
-    +(retryable!==false
+    + '<div class="error-bubble-title">&#x26A0; Something went wrong</div>'
+    + '<div class="error-bubble-msg">' + esc(message || 'An unexpected error occurred.') + '</div>'
+    + '<div class="error-bubble-actions">'
+    + (retryable !== false
       ? '<button class="error-btn-retry" type="button">Retry</button>'
       : '<button class="error-btn-retry" type="button" onclick="location.href=\'/tutor/\'+SID">Reload page</button>')
-    +'<button class="error-btn-dismiss" type="button">Dismiss</button>'
-    +'</div>'
-    +'</div>';
+    + '<button class="error-btn-dismiss" type="button">Dismiss</button>'
+    + '</div>'
+    + '</div>';
   t.appendChild(d);
-  t.scrollTop = t.scrollHeight;
-  // Wire buttons
+  const chat = document.getElementById('chat');
+  chat.scrollTop = chat.scrollHeight;
   const retryBtn = d.querySelector('.error-btn-retry');
-  if(retryBtn && retryable!==false){
-    retryBtn.addEventListener('click', ()=>{
+  if (retryBtn && retryable !== false) {
+    retryBtn.addEventListener('click', () => {
       d.remove();
-      if(_lastStreamBody !== null) streamEvents(_lastStreamBody);
+      if (_lastStreamBody !== null) streamEvents(_lastStreamBody);
     });
   }
-  d.querySelector('.error-btn-dismiss').addEventListener('click', ()=>{
+  d.querySelector('.error-btn-dismiss').addEventListener('click', () => {
     d.remove();
-    // Re-enable input so learner can try again manually
     const inp = document.getElementById('answer-input');
-    if(inp){ inp.disabled=false; inp.focus(); }
-    document.getElementById('working').style.display='none';
+    if (inp) { inp.disabled = false; inp.focus(); }
+    document.getElementById('working').style.display = 'none';
   });
 }
 
-async function streamEvents(body){
+async function streamEvents(body) {
   _lastStreamBody = body;
   clearError();
-  const inp=document.getElementById('answer-input');
-  inp.disabled=true;
-  document.getElementById('working').style.display='block';
-  const steps=[];
-  try{
-    const resp=await fetch('/tutor/'+SID+'/events',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(body||{})
+  const inp = document.getElementById('answer-input');
+  inp.disabled = true;
+  document.getElementById('working').style.display = 'block';
+  const steps = [];
+  try {
+    const resp = await fetch('/tutor/' + SID + '/events', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body || {})
     });
-    const reader=resp.body.getReader();
-    const dec=new TextDecoder();
-    let buf='';
-    while(true){
-      const r=await reader.read();
-      if(r.done)break;
-      buf+=dec.decode(r.value,{stream:true});
+    const reader = resp.body.getReader();
+    const dec = new TextDecoder();
+    let buf = '';
+    while (true) {
+      const r = await reader.read();
+      if (r.done) break;
+      buf += dec.decode(r.value, {stream: true});
       let i;
-      while((i=buf.indexOf('\n\n'))>=0){
-        const block=buf.slice(0,i);
-        buf=buf.slice(i+2);
-        const dl=block.split('\n').find(l=>l.startsWith('data:'));
-        if(dl)handleEvent(JSON.parse(dl.slice(5).trim()),steps,inp);
+      while ((i = buf.indexOf('\n\n')) >= 0) {
+        const block = buf.slice(0, i);
+        buf = buf.slice(i + 2);
+        const dl = block.split('\n').find(l => l.startsWith('data:'));
+        if (dl) handleEvent(JSON.parse(dl.slice(5).trim()), steps, inp);
       }
     }
-  }catch(err){
-    document.getElementById('working').style.display='none';
-    const inp=document.getElementById('answer-input');
-    if(inp){inp.disabled=false;}
-    showError(err&&err.message?err.message:'Network error — check your connection.', true);
+  } catch(err) {
+    document.getElementById('working').style.display = 'none';
+    const inp2 = document.getElementById('answer-input');
+    if (inp2) { inp2.disabled = false; }
+    showError(err && err.message ? err.message : 'Network error — check your connection.', true);
   }
 }
 
-async function submitAnswer(ev){
+async function submitAnswer(ev) {
   ev.preventDefault();
-  const inp=document.getElementById('answer-input');
-  const text=inp.value.trim();
-  if(!text)return false;
-  addBubble('me',text,false);
-  inp.value='';
-  await streamEvents({answer:text});
+  const inp = document.getElementById('answer-input');
+  const text = inp.value.trim();
+  if (!text) return false;
+  addBubble('me', text, false);
+  inp.value = '';
+  await streamEvents({answer: text});
   return false;
 }
 
-// Open-world cold start: the page loads in a "building" state and streams discover→digest→teach.
-if(window.__BUILDING__){
-  // Start elapsed timer
+// Open-world cold start
+if (window.__BUILDING__) {
   const _buildStart = Date.now();
-  const _buildTimer = setInterval(()=>{
+  const _buildTimer = setInterval(() => {
     const el = document.getElementById('build-elapsed');
-    if(el) el.textContent = Math.round((Date.now()-_buildStart)/1000)+'s elapsed';
+    if (el) el.textContent = Math.round((Date.now() - _buildStart) / 1000) + 's elapsed';
   }, 1000);
-  // Stream events + stop timer when done
-  (async()=>{
+  (async() => {
     await streamEvents({});
     clearInterval(_buildTimer);
-    // Mark all rows done once streaming ends
-    ['discover','digest','plan','teach'].forEach(r=>{
-      _buildRowDone('brow-'+r, document.querySelector('#brow-'+r+' .build-icon'),
-                    document.getElementById('bcount-'+r), '');
+    ['discover', 'digest', 'plan', 'teach'].forEach(r => {
+      _buildRowDone('brow-' + r, document.querySelector('#brow-' + r + ' .build-icon'),
+                    document.getElementById('bcount-' + r), '');
     });
   })();
 }
 
 // Apply markdown to server-rendered AI bubbles on initial page load
-document.querySelectorAll('.bubble.ai[data-md]').forEach(el=>{
-  el.innerHTML=md(el.textContent);
+document.querySelectorAll('.bubble.ai[data-md]').forEach(el => {
+  el.innerHTML = md(el.textContent);
 });
 </script>
-</body></html>
+</body>
+</html>
