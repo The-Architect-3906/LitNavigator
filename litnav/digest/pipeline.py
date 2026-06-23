@@ -97,11 +97,25 @@ def _write_graph(conn: sqlite3.Connection, di: DigestInput, concepts: list[dict]
     # Edges are written INSERT-OR-IGNORE on PK (prereq, target, edge_type). A prereq edge that
     # verify_edges downgraded to 'similarity' can therefore collide with a pre-existing similarity
     # edge on the same (A,B) pair — first writer wins, silently. Task 8's gate exercises this.
+    n_prereq = 0
     for e in scored_edges:
         if e["prereq_slug"] in ids and e["target_slug"] in ids:
             repo.record_edge(conn, ids[e["prereq_slug"]], ids[e["target_slug"]],
                              edge_type=e["edge_type"], source="digested",
                              confidence=e["confidence"], evidence_chunks=e["evidence"],
+                             slice_key=slice_key)
+            if e["edge_type"] == "prerequisite":
+                n_prereq += 1
+    # Reliability backbone: the live LLM edge proposal is non-deterministic and sometimes returns
+    # zero prerequisite edges, which leaves the induced map a disconnected column. When NO prereq
+    # edge survived and there are >=2 concepts, synthesize a sequential chain over the concept order
+    # (extraction order = teaching order), marked source='induced' so the UI renders it dashed —
+    # an inferred ordering, not a verified prerequisite.
+    if n_prereq == 0:
+        ordered = [c["slug"] for c in concepts if c["slug"] in ids]
+        for prev, nxt in zip(ordered, ordered[1:]):
+            repo.record_edge(conn, ids[prev], ids[nxt], edge_type="prerequisite",
+                             source="induced", confidence=0.0, evidence_chunks=[],
                              slice_key=slice_key)
     # Build a mapping: concept_db_id -> set of resolved chunk ids, so we can tag
     # each written chunk with the concept that owns it after writing keypoints.
