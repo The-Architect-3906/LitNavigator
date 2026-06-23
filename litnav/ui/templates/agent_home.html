@@ -369,6 +369,8 @@
       display: inline-block;
     }
     /* The visible styled placeholder title — hidden once user focuses */
+    /* Auto-growing, wrapping title field (textarea so long goals / narrow widths wrap
+       to multiple lines instead of scrolling on one line). */
     .ln-wt-input {
       font-family: 'Spectral', serif;
       font-size: 25px;
@@ -382,24 +384,15 @@
       width: 100%;
       outline: none;
       padding: 0;
+      display: block;
+      resize: none;
+      overflow: hidden;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      font-family: 'Spectral', serif;  /* textarea defaults to monospace; force serif */
     }
     .ln-wt-input::placeholder {
       color: #b3a890;
-    }
-    .ln-wt-cursor {
-      display: inline-block;
-      width: 2px;
-      height: 22px;
-      background: #6f6650;
-      margin-left: 3px;
-      vertical-align: -3px;
-      animation: ln-blink 1.1s step-end infinite;
-    }
-    /* Decorative caret only while the field is idle + empty — otherwise the real
-       browser caret takes over, so we never show two blinking cursors at once. */
-    .ln-wt-input:focus + .ln-wt-cursor,
-    .ln-wt-input:not(:placeholder-shown) + .ln-wt-cursor {
-      display: none;
     }
     .ln-wt-byline {
       margin-top: 12px;
@@ -1368,16 +1361,16 @@
             <div class="ln-working-title">
               <div class="ln-wt-label">WORKING TITLE — TYPE YOUR OBJECTIVE</div>
               <label for="goal" class="sr-only">Your learning goal</label>
-              <input
+              <textarea
                 id="goal"
                 name="goal"
-                type="text"
                 class="ln-wt-input"
+                rows="1"
                 placeholder="I want to understand multi-agent debate"
                 autocomplete="off"
                 autofocus
                 aria-label="Your learning goal"
-              ><span class="ln-wt-cursor" aria-hidden="true"></span>
+              ></textarea>
               <div class="ln-wt-byline">Assembled live by LitNavigator — an agentic tutor</div>
             </div>
 
@@ -1930,11 +1923,29 @@
 </div><!-- /.ln-screen -->
 
 <script>
-  /* Ctrl+Enter submits the goal form */
+  var goalEl = document.getElementById('goal');
+  var goalForm = document.getElementById('goal-form');
+  /* Auto-grow the title textarea to fit its wrapped content (no inner scrollbar). */
+  function autoGrow() {
+    if (!goalEl) return;
+    goalEl.style.height = 'auto';
+    goalEl.style.height = goalEl.scrollHeight + 'px';
+  }
+  if (goalEl) {
+    autoGrow();
+    goalEl.addEventListener('input', autoGrow);
+    /* Enter submits the goal; Shift+Enter inserts a newline. */
+    goalEl.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        if (goalForm) { goalForm.submit(); }
+      }
+    });
+  }
+  /* Ctrl/Cmd+Enter also submits (works from anywhere in the sheet). */
   document.addEventListener('keydown', function(e) {
     if ((e.ctrlKey || e.metaKey) && (e.key === 'Enter' || e.keyCode === 13)) {
-      var form = document.getElementById('goal-form');
-      if (form) { form.submit(); }
+      if (goalForm) { goalForm.submit(); }
     }
   });
 </script>
