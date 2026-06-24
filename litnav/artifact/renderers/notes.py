@@ -1,8 +1,8 @@
-"""Cornell-style concise notes renderer (spec §6.4).
+"""Cornell-style study notes renderer (spec §6.4).
 
-Produces cue-column + summary notes — NOT verbatim evidence — plus a retrieval
-prompt per concept and a citations footer.  Live path uses a cheap LLM grounded
-in the supplied evidence; offline path uses a deterministic template.
+Produces cue-column + explanation + summary notes grounded in the session evidence.
+Live path uses a cheap LLM; offline path uses a deterministic template.
+Citations are resolved to human-readable paper titles.
 """
 from __future__ import annotations
 
@@ -10,35 +10,63 @@ import os
 import sqlite3
 
 
-def _offline_template(concepts: list[dict], evidence_by_concept: dict[str, list[str]]) -> list[dict]:
-    """Build Cornell note entries without an LLM.
+def _resolve_citations(conn: sqlite3.Connection, chunk_ids: list[str]) -> list[str]:
+    """Map chunk IDs to readable paper references (Title, year). Falls back to chunk ID."""
+    resolved = []
+    seen: set[str] = set()
+    for cid in chunk_ids:
+        row = conn.execute(
+            "SELECT p.title, p.year, p.url FROM paper_chunks pc "
+            "LEFT JOIN papers p ON p.id = pc.paper_id WHERE pc.id=?", (cid,)
+        ).fetchone()
+        if row and row[0]:
+            title, year, url = row
+            label = f"{title} ({year})" if year else title
+            if url:
+                label = f"[{label}]({url})"
+            if label not in seen:
+                resolved.append(label)
+                seen.add(label)
+        else:
+            if cid not in seen:
+                resolved.append(cid)
+                seen.add(cid)
+    return resolved
 
-    Each entry has:
-    - concept: display name
-    - cues: one question derived from the concept name (not the raw evidence sentence)
-    - summary: a short condensed phrase (concept name + a trimmed clause), never
-                a verbatim copy of the evidence text.
-    """
+
+def _offline_template(concepts: list[dict], evidence_by_concept: dict[str, list[str]]) -> list[dict]:
+    """Build Cornell note entries without an LLM."""
     notes_list = []
     for c in concepts:
         name = c.get("name") or c.get("slug") or "?"
         slug = c.get("slug") or name.lower().replace(" ", "_")
         evs = evidence_by_concept.get(slug) or []
 
-        cue = f"What is {name} and why does it matter?"
+        cues = [
+            f"What is {name} and why does it matter?",
+            f"How does {name} work in practice?",
+        ]
 
-        # Build a short summary from the concept name plus a trimmed hint from evidence —
-        # deliberately avoiding a verbatim copy of any evidence sentence.
+        # Build explanation from first 2 evidence items
         if evs:
-            # Take first evidence item, strip the trailing period, truncate to ≤6 words.
-            raw = evs[0].rstrip(".")
-            words = raw.split()
-            hint = " ".join(words[:6]) + ("…" if len(words) > 6 else "")
-            summary = f"{name}: {hint}"
+            explanation = " ".join(ev.rstrip(".") + "." for ev in evs[:2])
         else:
-            summary = f"{name}: key concept — see evidence for details."
+            explanation = f"{name} is a key concept in this domain."
 
-        notes_list.append({"concept": name, "cues": [cue], "summary": summary})
+        # Short summary — trimmed from concept name + first evidence
+        if evs:
+            words = evs[0].rstrip(".").split()
+            hint = " ".join(words[:8]) + ("…" if len(words) > 8 else "")
+            summary = hint
+        else:
+            summary = f"Core idea: see explanation above."
+
+        notes_list.append({
+            "concept": name,
+            "cues": cues,
+            "explanation": explanation,
+            "summary": summary,
+        })
     return notes_list
 
 
@@ -46,10 +74,14 @@ def _build_prompt(concepts: list[dict], evidence_by_concept: dict[str, list[str]
                   language: str = "English") -> str:
     lines = [
         "Produce Cornell-style study notes grounded ONLY in the evidence below.",
-        "Rules: concise (Mayer's coherence principle) — do NOT copy sentences verbatim;",
-        "distil each concept into meaningful cues (questions) and a SHORT summary phrase.",
+        "For each concept write:",
+        "  - cues: 2-3 guiding questions a student should be able to answer",
+        "  - explanation: 2-4 sentences capturing the core idea IN YOUR OWN WORDS (no verbatim copying)",
+        "  - summary: one tight sentence — the single most important takeaway",
+        "Rules: concise (Mayer coherence), no bullet padding, no filler phrases.",
         f"Write ALL output in {language}.",
-        "Return JSON: {\"notes\":[{\"concept\":\"<name>\",\"cues\":[\"<q>\"],\"summary\":\"<short phrase>\"}]}",
+        'Return JSON: {"notes":[{"concept":"<name>","cues":["<q1>","<q2>"],'
+        '"explanation":"<2-4 sentences>","summary":"<one sentence>"}]}',
         "",
         "Evidence:",
     ]
@@ -58,7 +90,7 @@ def _build_prompt(concepts: list[dict], evidence_by_concept: dict[str, list[str]
         slug = c.get("slug") or name.lower().replace(" ", "_")
         evs = evidence_by_concept.get(slug) or []
         lines.append(f"  [{name}]")
-        for ev in evs:
+        for ev in evs[:4]:  # cap per-concept evidence to keep prompt tight
             lines.append(f"    - {ev}")
     return "\n".join(lines)
 
@@ -73,29 +105,10 @@ def render(
     budget: int | None = None,
     language: str = "English",
 ) -> str:
-    """Render Cornell-style study notes as a Markdown string.
-
-    Parameters
-    ----------
-    concepts:
-        Ordered list of ``{"slug": ..., "name": ...}`` dicts.
-    evidence_by_concept:
-        Map of slug → list of evidence strings (from the digest store).
-    citations:
-        List of citation IDs to append as a footer.
-    conn, session_id:
-        Passed through to the router for cost metering.
-    budget:
-        Optional token budget; forwarded to the router.
-    language:
-        The learner's output language (e.g. "Chinese"). Injected into the LLM prompt.
-        Offline/template path is language-neutral (structural Markdown only).
-    """
+    """Render Cornell-style study notes as a Markdown string."""
     provider = os.environ.get("LITNAV_LLM_PROVIDER", "").lower()
     offline = provider in ("none", "offline")
 
-    # Build the offline fallback unconditionally (used by router when provider=none,
-    # and also used as the fallback= value so the router never raises on schema errors).
     fallback_notes = _offline_template(concepts, evidence_by_concept)
     fallback = {"notes": fallback_notes}
 
@@ -115,27 +128,45 @@ def render(
         )
         notes_list = result.get("notes") or fallback_notes
 
+    # Resolve citations to human-readable paper references
+    resolved_citations = _resolve_citations(conn, citations)
+
     # --- Render Markdown ---
-    md_parts = ["# Study notes", ""]
+    md_parts = ["# Study Notes", ""]
 
     for entry in notes_list:
         name = entry.get("concept", "?")
         cues = entry.get("cues") or []
-        summary = entry.get("summary", "")
+        explanation = entry.get("explanation", "").strip()
+        summary = entry.get("summary", "").strip()
 
         md_parts.append(f"## {name}")
         md_parts.append("")
-        md_parts.append("**Cues:**")
-        for cue in cues:
-            md_parts.append(f"- {cue}")
+
+        if explanation:
+            md_parts.append(explanation)
+            md_parts.append("")
+
+        if cues:
+            md_parts.append("**Self-test questions:**")
+            for cue in cues:
+                md_parts.append(f"- {cue}")
+            md_parts.append("")
+
+        if summary:
+            md_parts.append(f"**Key takeaway:** {summary}")
+            md_parts.append("")
+
+        md_parts.append("> *Without looking, answer each question above from memory.*")
         md_parts.append("")
-        md_parts.append(f"**Summary:** {summary}")
-        md_parts.append("")
-        md_parts.append("> Recall prompt: without looking, answer each cue above from memory.")
+        md_parts.append("---")
         md_parts.append("")
 
-    cite_str = ", ".join(citations) if citations else "(none)"
-    md_parts.append(f"Citations: {cite_str}")
-    md_parts.append("")
+    if resolved_citations:
+        md_parts.append("## Sources")
+        md_parts.append("")
+        for ref in resolved_citations:
+            md_parts.append(f"- {ref}")
+        md_parts.append("")
 
     return "\n".join(md_parts)

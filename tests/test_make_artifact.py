@@ -31,6 +31,6 @@ def test_make_artifact_override_and_combination(tmp_path, monkeypatch):
     assert res.format == "combination"
     body = open(res.artifact_path, encoding="utf-8").read()
     assert "mermaid" in body                 # map section
-    assert "Study notes" in body             # notes section
+    assert "Study Notes" in body             # notes section
     assert "Worked Example" in body          # worked section
     assert "c0" in body                       # citations carried

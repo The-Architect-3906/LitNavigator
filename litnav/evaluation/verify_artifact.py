@@ -85,7 +85,7 @@ def main() -> int:
     assert res2.format == "combination"
     body2 = open(res2.artifact_path, encoding="utf-8").read()
     assert "mermaid" in body2, "combination must contain mindmap section"
-    assert "Study notes" in body2, "combination must contain Study notes section"
+    assert "Study Notes" in body2, "combination must contain Study notes section"
     assert "Worked Example" in body2, "combination must contain Worked Example section"
     assert "c0" in body2, "combination must cite c0"
     print(f"G-artifact PASS: make_artifact combination offline (3 sections + c0)")

@@ -11,19 +11,24 @@ def test_notes_offline_cornell_template(monkeypatch):
     monkeypatch.setenv("LITNAV_LLM_PROVIDER", "none")
     c = sqlite3.connect(":memory:"); init_db(c)
     out = notes.render(CONCEPTS, EV, citations=["c0", "c1"], conn=c, session_id="s")
-    assert "Cues" in out and "Summary" in out          # Cornell structure
+    # Cornell structure: self-test questions + key takeaway
+    assert "Self-test questions" in out and "Key takeaway" in out
     assert "ReAct" in out and "Tool Use" in out
-    assert "Citations:" in out and "c0" in out
-    assert any(w in out.lower() for w in ("recall", "retrieval", "test yourself", "without looking"))  # retrieval prompt
-    # NOT verbatim: the full evidence sentence should not be dumped wholesale offline (template summarizes)
+    # Citations section with chunk IDs (no paper row in memory DB → raw id shown)
+    assert "Sources" in out and "c0" in out
+    assert any(w in out.lower() for w in ("recall", "retrieval", "test yourself", "without looking"))
+    # NOT verbatim: full evidence sentence should not be dumped wholesale
     assert out.count("ReAct interleaves reasoning traces and actions.") <= 1
 
 def test_notes_live_uses_llm(monkeypatch):
     captured = {}
     def fake(prompt, *, tier, stage, fallback, **k):
         captured["called"] = True
-        return {"notes": [{"concept": "ReAct", "cues": ["what is ReAct?"], "summary": "reasoning+acting"}]}
+        return {"notes": [{"concept": "ReAct", "cues": ["what is ReAct?"],
+                           "explanation": "ReAct combines reasoning and acting.",
+                           "summary": "reasoning+acting"}]}
     monkeypatch.setattr(router, "complete_json", fake)
     c = sqlite3.connect(":memory:"); init_db(c)
     out = notes.render(CONCEPTS, EV, citations=["c0"], conn=c, session_id="s")
     assert captured.get("called") and "reasoning+acting" in out
+    assert "ReAct combines reasoning and acting." in out
