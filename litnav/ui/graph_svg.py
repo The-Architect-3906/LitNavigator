@@ -9,18 +9,22 @@ from __future__ import annotations
 
 import html
 
-# Learner-state fill colors — dark-surface-safe, consistent with the B1 design system.
-# Surfaces: --s1 #181d27, --s2 #1f2636, --s3 #28334a
-_STATE_FILL = {
-    "idle":     "#1f2636",   # --s2: neutral dark, unvisited
-    "current":  "#28334a",   # --s3: slightly brighter, active concept
-    "mastered": "#172b20",   # --ok (#2da65c) tinted surface: mastered
-    "conceded": "#2b1f10",   # --warn (#b3700d) tinted surface: conceded
-    "lectured": "#1e2638",   # --accent (#E0A33C) tinted surface: lectured/oriented
+# Learner-STATE drives the visible color (fill, border, text) — light "manuscript" palette matching
+# the tutor map legend (current=amber, mastered=green, contested=red, idle=gray dashed). State is the
+# signal; frontier_flag is only a secondary marker (contested override, below). The old code let
+# frontier_flag paint every node's border green ("consensus") regardless of state, so the whole map
+# looked mastered. Tuple = (fill, border, text).
+_STATE_STYLE = {
+    "idle":     ("#ffffff", "#d3cab8", "#9a907d"),   # not started — pale, dashed border
+    "current":  ("#fff7ea", "#e08a1e", "#7a4d09"),   # active — amber fill + border
+    "mastered": ("#f0faf3", "#4cae74", "#1f4d33"),   # mastered — green fill + border
+    "conceded": ("#fdf1ef", "#ef6a4a", "#9e3318"),   # conceded / not-yet — red-ish
+    "lectured": ("#eef1f6", "#9bb0cf", "#37445c"),   # oriented / lectured — cool blue-gray
 }
-# Frontier outline colors — semantic status tokens from B1.
-_FRONTIER_STROKE = {"consensus": "#2da65c", "contested": "#b3700d", "open": "#b3700d"}
-_CURRENT_STROKE = "#E0A33C"   # --accent amber: active concept border
+_CONTESTED_BORDER = "#ef6a4a"      # surfaces a contested frontier on an otherwise-neutral node
+_EDGE_STROKE = "#b3a98f"           # warm prerequisite edge
+_INDUCED_EDGE_STROKE = "#c79a3f"   # dashed amber for induced/inferred edges
+_SIMILARITY_STROKE = "#cfc7b5"     # pale dotted "related" link (undirected, not a prerequisite)
 
 _COL_W, _ROW_H = 215, 66
 _NODE_W, _NODE_H = 158, 42
@@ -32,6 +36,8 @@ def _layers(nodes: list[dict], edges: list[dict]) -> dict[int, int]:
     ids = {n["id"] for n in nodes}
     preds: dict[int, list[int]] = {i: [] for i in ids}
     for e in edges:
+        if e.get("kind") == "similarity":
+            continue   # similarity is undirected, not a precedence relation — ignore for layering
         if e["target_id"] in ids and e["prereq_id"] in ids:
             preds[e["target_id"]].append(e["prereq_id"])
     layer: dict[int, int] = {}
@@ -80,36 +86,56 @@ def to_svg(graph: dict, *, max_label: int = 20) -> str:
         "orient='auto'><path d='M0,0 L7,3 L0,6 z' fill='#4a5568'/></marker></defs>",
     ]
 
-    # Edges first (under nodes). Right edge of prereq -> left edge of target.
+    # Edges first (under nodes). Similarity ("related") links draw first, underneath: a pale dotted
+    # straight line between node centers, undirected (no arrow). Prerequisites then draw on top as a
+    # warm bezier from the prereq's right edge to the target's left edge, with a direction arrow.
     for e in edges:
+        if e.get("kind") != "similarity":
+            continue
+        if e["prereq_id"] not in pos or e["target_id"] not in pos:
+            continue
+        ax, ay = pos[e["prereq_id"]]
+        bx, by = pos[e["target_id"]]
+        cx1, cy1 = ax + _NODE_W / 2, ay + _NODE_H / 2
+        cx2, cy2 = bx + _NODE_W / 2, by + _NODE_H / 2
+        parts.append(
+            f"<line x1='{cx1:.0f}' y1='{cy1:.0f}' x2='{cx2:.0f}' y2='{cy2:.0f}' "
+            f"stroke='{_SIMILARITY_STROKE}' stroke-width='1' stroke-dasharray='2 4'/>"
+        )
+    for e in edges:
+        if e.get("kind") == "similarity":
+            continue
         if e["prereq_id"] not in pos or e["target_id"] not in pos:
             continue
         x1, y1 = pos[e["prereq_id"]]
         x2, y2 = pos[e["target_id"]]
         sx, sy = x1 + _NODE_W, y1 + _NODE_H / 2
         tx, ty = x2, y2 + _NODE_H / 2
-        dash = " stroke-dasharray='4 3'" if e["source"] == "induced" else ""
+        induced = e["source"] == "induced"
+        estroke = _INDUCED_EDGE_STROKE if induced else _EDGE_STROKE
+        dash = " stroke-dasharray='4 3'" if induced else ""
         parts.append(
             f"<path d='M{sx:.0f},{sy:.0f} C{sx + 40:.0f},{sy:.0f} {tx - 40:.0f},{ty:.0f} "
-            f"{tx:.0f},{ty:.0f}' fill='none' stroke='#4a5568' stroke-width='1.5'"
+            f"{tx:.0f},{ty:.0f}' fill='none' stroke='{estroke}' stroke-width='1.5'"
             f"{dash} marker-end='url(#arw)'/>"
         )
 
-    # Nodes.
+    # Nodes — STATE drives fill/border/text; current gets a thicker border; a contested frontier
+    # overrides the border on neutral (idle/lectured) nodes; idle + induced nodes are dashed.
     for n in nodes:
         x, y = pos[n["id"]]
-        fill = _STATE_FILL.get(n["state"], _STATE_FILL["idle"])
-        if n["state"] == "current":
-            stroke, sw = _CURRENT_STROKE, 3
-        else:
-            stroke, sw = _FRONTIER_STROKE.get(n["frontier_flag"], "#4a5568"), 1.5
-        dash = " stroke-dasharray='5 3'" if n["induced"] else ""
+        state = n.get("state") or "idle"
+        fill, stroke, text = _STATE_STYLE.get(state, _STATE_STYLE["idle"])
+        sw = 2.5 if state == "current" else 1.5
+        if state in ("idle", "lectured") and n.get("frontier_flag") == "contested":
+            stroke = _CONTESTED_BORDER
+        dash = " stroke-dasharray='5 3'" if (n.get("induced") or state == "idle") else ""
         label = n["name"] if len(n["name"]) <= max_label else n["name"][: max_label - 1] + "…"
         parts.append(
             f"<g><rect x='{x:.0f}' y='{y:.0f}' rx='8' width='{_NODE_W}' height='{_NODE_H}' "
             f"fill='{fill}' stroke='{stroke}' stroke-width='{sw}'{dash}/>"
             f"<text x='{x + _NODE_W / 2:.0f}' y='{y + _NODE_H / 2 + 4:.0f}' text-anchor='middle' "
-            f"font-size='12' fill='#e2e8f0'>{html.escape(label)}</text></g>"
+            f"font-size='12' fill='{text}'>{html.escape(label)}</text></g>"
         )
 
     parts.append("</svg>")

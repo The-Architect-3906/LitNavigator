@@ -184,11 +184,17 @@ class TutorSession:
         # B18: mark session done in DB when the route is fully complete (idempotent).
         if cur.get("done"):
             repo.complete_session(self.conn, self.sid)
-        events = [
-            {"type": "teach", "text": text, "cited": cur.get("cited") or []}
-            for text in (cur.get("teach_messages") or [])
-            if text
-        ]
+        # Attach per-message research provenance (skill/method/paper) so the "Show research detail"
+        # toggle reveals the pedagogy behind each teach turn, not only the open-world build steps.
+        teach_msgs = cur.get("teach_messages") or []
+        teach_provs = cur.get("teach_provenance") or []
+        events = []
+        for i, text in enumerate(teach_msgs):
+            if not text:
+                continue
+            meta = teach_provs[i] if i < len(teach_provs) else meta_for("teach_kp")
+            events.append({"type": "teach", "text": text, "cited": cur.get("cited") or [],
+                           "skill": meta["skill"], "method": meta["method"], "paper": meta["paper"]})
         # B16: when the route is complete, emit a short completion message instead of the empty
         # question bubble (text='', bloom_level=None) that previously appeared alongside the artifact.
         if cur.get("done"):
@@ -220,8 +226,9 @@ class TutorSession:
         return events
 
     @staticmethod
-    def _recent_teach_messages(history: list[dict]) -> list[str]:
-        """Return the teach/reteach block that most recently led to the current question."""
+    def _recent_teach_blocks(history: list[dict]) -> list[tuple[str, str]]:
+        """Return the teach/reteach block (text, node) that most recently led to the current
+        question. The node lets callers attach per-message research provenance (meta_for)."""
         if not history:
             return []
 
@@ -234,15 +241,21 @@ class TutorSession:
         if history[idx].get("event") in boundary_events:
             idx -= 1
 
-        collected: list[str] = []
+        collected: list[tuple[str, str]] = []
         while idx >= 0 and history[idx].get("event") in teach_events:
+            node = history[idx].get("event") or "teach_kp"
             text = history[idx].get("message") or history[idx].get("text") or ""
             closing = history[idx].get("closing") or ""
             if text:
-                collected.append(text + closing)
+                collected.append((text + closing, node))
             idx -= 1
         collected.reverse()
         return collected
+
+    @staticmethod
+    def _recent_teach_messages(history: list[dict]) -> list[str]:
+        """Return the teach/reteach block that most recently led to the current question."""
+        return [text for text, _ in TutorSession._recent_teach_blocks(history)]
 
     @staticmethod
     def _feedback_event(node: str, delta: dict) -> dict | None:
@@ -309,7 +322,9 @@ class TutorSession:
             st.get("status") in self._TERMINAL_ROUTE_STATUSES for st in route
         )
 
-        teach_messages = self._recent_teach_messages(vals.get("history", []))
+        teach_blocks = self._recent_teach_blocks(vals.get("history", []))
+        teach_messages = [text for text, _ in teach_blocks]
+        teach_provenance = [meta_for(node) for _, node in teach_blocks]
         teach_msg = teach_messages[-1] if teach_messages else None
 
         quiz = vals.get("current_quiz_item") or {}
@@ -361,6 +376,7 @@ class TutorSession:
             "concept_name": name,
             "teach": teach_msg,
             "teach_messages": teach_messages,
+            "teach_provenance": teach_provenance,
             "question": quiz.get("question"),
             "bloom": quiz.get("bloom_level"),
             "mastery": round(cs.get("mastery", 0.0), 3) if cs else None,

@@ -221,6 +221,13 @@ def _start_agent(goal: str, intent: str | None, selected_adapters: list[str] | N
         plan = resolve_goal(goal, ag.concepts, ag.off)
         if plan["kind"] in ("concept", "induce"):
             list(ag._start_teaching(plan["slug"]))   # run the first teach now
+        else:
+            # Unresolved goal (vague phrase like "teach me", or no concept match). Don't strand the
+            # learner in a goalless "TEACHING —" chat that deflects every message — start teaching over
+            # the FULL curated route (ORIENT roadmap + first concept), so teaching always begins.
+            ag.tutor = TutorSession(conn, ckpt, sid, out_dir=_ARTIFACT_DIR)
+            ag.tutor.start(ag.topic, target_concept_ids=[c["id"] for c in ag.concepts],
+                           mastery_threshold=0.75)
     return sid
 
 
@@ -268,7 +275,13 @@ def tutor_home(message: str = ""):
 @app.get("/tutor/start")
 def tutor_start(goal: str = "", intent: str = "", adapters: list[str] = Query(default=[])):
     from litnav.intent import INTENTS
-    sid = _start_agent(goal, intent if intent in INTENTS else None, selected_adapters=adapters or None)
+    valid_intent = intent if intent in INTENTS else None
+    # Guard: an empty goal with no intent would fall into a goalless curated session that never
+    # starts teaching (header shows "TEACHING —" and every message deflects). Bounce back to the
+    # home with a hint instead of stranding the learner in a dead chat.
+    if not goal.strip() and not valid_intent:
+        return RedirectResponse("/tutor?message=Enter+a+learning+goal+to+begin.", status_code=303)
+    sid = _start_agent(goal, valid_intent, selected_adapters=adapters or None)
     return RedirectResponse(f"/tutor/{sid}", status_code=303)
 
 
