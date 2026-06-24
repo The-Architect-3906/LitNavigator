@@ -1409,8 +1409,24 @@
         <!-- Thread: teach bubbles + quiz + feedback (server-rendered initial state) -->
         <div id="thread" aria-live="polite" aria-label="Conversation">
           <div class="bubble me">{{ concept_name or "Teach me" }}</div>
+          {% set _tp = teach_provenance or [] %}
           {% for msg in teach_messages or ([] if not teach else [teach]) %}
           <div class="bubble ai" data-md="">{{ msg | e }}</div>
+          {% set p = _tp[loop.index0] if loop.index0 < (_tp | length) else None %}
+          {% if p and ((p.skill and p.skill != '—') or (p.method and p.method != '—') or (p.paper and p.paper != '—')) %}
+          {%- set ns = namespace(first=true) -%}
+          <div class="research-chip" style="margin-left:0">
+            {%- if p.skill and p.skill != '—' -%}
+              <span class="chip-skill">{{ p.skill }}</span>{%- set ns.first = false -%}
+            {%- endif -%}
+            {%- if p.method and p.method != '—' -%}
+              {%- if not ns.first %}<span class="chip-sep">·</span>{% endif -%}{{ p.method }}{%- set ns.first = false -%}
+            {%- endif -%}
+            {%- if p.paper and p.paper != '—' -%}
+              {%- if not ns.first %}<span class="chip-sep">·</span>{% endif -%}<em>{{ p.paper }}</em>
+            {%- endif -%}
+          </div>
+          {% endif %}
           {% endfor %}
           {% if question %}<div class="bubble ai qa">{{ question | e }}</div>{% endif %}
         </div>
@@ -1788,6 +1804,16 @@ function addBubble(cls, text, _tw) {
   return d;
 }
 
+/* Build the inner HTML of a research-detail chip (skill · method · paper), or '' if none. */
+function researchChipHTML(s) {
+  if (!(s.skill || s.method || s.paper)) return '';
+  const skill  = s.skill  && s.skill  !== '—' ? '<span class="chip-skill">' + esc(s.skill) + '</span>' : '';
+  const method = s.method && s.method !== '—' ? esc(s.method) : '';
+  const paper  = s.paper  && s.paper  !== '—' ? '<em>' + esc(s.paper) + '</em>' : '';
+  const parts = [skill, method, paper].filter(Boolean);
+  return parts.length ? parts.join('<span class="chip-sep">·</span>') : '';
+}
+
 function setFlow(steps) {
   const f = document.getElementById('flow'); f.innerHTML = '';
   steps.forEach(s => {
@@ -1796,15 +1822,8 @@ function setFlow(steps) {
     const ic = s.state === 'done' ? '&#x2713;' : (s.state === 'active' ? '&#x25B6;' : '&#x25CB;');
     let html = '<span class="ic">' + ic + '</span><span>' + esc(s.label)
       + (s.detail ? ' <span class="mut">· ' + esc(s.detail) + '</span>' : '') + '</span>';
-    if (s.skill || s.method || s.paper) {
-      const skill  = s.skill  && s.skill  !== '—' ? '<span class="chip-skill">' + esc(s.skill) + '</span>' : '';
-      const method = s.method && s.method !== '—' ? esc(s.method) : '';
-      const paper  = s.paper  && s.paper  !== '—' ? '<em>' + esc(s.paper) + '</em>' : '';
-      const parts = [skill, method, paper].filter(Boolean);
-      if (parts.length) {
-        html += '<div class="research-chip">' + parts.join('<span class="chip-sep">·</span>') + '</div>';
-      }
-    }
+    const chip = researchChipHTML(s);
+    if (chip) html += '<div class="research-chip">' + chip + '</div>';
     d.innerHTML = html;
     f.appendChild(d);
   });
@@ -2148,6 +2167,15 @@ function handleEvent(e, steps, inp) {
           chipRow.appendChild(chip);
         });
         bubble.appendChild(chipRow);
+      }
+      // Glass-box provenance under the teach turn — revealed by "Show research detail".
+      const prov = researchChipHTML(e);
+      if (prov) {
+        const provEl = document.createElement('div');
+        provEl.className = 'research-chip';
+        provEl.style.marginLeft = '0';
+        provEl.innerHTML = prov;
+        bubble.appendChild(provEl);
       }
     }
   } else if (e.type === 'question') {

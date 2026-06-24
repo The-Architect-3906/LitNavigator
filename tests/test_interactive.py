@@ -30,6 +30,19 @@ def test_pauses_with_a_question_then_advances_on_correct_answer():
     assert s["mastery"] >= 0.75
 
 
+def test_teach_events_carry_research_provenance():
+    """Each teach event must carry skill/method/paper so the 'Show research detail' toggle
+    reveals the pedagogy behind a teach turn, not only behind the open-world build steps."""
+    ts = _session()
+    ts.start("agents", target_concept_ids=[REACT], mastery_threshold=0.75)
+    teach_events = [e for e in ts._terminal_events() if e["type"] == "teach"]
+    assert teach_events, "a teach turn must be emitted"
+    for e in teach_events:
+        assert e.get("skill") and e["skill"] != "—", f"teach event missing skill: {e}"
+        assert e.get("method") and e["method"] != "—", f"teach event missing method: {e}"
+        assert e.get("paper"), f"teach event missing paper provenance: {e}"
+
+
 def test_wrong_answer_triggers_reteach_then_pass():
     ts = _session()
     s = ts.start("agents", target_concept_ids=[REACT], mastery_threshold=0.75)
