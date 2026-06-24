@@ -1368,6 +1368,7 @@
                 name="goal"
                 class="ln-wt-input"
                 rows="1"
+                required
                 placeholder="I want to understand multi-agent debate"
                 autocomplete="off"
                 autofocus
@@ -1940,14 +1941,14 @@
     goalEl.addEventListener('keydown', function(e) {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
-        if (goalForm) { goalForm.submit(); }
+        if (goalForm) { goalForm.requestSubmit(); }  /* requestSubmit honors required/validation; submit() bypasses it */
       }
     });
   }
   /* Ctrl/Cmd+Enter also submits (works from anywhere in the sheet). */
   document.addEventListener('keydown', function(e) {
     if ((e.ctrlKey || e.metaKey) && (e.key === 'Enter' || e.keyCode === 13)) {
-      if (goalForm) { goalForm.submit(); }
+      if (goalForm) { goalForm.requestSubmit(); }  /* requestSubmit honors required/validation; submit() bypasses it */
     }
   });
 </script>
