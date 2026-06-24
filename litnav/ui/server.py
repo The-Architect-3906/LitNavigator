@@ -221,6 +221,13 @@ def _start_agent(goal: str, intent: str | None, selected_adapters: list[str] | N
         plan = resolve_goal(goal, ag.concepts, ag.off)
         if plan["kind"] in ("concept", "induce"):
             list(ag._start_teaching(plan["slug"]))   # run the first teach now
+        else:
+            # Unresolved goal (vague phrase like "teach me", or no concept match). Don't strand the
+            # learner in a goalless "TEACHING —" chat that deflects every message — start teaching over
+            # the FULL curated route (ORIENT roadmap + first concept), so teaching always begins.
+            ag.tutor = TutorSession(conn, ckpt, sid, out_dir=_ARTIFACT_DIR)
+            ag.tutor.start(ag.topic, target_concept_ids=[c["id"] for c in ag.concepts],
+                           mastery_threshold=0.75)
     return sid
 
 
