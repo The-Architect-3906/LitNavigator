@@ -455,9 +455,15 @@ class TestFindIterativeLoop:
         assert search_call_count[0] == 0, "Cache hit must not trigger any adapter search"
         assert len(result.sources) == 2
 
-    def test_round2_candidates_merged_and_deduped_before_rank(self, monkeypatch):
-        """After round 2, the rank is called on the MERGED (deduped) set, not just round-2 sources."""
-        TARGET = find_sources.TARGET_SOURCES
+    def test_round2_survivors_included_in_final_rank(self, monkeypatch):
+        """After round 2, the final rank is called on the union of r1 + r2 survivors (deduped).
+
+        New behavior (per-sub-query judging):
+        - Round-1 gate returns [] → no r1 survivors (forced refine).
+        - Round-2 per-sub-query gate passes r2_source as a survivor.
+        - Final rank call sees r2_source (+ shared if it passes r2 gate).
+        - shared paper appears only once even if surfaced by both rounds.
+        """
         r1_source = _src("Round1 Only Paper", source_type="arxiv", source_id="r1_id")
         shared = _src("Shared Paper", source_type="arxiv", source_id="shared_id")
         r2_source = _src("Round2 Only Paper", source_type="arxiv", source_id="r2_id")
@@ -473,19 +479,19 @@ class TestFindIterativeLoop:
                 search_round[0] += 1
                 if search_round[0] == 1:
                     return [r1_source, shared]
-                return [shared, r2_source]  # shared overlaps
+                return [shared, r2_source]  # shared overlaps with round 1
 
-        rank_inputs = []
+        rank_calls = []
         def fake_rank(goal, srcs, **k):
-            rank_inputs.append(list(srcs))
+            rank_calls.append((goal, list(srcs)))
             return srcs
 
         gate_call = [0]
         def fake_gate(goal, srcs, **k):
             gate_call[0] += 1
             if gate_call[0] == 1:
-                return []  # force refine
-            return srcs
+                return []  # round-1 gate fails → forces refine
+            return srcs   # sub-query gate passes everything
 
         conn = _db()
         monkeypatch.setattr(adapter_registry, "resolve", lambda ids: [FakeAdapter()])
@@ -498,13 +504,20 @@ class TestFindIterativeLoop:
         monkeypatch.setattr(intent_mod, "classify", lambda *a, **k: "reference")
 
         di = DiscoverInput(goal_text="compound niche goal", k=6)
-        find_sources.find(di, conn=conn, session_id="test")
+        result = find_sources.find(di, conn=conn, session_id="test")
 
-        # Round 2 rank call should have the merged set (r1 + r2 unique sources)
-        if len(rank_inputs) >= 2:
-            final_rank_titles = {s.title for s in rank_inputs[-1]}
-            assert "Round1 Only Paper" in final_rank_titles, "Round-1 sources should be in merged set"
-            assert "Round2 Only Paper" in final_rank_titles, "Round-2 new sources should be in merged set"
-            # shared paper should appear only once in the input to rank
-            shared_count = sum(1 for s in rank_inputs[-1] if s.title == "Shared Paper")
-            assert shared_count <= 1, "Shared paper should be deduplicated before ranking"
+        # The final rank call (last in rank_calls) is against goal_text and has the union.
+        # r1_source did NOT pass the round-1 gate so it should NOT be in the final union.
+        # r2_source passed the sub-query gate so it SHOULD be in the final result.
+        assert rank_calls, "rank_sources should have been called at least once"
+        final_goal, final_sources = rank_calls[-1]
+        assert final_goal == "compound niche goal", "Final rank must be against goal_text"
+
+        result_titles = {s.title for s in result.sources}
+        assert "Round2 Only Paper" in result_titles, "r2_source (sub-query survivor) should be in final result"
+        # shared paper is filtered out from rq_new because it was already seen in round-1 raw;
+        # 'Round1 Only Paper' was NOT a survivor so it should not appear either.
+        # Importantly, no source appears twice.
+        assert len(result.sources) == len({s.source_id for s in result.sources}), (
+            "Deduplication: each source_id should appear at most once"
+        )
