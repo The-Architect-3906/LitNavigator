@@ -33,13 +33,29 @@ def concept_graph(conn: sqlite3.Connection, session_id: str | None = None) -> di
         "SELECT id, name, frontier_flag FROM concepts ORDER BY id"
     ).fetchall()
     edges = [
-        {"prereq_id": r[0], "target_id": r[1], "source": r[2] or "curated"}
+        {"prereq_id": r[0], "target_id": r[1], "source": r[2] or "curated", "kind": "prerequisite"}
         for r in conn.execute(
             "SELECT prereq_concept, target_concept, source FROM concept_edges "
             "WHERE edge_type='prerequisite'"
         ).fetchall()
     ]
     induced_targets = {e["target_id"] for e in edges if e["source"] == "induced"}
+
+    # Similarity ("related") edges — drawn as undirected hints, never used for layering. The digest
+    # classifies most cross-concept links as similarity, so without these the map looks edgeless.
+    # Dedup symmetric pairs and drop any pair already linked by a prerequisite edge (no double line).
+    prereq_pairs = {frozenset((e["prereq_id"], e["target_id"])) for e in edges}
+    seen_sim: set = set()
+    for r in conn.execute(
+        "SELECT prereq_concept, target_concept, source FROM concept_edges "
+        "WHERE edge_type='similarity'"
+    ).fetchall():
+        pair = frozenset((r[0], r[1]))
+        if len(pair) < 2 or pair in prereq_pairs or pair in seen_sim:
+            continue
+        seen_sim.add(pair)
+        edges.append({"prereq_id": r[0], "target_id": r[1],
+                      "source": r[2] or "curated", "kind": "similarity"})
 
     state_by_id: dict[int, str] = {}
     if session_id is not None:

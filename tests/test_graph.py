@@ -30,6 +30,52 @@ def test_to_svg_renders_without_dependency():
     assert "ReAct" in svg  # a node label made it in
 
 
+def test_concept_graph_includes_similarity_edges_tagged():
+    """Similarity ('related') edges must reach the map, distinct from prerequisites — the digest
+    classifies most cross-concept links as similarity, and dropping them leaves a near-edgeless map."""
+    from litnav.storage import repo
+    conn = _conn()
+    repo.record_edge(conn, 2, 3, edge_type="similarity", source="digested",
+                     confidence=0.8, evidence_chunks=[], slice_key="t")
+    g = concept_graph(conn, session_id=None)
+    kinds = [e.get("kind") for e in g["edges"]]
+    assert kinds.count("prerequisite") == 6
+    sim = [e for e in g["edges"] if e.get("kind") == "similarity"]
+    assert len(sim) == 1
+    assert {sim[0]["prereq_id"], sim[0]["target_id"]} == {2, 3}
+
+
+def test_similarity_edge_not_used_for_layering():
+    """A similarity edge is not a precedence relation — it must not push a node into a later column."""
+    from litnav.ui.graph_svg import _layers
+    nodes = [{"id": 1}, {"id": 2}]
+    sim = [{"prereq_id": 1, "target_id": 2, "source": "digested", "kind": "similarity"}]
+    layer = _layers(nodes, sim)
+    assert layer[1] == 0 and layer[2] == 0
+
+
+def test_similarity_pair_already_prereq_is_not_duplicated():
+    """If a pair is already a prerequisite edge, the similarity duplicate is dropped (no double line)."""
+    from litnav.storage import repo
+    conn = _conn()
+    # 1->2 is a curated prerequisite in the fixture; a similarity over the same pair must be dropped.
+    repo.record_edge(conn, 1, 2, edge_type="similarity", source="digested",
+                     confidence=0.8, evidence_chunks=[], slice_key="t")
+    g = concept_graph(conn, None)
+    assert not any(e.get("kind") == "similarity" for e in g["edges"])
+
+
+def test_to_svg_renders_similarity_distinct_from_prereq():
+    from litnav.storage import repo
+    conn = _conn()
+    repo.record_edge(conn, 2, 3, edge_type="similarity", source="digested",
+                     confidence=0.8, evidence_chunks=[], slice_key="t")
+    svg = to_svg(concept_graph(conn, None))
+    assert "marker-end='url(#arw)'" in svg     # prerequisites keep the directed arrow
+    assert "<line" in svg                       # similarity drawn as an undirected line
+    assert "stroke-dasharray='2 4'" in svg      # similarity uses a dotted style
+
+
 def test_session_graph_quiz_posed_after_teach_phase():
     """After teaching all keypoints, the graph poses a quiz (assess phase starts)."""
     from litnav.ui.interactive import TutorSession

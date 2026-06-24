@@ -24,6 +24,7 @@ _STATE_STYLE = {
 _CONTESTED_BORDER = "#ef6a4a"      # surfaces a contested frontier on an otherwise-neutral node
 _EDGE_STROKE = "#b3a98f"           # warm prerequisite edge
 _INDUCED_EDGE_STROKE = "#c79a3f"   # dashed amber for induced/inferred edges
+_SIMILARITY_STROKE = "#cfc7b5"     # pale dotted "related" link (undirected, not a prerequisite)
 
 _COL_W, _ROW_H = 215, 66
 _NODE_W, _NODE_H = 158, 42
@@ -35,6 +36,8 @@ def _layers(nodes: list[dict], edges: list[dict]) -> dict[int, int]:
     ids = {n["id"] for n in nodes}
     preds: dict[int, list[int]] = {i: [] for i in ids}
     for e in edges:
+        if e.get("kind") == "similarity":
+            continue   # similarity is undirected, not a precedence relation — ignore for layering
         if e["target_id"] in ids and e["prereq_id"] in ids:
             preds[e["target_id"]].append(e["prereq_id"])
     layer: dict[int, int] = {}
@@ -83,8 +86,25 @@ def to_svg(graph: dict, *, max_label: int = 20) -> str:
         "orient='auto'><path d='M0,0 L7,3 L0,6 z' fill='#4a5568'/></marker></defs>",
     ]
 
-    # Edges first (under nodes). Right edge of prereq -> left edge of target.
+    # Edges first (under nodes). Similarity ("related") links draw first, underneath: a pale dotted
+    # straight line between node centers, undirected (no arrow). Prerequisites then draw on top as a
+    # warm bezier from the prereq's right edge to the target's left edge, with a direction arrow.
     for e in edges:
+        if e.get("kind") != "similarity":
+            continue
+        if e["prereq_id"] not in pos or e["target_id"] not in pos:
+            continue
+        ax, ay = pos[e["prereq_id"]]
+        bx, by = pos[e["target_id"]]
+        cx1, cy1 = ax + _NODE_W / 2, ay + _NODE_H / 2
+        cx2, cy2 = bx + _NODE_W / 2, by + _NODE_H / 2
+        parts.append(
+            f"<line x1='{cx1:.0f}' y1='{cy1:.0f}' x2='{cx2:.0f}' y2='{cy2:.0f}' "
+            f"stroke='{_SIMILARITY_STROKE}' stroke-width='1' stroke-dasharray='2 4'/>"
+        )
+    for e in edges:
+        if e.get("kind") == "similarity":
+            continue
         if e["prereq_id"] not in pos or e["target_id"] not in pos:
             continue
         x1, y1 = pos[e["prereq_id"]]
