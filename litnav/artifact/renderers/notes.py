@@ -10,27 +10,33 @@ import os
 import sqlite3
 
 
+_BLOOM_ORDER = {"recall": 1, "understand": 2, "apply": 3, "analyze": 4, "evaluate": 5, "create": 6}
+
+
 def _resolve_citations(conn: sqlite3.Connection, chunk_ids: list[str]) -> list[str]:
-    """Map chunk IDs to readable paper references (Title, year). Falls back to chunk ID."""
+    """Map chunk IDs to readable paper references. Falls back to arXiv:ID then raw ID."""
     resolved = []
     seen: set[str] = set()
     for cid in chunk_ids:
         row = conn.execute(
-            "SELECT p.title, p.year, p.url FROM paper_chunks pc "
+            "SELECT p.title, p.year, p.url, p.arxiv_id FROM paper_chunks pc "
             "LEFT JOIN papers p ON p.id = pc.paper_id WHERE pc.id=?", (cid,)
         ).fetchone()
-        if row and row[0]:
-            title, year, url = row
-            label = f"{title} ({year})" if year else title
-            if url:
-                label = f"[{label}]({url})"
-            if label not in seen:
-                resolved.append(label)
-                seen.add(label)
+        if row:
+            title, year, url, arxiv_id = row
+            if title:
+                label = f"{title} ({year})" if year else title
+                if url:
+                    label = f"[{label}]({url})"
+            elif arxiv_id:
+                label = f"arXiv:{arxiv_id}"
+            else:
+                label = cid
         else:
-            if cid not in seen:
-                resolved.append(cid)
-                seen.add(cid)
+            label = cid
+        if label not in seen:
+            resolved.append(label)
+            seen.add(label)
     return resolved
 
 
@@ -70,8 +76,12 @@ def _offline_template(concepts: list[dict], evidence_by_concept: dict[str, list[
     return notes_list
 
 
-def _build_prompt(concepts: list[dict], evidence_by_concept: dict[str, list[str]],
-                  language: str = "English") -> str:
+def _build_prompt(
+    concepts: list[dict],
+    evidence_by_concept: dict[str, list[str]],
+    prereqs_by_concept: dict[str, list[str]],
+    language: str = "English",
+) -> str:
     lines = [
         "Produce Cornell-style study notes grounded ONLY in the evidence below.",
         "For each concept write:",
@@ -79,8 +89,9 @@ def _build_prompt(concepts: list[dict], evidence_by_concept: dict[str, list[str]
         "  - explanation: 2-4 sentences capturing the core idea IN YOUR OWN WORDS (no verbatim copying)",
         "  - summary: one tight sentence — the single most important takeaway",
         "Rules: concise (Mayer coherence), no bullet padding, no filler phrases.",
+        "If a concept has prerequisites listed, you may briefly reference them but do not re-explain them.",
         f"Write ALL output in {language}.",
-        'Return JSON: {"notes":[{"concept":"<name>","cues":["<q1>","<q2>"],'
+        'Return JSON: {"notes":[{"concept":"<name>","cues":["<q1>","<q2>","<q3>"],'
         '"explanation":"<2-4 sentences>","summary":"<one sentence>"}]}',
         "",
         "Evidence:",
@@ -89,8 +100,9 @@ def _build_prompt(concepts: list[dict], evidence_by_concept: dict[str, list[str]
         name = c.get("name") or c.get("slug") or "?"
         slug = c.get("slug") or name.lower().replace(" ", "_")
         evs = evidence_by_concept.get(slug) or []
-        lines.append(f"  [{name}]")
-        for ev in evs[:4]:  # cap per-concept evidence to keep prompt tight
+        prereqs = prereqs_by_concept.get(slug) or []
+        lines.append(f"  [{name}]" + (f"  (prereqs: {', '.join(prereqs)})" if prereqs else ""))
+        for ev in evs[:4]:
             lines.append(f"    - {ev}")
     return "\n".join(lines)
 
@@ -102,10 +114,26 @@ def render(
     *,
     conn: sqlite3.Connection,
     session_id: str,
+    edges: list[dict] | None = None,
+    bloom_by_concept: dict[str, str] | None = None,
     budget: int | None = None,
     language: str = "English",
 ) -> str:
     """Render Cornell-style study notes as a Markdown string."""
+    edges = edges or []
+    bloom_by_concept = bloom_by_concept or {}
+
+    # Build name lookups from slug
+    name_of: dict[str, str] = {c.get("slug", ""): (c.get("name") or c.get("slug") or "?") for c in concepts}
+
+    # prereqs_by_concept[target_slug] = [prereq_name, ...]
+    prereqs_by_concept: dict[str, list[str]] = {}
+    for e in edges:
+        if e.get("edge_type") == "prerequisite":
+            tgt = e["target_slug"]
+            pre_name = name_of.get(e["prereq_slug"], e["prereq_slug"])
+            prereqs_by_concept.setdefault(tgt, []).append(pre_name)
+
     provider = os.environ.get("LITNAV_LLM_PROVIDER", "").lower()
     offline = provider in ("none", "offline")
 
@@ -116,7 +144,7 @@ def render(
         notes_list = fallback_notes
     else:
         from litnav.llm import router
-        prompt = _build_prompt(concepts, evidence_by_concept, language=language)
+        prompt = _build_prompt(concepts, evidence_by_concept, prereqs_by_concept, language=language)
         result = router.complete_json(
             prompt,
             tier="cheap",
@@ -128,7 +156,6 @@ def render(
         )
         notes_list = result.get("notes") or fallback_notes
 
-    # Resolve citations to human-readable paper references
     resolved_citations = _resolve_citations(conn, citations)
 
     # --- Render Markdown ---
@@ -136,11 +163,24 @@ def render(
 
     for entry in notes_list:
         name = entry.get("concept", "?")
+        slug = next((c["slug"] for c in concepts if c.get("name") == name), name.lower().replace(" ", "_"))
         cues = entry.get("cues") or []
         explanation = entry.get("explanation", "").strip()
         summary = entry.get("summary", "").strip()
 
+        bloom = bloom_by_concept.get(slug)
+        prereqs = prereqs_by_concept.get(slug)
+
         md_parts.append(f"## {name}")
+
+        # Metadata line — bloom level + prerequisite chain
+        meta_parts = []
+        if bloom:
+            meta_parts.append(f"Bloom: **{bloom}**")
+        if prereqs:
+            meta_parts.append(f"Prerequisite: {', '.join(prereqs)}")
+        if meta_parts:
+            md_parts.append(f"*{' · '.join(meta_parts)}*")
         md_parts.append("")
 
         if explanation:

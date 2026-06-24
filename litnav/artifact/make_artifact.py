@@ -141,10 +141,24 @@ def make_artifact(
 
         evidence_by_concept[slug] = evs
 
-    # ── 5. Build graph dict for mindmap renderer ──────────────────────────────
+    # ── 5. Collect Bloom level per concept (highest level reached in keypoints) ─
+    _bloom_order = {"recall": 1, "understand": 2, "apply": 3, "analyze": 4, "evaluate": 5, "create": 6}
+    bloom_by_concept: dict[str, str] = {}
+    for cid in ai.concept_ids:
+        if cid not in id_to_concept:
+            continue
+        slug = slug_of[cid]
+        rows = conn.execute(
+            "SELECT bloom_level FROM keypoints WHERE concept_id=?", (cid,)
+        ).fetchall()
+        if rows:
+            highest = max((r[0] or "recall" for r in rows), key=lambda b: _bloom_order.get(b, 0))
+            bloom_by_concept[slug] = highest
+
+    # ── 6. Build graph dict for mindmap renderer ──────────────────────────────
     graph = {"concepts": renderer_concepts, "edges": edges}
 
-    # ── 6. Dispatch to renderer(s) ────────────────────────────────────────────
+    # ── 7. Dispatch to renderer(s) ────────────────────────────────────────────
     lang = ai.language or "English"
 
     if fmt == "mindmap":
@@ -154,6 +168,7 @@ def make_artifact(
         content = notes.render(
             renderer_concepts, evidence_by_concept, citations,
             conn=conn, session_id=session_id, language=lang,
+            edges=edges, bloom_by_concept=bloom_by_concept,
         )
 
     elif fmt == "slides":
@@ -174,6 +189,7 @@ def make_artifact(
         notes_section = notes.render(
             renderer_concepts, evidence_by_concept, citations,
             conn=conn, session_id=session_id, language=lang,
+            edges=edges, bloom_by_concept=bloom_by_concept,
         )
         worked_section = worked_example.render(
             renderer_concepts, evidence_by_concept, citations,
