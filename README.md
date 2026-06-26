@@ -31,7 +31,76 @@ The closed-world edition (M0–M3) tutored from a *curated* paper pack. The **op
 
 ---
 
-## How it works
+## System architecture
+
+Five layers: **external sources → open-world build → one SQLite store → adaptive tutor core → the glass box.** One metered, provider-agnostic router fronts every LLM/embedding call.
+
+```mermaid
+flowchart TB
+    subgraph SRC["External sources"]
+        direction LR
+        S_AX["arXiv<br/>preprints"]
+        S_SS["Semantic Scholar<br/>papers · citations"]
+        S_WK["Wikipedia<br/>encyclopedic"]
+        S_OA["OpenAlex<br/>academic graph"]
+    end
+    subgraph BUILD["Open-world build — construct the concept graph on demand"]
+        direction LR
+        DISC["DISCOVER · find-sources<br/>intent · query→English · all adapters<br/>BM25 + embedding rerank · relevance gate<br/>iterative 2-round refinement"]
+        DIG["DIGEST · digest-corpus<br/>concept + keypoint extraction<br/>RefD prereq edges + LLM judge<br/>verify · confidence · write graph"]
+    end
+    DB[("SQLite — domain DB + LangGraph checkpoint DB<br/>concepts · edges · keypoints · papers · paper_chunks · learner_state · cost_ledger")]
+    subgraph CORE["Adaptive tutor core"]
+        direction LR
+        LG["LangGraph StateGraph<br/>22 nodes · SqliteSaver checkpoint · interrupt/resume<br/>BKT mastery · Bloom ladder · goal_type<br/>interrupt_after = check, assess_next"]
+        RTR["LLM Router — LiteLLM, any provider<br/>cheap gpt-4o-mini: teach · grade · artifact<br/>frontier gpt-4o: digest · edge verify<br/>offline deterministic fallback · $0"]
+    end
+    subgraph OUT["Output — the glass box"]
+        direction LR
+        UI["Glass-Box Web UI<br/>FastAPI · SSE · agent.html<br/>concept-map SVG · mastery bars · cost meter<br/>flow_meta provenance per node"]
+        ART["Artifact generator<br/>Cornell notes · Mermaid mind-map · Marp slides · worked-example<br/>citations resolved to paper titles"]
+    end
+    SRC --> DISC --> DIG --> DB --> LG
+    LG <--> RTR
+    DISC -. metered .-> RTR
+    DIG -. metered .-> RTR
+    LG --> UI
+    LG --> ART
+    DB -. cited evidence .-> UI
+    S_AX ~~~ S_SS ~~~ S_WK ~~~ S_OA
+    UI ~~~ ART
+    classDef src fill:#eef0fb,stroke:#5b49c4,color:#1c1444;
+    classDef disc fill:#dde6f2,stroke:#3f4b5e,color:#0f1b2b;
+    classDef dig fill:#c7ecd4,stroke:#258a51,color:#0c3019;
+    classDef store fill:#fff0d6,stroke:#b3700d,color:#43280a;
+    classDef core fill:#dfe7f5,stroke:#2d5d8f,color:#0f1b2b;
+    classDef router fill:#f7d9ec,stroke:#b03a7a,color:#3d0f27;
+    classDef ui fill:#fde2ee,stroke:#b03a7a,color:#3d0f27;
+    classDef art fill:#e7f7ec,stroke:#258a51,color:#0c3019;
+    class S_AX,S_SS,S_WK,S_OA src;
+    class DISC disc;
+    class DIG dig;
+    class DB store;
+    class LG core;
+    class RTR router;
+    class UI ui;
+    class ART art;
+```
+
+**Research foundations** — every adaptive decision is grounded in published learning-science / IR methods (computed in code), not the model's opinion:
+
+| Capability | Method (in code) | Grounding |
+|:--|:--|:--|
+| Mastery tracking | Bayesian Knowledge Tracing (BKT / BKT-lite) | Corbett & Anderson, 1995 |
+| Question generation | Bloom-leveled QG · distractor flaw gate · IRT difficulty | SAQUET 2024 · SMART (EMNLP 2025) |
+| Prerequisite edges | RefD prerequisite-relation extraction | Liang et al., EMNLP 2015 |
+| Teaching strategy | multimedia principle · expertise-reversal switch | Mayer 2009 · Kalyuga 2007 |
+| Source ranking | BM25 + `text-embedding-3-small` rerank | Robertson & Zaragoza, 2009 |
+| Spaced retrieval | FSRS forgetting-curve scheduling | FSRS |
+
+---
+
+## How a session runs — the agent flow
 
 The **open-world layer (blue → green) builds the concept graph on demand**, then hands it to the
 **inner teaching loop (purple, LangGraph + checkpointed)** — the same orient → teach → assess → route
