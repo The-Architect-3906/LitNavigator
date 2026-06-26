@@ -11,13 +11,21 @@
 #
 # Offline by default (no key) runs the full agentic flow deterministically at $0.
 
+# NOTE: litellm + tiktoken (with the tiktoken_ext plugins) MUST be collected, or live mode
+# silently falls back to the offline path inside the frozen exe — tiktoken can't find the
+# `cl100k_base` encoding ("Unknown encoding cl100k_base. Plugins found: []") because the
+# `tiktoken_ext` namespace package isn't picked up by default. The hidden-imports below register it.
 python -m PyInstaller --noconfirm --name LitNavigator --console `
   --add-data "data/seed;data/seed" `
   --add-data "litnav/ui/templates;litnav/ui/templates" `
   --collect-all langgraph `
   --collect-all langgraph_checkpoint `
   --collect-all langchain_core `
+  --collect-all litellm `
+  --collect-all tiktoken `
   --collect-submodules uvicorn `
+  --hidden-import tiktoken_ext `
+  --hidden-import tiktoken_ext.openai_public `
   run_litnav.py
 
 # Ship the user-facing .env template + quick-start NEXT TO the exe (run_litnav reads .env
