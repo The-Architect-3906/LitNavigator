@@ -1,320 +1,147 @@
 <div align="center">
 
-# 🧭 LitNavigator — Open-World Edition
+# 🧭 LitNavigator
 
-**Reads the literature. Builds the course. Shows its work.**
+### Reads the literature. Builds the course. Shows its work.
 
-### Give it any learning goal. It finds the most suitable real sources, digests them into a teachable concept map, and tutors *you* through it — adaptively, grounded in the literature, under strict cost control.
+Give it **any learning goal, in any language.** LitNavigator finds real papers, induces a
+**prerequisite-ordered concept map**, and tutors *you* through it — adaptively, with **every claim
+cited and every number rule-computed.** An open-world agentic study copilot.
 
-![Status](https://img.shields.io/badge/open--world-OW--0..7%20complete%20·%20live%20cold--start%20UI%20·%20e2e%20mean%204.33%2F5-brightgreen)
-![Python](https://img.shields.io/badge/python-3.11%2B-blue)
-![Agent](https://img.shields.io/badge/agent-LangGraph%20%2B%20ReAct-black)
-![Live](https://img.shields.io/badge/validation-live--first-orange)
+![Domain](https://img.shields.io/badge/domain-Education-5B49C4)
+![Agent](https://img.shields.io/badge/agent-LangGraph%20%2B%20ReAct-1C2333)
+![Providers](https://img.shields.io/badge/LLM-any%20provider%20(LiteLLM)-2D6CDF)
+![Offline](https://img.shields.io/badge/offline-%240%2C%20no%20key-258A51)
 ![ICCSE 2026](https://img.shields.io/badge/ICCSE%202026-Agentic%20AI%20Competition-purple)
+
+**[▶ Download &amp; run](https://github.com/The-Architect-3906/LitNavigator/releases/latest)** · [Architecture](#architecture) · [How to run](#how-to-run) · [What it does](#what-it-does) · [Results](#results)
 
 </div>
 
 ---
 
-## The gap nobody fills
+## What it is
 
-> *You have a question about a research field. Who goes and gets the right papers, turns them into a syllabus, and then teaches it to you — adapting as you stumble?*
+A researcher or student entering a new field faces a wall: **find the right papers → figure out what
+to read first → read passively → hope it sticks.** Search tools find papers but don't teach. Tutors
+teach, but only fixed, human-authored curricula — never the live literature. Generic chatbots bluff.
 
-| | Models you | Adaptive teach/test/reteach | Prereq sequencing | From living literature | **Finds its own sources** | Curriculum source |
-|:--|:--:|:--:|:--:|:--:|:--:|:--|
-| Elicit / SciSpace | ✗ | ✗ | ✗ | ✓ | ✓ | — |
-| NotebookLM | ✗ | ✗ | ✗ | ✓ (you upload) | ✗ | — |
-| Khanmigo / LearnLM | ✓ | ✓ | ✓ | ✗ | ✗ | human-authored |
-| **LitNavigator (open-world)** | ✓ | ✓ | ✓ | ✓ | ✓ | **discovered + digested live** |
+**LitNavigator closes that gap.** Type a goal; it *discovers* real sources, *digests* them into a
+cited, prerequisite-ordered concept map, then *teaches and quizzes* you through it — adapting when you
+struggle, conceding honestly when a concept won't land, and showing its work the whole way. It runs
+**fully offline at $0**, or **live for ~$0.02 a session** with any provider's key.
 
-The closed-world edition (M0–M3) tutored from a *curated* paper pack. The **open-world** edition removes the boundary: it **discovers** sources for any goal and **digests** them into the concept graph on demand.
-
----
-
-## System architecture
-
-Five layers: **external sources → open-world build → one SQLite store → adaptive tutor core → the glass box.** One metered, provider-agnostic router fronts every LLM/embedding call.
-
-```mermaid
-flowchart TB
-    subgraph SRC["External sources"]
-        direction LR
-        S_AX["arXiv<br/>preprints"]
-        S_SS["Semantic Scholar<br/>papers · citations"]
-        S_WK["Wikipedia<br/>encyclopedic"]
-        S_OA["OpenAlex<br/>academic graph"]
-    end
-    subgraph BUILD["Open-world build — construct the concept graph on demand"]
-        direction LR
-        DISC["DISCOVER · find-sources<br/>intent · query→English · all adapters<br/>BM25 + embedding rerank · relevance gate<br/>iterative 2-round refinement"]
-        DIG["DIGEST · digest-corpus<br/>concept + keypoint extraction<br/>RefD prereq edges + LLM judge<br/>verify · confidence · write graph"]
-    end
-    DB[("SQLite — domain DB + LangGraph checkpoint DB<br/>concepts · edges · keypoints · papers · paper_chunks · learner_state · cost_ledger")]
-    subgraph CORE["Adaptive tutor core"]
-        direction LR
-        LG["LangGraph StateGraph<br/>22 nodes · SqliteSaver checkpoint · interrupt/resume<br/>BKT mastery · Bloom ladder · goal_type<br/>interrupt_after = check, assess_next"]
-        RTR["LLM Router — LiteLLM, any provider<br/>cheap gpt-4o-mini: teach · grade · artifact<br/>frontier gpt-4o: digest · edge verify<br/>offline deterministic fallback · $0"]
-    end
-    subgraph OUT["Output — the glass box"]
-        direction LR
-        UI["Glass-Box Web UI<br/>FastAPI · SSE · agent.html<br/>concept-map SVG · mastery bars · cost meter<br/>flow_meta provenance per node"]
-        ART["Artifact generator<br/>Cornell notes · Mermaid mind-map · Marp slides · worked-example<br/>citations resolved to paper titles"]
-    end
-    SRC --> DISC --> DIG --> DB --> LG
-    LG <--> RTR
-    DISC -. metered .-> RTR
-    DIG -. metered .-> RTR
-    LG --> UI
-    LG --> ART
-    DB -. cited evidence .-> UI
-    S_AX ~~~ S_SS ~~~ S_WK ~~~ S_OA
-    UI ~~~ ART
-    classDef src fill:#eef0fb,stroke:#5b49c4,color:#1c1444;
-    classDef disc fill:#dde6f2,stroke:#3f4b5e,color:#0f1b2b;
-    classDef dig fill:#c7ecd4,stroke:#258a51,color:#0c3019;
-    classDef store fill:#fff0d6,stroke:#b3700d,color:#43280a;
-    classDef core fill:#dfe7f5,stroke:#2d5d8f,color:#0f1b2b;
-    classDef router fill:#f7d9ec,stroke:#b03a7a,color:#3d0f27;
-    classDef ui fill:#fde2ee,stroke:#b03a7a,color:#3d0f27;
-    classDef art fill:#e7f7ec,stroke:#258a51,color:#0c3019;
-    class S_AX,S_SS,S_WK,S_OA src;
-    class DISC disc;
-    class DIG dig;
-    class DB store;
-    class LG core;
-    class RTR router;
-    class UI ui;
-    class ART art;
-```
-
-**Research foundations** — every adaptive decision is grounded in published learning-science / IR methods (computed in code), not the model's opinion:
-
-| Capability | Method (in code) | Grounding |
-|:--|:--|:--|
-| Mastery tracking | Bayesian Knowledge Tracing (BKT / BKT-lite) | Corbett & Anderson, 1995 |
-| Question generation | Bloom-leveled QG · distractor flaw gate · IRT difficulty | SAQUET 2024 · SMART (EMNLP 2025) |
-| Prerequisite edges | RefD prerequisite-relation extraction | Liang et al., EMNLP 2015 |
-| Teaching strategy | multimedia principle · expertise-reversal switch | Mayer 2009 · Kalyuga 2007 |
-| Source ranking | BM25 + `text-embedding-3-small` rerank | Robertson & Zaragoza, 2009 |
-| Spaced retrieval | FSRS forgetting-curve scheduling | FSRS |
+| | Finds its own sources | From living literature | Prereq sequencing | Adaptive teach / test / reteach | Honest, cited |
+|:--|:--:|:--:|:--:|:--:|:--:|
+| Elicit / SciSpace | ✓ | ✓ | ✗ | ✗ | ✓ |
+| NotebookLM | ✗ | ✓ (you upload) | ✗ | ✗ | ✓ |
+| Khanmigo / LearnLM | ✗ | ✗ | ✓ | ✓ | ✓ |
+| **LitNavigator** | **✓** | **✓** | **✓** | **✓** | **✓** |
 
 ---
 
-## How a session runs — the agent flow
+## Architecture
 
-The **open-world layer (blue → green) builds the concept graph on demand**, then hands it to the
-**inner teaching loop (purple, LangGraph + checkpointed)** — the same orient → teach → assess → route
-machine as the curated edition — and finally to **artifacts (pink)** and **next-step (grey)**. Every
-LLM/embedding call goes through the **one metered router (amber)**.
+**Five layers** — external sources → open-world build → one SQLite store → an adaptive tutor core →
+the glass-box UI — all behind one metered, provider-agnostic router.
 
-```mermaid
-flowchart TD
-    G([🎯 Your learning goal])
+![LitNavigator system architecture](docs/assets/architecture-system.png)
 
-    %% ===================== OPEN-WORLD: build the graph on demand =====================
-    subgraph DISC [find-sources · DISCOVER · OW-3 / 3.1]
-      direction TB
-      FS0[normalize query\nany-language goal → English search query]
-      FS1[intent classify\ngoal → survey · applied · cutting-edge]
-      FS2[selectable adapters · OpenAlex · Semantic Scholar · arXiv · Wikipedia\nmetadata + authority]
-      FS3[BM25 prefilter → embedding-cosine rerank\n+ authority + dedup]
-      FSG[relevance gate\ncheap LLM drops off-topic sources]
-      FS4[top-k full text → sub-chunked c0..cN]
-      FS0 --> FS1 --> FS2 --> FS3 --> FSG --> FS4
-    end
-    subgraph DIG [digest-corpus · DIGEST · OW-2]
-      direction TB
-      DG1[extract concepts + keypoints\ncheap · temp 0 · grounded in chunks]
-      DG2[propose edges\nRefD prereq signal + LLM + cosine]
-      DG3[gpt-4o verify high-impact edges\ninduced_confidence · downgrade unsupported]
-      DG4[persist concepts · edges · keypoints · quiz · chunks\nsource=digested · slice cache]
-      DG1 --> DG2 --> DG3 --> DG4
-    end
-    G --> FS0
-    FS4 --> DG1
-    DG4 --> CG[(Concept graph · SQLite\nconcepts · edges · keypoints · quiz · chunks\nprereq solid · similarity dashed · digested)]
+**The agent loop.** Teaching runs on a checkpointed **LangGraph** state machine: it plans a route over
+the concept map, teaches each concept keypoint-by-keypoint, quizzes at rising Bloom levels, and
+**recovers when you're wrong** — reteaching with a new strategy, re-explaining on "I'm lost",
+detouring to a missing prerequisite, or conceding honestly. Mastery is computed by rule (BKT), never
+by the model grading itself.
 
-    %% ===================== INNER LOOP — LangGraph, checkpointed =====================
-    CG --> GE[goal_elicit\ngoal_type → Bloom ceiling]
-    GE --> PL[planner\nroute over target concepts]
-    PL -->|new concept| IND[induce_scaffold\nderive prereqs · mine misconceptions]
-    PL -->|multi-stop route| OT[orient_tour\nshow the roadmap first]
-    IND --> SN
-    OT --> SN
-    PL -->|else| SN
-    SN{select_next\n↻ next concept · or done}
-    SN -->|next concept| RT[retrieve evidence\ncited chunks]
-    RT -->|concept has keypoints| IK[init_kp → teach_kp\npaper-grounded explanation]
-    RT -->|no keypoints| LT[teach · legacy fallback]
-
-    subgraph TA [TEACH · ASSESS — keypoint by keypoint]
-      direction TB
-      IK --> AN[assess_next\nquiz at rising Bloom · learner answers]
-      AN -->|lost| HL[handle_lost\nre-explain · no grade]
-      HL --> AN
-      AN -->|answer| GK[grade_kp\nBKT/Rasch mastery · detect misconception\nfrontier escalation near threshold]
-      GK -->|correct → Bloom up · or hold| AN
-      GK -->|wrong · retries left| RK[reteach_kp\nswitch strategy]
-      RK --> AN
-      GK -->|mastered ≥ threshold · or reteach exhausted| AK[advance_kp]
-    end
-    AK --> SN
-
-    subgraph LEG [fallback — concepts without authored keypoints]
-      direction TB
-      LT -->|has quiz| CK[check · Socratic Q]
-      LT -->|quizless| LEC[lecture · no mastery claim]
-      CK --> GR[grade · BKT · detect misconception]
-      GR -->|misconception · retries left| RE[reteach] --> LT
-      GR -->|missing prereq| DI[diagnose → replan\ninsert missing prereq]
-    end
-    GR -->|mastered| SN
-    LEC --> SN
-    DI --> SN
-
-    %% ===================== ARTIFACTS + NEXT =====================
-    SN -->|all concepts done| ART
-    ART[make-artifact · ARTIFACT · OW-5\nselect format → mind-map · notes · slides ·\nworked-example · combination\nretrieval prompt + citations · in learner's language]
-    ART --> RN[recommend-next · OW-6\nhard-prereq filter + mastery-gain ranker]
-    RN --> DONE([✅ session done])
-    CG -.on demand · deck · notes · map.-> ART
-
-    %% ===================== COST SPINE — single metered chokepoint =====================
-    subgraph SPINE [Cost spine · OW-0]
-      RTR[router\ntier registry · per-session budget cap + 80% alert\nresult cache · strict liveness · cost_ledger]
-    end
-    FS1 -.meter.-> RTR
-    DG1 -.-> RTR
-    DG3 -.-> RTR
-    GE -.-> RTR
-    GK -.-> RTR
-    ART -.-> RTR
-
-    classDef disc fill:#dde6f2,stroke:#3f4b5e,color:#0f1b2b;
-    classDef dig fill:#c7ecd4,stroke:#258a51,color:#0c3019;
-    classDef teach fill:#d7ccff,stroke:#5b49c4,color:#1c1444;
-    classDef spine fill:#ffdf9e,stroke:#b3700d,color:#43280a;
-    classDef art fill:#ffd9ec,stroke:#b03a7a,color:#3d0f27;
-    classDef store fill:#eaf3ff,stroke:#2d5d8f,color:#0f1b2b;
-    classDef pending fill:#eee,stroke:#999,color:#555,stroke-dasharray:4 3;
-    class G disc;
-    class FS0,FS1,FS2,FS3,FSG,FS4 disc;
-    class DG1,DG2,DG3,DG4 dig; class CG store;
-    class GE,PL,IND,OT,SN,RT,IK,AN,HL,GK,RK,AK,LT,CK,LEC,GR,RE,DI teach;
-    class ART art; class RN pending; class DONE store; class RTR spine;
-```
-
-> **Reading it:** DISCOVER + DIGEST are the open-world additions that *construct* the graph; everything
-> from `goal_elicit` down is the checkpointed LangGraph inner loop (concepts **with** authored keypoints
-> take the `teach_kp → assess_next → grade_kp → reteach_kp` path; concepts **without** take the legacy
-> `teach → check → grade → diagnose/replan` fallback). Mastery is always BKT/Rasch from real answers,
-> never LLM self-judgement.
-
-**Stage skills** the outer loop invokes (each contracted, metered, live-verified):
-
-| Stage | Status | What it does |
-|:--|:--:|:--|
-| **find-sources** (DISCOVER) | ✅ live | goal + intent → real sources from a **selectable adapter registry** (OpenAlex · Semantic Scholar · arXiv · Wikipedia default-on; Stack Overflow opt-in), ranked by relevance × authority, top-k full text fetched |
-| **digest-corpus** (DIGEST) | ✅ live | sources → distinct concepts → prerequisite (RefD **+** LLM) and similarity edges → `gpt-4o` verify → grounded, cited graph |
-| **teach / assess** (inner loop) | ✅ live | per-keypoint adaptive teaching; goal-elicited Bloom ceiling; metered grade with frontier escalation near the mastery threshold; MCQ distractors + flaw gate + IRT difficulty; FSRS spacing + retention probe; mastery from answers (BKT/Rasch), never LLM self-judgment |
-| **make-artifact** (ARTIFACT) | ✅ live | scenario → format selector → mind-map / Cornell notes / Marp slides / worked-example / combination; every artifact carries a retrieval prompt + resolving citations |
-| **recommend-next** | ✅ live | hard-prereq filter + soft mastery-gain ranker; prereq-aware ready-now vs blocked |
+![LitNavigator agent flow (LangGraph)](docs/assets/architecture-flow.png)
 
 ---
 
-## Live-first — the validation principle
+## How to run
 
-Open-world capability is meaningless if only tested offline. So **every capability skill has a LIVE gate** that runs against a real provider and asserts structure + quality + **real metered cost**; offline gates are kept only for deterministic safety/math. A strict mode makes a real call *provably distinct* from a silent fallback (a dead provider raises, never quietly returns a fixture).
+### Option A — Download the app (Windows, no setup)
 
-What this caught and fixed, on real runs:
-- the digest's `frontier` tier was silently calling `gpt-4o-mini` (billed at gpt-4o rates) — **tier routing fixed**, the judge now runs on real `gpt-4o`;
-- a chunk-id format bug dropped **100%** of proposed edges — fixed; edges now build;
-- the cheap model self-judging gave false confidence — the real `gpt-4o` judge corrects it; and a non-LLM **RefD** signal recovers genuine prerequisites the judge alone rejects.
+1. Download **`LitNavigator-windows.zip`** from the **[latest release](https://github.com/The-Architect-3906/LitNavigator/releases/latest)** and unzip.
+2. Run **`LitNavigator.exe`** → it starts a local server and opens `http://127.0.0.1:8000/tutor`.
+3. **Offline by default** ($0, no key): the full agentic flow on a curated agent-papers corpus.
+4. **Enable live open-world** — discover + digest real papers for *any* goal — by dropping a **`.env`**
+   next to the exe (a `.env.example` is included):
 
-A full digest (discover → 8 concepts → RefD+LLM edges → gpt-4o judge) costs **≈ $0.003**. Offline, everything runs at **$0**.
+   ```dotenv
+   LITNAV_LLM_PROVIDER=openai
+   LITNAV_LLM_API_KEY=sk-...
+   ```
 
----
+   Provider-agnostic via **LiteLLM** — OpenAI · Anthropic · Gemini · DeepSeek · Groq · local /
+   any OpenAI-compatible endpoint. A live session costs about **$0.02**. After launch, the exe writes a
+   **`litnav_startup.log`** next to it showing whether live mode engaged (`provider`, `mode`).
 
-## Quick start
+### Option B — Run from source (any OS)
 
 ```bash
 pip install -r requirements.txt
-
-# Offline gates (deterministic, $0, no key, no network)
-python -m litnav.evaluation.verify_cost      # cost spine: metering + budget cap + record-only refusal
-python -m litnav.evaluation.verify_digest    # digest determinism/schema unit gate
-python -m litnav.evaluation.verify_discover  # find-sources parsing/rank/dedup/intent
-python -m litnav.evaluation.verify_teach_assess  # goal/Bloom/flaw-gate/FSRS/strategy determinism
-python -m litnav.evaluation.verify_artifact  # format selector + mind-map/combination + citations
-python -m litnav.evaluation.verify_m0        # legacy closed-world gates (still green)
-pytest -q                                    # full suite — 557 passed offline ($0) · 16 live-gated (573 total)
-
-# LIVE gates (real provider; set LITNAV_LLM_PROVIDER=openai + LITNAV_LLM_API_KEY in .env)
-python -m litnav.evaluation.verify_liveness      # a real call is distinguishable from a fallback
-python -m litnav.evaluation.verify_cost_live     # budget cap fires on real spend
-python -m litnav.evaluation.verify_digest_live   # real LLM extracts + builds + judges a graph
-python -m litnav.evaluation.verify_discover_live # real OpenAlex/Semantic Scholar/arXiv/Wikipedia discovery → digest
-python -m litnav.evaluation.verify_teach_assess_live # real goal elicit + distractors + metered grade
-python -m litnav.evaluation.verify_artifact_live # real notes/slides/worked-example, citations resolve, metered
+python -m litnav.ui.server      # → http://127.0.0.1:8000/tutor
 ```
 
-> Offline is the deterministic floor; the LIVE gates are the proof the capability works.
-
-### Unified web UI (open-world tutor + glass-box)
-```bash
-python -m litnav.ui.server     # http://127.0.0.1:8000/tutor — Chat + Glass-box views
-```
-
-The `/tutor/{sid}` page shows the full agent session: per-step skill/method/paper chips,
-live mastery scores, concept-map SVG, cost meter, and a recommend-next card at session end.
+Offline by default ($0). For live mode, create a `.env` in the project root with the keys above.
 
 ---
 
-## Roadmap (open-world milestones)
+## What it does
 
-| Milestone | Status | Proof |
-|:--|:--:|:--|
-| **Phase 0** · LLM liveness precondition | ✅ done · live | `verify_liveness` |
-| **OW-0** · Cost spine (registry · metered router · budget cap · result cache) | ✅ done · live | `verify_cost_live` |
-| **OW-1** · Data model (concept-graph + learner + cache + ledger schema) | ✅ done | schema + repo tests |
-| **OW-2** · digest-corpus (RefD+LLM edges, gpt-4o verify, cache) | ✅ done · live | `verify_digest_live` |
-| **OW-3** · find-sources (selectable adapters — OpenAlex · Semantic Scholar · arXiv · Wikipedia + Stack Overflow opt-in, BM25+rerank, full text) + OW-3.1 (relevance gate, multilingual query) | ✅ done · live | `verify_discover_live` |
-| **OW-4** · TEACH/ASSESS (goal elicitation, Bloom quiz, distractors, IRT, FSRS, retention probe, escalation, prereq-detour, mid-session goal-pivot) | ✅ done · live | `verify_teach_assess_live` |
-| **OW-5** · make-artifact (selector → map/notes/slides/worked-example/combination; retrieval prompt + citations) + OW-5.1 persistence | ✅ done · live | `verify_artifact_live` |
-| **OW-6** · recommend-next + unified glass-box+user frontend + quality hardening (multilingual output, source sub-chunking, discovery precision, quiz variety, feedback depth) | ✅ done · live | `verify_openworld_e2e_live` |
-| **OW-7** · live cold-start in the UI (streamed real-topic discover→digest→teach) + downloadable artifact | ✅ done · live | `tests/test_ui_openworld.py` + live smoke |
+Five contracted skills, orchestrated by a ReAct + Plan-and-Solve loop over one concept graph and one
+metered router:
 
-Full backend detail, live gate results, and test counts: [`docs/BACKEND-COMPLETE.md`](docs/BACKEND-COMPLETE.md).
-Frontend detail: [`docs/FRONTEND-COMPLETE.md`](docs/FRONTEND-COMPLETE.md).
-End-to-end quality results: [`docs/E2E-REPORT.md`](docs/E2E-REPORT.md).
+| Skill | What it does |
+|:--|:--|
+| **find-sources** | Goal → query (any language → English) → searches **OpenAlex · Semantic Scholar · arXiv · Wikipedia** → ranks by relevance × authority → drops off-topic sources → fetches full text |
+| **digest-corpus** | Reads the sources → extracts concepts + keypoints → builds **prerequisite (RefD + LLM)** and similarity edges → frontier-model verify → a cited concept graph |
+| **teach / assess** | Teaches keypoint-by-keypoint, quizzes at rising **Bloom** levels, and adapts — reteach / re-explain / prerequisite-detour / honest concede. Mastery is **BKT-computed**, never the model judging itself |
+| **make-artifact** | A downloadable take-away — **Cornell notes · mind-map · slides · worked-example** — in the learner's language, every claim cited |
+| **recommend-next** | Prerequisite-aware ranking of the best concept to learn next |
+
+Everything is a **glass box**: the UI shows, per step, which skill ran, which method, and which paper —
+plus live mastery bars and a running cost meter.
 
 ---
 
-## Design principles
-- **Grounded, not bluffing.** Open-domain ≠ ungrounded — it *fetches and digests* a source, then teaches from cited evidence.
-- **The learner model is BKT/Rasch, never LLM self-assessment.**
-- **Cost is a first-class constraint** — one metered chokepoint, a tier cascade, caching, a per-session budget cap; only approved models are callable, any other is record-only until approved.
-- **Prereq edges are a soft constraint** (RefD + LLM + similarity fallback), never a hard gate; confidence is rule-computed and surfaced, never hallucinated.
-- **No silent deviations.** Code is kept on one line with the research and the full spec; anything deferred is flagged in the spec.
+## Results
+
+From a 10-scenario live end-to-end evaluation (frontier-model judge) plus the automated suite:
+
+| | |
+|:--|:--|
+| **4.33 / 5** | overall teaching quality across 10 live scenarios (8 / 9 ≥ 4) |
+| **4.78 / 5** | grounding — cited chunks resolve to real source papers |
+| **≈ $0.02** | per full multi-concept live session · **$0** fully offline |
+| **4 / 4** | languages taught (en · 中 · es · fr) |
+| **573** | automated tests — 557 offline ($0) + 16 live-gated |
+| **all fire live** | adaptive branches: advance · reteach→recover · concede · lost→recover |
+
+**Honest limits** (stated plainly): source precision can still admit an adjacent-but-wrong paper on
+niche goals; non-English *quizzes* can revert to English; spaced review is built but not yet delivered
+before new teaching; digest is single-source per topic today. See
+[`docs/E2E-REPORT.md`](docs/E2E-REPORT.md) for the full breakdown.
 
 ---
 
 ## Tech stack
-`LangGraph` (inner loop) · ReAct outer loop · `SQLite` (concept graph · learner model · cost ledger · caches) · **LiteLLM** gateway — provider-agnostic (OpenAI / Anthropic / Gemini / DeepSeek / Groq / Ollama / any OpenAI-compatible), default tiers `gpt-4o-mini` (cheap) + `gpt-4o` (frontier) + `text-embedding-3-small`, offline-capable ($0) · OpenAlex / Semantic Scholar / arXiv / Wikipedia (selectable live-discovery adapters; Stack Overflow opt-in) · RefD (Liang 2015) prerequisite signal · `pytest`
+
+`LangGraph` (checkpointed inner loop) · ReAct + Plan-and-Solve outer loop · `SQLite` (concept graph ·
+learner model · cost ledger) · **LiteLLM** gateway — any provider, default `gpt-4o-mini` (cheap) +
+`gpt-4o` (frontier) + `text-embedding-3-small`, offline-capable ($0) · OpenAlex / Semantic Scholar /
+arXiv / Wikipedia discovery · RefD (Liang 2015) prerequisite signal · FastAPI + SSE UI · PyInstaller
+desktop build.
 
 ## Documentation
-| Doc | Role |
-|:--|:--|
-| [`docs/RESEARCH-AND-SPEC.md`](docs/RESEARCH-AND-SPEC.md) | Research questions, verified literature/methods table, and full architecture spec (problem, principles, data model, cost spine, all 5 skills, milestones) |
-| [`docs/BACKEND-COMPLETE.md`](docs/BACKEND-COMPLETE.md) | Complete backend reference: ASCII architecture, real-run storyboard, module index, the 5 stage skills (code + research + gate), graph node reference, data model, provider-agnostic LLM/cost spine, verification |
-| [`docs/BACKEND-ROADMAP.md`](docs/BACKEND-ROADMAP.md) | Remaining backend work: live cold-start (streamed), multi-source digest, sharper discovery, deeper quiz/feedback, robust non-English, new source adapters |
-| [`docs/FRONTEND-COMPLETE.md`](docs/FRONTEND-COMPLETE.md) | Complete frontend reference: two modes (offline demo / live open-world), ASCII architecture, route index, template + JS + Python module reference, SSE event schema, CSS tokens, fixture flow, verification |
-| [`docs/FRONTEND-ROADMAP.md`](docs/FRONTEND-ROADMAP.md) | Remaining frontend: session persistence/auth, slides→PPTX export, teacher overrides, live quality scores, token-by-token streaming, incremental map render, mobile polish, deployment |
-| [`docs/E2E-REPORT.md`](docs/E2E-REPORT.md) | Full 10-scenario live E2E report — actual-quality scores (mean 4.33/5), per-scenario breakdown, before/after quality deltas |
-| `docs/archive/` | Superseded: per-milestone plans, audits, research brief, literature review, architecture spec, storyboard, status; `closed-world/` = legacy M0–M4 docs |
 
----
+Deep technical detail lives in [`docs/`](docs): research &amp; architecture spec
+([`RESEARCH-AND-SPEC.md`](docs/RESEARCH-AND-SPEC.md)), the backend and frontend references
+([`BACKEND-COMPLETE.md`](docs/BACKEND-COMPLETE.md) · [`FRONTEND-COMPLETE.md`](docs/FRONTEND-COMPLETE.md)),
+their roadmaps, and the end-to-end evaluation ([`E2E-REPORT.md`](docs/E2E-REPORT.md)).
 
-## Team & acknowledgments
-**Team The Three Musketeers** — Tu Yaowei (agent & backend) · Jing Yen (research, eval & UX) — National University of Singapore.
-Built for the **ICCSE 2026 Agentic AI Competition** (NTU · Tsinghua · Shandong · Xinjiang · UBC · Alibaba). Compute supported by QoderWork and Alibaba Cloud "Cloud for Research." **License:** MIT — see [LICENSE](LICENSE).
+## Team &amp; license
+
+**Team The Three Musketeers** — **Tu Yaowei** (agent &amp; backend) · **Jing Yen** (research, eval &amp; UX),
+National University of Singapore. Built for the **ICCSE 2026 Agentic AI Competition**. Compute
+supported by QoderWork and Alibaba Cloud "Cloud for Research." **License:** MIT — see [LICENSE](LICENSE).
