@@ -7,7 +7,7 @@ ships, how it's built, and every module, route, event, and token.* Backend it ta
 
 **Run it:** `python -m litnav.ui.server` → http://127.0.0.1:8000/tutor (offline by default, $0, no key).
 
-**Status:** covered by the 366-test offline suite (`test_unified_ui.py`, `test_ui_openworld.py`,
+**Status:** covered by the offline suite — 557 passing, 16 live-gated, 573 total (`test_unified_ui.py`, `test_ui_openworld.py`,
 `test_ui_artifact.py`); the live open-world cold-start was verified end-to-end with a metered smoke.
 
 > Covers all UI modules after the June 2026 pull: open-world cold-start, downloadable artifact,
@@ -404,5 +404,5 @@ Open-world sessions skip the fixture entirely; `find_sources` + `digest.pipeline
 | Server render + SSE provenance/recommend payload | `tests/test_unified_ui.py` (FastAPI TestClient + `flow_meta` assertions) |
 | Open-world build path + no-source boundary | `tests/test_ui_openworld.py` (monkeypatched discover/digest, offline/$0) |
 | Artifact generation + download endpoint | `tests/test_ui_artifact.py` |
-| **Full offline suite** | `python -m pytest -q` → **366 passed** ($0) |
+| **Full offline suite** | `python -m pytest -q` → **557 passed, 16 live-gated (573 total)** ($0) |
 | **Live open-world (metered smoke)** | a fresh "CRISPR" goal streamed `discover → digest → map (4 concepts) → teach → quiz` through the UI for **$0.0065** (18 calls); the cost meter reported it from `cost_ledger` |

@@ -59,7 +59,7 @@ and tells you what to learn next — all under a strict, metered cost budget.
 flowchart TD
     U(["👤 Learner states a goal — in any language<br/>e.g. 给我讲讲 diffusion models / Explain RLHF"])
 
-    U --> S1["① find-sources · DISCOVER<br/>find the right real sources for this goal<br/>· LLM intent + query→English · OpenAlex/Wikipedia · BM25 · embed rerank · LLM relevance gate"]
+    U --> S1["① find-sources · DISCOVER<br/>find the right real sources for this goal<br/>· LLM intent + query→English · OpenAlex/Semantic Scholar/arXiv/Wikipedia · BM25 · embed rerank · LLM relevance gate"]
     S1 --> S2["② digest-corpus · DIGEST<br/>turn sources into a teachable concept graph<br/>· LLM concept extraction · RefD prerequisite signal · gpt-4o edge verify"]
     S2 --> CG[("Concept graph · SQLite<br/>prereq-ordered concepts · cited evidence")]
     CG --> S3["③ orient · goal & depth<br/>set how deep to go<br/>· Bloom-ceiling: mastery / functional / survey"]
@@ -107,7 +107,8 @@ The system is **five contracted "stage skills"** orchestrated by an outer agent 
 
 ### 4.1 The five stages
 1. **find-sources (DISCOVER)** — `{goal, intent}` → real sources. Normalise the goal to an English
-   search query → classify intent → query OpenAlex + Wikipedia → BM25 pre-filter → embedding re-rank +
+   search query → classify intent → query the **selectable adapter registry** (OpenAlex · Semantic
+   Scholar · arXiv · Wikipedia default-on; Stack Overflow opt-in) → BM25 pre-filter → embedding re-rank +
    authority + dedup → **relevance gate** (drop off-topic) → fetch full text for the top few.
 2. **digest-corpus (DIGEST)** — `{sources}` → concept graph. Extract concepts + keypoints → propose
    prerequisite & similarity edges (RefD + LLM) → a frontier model verifies the high-impact prereq
@@ -151,6 +152,7 @@ is *not* evidence a capability works — the live gate and the [E2E-REPORT](E2E-
 ## 6. Status & deferred
 
 All five stages and the cost spine are implemented and live-verified (see
-[BACKEND-COMPLETE](BACKEND-COMPLETE.md)). Still deferred: streaming a live cold-start to the screen,
-multi-source digest for breadth, more source adapters (Semantic Scholar, YouTube transcripts), and
-SPECTER re-ranking — all tracked in [BACKEND-ROADMAP](BACKEND-ROADMAP.md).
+[BACKEND-COMPLETE](BACKEND-COMPLETE.md)). Discovery already ships a selectable adapter registry
+(OpenAlex · Semantic Scholar · arXiv · Wikipedia + Stack Overflow opt-in). Still deferred: streaming a
+live cold-start to the screen, multi-source digest for breadth, further adapters (YouTube transcripts,
+institutional OA), and SPECTER re-ranking — all tracked in [BACKEND-ROADMAP](BACKEND-ROADMAP.md).

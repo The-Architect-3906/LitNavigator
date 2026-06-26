@@ -6,6 +6,15 @@ from litnav.llm import router
 CONCEPTS = [{"slug": "gradient_descent", "name": "Gradient Descent"}]
 EV = {"gradient_descent": ["Update params opposite the gradient, scaled by a learning rate."]}
 
+import os as _os_live
+import pytest as _pytest_live
+_LIVE_ONLY = _pytest_live.mark.skipif(
+    _os_live.getenv("LITNAV_LLM_PROVIDER", "none").lower() == "none",
+    reason="live LLM path — activates only when a provider is configured; "
+           "skipped in the $0 offline suite",
+)
+
+
 def test_worked_offline_has_steps_and_practice(monkeypatch):
     monkeypatch.setenv("LITNAV_LLM_PROVIDER", "none")
     c = sqlite3.connect(":memory:"); init_db(c)
@@ -18,6 +27,7 @@ def test_worked_offline_has_steps_and_practice(monkeypatch):
     assert "Citations" in out and "c0" in out
     assert any(w in out.lower() for w in ("recall", "retrieval", "test yourself"))  # retrieval prompt
 
+@_LIVE_ONLY
 def test_worked_uses_llm_then_assembles(monkeypatch):
     def fake(prompt, *, tier, stage, fallback, **k):
         return {"steps": ["Compute the gradient", "Step opposite it"],
@@ -27,6 +37,7 @@ def test_worked_uses_llm_then_assembles(monkeypatch):
     out = worked_example.render(CONCEPTS, EV, citations=["c0"], conn=c, session_id="s")
     assert "Compute the gradient" in out and "What sign is the step?" in out
 
+@_LIVE_ONLY
 def test_worked_strips_llm_enumerator_no_double_numbering(monkeypatch):
     # LLM sometimes pre-numbers steps ("1. ...", "Step 1 — ..."); the emitter re-numbers,
     # so the leading enumerator must be stripped to avoid "1. 1. ..." (seen in live output).

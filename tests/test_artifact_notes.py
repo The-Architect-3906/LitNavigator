@@ -7,6 +7,15 @@ CONCEPTS = [{"slug": "react", "name": "ReAct"}, {"slug": "tool_use", "name": "To
 EV = {"react": ["ReAct interleaves reasoning traces and actions."],
       "tool_use": ["Tools let the agent act on the world."]}
 
+import os as _os_live
+import pytest as _pytest_live
+_LIVE_ONLY = _pytest_live.mark.skipif(
+    _os_live.getenv("LITNAV_LLM_PROVIDER", "none").lower() == "none",
+    reason="live LLM path — activates only when a provider is configured; "
+           "skipped in the $0 offline suite",
+)
+
+
 def test_notes_offline_cornell_template(monkeypatch):
     monkeypatch.setenv("LITNAV_LLM_PROVIDER", "none")
     c = sqlite3.connect(":memory:"); init_db(c)
@@ -20,6 +29,7 @@ def test_notes_offline_cornell_template(monkeypatch):
     # NOT verbatim: full evidence sentence should not be dumped wholesale
     assert out.count("ReAct interleaves reasoning traces and actions.") <= 1
 
+@_LIVE_ONLY
 def test_notes_live_uses_llm(monkeypatch):
     captured = {}
     def fake(prompt, *, tier, stage, fallback, **k):

@@ -17,6 +17,16 @@ CITS = ["chunk-1"]
 
 # ── notes.render — prompt includes language directive ────────────────────────
 
+import os as _os_live
+import pytest as _pytest_live
+_LIVE_ONLY = _pytest_live.mark.skipif(
+    _os_live.getenv("LITNAV_LLM_PROVIDER", "none").lower() == "none",
+    reason="live LLM path — activates only when a provider is configured; "
+           "skipped in the $0 offline suite",
+)
+
+
+@_LIVE_ONLY
 def test_notes_prompt_contains_language(monkeypatch):
     """When language='Chinese', the LLM prompt must contain 'Chinese'."""
     captured = {}
@@ -37,6 +47,7 @@ def test_notes_prompt_contains_language(monkeypatch):
     )
 
 
+@_LIVE_ONLY
 def test_notes_prompt_default_english(monkeypatch):
     """Default language='English' should appear in the prompt."""
     captured = {}
@@ -58,6 +69,7 @@ def test_notes_prompt_default_english(monkeypatch):
 
 # ── slides.render — prompt includes language directive ───────────────────────
 
+@_LIVE_ONLY
 def test_slides_prompt_contains_language(monkeypatch):
     captured = {}
 
@@ -78,6 +90,7 @@ def test_slides_prompt_contains_language(monkeypatch):
 
 # ── worked_example.render — prompt includes language directive ───────────────
 
+@_LIVE_ONLY
 def test_worked_example_prompt_contains_language(monkeypatch):
     captured = {}
 
@@ -109,6 +122,7 @@ def _seed_db(conn):
     conn.commit()
 
 
+@_LIVE_ONLY
 def test_make_artifact_notes_language_threads(monkeypatch, tmp_path):
     """make_artifact(ArtifactInput(..., language='Chinese')) captures 'Chinese' in renderer prompt."""
     captured = {}

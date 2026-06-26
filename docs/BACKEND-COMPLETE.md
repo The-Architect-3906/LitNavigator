@@ -5,7 +5,7 @@ implements it, the module/node/data-model index, and how it's verified.* Design 
 [RESEARCH-AND-SPEC](RESEARCH-AND-SPEC.md). Remaining work: [BACKEND-ROADMAP](BACKEND-ROADMAP.md).
 Measured quality: [E2E-REPORT](E2E-REPORT.md). The UI on top: [FRONTEND-COMPLETE](FRONTEND-COMPLETE.md).
 
-**Status:** 366 automated tests pass offline ($0); all live gates pass against a real provider.
+**Status:** 557 automated tests pass offline ($0), with 16 live-gated (573 total); all live gates pass against a real provider.
 A full multi-concept session (find → digest → teach → artifact → recommend) costs about **$0.02**.
 Provider-agnostic: OpenAI / Anthropic / Gemini / DeepSeek / … via LiteLLM (§7).
 
@@ -122,7 +122,7 @@ flowchart TD
 | `litnav/state.py` | `NavState` — the state contract threaded through every node |
 | `litnav/nodes/` | the teaching-graph nodes (§5) |
 | `litnav/assess/` | quiz generation (`quizgen`), teach-strategy policy (`strategy`), spaced repetition (`spacing`) |
-| `litnav/discover/` | **find-sources** skill: intent, query, OpenAlex/Wikipedia adapters, rank, relevance, full-text |
+| `litnav/discover/` | **find-sources** skill: intent, query, selectable adapter registry (OpenAlex · Semantic Scholar · arXiv · Wikipedia + Stack Overflow opt-in), rank, relevance, full-text |
 | `litnav/digest/` | **digest-corpus** skill: extract → edges (RefD-style) → verify → pipeline |
 | `litnav/artifact/` | **make-artifact** skill: selector + renderers (mindmap/notes/slides/worked-example) |
 | `litnav/recommend/` | **recommend-next** skill: prereq filter + mastery-gain ranker |
@@ -145,8 +145,9 @@ the LangGraph spine itself.
 ### find-sources — discover real sources for any goal
 `litnav/discover/` · `SKILL.md`
 - Normalises any-language goal → English search query (`query.py`) so non-English goals find sources.
-- Classifies intent (`intent.py`), queries OpenAlex + Wikipedia (`adapters/`), ranks by BM25 then
-  embedding similarity + citation authority, de-dups (`rank.py`).
+- Classifies intent (`intent.py`), queries a **selectable adapter registry** (`adapters/registry.py`
+  — OpenAlex · Semantic Scholar · arXiv · Wikipedia default-on; Stack Overflow opt-in), ranks by BM25
+  then embedding similarity + citation authority, de-dups (`rank.py`).
 - **Relevance gate** (`relevance.py`): a cheap LLM scores each source's fit to the *specific* goal and
   drops adjacent-but-wrong ones (e.g. a PBFT paper for a Raft goal), never starving the pipeline.
 - Fetches full text for the top few and sub-chunks it into citable units (`fulltext.py`).
@@ -278,7 +279,7 @@ routing are rule-computed**, never emitted by the model. Every caller passes a d
 
 **Offline (deterministic, $0):** `verify_cost`, `verify_digest`, `verify_discover`,
 `verify_teach_assess`, `verify_artifact`, `verify_recommend`, plus the legacy `verify_m0…m3`. Full
-suite: **`pytest -q` → 366 passed.**
+suite: **`pytest -q` → 557 passed, 16 live-gated (skipped without a provider) — 573 total.**
 
 **Live (real provider, metered — run with a provider configured):**
 
@@ -287,7 +288,7 @@ suite: **`pytest -q` → 366 passed.**
 | `verify_liveness` | a real call is provably distinct from a fallback | $0.000007 |
 | `verify_cost_live` | budget cap fires on real accumulating spend | ~$0.00001 |
 | `verify_digest_live` | concepts **persist** + the frontier judge runs + evidence resolves | ~$0.003 |
-| `verify_discover_live` | real OpenAlex/Wikipedia; relevance gate; multilingual query | ~$0.002 |
+| `verify_discover_live` | real OpenAlex/Semantic Scholar/arXiv/Wikipedia; relevance gate; multilingual query | ~$0.002 |
 | `verify_teach_assess_live` | goal classified, distractors flaw-gated, grade metered | ~$0.0002 |
 | `verify_artifact_live` | notes/slides/worked render live; citations resolve | ~$0.0004 |
 | `verify_openworld_e2e_live` | a fresh topic runs discover→digest→teach→artifact on the **persisted** graph | ~$0.003 |
