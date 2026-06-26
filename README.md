@@ -2,6 +2,8 @@
 
 # 🧭 LitNavigator — Open-World Edition
 
+**Reads the literature. Builds the course. Shows its work.**
+
 ### Give it any learning goal. It finds the most suitable real sources, digests them into a teachable concept map, and tutors *you* through it — adaptively, grounded in the literature, under strict cost control.
 
 ![Status](https://img.shields.io/badge/open--world-OW--0..7%20complete%20·%20live%20cold--start%20UI%20·%20e2e%20mean%204.33%2F5-brightgreen)
@@ -45,7 +47,7 @@ flowchart TD
       direction TB
       FS0[normalize query\nany-language goal → English search query]
       FS1[intent classify\ngoal → survey · applied · cutting-edge]
-      FS2[OpenAlex + Wikipedia adapters\nmetadata + authority]
+      FS2[selectable adapters · OpenAlex · Semantic Scholar · arXiv · Wikipedia\nmetadata + authority]
       FS3[BM25 prefilter → embedding-cosine rerank\n+ authority + dedup]
       FSG[relevance gate\ncheap LLM drops off-topic sources]
       FS4[top-k full text → sub-chunked c0..cN]
@@ -143,7 +145,7 @@ flowchart TD
 
 | Stage | Status | What it does |
 |:--|:--:|:--|
-| **find-sources** (DISCOVER) | ✅ live | goal + intent → real OpenAlex/Wikipedia sources, ranked by relevance × authority, top-k full text fetched |
+| **find-sources** (DISCOVER) | ✅ live | goal + intent → real sources from a **selectable adapter registry** (OpenAlex · Semantic Scholar · arXiv · Wikipedia default-on; Stack Overflow opt-in), ranked by relevance × authority, top-k full text fetched |
 | **digest-corpus** (DIGEST) | ✅ live | sources → distinct concepts → prerequisite (RefD **+** LLM) and similarity edges → `gpt-4o` verify → grounded, cited graph |
 | **teach / assess** (inner loop) | ✅ live | per-keypoint adaptive teaching; goal-elicited Bloom ceiling; metered grade with frontier escalation near the mastery threshold; MCQ distractors + flaw gate + IRT difficulty; FSRS spacing + retention probe; mastery from answers (BKT/Rasch), never LLM self-judgment |
 | **make-artifact** (ARTIFACT) | ✅ live | scenario → format selector → mind-map / Cornell notes / Marp slides / worked-example / combination; every artifact carries a retrieval prompt + resolving citations |
@@ -176,13 +178,13 @@ python -m litnav.evaluation.verify_discover  # find-sources parsing/rank/dedup/i
 python -m litnav.evaluation.verify_teach_assess  # goal/Bloom/flaw-gate/FSRS/strategy determinism
 python -m litnav.evaluation.verify_artifact  # format selector + mind-map/combination + citations
 python -m litnav.evaluation.verify_m0        # legacy closed-world gates (still green)
-pytest -q                                    # full suite — 366 passed
+pytest -q                                    # full suite — 557 passed offline ($0) · 16 live-gated (573 total)
 
 # LIVE gates (real provider; set LITNAV_LLM_PROVIDER=openai + LITNAV_LLM_API_KEY in .env)
 python -m litnav.evaluation.verify_liveness      # a real call is distinguishable from a fallback
 python -m litnav.evaluation.verify_cost_live     # budget cap fires on real spend
 python -m litnav.evaluation.verify_digest_live   # real LLM extracts + builds + judges a graph
-python -m litnav.evaluation.verify_discover_live # real OpenAlex/Wikipedia/arXiv discovery → digest
+python -m litnav.evaluation.verify_discover_live # real OpenAlex/Semantic Scholar/arXiv/Wikipedia discovery → digest
 python -m litnav.evaluation.verify_teach_assess_live # real goal elicit + distractors + metered grade
 python -m litnav.evaluation.verify_artifact_live # real notes/slides/worked-example, citations resolve, metered
 ```
@@ -207,7 +209,7 @@ live mastery scores, concept-map SVG, cost meter, and a recommend-next card at s
 | **OW-0** · Cost spine (registry · metered router · budget cap · result cache) | ✅ done · live | `verify_cost_live` |
 | **OW-1** · Data model (concept-graph + learner + cache + ledger schema) | ✅ done | schema + repo tests |
 | **OW-2** · digest-corpus (RefD+LLM edges, gpt-4o verify, cache) | ✅ done · live | `verify_digest_live` |
-| **OW-3** · find-sources (OpenAlex+Wikipedia, BM25+rerank, full text) + OW-3.1 (relevance gate, multilingual query) | ✅ done · live | `verify_discover_live` |
+| **OW-3** · find-sources (selectable adapters — OpenAlex · Semantic Scholar · arXiv · Wikipedia + Stack Overflow opt-in, BM25+rerank, full text) + OW-3.1 (relevance gate, multilingual query) | ✅ done · live | `verify_discover_live` |
 | **OW-4** · TEACH/ASSESS (goal elicitation, Bloom quiz, distractors, IRT, FSRS, retention probe, escalation, prereq-detour, mid-session goal-pivot) | ✅ done · live | `verify_teach_assess_live` |
 | **OW-5** · make-artifact (selector → map/notes/slides/worked-example/combination; retrieval prompt + citations) + OW-5.1 persistence | ✅ done · live | `verify_artifact_live` |
 | **OW-6** · recommend-next + unified glass-box+user frontend + quality hardening (multilingual output, source sub-chunking, discovery precision, quiz variety, feedback depth) | ✅ done · live | `verify_openworld_e2e_live` |
@@ -229,7 +231,7 @@ End-to-end quality results: [`docs/E2E-REPORT.md`](docs/E2E-REPORT.md).
 ---
 
 ## Tech stack
-`LangGraph` (inner loop) · ReAct outer loop · `SQLite` (concept graph · learner model · cost ledger · caches) · **LiteLLM** gateway — provider-agnostic (OpenAI / Anthropic / Gemini / DeepSeek / Groq / Ollama / any OpenAI-compatible), default tiers `gpt-4o-mini` (cheap) + `gpt-4o` (frontier) + `text-embedding-3-small`, offline-capable ($0) · OpenAlex / Wikipedia / arXiv (live discovery) · RefD (Liang 2015) prerequisite signal · `pytest`
+`LangGraph` (inner loop) · ReAct outer loop · `SQLite` (concept graph · learner model · cost ledger · caches) · **LiteLLM** gateway — provider-agnostic (OpenAI / Anthropic / Gemini / DeepSeek / Groq / Ollama / any OpenAI-compatible), default tiers `gpt-4o-mini` (cheap) + `gpt-4o` (frontier) + `text-embedding-3-small`, offline-capable ($0) · OpenAlex / Semantic Scholar / arXiv / Wikipedia (selectable live-discovery adapters; Stack Overflow opt-in) · RefD (Liang 2015) prerequisite signal · `pytest`
 
 ## Documentation
 | Doc | Role |
@@ -244,5 +246,6 @@ End-to-end quality results: [`docs/E2E-REPORT.md`](docs/E2E-REPORT.md).
 
 ---
 
-## Acknowledgments
+## Team & acknowledgments
+**Team The Three Musketeers** — Tu Yaowei (agent & backend) · Jing Yen (research, eval & UX) — National University of Singapore.
 Built for the **ICCSE 2026 Agentic AI Competition** (NTU · Tsinghua · Shandong · Xinjiang · UBC · Alibaba). Compute supported by QoderWork and Alibaba Cloud "Cloud for Research." **License:** MIT — see [LICENSE](LICENSE).

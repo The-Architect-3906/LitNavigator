@@ -72,20 +72,20 @@ Two adaptive behaviours work but aren't yet exercised end-to-end by the automate
   and re-plans when the learner changes their mind mid-session. Add a learner persona to the
   inner-loop harness that signals a goal change and asserts the depth ceiling and route re-adjust.
 
-## 7. More source types — *P2*
+## 7. More source types — *partially done*
 
-The discovery layer currently queries OpenAlex and Wikipedia
-(`litnav/discover/adapters/openalex.py`, `wikipedia.py`). Two more adapters would widen recall:
+The discovery layer is now a **selectable adapter registry**
+(`litnav/discover/adapters/registry.py`): **OpenAlex, Semantic Scholar, arXiv and Wikipedia are
+default-on**, and **Stack Overflow** is available opt-in. Remaining adapters that would widen recall:
 
-- **Semantic Scholar** (`adapters/s2.py`): a 200M-paper index with free SPECTER embeddings and
-  TLDR summaries — better recall than OpenAlex for ML/NLP topics.
 - **YouTube transcripts** (`adapters/youtube.py`): for video-first / crash-course learners.
+- **CORE / institutional open-access** for broader full-text coverage.
 
 ## 8. SPECTER re-ranking — *P2*
 
-Ranking is currently BM25 → `text-embedding-3-small` cosine. SPECTER embeddings (free via Semantic
-Scholar) would improve scientific-paper ranking at no extra cost — but this depends on the Semantic
-Scholar adapter above.
+Ranking is currently BM25 → `text-embedding-3-small` cosine. SPECTER embeddings (free via the
+Semantic Scholar adapter, now shipped) would improve scientific-paper ranking at no extra cost —
+this is now unblocked.
 
 ## Deferred (recorded, not this sprint)
 
@@ -108,8 +108,7 @@ Scholar adapter above.
 | Robust non-English discovery (retry + fallback) | P1 |
 | Deeper quiz & feedback quality | P1 |
 | Finish autonomous-loop wiring (detour + goal-change in harness) | P1 |
-| Semantic Scholar adapter | P2 |
-| YouTube adapter | P2 |
+| YouTube transcript adapter | P2 |
 | SPECTER re-ranking | P2 |
 | Escalation telemetry + re-tuning | deferred |
 | Goal-to-concept reconciliation | deferred |

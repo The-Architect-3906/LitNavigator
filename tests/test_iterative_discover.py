@@ -26,6 +26,15 @@ from litnav.storage import openworld_repo
 # Helpers
 # ---------------------------------------------------------------------------
 
+import os as _os_live
+import pytest as _pytest_live
+_LIVE_ONLY = _pytest_live.mark.skipif(
+    _os_live.getenv("LITNAV_LLM_PROVIDER", "none").lower() == "none",
+    reason="live LLM path — activates only when a provider is configured; "
+           "skipped in the $0 offline suite",
+)
+
+
 def _src(title: str, source_type: str = "arxiv", source_id: str | None = None) -> Source:
     """Build a minimal Source for testing."""
     return Source(
@@ -79,6 +88,7 @@ class TestRefineQueries:
         )
         assert result == []
 
+    @_LIVE_ONLY
     def test_live_returns_2_to_3_queries(self, monkeypatch):
         """refine_queries returns 2-3 queries when LLM provides them."""
         from litnav.llm import router
